@@ -1,7 +1,7 @@
 ﻿@using System.Globalization
 @{
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
-    ViewData["Title"] = isAr ? "إنشاء حساب تاجر" : "Register Merchant";
+    ViewData["Title"] = isAr ? "إنشاء حساب جديد" : "Sign Up";
     Layout = null;
 }
 
@@ -18,7 +18,7 @@
             body {
                 font-family: 'Cairo';
             }</style>
- }
+    }
     else
     {
         <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -26,66 +26,157 @@
             body {
                 font-family: 'Roboto';
             }</style>
- }
-    <link rel="stylesheet" href="~/style.css">
+    }
+    <link rel="stylesheet" href="~/css/style.css">
     <style>
-        .auth-logo-img {
-            height: 70px;
-            width: auto;
-            margin: 0 auto 15px;
-            display: block;
+        .auth-container {
+            max-width: 500px;
+            margin: 40px auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
         }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+            .form-group label {
+                display: block;
+                margin-bottom: 5px;
+                font-weight: bold;
+                color: #333;
+            }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .btn.primary {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: #0F172A;
+            color: #FACC15;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+            .btn.primary:hover {
+                background: #1e293b;
+            }
+
+        /* Custom Radio Toggle */
+        .type-toggle {
+            display: flex;
+            background: #f1f5f9;
+            padding: 5px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+            .type-toggle label {
+                flex: 1;
+                text-align: center;
+                padding: 10px;
+                cursor: pointer;
+                border-radius: 8px;
+                transition: 0.3s;
+                margin: 0;
+                font-weight: bold;
+                color: #64748b;
+            }
+
+            .type-toggle input {
+                display: none;
+            }
+
+                .type-toggle input:checked + label {
+                    background: #fff;
+                    color: #0F172A;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+                }
     </style>
 </head>
-<body class="auth-body">
+<body style="background-color: #F8FAFC;">
 
-    <div class="auth-container" style="margin-top:50px;">
-        <div class="auth-header">
-            <img src="~/images/logo.png" alt="DISKA Logo" class="auth-logo-img" onerror="this.style.display='none'">
-            <h2>@(isAr ? "إنشاء حساب جديد" : "Create Account")</h2>
-            <p>@(isAr ? "انضم لأكبر شبكة تجار جملة" : "Join the largest wholesale network")</p>
+    <div class="auth-container">
+        <div style="text-align: center; margin-bottom: 25px;">
+            <h2 style="color: #0F172A;">@(isAr ? "انضم إلى عائلة ديسكا" : "Join Diska Family")</h2>
+            <p style="color: #666;">@(isAr ? "حدد نوع حسابك وابدأ الآن" : "Choose account type and start now")</p>
         </div>
 
-        <form class="auth-form" asp-action="Signup" method="post">
+        <form asp-action="Signup" method="post" id="signupForm">
             @if (ViewBag.Error != null)
             {
-                <div style="color:red; text-align:center; margin-bottom:10px;">@ViewBag.Error</div>
+                <div style="background:#fee2e2; color:#dc2626; padding:10px; border-radius:8px; margin-bottom:15px; text-align:center;">@ViewBag.Error</div>
             }
+
+            <div class="type-toggle">
+                <input type="radio" name="type" id="typeCustomer" value="Customer" checked onchange="toggleFields()">
+                <label for="typeCustomer">👤 @(isAr ? "مشتري / محل" : "Buyer")</label>
+
+                <input type="radio" name="type" id="typeMerchant" value="Merchant" onchange="toggleFields()">
+                <label for="typeMerchant">🏪 @(isAr ? "تاجر / مورد" : "Merchant")</label>
+            </div>
 
             <div class="form-group">
                 <label>@(isAr ? "الاسم بالكامل" : "Full Name")</label>
-                <input type="text" name="fullName" placeholder="@(isAr ? "أدخل اسمك الثلاثي" : "Full Name")" required>
-            </div>
-
-            <div class="form-group">
-                <label>@(isAr ? "اسم المحل / النشاط" : "Shop Name")</label>
-                <input type="text" name="shopName" placeholder="@(isAr ? "مثال: سوبر ماركت الأمانة" : "Ex: Al-Amana Market")" required>
-            </div>
-
-            <div class="form-group">
-                <label>@(isAr ? "رقم السجل التجاري (اختياري)" : "Commercial Register (Optional)")</label>
-                <input type="text" name="commercialReg" placeholder="123456">
+                <input type="text" name="fullName" class="form-control" required>
             </div>
 
             <div class="form-group">
                 <label>@(isAr ? "رقم الموبايل" : "Phone Number")</label>
-                <input type="tel" name="phone" placeholder="01xxxxxxxxx" required>
+                <input type="tel" name="phone" class="form-control" placeholder="01xxxxxxxxx" required style="direction: ltr; text-align: right;">
+            </div>
+
+            <!-- Merchant Only Fields -->
+            <div id="merchantFields" style="display: none;">
+                <div class="form-group">
+                    <label>@(isAr ? "اسم النشاط التجاري / المحل" : "Shop / Business Name")</label>
+                    <input type="text" name="shopName" id="shopNameInput" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>@(isAr ? "رقم السجل التجاري (اختياري)" : "Commercial Register (Optional)")</label>
+                    <input type="text" name="commercialReg" class="form-control">
+                </div>
             </div>
 
             <div class="form-group">
                 <label>@(isAr ? "كلمة المرور" : "Password")</label>
-                <input type="password" name="password" placeholder="********" required>
+                <input type="password" name="password" class="form-control" placeholder="********" required>
             </div>
 
-            <button class="btn primary w-100">@(isAr ? "تسجيل حساب" : "Register")</button>
+            <button type="submit" class="btn primary">@(isAr ? "إنشاء الحساب" : "Create Account")</button>
         </form>
 
-        <div class="auth-footer">
-            <p>@(isAr ? "لديك حساب بالفعل؟" : "Already have an account?") <a asp-action="Login">@(isAr ? "تسجيل الدخول" : "Login")</a></p>
+        <div style="text-align: center; margin-top: 20px;">
+            <p>@(isAr ? "لديك حساب بالفعل؟" : "Already registered?") <a asp-action="Login" style="color: #0F172A; font-weight: bold;">@(isAr ? "تسجيل الدخول" : "Login")</a></p>
         </div>
-
-        <a asp-controller="Home" asp-action="Index" class="back-home">@(isAr ? "العودة للرئيسية" : "Back to Home")</a>
     </div>
 
+    <script>
+        function toggleFields() {
+            const isMerchant = document.getElementById('typeMerchant').checked;
+            const fields = document.getElementById('merchantFields');
+            const shopInput = document.getElementById('shopNameInput');
+
+            if (isMerchant) {
+                fields.style.display = 'block';
+                shopInput.setAttribute('required', 'required');
+            } else {
+                fields.style.display = 'none';
+                shopInput.removeAttribute('required');
+            }
+        }
+    </script>
 </body>
 </html>

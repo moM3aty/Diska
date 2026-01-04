@@ -1,100 +1,49 @@
 ﻿@using System.Globalization
 @{
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
-    ViewData["Title"] = isAr ? "الإشعارات" : "Notifications";
+    ViewData["Title"] = isAr ? "بع معنا" : "Sell with Us";
 }
 
-<section class="section-padding" style="padding-top: 50px; min-height: 60vh;">
+<section class="hero-section" style="background: linear-gradient(rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.9)), url('/images/merchant-bg.jpg'); background-size: cover; background-position: center; color: #fff; padding: 80px 0; text-align: center;">
     <div class="container">
+        <h1 style="font-size: 3rem; margin-bottom: 20px; color: #FACC15;">@(isAr ? "زود مبيعاتك مع ديسكا" : "Boost Your Sales with Diska")</h1>
+        <p style="font-size: 1.2rem; max-width: 700px; margin: 0 auto 40px;">
+            @(isAr ? "انضم لأكبر شبكة تجار جملة في مصر. وصل منتجاتك لآلاف المحلات والسوبر ماركت بضغطة زر." : "Join Egypt's largest wholesale network. Reach thousands of shops and supermarkets with a click.")
+        </p>
+        <a asp-controller="Account" asp-action="Signup" class="btn primary big" style="padding: 15px 40px; font-size: 1.2rem;">@(isAr ? "سجل كتاجر الآن" : "Register as Merchant")</a>
+    </div>
+</section>
 
-        <div class="notif-header">
-            <h2 style="margin-bottom: 15px;">@(isAr ? "الإشعارات والتنبيهات 🔔" : "Notifications & Alerts 🔔")</h2>
+<section class="section-padding">
+    <div class="container">
+        <div class="features-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
 
-            <!-- تم تعديل الزر ليكون عريض وبنفس ستايل الفرونت الأصلي -->
-            <button class="btn primary w-100" id="clearNotifBtn" style="text-align: center; text-decoration: none; border: none; margin-top: 10px; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold;">
-                @(isAr ? "مسح الكل" : "Clear All")
-            </button>
-        </div>
-
-        <div class="notifications-list" id="fullNotifList" style="margin-top: 20px;">
-            <div style="text-align:center; padding:40px;">
-                <i class="fas fa-spinner fa-spin fa-2x" style="color:var(--primary);"></i>
-                <p style="margin-top:10px;">@(isAr ? "جاري تحميل الإشعارات..." : "Loading notifications...")</p>
+            <div class="feature-card" style="text-align: center; padding: 30px; background: #fff; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.05);">
+                <i class="fas fa-users fa-3x" style="color: var(--primary); margin-bottom: 20px;"></i>
+                <h3>@(isAr ? "قاعدة عملاء ضخمة" : "Huge Customer Base")</h3>
+                <p style="color: #666;">@(isAr ? "وصل لآلاف تجار التجزئة في مكان واحد بدون مصاريف تسويق." : "Reach thousands of retailers in one place without marketing costs.")</p>
             </div>
+
+            <div class="feature-card" style="text-align: center; padding: 30px; background: #fff; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.05);">
+                <i class="fas fa-chart-line fa-3x" style="color: var(--primary); margin-bottom: 20px;"></i>
+                <h3>@(isAr ? "لوحة تحكم ذكية" : "Smart Dashboard")</h3>
+                <p style="color: #666;">@(isAr ? "تابع مبيعاتك، مخزونك، وأرباحك لحظة بلحظة من خلال لوحة تحكم متطورة." : "Track sales, inventory, and profits in real-time via advanced dashboard.")</p>
+            </div>
+
+            <div class="feature-card" style="text-align: center; padding: 30px; background: #fff; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.05);">
+                <i class="fas fa-truck-loading fa-3x" style="color: var(--primary); margin-bottom: 20px;"></i>
+                <h3>@(isAr ? "لوجستيات متكاملة" : "Integrated Logistics")</h3>
+                <p style="color: #666;">@(isAr ? "ركز في تجارتك وسيب التوصيل والتحصيل علينا." : "Focus on trading and leave delivery and collection to us.")</p>
+            </div>
+
         </div>
     </div>
 </section>
 
-@section Scripts {
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            loadNotificationsPage();
-
-            document.getElementById('clearNotifBtn').addEventListener('click', async () => {
-                const msg = '@(isAr ? "هل أنت متأكد من مسح جميع الإشعارات؟" : "Are you sure you want to clear all notifications?")';
-                if(confirm(msg)) {
-                    await fetch('/Notification/ClearAll', { method: 'POST' });
-                    loadNotificationsPage();
-                    if(typeof updateNotificationBadge === 'function') updateNotificationBadge();
-                }
-            });
-        });
-
-        async function loadNotificationsPage() {
-            const container = document.getElementById('fullNotifList');
-            try {
-                const response = await fetch('/Notification/GetRecent');
-                const data = await response.json();
-
-                container.innerHTML = '';
-
-                if (data.length === 0) {
-                    const emptyMsg = '@(isAr ? "لا توجد إشعارات جديدة" : "No new notifications")';
-                    container.innerHTML = `
-                        <div style="text-align:center; padding:40px; color:#777; background:#fff; border-radius:10px; border:1px solid #eee;">
-                            <i class="fas fa-bell-slash" style="font-size:2rem; margin-bottom:10px; opacity:0.5;"></i>
-                            <p>${emptyMsg}</p>
-                        </div>`;
-                    return;
-                }
-
-                data.forEach(n => {
-                    const iconClass = n.type === 'Alert' ? 'fa-exclamation-triangle' :
-                                      n.type === 'Order' ? 'fa-box' : 'fa-info-circle';
-                    const bgClass = n.type === 'Alert' ? '#fef2f2' :
-                                    n.type === 'Order' ? '#f0f9ff' : '#fff';
-                    const iconColor = n.type === 'Alert' ? '#ef4444' :
-                                      n.type === 'Order' ? '#0ea5e9' : '#3b82f6';
-
-                    const html = `
-                        <div class="notif-card ${n.isRead ? '' : 'unread'}" style="background:${n.isRead ? '#fff' : '#f8fafc'}; border-radius:10px; padding:15px; display:flex; gap:15px; align-items:flex-start; border:1px solid #eee; margin-bottom:10px; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
-                            <div class="icon" style="background:${bgClass}; color:${iconColor}; width:40px; height:40px; display:flex; align-items:center; justify-content:center; border-radius:50%; flex-shrink:0;">
-                                <i class="fas ${iconClass}"></i>
-                            </div>
-                            <div class="content" style="flex:1;">
-                                <h4 style="font-weight:${n.isRead ? 'normal' : 'bold'}; margin:0 0 5px; font-size:1rem; color: var(--primary);">${n.title}</h4>
-                                <p style="margin:0; color:#666; font-size:0.9rem; line-height:1.5;">${n.message}</p>
-                                <span class="time" style="font-size:0.75rem; color:#999; display:block; margin-top:5px;">${n.timeAgo}</span>
-                            </div>
-                            ${!n.isRead ? `<button onclick="markAsRead(${n.id}, this)" style="background:none; border:none; color:#0284c7; cursor:pointer; padding:5px;" title="تحديد كمقروء"><i class="fas fa-check-double"></i></button>` : ''}
-                        </div>
-                    `;
-                    container.insertAdjacentHTML('beforeend', html);
-                });
-
-            } catch (error) {
-                console.error(error);
-                container.innerHTML = '<p style="text-align:center; color:red;">حدث خطأ في تحميل الإشعارات</p>';
-            }
-        }
-
-        async function markAsRead(id, btnElement) {
-            await fetch(`/Notification/MarkAsRead?id=${id}`, { method: 'POST' });
-            const card = btnElement.closest('.notif-card');
-            card.style.background = '#fff';
-            card.querySelector('h4').style.fontWeight = 'normal';
-            btnElement.remove();
-            if(typeof updateNotificationBadge === 'function') updateNotificationBadge();
-        }
-    </script>
-}
+<section class="cta-section" style="background: #f8fafc; padding: 60px 0; text-align: center;">
+    <div class="container">
+        <h2>@(isAr ? "جاهز تبدأ؟" : "Ready to Start?")</h2>
+        <p style="margin-bottom: 30px;">@(isAr ? "التسجيل مجاني ولا يأخذ أكثر من دقيقتين." : "Registration is free and takes less than 2 minutes.")</p>
+        <a asp-controller="Account" asp-action="Signup" class="btn primary">@(isAr ? "ابدأ رحلة البيع" : "Start Selling")</a>
+    </div>
+</section>

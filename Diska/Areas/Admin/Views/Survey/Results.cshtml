@@ -1,0 +1,59 @@
+﻿@model Diska.Models.Survey
+@{
+    ViewData["Title"] = "نتائج الاستبيان";
+    Layout = "_AdminLayout";
+    int totalResponses = Model.Responses?.Count ?? 0;
+}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+    <div>
+        <h2 style="margin:0;">نتائج: @Model.Title</h2>
+        <p style="color:#666; margin-top:5px;">إجمالي المشاركات: <strong>@totalResponses</strong></p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline">عودة للقائمة</a>
+</div>
+
+<div class="survey-results-grid" style="display:grid; gap:20px;">
+    @foreach (var question in Model.Questions)
+    {
+        <div class="card" style="padding:20px;">
+            <h4 style="margin-top:0; color:var(--primary); border-bottom:1px solid #eee; padding-bottom:10px;">@question.QuestionText</h4>
+
+            <div class="answers-list" style="max-height:300px; overflow-y:auto;">
+                @if (totalResponses == 0)
+                {
+                    <p style="color:#999;">لا توجد إجابات حتى الآن.</p>
+                }
+                else
+                {
+                    // تحليل الإجابات بناءً على النوع (بسيط للعرض)
+                    // في الوضع الحقيقي يتم معالجة JSON في الكنترولر
+                    <table style="width:100%; border-collapse:collapse;">
+                        <thead>
+                            <tr style="background:#f8f9fa;">
+                                <th style="padding:10px; text-align:right;">الإجابة</th>
+                                <th style="padding:10px; text-align:right;">المستخدم</th>
+                                <th style="padding:10px; text-align:right;">التاريخ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var response in Model.Responses)
+                            {
+                                // استخراج الإجابة الخاصة بهذا السؤال من JSON
+                                var answers = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(response.AnswerJson);
+                                var key = $"q_{question.Id}";
+                                var answerText = answers != null && answers.ContainsKey(key) ? answers[key] : "-";
+
+                                <tr>
+                                    <td style="padding:10px; border-bottom:1px solid #eee;">@answerText</td>
+                                    <td style="padding:10px; border-bottom:1px solid #eee; font-size:0.9rem; color:#666;">@response.UserId</td>
+                                    <td style="padding:10px; border-bottom:1px solid #eee; font-size:0.8rem;">@response.SubmittedAt.ToString("yyyy-MM-dd")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+    }
+</div>

@@ -1,0 +1,75 @@
+﻿@model Diska.Models.Survey
+@{
+    ViewData["Title"] = "إنشاء استبيان";
+    Layout = "_AdminLayout";
+}
+
+<div class="card" style="max-width:800px; margin:0 auto;">
+    <h2 style="margin-bottom:20px;">إنشاء استبيان جديد</h2>
+
+    <form asp-action="Create" method="post">
+        <div class="form-group" style="margin-bottom:15px;">
+            <label>عنوان الاستبيان</label>
+            <input asp-for="Title" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;" required />
+        </div>
+
+        <div style="display:flex; gap:20px; margin-bottom:15px;">
+            <div style="flex:1;">
+                <label>تاريخ الانتهاء</label>
+                <input asp-for="EndDate" type="date" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;" />
+            </div>
+            <div style="flex:1;">
+                <label>الجمهور المستهدف</label>
+                <select asp-for="TargetAudience" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;">
+                    <option value="All">الكل</option>
+                    <option value="Merchant">التجار فقط</option>
+                    <option value="Customer">العملاء فقط</option>
+                </select>
+            </div>
+        </div>
+
+        <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
+
+        <h4 style="margin-bottom:10px;">الأسئلة</h4>
+        <div id="questionsContainer">
+            <!-- Questions will be added here via JS -->
+            <div class="question-row" style="background:#f8fafc; padding:15px; border-radius:8px; margin-bottom:10px; border:1px solid #eee;">
+                <div style="display:flex; gap:10px; margin-bottom:10px;">
+                    <input type="text" name="QuestionsText" placeholder="نص السؤال" class="form-control" style="flex:3; padding:8px; border:1px solid #ddd; border-radius:5px;" required>
+                    <select name="QuestionsType" class="form-control" style="flex:1; padding:8px; border:1px solid #ddd; border-radius:5px;">
+                        <option value="Text">نص حر</option>
+                        <option value="Star">تقييم نجوم</option>
+                        <option value="YesNo">نعم / لا</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <button type="button" onclick="addQuestion()" class="btn btn-outline" style="margin-bottom:20px; width:100%; border-style:dashed;">+ إضافة سؤال آخر</button>
+
+        <div style="text-align:left;">
+            <button type="submit" class="btn btn-primary" style="padding:10px 30px;">نشر الاستبيان</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    function addQuestion() {
+        const container = document.getElementById('questionsContainer');
+        const div = document.createElement('div');
+        div.className = 'question-row';
+        div.style = 'background:#f8fafc; padding:15px; border-radius:8px; margin-bottom:10px; border:1px solid #eee;';
+        div.innerHTML = `
+            <div style="display:flex; gap:10px; margin-bottom:10px;">
+                <input type="text" name="QuestionsText" placeholder="نص السؤال" class="form-control" style="flex:3; padding:8px; border:1px solid #ddd; border-radius:5px;" required>
+                <select name="QuestionsType" class="form-control" style="flex:1; padding:8px; border:1px solid #ddd; border-radius:5px;">
+                    <option value="Text">نص حر</option>
+                    <option value="Star">تقييم نجوم</option>
+                    <option value="YesNo">نعم / لا</option>
+                </select>
+                <button type="button" onclick="this.parentElement.parentElement.remove()" style="color:red; background:none; border:none; cursor:pointer;">&times;</button>
+            </div>
+        `;
+        container.appendChild(div);
+    }
+</script>

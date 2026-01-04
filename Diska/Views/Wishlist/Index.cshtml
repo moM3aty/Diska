@@ -1,51 +1,58 @@
-﻿@{
-    ViewData["Title"] = "المفضلة";
+﻿@model IEnumerable<Diska.Models.WishlistItem>
+@using System.Globalization
+@{
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    ViewData["Title"] = isAr ? "المفضلة" : "Wishlist";
 }
 
 <section class="section-padding">
     <div class="container">
-        <h2 style="margin-bottom: 30px;padding-top: 40px;">قائمة المفضلة ❤️</h2>
+        <h2 class="page-title">@(isAr ? "المنتجات المفضلة ❤️" : "My Wishlist ❤️")</h2>
 
-        <div class="products-grid-wishlist" id="wishlistContainer">
-            <!-- سيتم ملء المنتجات هنا بواسطة JavaScript -->
-            <p style="text-align:center; width:100%; color:#777;">جاري تحميل المفضلة...</p>
-        </div>
-    </div>
-</section>
+        @if (!Model.Any())
+        {
+            <div style="text-align:center; padding:50px; background:#f8fafc; border-radius:10px;">
+                <i class="fas fa-heart-broken fa-3x" style="color:#cbd5e1; margin-bottom:15px;"></i>
+                <p style="color:#64748b;">@(isAr ? "قائمة المفضلة فارغة." : "Your wishlist is empty.")</p>
+                <a asp-controller="Home" asp-action="Index" class="btn primary small">@(isAr ? "تصفح المنتجات" : "Browse Products")</a>
+            </div>
+        }
+        else
+        {
+            <div class="products-grid">
+                @foreach (var item in Model)
+                {
+                    <div class="product-card" data-id="@item.Product.Id" data-stock="@item.Product.StockQuantity">
+                        <div class="product-img">
+                            <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Product.Id">
+                                <img src="~/@item.Product.ImageUrl" alt="@item.Product.Name">
+                            </a>
+                        </div>
 
-@section Scripts {
-    <script>
-        // منطق عرض المفضلة المخصص لهذه الصفحة
-        document.addEventListener('DOMContentLoaded', () => {
-            const container = document.getElementById('wishlistContainer');
-            const wishlist = JSON.parse(localStorage.getItem('DISKA_WISHLIST')) || [];
-
-            if(wishlist.length === 0) {
-                container.innerHTML = '<div style="text-align:center; width:100%; grid-column:1/-1; padding:40px;">لا توجد منتجات في المفضلة</div>';
-                return;
-            }
-
-            container.innerHTML = '';
-            wishlist.forEach(item => {
-                const html = `
-                    <div class="product-card">
-                        <div class="product-img"><img src="${item.image}" alt="${item.name}"></div>
                         <div class="product-info">
-                            <h4>${item.name}</h4>
-                            <div class="pricing"><span class="current-price">${item.price} ج.م</span></div>
-                            <button class="btn primary w-100" onclick="removeItemFromWishlist('${item.id}')">إزالة ❌</button>
+                            <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Product.Id" style="color:inherit; text-decoration:none;">
+                                <h4>@(isAr? item.Product.Name : (item.Product.NameEn ?? item.Product.Name))</h4>
+                            </a>
+
+                            <div class="pricing">
+                                <span class="current-price">@item.Product.Price.ToString("N2") @(isAr ? "ج.م" : "EGP")</span>
+                            </div>
+
+                            <div style="display:flex; gap:10px; margin-top:10px;">
+                                <button class="btn primary w-100 add-btn" onclick="addToCart(this)">
+                                    @(isAr ? "إضافة للسلة" : "Add to Cart")
+                                </button>
+                                <form asp-action="Remove" method="post" style="width: 40px;">
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <button type="submit" class="btn btn-delete" style="width:100%; height:100%; background:#fee2e2; color:red; border:none; border-radius:5px;">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                     </div>
-                `;
-                container.insertAdjacentHTML('beforeend', html);
-            });
-        });
-
-        function removeItemFromWishlist(id) {
-            let wishlist = JSON.parse(localStorage.getItem('DISKA_WISHLIST')) || [];
-            wishlist = wishlist.filter(item => item.id != id);
-            localStorage.setItem('DISKA_WISHLIST', JSON.stringify(wishlist));
-            location.reload();
+                }
+            </div>
         }
-    </script>
-}
+    </div>
+</section>

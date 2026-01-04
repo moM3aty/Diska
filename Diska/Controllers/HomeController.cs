@@ -1,98 +1,54 @@
-﻿using System.Diagnostics;
-using Microsoft.AspNetCore.Mvc;
-using Diska.Models;
+﻿using Microsoft.AspNetCore.Mvc;
 using Diska.Data;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
+using Diska.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Diska.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
         private readonly ApplicationDbContext _context;
-        private readonly UserManager<ApplicationUser> _userManager;
 
-        public HomeController(ILogger<HomeController> logger, ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+        public HomeController(ApplicationDbContext context)
         {
-            _logger = logger;
             _context = context;
-            _userManager = userManager;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            // 1. جلب المنتجات (للعرض في الأسفل)
-            var products = _context.Products.Include(p => p.Category).OrderByDescending(p => p.Id).Take(12).ToList();
+            // جلب الأقسام للعرض
+            ViewBag.Categories = await _context.Categories.ToListAsync();
 
-            // 2. جلب الأقسام (للعرض في الأعلى) - الحل لمشكلة الروابط
-            var categories = _context.Categories.ToList();
-            ViewBag.Categories = categories;
+            // جلب المنتجات المميزة (مثلاً أحدث 12 منتج متوفر)
+            var products = await _context.Products
+                .Include(p => p.Category)
+                .Where(p => p.StockQuantity > 0 && p.ExpiryDate > DateTime.Now)
+                .OrderByDescending(p => p.Id)
+                .Take(12)
+                .ToListAsync();
 
             return View(products);
         }
 
-        // --- باقي الكود كما هو ---
-        public IActionResult MerchantLanding()
+        public async Task<IActionResult> Search(string query)
         {
-            if (User.Identity.IsAuthenticated && User.IsInRole("Merchant"))
-            {
-                return RedirectToAction("Index", "Merchant");
-            }
-            return View();
-        }
-
-        [HttpGet]
-        public IActionResult Search(string query)
-        {
-            var products = _context.Products.Include(p => p.Category).AsQueryable();
-
-            if (!string.IsNullOrEmpty(query))
-            {
-                products = products.Where(p => p.Name.Contains(query) || p.Description.Contains(query) || p.Category.Name.Contains(query));
-            }
+            if (string.IsNullOrWhiteSpace(query))
+                return RedirectToAction(nameof(Index));
 
             ViewBag.SearchQuery = query;
-            return View(products.ToList());
+
+            var products = await _context.Products
+                .Include(p => p.Category)
+                .Where(p => p.Name.Contains(query) || p.NameEn.Contains(query) || p.Description.Contains(query))
+                .Where(p => p.StockQuantity > 0)
+                .ToListAsync();
+
+            return View("Index", products); // إعادة استخدام نفس الـ View لعرض النتائج
         }
 
-        public IActionResult Deals()
-        {
-            var deals = _context.GroupDeals
-                .Include(d => d.Product)
-                .Where(d => d.IsActive && d.EndDate > DateTime.Now)
-                .OrderBy(d => d.EndDate)
-                .ToList();
-
-            return View(deals);
-        }
-
+        public IActionResult Privacy() => View();
         public IActionResult About() => View();
-        public IActionResult FAQ() => View();
-        public IActionResult Policies() => View();
-        public IActionResult Notifications() => View();
-
-        [HttpGet]
         public IActionResult Contact() => View();
-
-        [HttpPost]
-        public IActionResult Contact(ContactMessage model)
-        {
-            if (ModelState.IsValid)
-            {
-                model.DateSent = DateTime.Now;
-                _context.ContactMessages.Add(model);
-                _context.SaveChanges();
-                TempData["SuccessMessage"] = "تم استلام رسالتك بنجاح";
-                return RedirectToAction(nameof(Contact));
-            }
-            return View(model);
-        }
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
     }
 }

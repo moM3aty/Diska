@@ -9,40 +9,37 @@ using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. الاتصال بقاعدة البيانات
+// 1. Database Connection
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-// 2. تسجيل الخدمات
+// 2. Register Services
 builder.Services.AddScoped<INotificationService, NotificationService>();
 
-// 3. إعداد Identity (تم تعديل شروط كلمة المرور هنا)
+// 3. Identity Setup (Relaxed Password Policy for Dev/B2B Simplicity)
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
-    // إعدادات الدخول
     options.SignIn.RequireConfirmedAccount = false;
-
-    // تبسيط كلمة المرور (مهم جداً لحل مشكلتك)
-    options.Password.RequireDigit = false; // لا يشترط أرقام
-    options.Password.RequireLowercase = false; // لا يشترط حروف صغيرة
-    options.Password.RequireUppercase = false; // لا يشترط حروف كبيرة
-    options.Password.RequireNonAlphanumeric = false; // لا يشترط رموز (!@#)
-    options.Password.RequiredLength = 6; // الحد الأدنى 6 خانات فقط
-
-    // جعل رقم الهاتف هو المعرف الفريد
     options.User.RequireUniqueEmail = false;
+    options.Password.RequireDigit = false;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequiredLength = 6;
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
+// 4. Localization
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 builder.Services.AddControllersWithViews()
     .AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix)
     .AddDataAnnotationsLocalization();
 
+// 5. Session
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
@@ -53,15 +50,15 @@ builder.Services.AddSession(options =>
 
 var app = builder.Build();
 
-// Seeding
+// 6. Data Seeding (Auto-Migration & Admin Creation)
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
-        context.Database.Migrate();
-        await DbSeeder.SeedRolesAndAdminAsync(services);
+        context.Database.Migrate(); // Create DB if not exists
+        await DbSeeder.SeedRolesAndAdminAsync(services); // Create Admin
     }
     catch (Exception ex)
     {
@@ -79,6 +76,7 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
+// Localization Middleware
 var supportedCultures = new[] { new CultureInfo("ar-EG"), new CultureInfo("en-US") };
 app.UseRequestLocalization(new RequestLocalizationOptions
 {
@@ -88,8 +86,10 @@ app.UseRequestLocalization(new RequestLocalizationOptions
 });
 
 app.UseRouting();
+
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.UseSession();
 
 app.MapControllerRoute(

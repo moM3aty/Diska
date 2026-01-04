@@ -1,92 +1,90 @@
 ﻿@model Diska.Models.Order
 @{
-    ViewData["Title"] = "تفاصيل الطلب #" + Model.Id;
+    ViewData["Title"] = "تفاصيل الطلب";
     Layout = "_AdminLayout";
 }
 
-<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-    <h2 style="color:var(--primary);">تفاصيل الطلب #@Model.Id</h2>
-    <a asp-action="Orders" class="btn btn-outline" style="border:1px solid #ccc; padding:8px 15px; border-radius:5px; text-decoration:none; color:#333;">عودة للطلبات</a>
+<div style="margin-bottom:20px;">
+    <a asp-action="Orders" style="text-decoration:none; color:#666;"><i class="fas fa-arrow-right"></i> عودة للطلبات</a>
 </div>
 
-<div style="display:grid; grid-template-columns: 2fr 1fr; gap:30px;">
-
-    <!-- قائمة المنتجات -->
-    <div style="background:#fff; padding:20px; border-radius:10px; border:1px solid #eee; box-shadow:0 4px 10px rgba(0,0,0,0.05);">
-        <h3 style="border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:20px;">المنتجات المطلوبة</h3>
-        <table style="width:100%;">
+<div style="display:grid; grid-template-columns: 2fr 1fr; gap:20px;">
+    <!-- Order Items -->
+    <div class="card">
+        <h3 style="margin-top:0; border-bottom:1px solid #eee; padding-bottom:15px;">محتويات الطلب #@Model.Id</h3>
+        <table>
             <thead>
-                <tr style="background:#f9f9f9;">
-                    <th style="padding:10px;">المنتج</th>
-                    <th style="padding:10px;">السعر</th>
-                    <th style="padding:10px;">الكمية</th>
-                    <th style="padding:10px;">الإجمالي</th>
+                <tr>
+                    <th>المنتج</th>
+                    <th>السعر</th>
+                    <th>الكمية</th>
+                    <th>المجموع</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var item in Model.OrderItems)
                 {
                     <tr>
-                        <td style="padding:15px 10px; border-bottom:1px solid #eee;">
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                @if (item.Product != null)
-                                {
-                                    <img src="~/@item.Product.ImageUrl" style="width:40px; height:40px; object-fit:contain; border:1px solid #eee; border-radius:5px;">
-                                    <span>@item.Product.Name</span>
-                                }
-                                else
-                                {
-                                    <span>منتج محذوف (@item.ProductId)</span>
-                                }
-                            </div>
+                        <td>
+                            @if (item.Product != null)
+                            {
+                                <span>@item.Product.Name</span>
+                            }
+                            else
+                            {
+
+                                <span style="color:red;">منتج محذوف</span>
+                            }
                         </td>
-                        <td style="padding:10px; border-bottom:1px solid #eee;">@item.UnitPrice.ToString("N2")</td>
-                        <td style="padding:10px; border-bottom:1px solid #eee;">x @item.Quantity</td>
-                        <td style="padding:10px; border-bottom:1px solid #eee; font-weight:bold;">@((item.UnitPrice * item.Quantity).ToString("N2"))</td>
+                        <td>@item.UnitPrice.ToString("N2")</td>
+                        <td>@item.Quantity</td>
+                        <td>@((item.UnitPrice * item.Quantity).ToString("N2"))</td>
                     </tr>
                 }
             </tbody>
         </table>
-
-        <div style="margin-top:20px; text-align:left; font-size:1.2rem;">
-            الإجمالي الكلي: <strong style="color:var(--primary);">@Model.TotalAmount.ToString("N2") ج.م</strong>
+        <div style="margin-top:20px; text-align:left;">
+            <h4>الإجمالي الكلي: <span style="color:var(--primary);">@Model.TotalAmount.ToString("N2") ج.م</span></h4>
         </div>
     </div>
 
-    <!-- معلومات العميل والحالة -->
+    <!-- Actions & Info -->
     <div style="display:flex; flex-direction:column; gap:20px;">
-
-        <div style="background:#fff; padding:20px; border-radius:10px; border:1px solid #eee; box-shadow:0 4px 10px rgba(0,0,0,0.05);">
-            <h3 style="margin-bottom:15px; color:#555;">بيانات العميل</h3>
+        <div class="card">
+            <h4 style="margin-top:0;">بيانات العميل</h4>
             <p><strong>الاسم:</strong> @Model.CustomerName</p>
-            <p><strong>الهاتف:</strong> <a href="tel:@Model.Phone">@Model.Phone</a></p>
-            <p><strong>التاريخ:</strong> @Model.OrderDate.ToString("yyyy-MM-dd hh:mm tt")</p>
-            <p><strong>الدفع:</strong> @Model.PaymentMethod</p>
+            <p><strong>الهاتف:</strong> @Model.Phone</p>
+            <p><strong>العنوان:</strong> @Model.Governorate - @Model.City<br><small>@Model.Address</small></p>
         </div>
 
-        <div style="background:#fff; padding:20px; border-radius:10px; border:1px solid #eee; box-shadow:0 4px 10px rgba(0,0,0,0.05);">
-            <h3 style="margin-bottom:15px; color:#555;">عنوان التوصيل</h3>
-            <p>@Model.Governorate - @Model.City</p>
-            <p style="color:#777; font-size:0.9rem;">@Model.Address</p>
-        </div>
-
-        <div style="background:#fff; padding:20px; border-radius:10px; border:1px solid #eee; box-shadow:0 4px 10px rgba(0,0,0,0.05);">
-            <h3 style="margin-bottom:15px; color:#555;">تحديث الحالة</h3>
+        <div class="card">
+            <h4 style="margin-top:0;">إدارة الحالة</h4>
             <form asp-action="UpdateOrderStatus" method="post">
                 <input type="hidden" name="id" value="@Model.Id" />
-                <div style="margin-bottom:15px;">
-                    <label style="display:block; margin-bottom:5px;">الحالة الحالية: <strong>@Model.Status</strong></label>
-                    <select name="status" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;">
-                        <option value="Pending" selected="@(Model.Status == "Pending")">قيد الانتظار (Pending)</option>
-                        <option value="Confirmed" selected="@(Model.Status == "Confirmed")">مؤكد (Confirmed)</option>
-                        <option value="Shipped" selected="@(Model.Status == "Shipped")">تم الشحن (Shipped)</option>
-                        <option value="Delivered" selected="@(Model.Status == "Delivered")">تم التسليم (Delivered)</option>
-                        <option value="Cancelled" selected="@(Model.Status == "Cancelled")">ملغي (Cancelled)</option>
-                    </select>
-                </div>
-                <button type="submit" class="btn primary w-100" style="padding:10px;">حفظ التغيير</button>
+                <select name="status" class="form-control" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:5px;">
+                    <option value="Pending" selected="@(Model.Status == "Pending")">قيد الانتظار</option>
+                    <option value="Confirmed" selected="@(Model.Status == "Confirmed")">مؤكد</option>
+                    <option value="Shipped" selected="@(Model.Status == "Shipped")">تم الشحن</option>
+                    <option value="Delivered" selected="@(Model.Status == "Delivered")">تم التسليم</option>
+                    <option value="Cancelled" selected="@(Model.Status == "Cancelled")">ملغي</option>
+                </select>
+                <button type="submit" class="btn btn-primary" style="width:100%;">تحديث الحالة</button>
             </form>
         </div>
 
+        <!-- Refund Section -->
+        @if (Model.Status == "Cancelled" && Model.PaymentMethod == "Wallet")
+        {
+            <div class="card" style="border-color:#fca5a5;">
+                <h4 style="color:#dc2626; margin-top:0;">استرداد المبلغ (Refund)</h4>
+                <p style="font-size:0.9rem;">إرجاع المبلغ إلى محفظة العميل.</p>
+                <form asp-action="RefundUser" method="post">
+                    <input type="hidden" name="userId" value="@Model.UserId" />
+                    <input type="hidden" name="amount" value="@Model.TotalAmount" />
+                    <input type="hidden" name="reason" value="Order Cancelled #@Model.Id" />
+                    <button type="submit" class="btn" style="width:100%; background:#dc2626; color:#fff;">استرداد @Model.TotalAmount ج.م</button>
+                </form>
+            </div>
+        }
     </div>
 </div>

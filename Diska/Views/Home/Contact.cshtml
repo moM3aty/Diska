@@ -6,92 +6,61 @@
 
 <section class="section-padding">
     <div class="container">
+        <div class="contact-page-wrapper" style="display:grid; grid-template-columns: 1fr 1fr; gap:40px;">
 
-        <div class="breadcrumb">
-            <a asp-controller="Home" asp-action="Index">@(isAr ? "الرئيسية" : "Home")</a> / <span>@(isAr ? "تواصل معنا" : "Contact Us")</span>
-        </div>
+            <!-- Info Card -->
+            <div class="contact-info-card" style="background:var(--primary); color:#fff; padding:40px; border-radius:15px; display:flex; flex-direction:column; justify-content:center;">
+                <h2 style="color:#FACC15; margin-bottom:20px;">@(isAr ? "معلومات التواصل" : "Contact Info")</h2>
+                <p style="margin-bottom:30px; opacity:0.9;">@(isAr ? "فريق خدمة عملاء ديسكا جاهز للرد على استفساراتكم ومساعدتكم في أي وقت." : "Diska support team is ready to answer your questions.")</p>
 
-        <div class="contact-page-wrapper">
-
-            <div class="contact-info-card">
-                <div class="c-item">
-                    <div class="icon"><i class="fas fa-map-marker-alt"></i></div>
+                <div class="info-item" style="margin-bottom:20px; display:flex; align-items:center; gap:15px;">
+                    <div style="width:40px; height:40px; background:rgba(255,255,255,0.1); border-radius:50%; display:flex; align-items:center; justify-content:center;">
+                        <i class="fas fa-phone-alt"></i>
+                    </div>
                     <div>
-                        <h4>@(isAr ? "المقر الرئيسي" : "Main Office")</h4>
-                        <p>@(isAr ? "123 شارع التسعين، التجمع الخامس، القاهرة" : "123 El-Teseen St, 5th Settlement, Cairo")</p>
+                        <span style="display:block; font-size:0.8rem; opacity:0.7;">@(isAr ? "اتصل بنا" : "Call Us")</span>
+                        <strong style="font-size:1.1rem;">01000000000</strong>
                     </div>
                 </div>
 
-                <div class="c-item">
-                    <div class="icon"><i class="fas fa-phone-alt"></i></div>
+                <div class="info-item" style="margin-bottom:20px; display:flex; align-items:center; gap:15px;">
+                    <div style="width:40px; height:40px; background:rgba(255,255,255,0.1); border-radius:50%; display:flex; align-items:center; justify-content:center;">
+                        <i class="fas fa-envelope"></i>
+                    </div>
                     <div>
-                        <h4>@(isAr ? "أرقام الهاتف" : "Phone Numbers")</h4>
-                        <p>@(isAr ? "المبيعات" : "Sales"): <a href="tel:01000000000">01000000000</a></p>
-                        <p>@(isAr ? "الدعم" : "Support"): <a href="tel:01100000000">01100000000</a></p>
+                        <span style="display:block; font-size:0.8rem; opacity:0.7;">@(isAr ? "البريد الإلكتروني" : "Email")</span>
+                        <strong style="font-size:1.1rem;">support@diska.com</strong>
                     </div>
                 </div>
 
-                <div class="c-item">
-                    <div class="icon"><i class="fas fa-envelope"></i></div>
-                    <div>
-                        <h4>@(isAr ? "البريد الإلكتروني" : "Email Address")</h4>
-                        <p><a href="mailto:support@diska.com">support@diska.com</a></p>
+                <div class="info-item" style="display:flex; align-items:center; gap:15px;">
+                    <div style="width:40px; height:40px; background:rgba(255,255,255,0.1); border-radius:50%; display:flex; align-items:center; justify-content:center;">
+                        <i class="fas fa-map-marker-alt"></i>
                     </div>
-                </div>
-
-                <div class="map-container">
-                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3453.665363714578!2d31.343167!3d30.046534!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzDCsDAyJzQ3LjUiTiAzMcKwMjAnMzUuNCJF!5e0!3m2!1sar!2seg!4v1635000000000!5m2!1sar!2seg"
-                            width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+                    <div>
+                        <span style="display:block; font-size:0.8rem; opacity:0.7;">@(isAr ? "العنوان" : "Address")</span>
+                        <strong style="font-size:1.1rem;">@(isAr ? "القاهرة، التجمع الخامس" : "Cairo, New Cairo")</strong>
+                    </div>
                 </div>
             </div>
 
-            <div class="contact-form-card">
-                <h2>@(isAr ? "هل لديك استفسار؟" : "Have a question?")</h2>
-                <p>@(isAr ? "املأ النموذج التالي وسيتم الرد عليك قريباً." : "Fill out the form below and we will reply shortly.")</p>
-
-                <form asp-action="Contact" method="post">
-                    <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                        <div class="form-group">
-                            <label>@(isAr ? "الاسم بالكامل" : "Full Name")</label>
-                            <input type="text" name="Name" placeholder="@(isAr ? "أدخل اسمك" : "Enter your name")" required>
-                        </div>
-                        <div class="form-group">
-                            <label>@(isAr ? "رقم الموبايل" : "Phone")</label>
-                            <input type="tel" name="Phone" placeholder="01xxxxxxxxx" required>
-                        </div>
+            <!-- Contact Form -->
+            <div class="contact-form-card" style="background:#fff; padding:40px; border-radius:15px; border:1px solid #eee;">
+                <h2 style="color:var(--primary); margin-bottom:20px;">@(isAr ? "أرسل لنا رسالة" : "Send us a message")</h2>
+                <form>
+                    <div class="form-group mb-3">
+                        <label>@(isAr ? "الاسم" : "Name")</label>
+                        <input type="text" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;">
                     </div>
-
-                    <div class="form-group">
-                        <label>@(isAr ? "البريد الإلكتروني" : "Email")</label>
-                        <input type="email" name="Email" placeholder="email@example.com">
+                    <div class="form-group mb-3">
+                        <label>@(isAr ? "رقم الهاتف" : "Phone")</label>
+                        <input type="text" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;">
                     </div>
-
-                    <div class="form-group">
-                        <label>@(isAr ? "الموضوع" : "Subject")</label>
-                        <select name="Subject" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px;">
-                            @if (isAr)
-                            {
-                                <option>شكوى بخصوص طلب</option>
-                                <option>استفسار عن منتج</option>
-                                <option>طلب تسجيل تاجر</option>
-                                <option>أخرى</option>
-                            }
-                            else
-                            {
-                                <option>Order Issue</option>
-                                <option>Product Inquiry</option>
-                                <option>Merchant Registration</option>
-                                <option>Other</option>
-                            }
-                        </select>
-                    </div>
-
-                    <div class="form-group">
+                    <div class="form-group mb-3">
                         <label>@(isAr ? "الرسالة" : "Message")</label>
-                        <textarea name="Message" rows="5" placeholder="@(isAr ? "اكتب تفاصيل رسالتك..." : "Write your message here...")" required style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px;"></textarea>
+                        <textarea rows="4" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;"></textarea>
                     </div>
-
-                    <button class="btn primary w-100">@(isAr ? "إرسال الرسالة" : "Send Message")</button>
+                    <button type="button" class="btn primary w-100" onclick="alert('@(isAr ? "تم الإرسال بنجاح" : "Sent successfully")')">@(isAr ? "إرسال" : "Send")</button>
                 </form>
             </div>
 

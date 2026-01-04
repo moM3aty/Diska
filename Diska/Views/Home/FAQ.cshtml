@@ -4,139 +4,57 @@
     ViewData["Title"] = isAr ? "الأسئلة الشائعة" : "FAQ";
 }
 
-<!-- إضافة الستايل الخاص بالأكورديون هنا مباشرة لضمان عمله -->
-<style>
-    .faq-item {
-        background: #fff;
-        margin-bottom: 15px;
-        border-radius: 8px;
-        overflow: hidden;
-        border: 1px solid #eee;
-        transition: box-shadow 0.3s ease;
-    }
-
-        .faq-item:hover {
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-        }
-
-    .faq-question {
-        padding: 20px;
-        cursor: pointer;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-weight: bold;
-        color: var(--primary);
-        font-size: 1.1rem;
-        user-select: none;
-    }
-
-        .faq-question:hover {
-            background: #f9f9f9;
-        }
-
-    .faq-answer {
-        padding: 0 20px;
-        max-height: 0;
-        overflow: hidden;
-        transition: all 0.3s ease;
-        color: #666;
-        line-height: 1.6;
-        opacity: 0;
-    }
-
-    .faq-item.active .faq-answer {
-        padding: 20px;
-        padding-top: 0;
-        max-height: 300px; /* ارتفاع كافي للمحتوى */
-        opacity: 1;
-        /* border-top: 1px solid #eee; */
-    }
-
-    .faq-question i {
-        transition: transform 0.3s ease;
-    }
-
-    .faq-item.active .faq-question i {
-        transform: rotate(180deg);
-        color: var(--accent);
-    }
-</style>
-
 <section class="section-padding">
     <div class="container">
-        <!-- Breadcrumb -->
-        <div class="breadcrumb" style="margin-bottom: 30px; color: #666;">
-            <a asp-controller="Home" asp-action="Index" style="color: var(--primary); font-weight: bold; text-decoration: none;">@(isAr ? "الرئيسية" : "Home")</a>
-            / <span>@(isAr ? "الأسئلة الشائعة" : "FAQ")</span>
-        </div>
+        <h2 class="page-title" style="text-align:center; margin-bottom:40px;">@(isAr ? "الأسئلة الشائعة" : "Frequently Asked Questions")</h2>
 
-        <h2 class="page-title" style="margin-bottom: 30px; text-align: center; color: var(--primary);">@(isAr ? "الأسئلة الشائعة" : "Frequently Asked Questions")</h2>
+        <div class="faq-container" style="max-width:800px; margin:0 auto;">
 
-        <div class="faq-list" style="max-width: 800px; margin: 0 auto;">
-
-            <!-- Question 1 -->
-            <div class="faq-item">
-                <div class="faq-question">
-                    @(isAr ? "كيف يمكنني التسجيل كتاجر؟" : "How can I register as a merchant?")
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="faq-answer">
+            <div class="faq-item" style="margin-bottom:15px; border:1px solid #eee; border-radius:8px; overflow:hidden;">
+                <button class="faq-question" onclick="toggleFaq(this)" style="width:100%; padding:20px; background:#fff; border:none; text-align:inherit; font-weight:bold; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                    @(isAr ? "كيف يمكنني التسجيل كتاجر؟" : "How to register as a merchant?")
+                    <i class="fas fa-chevron-down transition-icon"></i>
+                </button>
+                <div class="faq-answer" style="display:none; padding:20px; background:#f9f9f9; border-top:1px solid #eee; line-height:1.6;">
                     @(isAr ?
-                                        "يمكنك الضغط على زر \"بيع معنا\" أو \"سجل كتاجر\" في الصفحة الرئيسية، وملء نموذج التسجيل ببياناتك وبيانات المحل (السجل التجاري والبطاقة الضريبية إن وجد)، وسيتم تفعيل حسابك فوراً للبدء في البيع." :
-                                        "You can click on 'Sell with Us' or 'Register as Merchant' on the home page, fill out the registration form with your details and shop info, and your account will be activated immediately to start selling.")
+                                        "يمكنك التسجيل بسهولة عبر الضغط على 'حساب التاجر' في القائمة العلوية، وملء النموذج ببياناتك وبيانات المحل. سيتم مراجعة الطلب وتفعيله خلال 24 ساعة." :
+                                        "Simply click on 'Merchant Panel' or 'Sell with Us', fill out the form with your shop details. Approvals usually take 24 hours.")
                 </div>
             </div>
 
-            <!-- Question 2 -->
-            <div class="faq-item">
-                <div class="faq-question">
-                    @(isAr ? "ما هو الحد الأدنى للطلب؟" : "What is the minimum order amount?")
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="faq-answer">
+            <div class="faq-item" style="margin-bottom:15px; border:1px solid #eee; border-radius:8px; overflow:hidden;">
+                <button class="faq-question" onclick="toggleFaq(this)" style="width:100%; padding:20px; background:#fff; border:none; text-align:inherit; font-weight:bold; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                    @(isAr ? "ما هو الحد الأدنى للطلب؟" : "What is the minimum order?")
+                    <i class="fas fa-chevron-down transition-icon"></i>
+                </button>
+                <div class="faq-answer" style="display:none; padding:20px; background:#f9f9f9; border-top:1px solid #eee; line-height:1.6;">
                     @(isAr ?
-                                        "يختلف الحد الأدنى حسب سياسة كل مورد، ولكن بشكل عام نسعى لتوفير خيارات مرنة. يمكنك رؤية الحد الأدنى (مثل عدد الكراتين) في صفحة تفاصيل كل منتج." :
-                                        "The minimum order varies by supplier policy, but we generally aim to provide flexible options. You can see the minimum quantity (e.g., number of cartons) on each product's detail page.")
+                                        "الحد الأدنى يختلف حسب المنتج والتاجر، ولكن معظم المنتجات تباع بنظام الكرتونة أو الجملة (نصف جملة)." :
+                                        "Minimums vary by product, but usually items are sold by carton or wholesale units.")
                 </div>
             </div>
 
-            <!-- Question 3 -->
-            <div class="faq-item">
-                <div class="faq-question">
-                    @(isAr ? "هل يوجد دفع عند الاستلام؟" : "Is Cash on Delivery available?")
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="faq-answer">
+            <div class="faq-item" style="margin-bottom:15px; border:1px solid #eee; border-radius:8px; overflow:hidden;">
+                <button class="faq-question" onclick="toggleFaq(this)" style="width:100%; padding:20px; background:#fff; border:none; text-align:inherit; font-weight:bold; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                    @(isAr ? "هل يوجد شحن للمحافظات؟" : "Do you ship to all governorates?")
+                    <i class="fas fa-chevron-down transition-icon"></i>
+                </button>
+                <div class="faq-answer" style="display:none; padding:20px; background:#f9f9f9; border-top:1px solid #eee; line-height:1.6;">
                     @(isAr ?
-                                        "نعم، نوفر خدمة الدفع عند الاستلام (كاش) لجميع المحافظات لضمان راحتك وأمانك. كما يمكنك استخدام محفظة DISKA للدفع الإلكتروني." :
-                                        "Yes, we provide Cash on Delivery (COD) service for all governorates to ensure your convenience and safety. You can also use the DISKA wallet for electronic payments.")
+                                        "نعم، نقوم بالتوصيل لجميع محافظات الجمهورية بالتعاون مع شركات شحن متخصصة." :
+                                        "Yes, we deliver to all governorates via our shipping partners.")
                 </div>
             </div>
 
-            <!-- Question 4 -->
-            <div class="faq-item">
-                <div class="faq-question">
-                    @(isAr ? "كيف يمكنني تتبع طلبي؟" : "How can I track my order?")
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="faq-answer">
+            <div class="faq-item" style="margin-bottom:15px; border:1px solid #eee; border-radius:8px; overflow:hidden;">
+                <button class="faq-question" onclick="toggleFaq(this)" style="width:100%; padding:20px; background:#fff; border:none; text-align:inherit; font-weight:bold; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                    @(isAr ? "كيف استخدم المحفظة؟" : "How to use the wallet?")
+                    <i class="fas fa-chevron-down transition-icon"></i>
+                </button>
+                <div class="faq-answer" style="display:none; padding:20px; background:#f9f9f9; border-top:1px solid #eee; line-height:1.6;">
                     @(isAr ?
-                                        "يمكنك متابعة حالة الطلب بسهولة من صفحة \"طلباتي\" في حسابك الشخصي. ستتغير الحالة تلقائياً من \"قيد الانتظار\" إلى \"مؤكد\" ثم \"تم الشحن\"." :
-                                        "You can easily track your order status from the 'My Orders' page in your account. The status will automatically update from 'Pending' to 'Confirmed' and then 'Shipped'.")
-                </div>
-            </div>
-
-            <!-- Question 5 -->
-            <div class="faq-item">
-                <div class="faq-question">
-                    @(isAr ? "ما هي سياسة الإرجاع؟" : "What is the return policy?")
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="faq-answer">
-                    @(isAr ?
-                                        "يمكنك طلب إرجاع المنتجات التالفة أو غير المطابقة للمواصفات خلال 14 يوماً من تاريخ الاستلام، بشرط أن تكون في حالتها الأصلية." :
-                                        "You can request a return for damaged or non-conforming products within 14 days of receipt, provided they are in their original condition.")
+                                        "يتم إضافة رصيد للمحفظة في حالة المرتجعات أو العروض الخاصة. يمكنك استخدام الرصيد للدفع كلياً أو جزئياً عند إتمام الطلب." :
+                                        "Wallet credit is added from refunds or promotions. You can use it to pay fully or partially at checkout.")
                 </div>
             </div>
 
@@ -144,27 +62,17 @@
     </div>
 </section>
 
-@section Scripts {
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const questions = document.querySelectorAll('.faq-question');
+<script>
+    function toggleFaq(btn) {
+        const answer = btn.nextElementSibling;
+        const icon = btn.querySelector('i');
 
-            questions.forEach(question => {
-                question.addEventListener('click', () => {
-                    const item = question.parentElement;
-                    const isActive = item.classList.contains('active');
-
-                    // إغلاق جميع العناصر الأخرى (اختياري - لجعل التجربة أنظف)
-                    document.querySelectorAll('.faq-item').forEach(i => {
-                        i.classList.remove('active');
-                    });
-
-                    // إذا لم يكن العنصر نشطاً من قبل، قم بتنشيطه
-                    if (!isActive) {
-                        item.classList.add('active');
-                    }
-                });
-            });
-        });
-    </script>
-}
+        if (answer.style.display === 'block') {
+            answer.style.display = 'none';
+            icon.style.transform = 'rotate(0deg)';
+        } else {
+            answer.style.display = 'block';
+            icon.style.transform = 'rotate(180deg)';
+        }
+    }
+</script>

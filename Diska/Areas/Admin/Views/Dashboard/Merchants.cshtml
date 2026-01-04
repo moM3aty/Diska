@@ -1,0 +1,56 @@
+﻿@model IEnumerable<Diska.Models.ApplicationUser>
+@{
+    ViewData["Title"] = "إدارة التجار";
+    Layout = "_AdminLayout";
+}
+
+<h2 style="margin-bottom:20px;">التجار المسجلين</h2>
+
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>اسم التاجر</th>
+                <th>اسم المحل</th>
+                <th>رقم الهاتف</th>
+                <th>السجل التجاري</th>
+                <th>الحالة</th>
+                <th>إجراءات</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var merchant in Model)
+            {
+                <tr>
+                    <td>@merchant.FullName</td>
+                    <td>@merchant.ShopName</td>
+                    <td>@merchant.PhoneNumber</td>
+                    <td>@merchant.CommercialRegister</td>
+                    <td>
+                        @if (merchant.IsVerifiedMerchant)
+                        {
+                            <span class="badge" style="background:#dcfce7; color:#16a34a;">موثق ✅</span>
+                        }
+                        else
+                        {
+                            <span class="badge" style="background:#fffbeb; color:#d97706;">قيد المراجعة ⏳</span>
+                        }
+                    </td>
+                    <td>
+                        <form asp-action="ToggleMerchantStatus" method="post">
+                            <input type="hidden" name="id" value="@merchant.Id" />
+                            @if (merchant.IsVerifiedMerchant)
+                            {
+                                <button type="submit" class="btn" style="background:#fee2e2; color:#dc2626; font-size:0.8rem; padding:5px 10px;">إلغاء التوثيق</button>
+                            }
+                            else
+                            {
+                                <button type="submit" class="btn" style="background:#dcfce7; color:#16a34a; font-size:0.8rem; padding:5px 10px;">توثيق الحساب</button>
+                            }
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

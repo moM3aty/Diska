@@ -3,13 +3,14 @@ using Diska.Data;
 using Diska.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Diska.Controllers
 {
+    [Authorize]
     public class WishlistController : Controller
     {
         private readonly ApplicationDbContext _context;
-        // تصحيح: استخدام ApplicationUser
         private readonly UserManager<ApplicationUser> _userManager;
 
         public WishlistController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
@@ -20,50 +21,48 @@ namespace Diska.Controllers
 
         public async Task<IActionResult> Index()
         {
-            if (User.Identity.IsAuthenticated)
-            {
-                var user = await _userManager.GetUserAsync(User);
-                if (user != null)
-                {
-                    var items = _context.WishlistItems
-                        .Where(w => w.UserId == user.Id)
-                        .Include(w => w.Product)
-                        .ToList();
-                    // عرض صفحة المفضلة الخاصة بالمستخدم المسجل (يمكنك إنشاء View باسم IndexDB أو استخدام Index وتمرير الموديل)
-                    // هنا سنعيد نفس الـ View وسنقوم بتعديلها لاحقاً لتقبل الموديل، أو نتركها تعتمد على الـ JS حالياً
-                    // للأمان، سنمرر البيانات للـ View
-                    return View(items);
-                }
-            }
-            return View(new List<WishlistItem>());
+            var user = await _userManager.GetUserAsync(User);
+            var items = await _context.WishlistItems
+                .Where(w => w.UserId == user.Id)
+                .Include(w => w.Product)
+                .ToListAsync();
+
+            return View(items);
         }
 
         [HttpPost]
         public async Task<IActionResult> Toggle(int productId)
         {
-            if (!User.Identity.IsAuthenticated)
-            {
-                return Json(new { success = false, message = "يجب تسجيل الدخول أولاً" });
-            }
-
             var user = await _userManager.GetUserAsync(User);
-            if (user == null) return Json(new { success = false, message = "خطأ في المستخدم" });
+            var exists = await _context.WishlistItems
+                .FirstOrDefaultAsync(w => w.UserId == user.Id && w.ProductId == productId);
 
-            var existingItem = _context.WishlistItems.FirstOrDefault(w => w.UserId == user.Id && w.ProductId == productId);
-
-            if (existingItem != null)
+            if (exists != null)
             {
-                _context.WishlistItems.Remove(existingItem);
+                _context.WishlistItems.Remove(exists);
                 await _context.SaveChangesAsync();
-                return Json(new { success = true, action = "removed" });
+                return Json(new { success = true, status = "removed", message = "تم الحذف من المفضلة" });
             }
             else
             {
                 var item = new WishlistItem { UserId = user.Id, ProductId = productId };
                 _context.WishlistItems.Add(item);
                 await _context.SaveChangesAsync();
-                return Json(new { success = true, action = "added" });
+                return Json(new { success = true, status = "added", message = "تمت الإضافة للمفضلة" });
             }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Remove(int id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var item = await _context.WishlistItems.FirstOrDefaultAsync(w => w.Id == id && w.UserId == user.Id);
+            if (item != null)
+            {
+                _context.WishlistItems.Remove(item);
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(Index));
         }
     }
 }

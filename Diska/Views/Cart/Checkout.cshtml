@@ -4,135 +4,109 @@
     ViewData["Title"] = isAr ? "إتمام الطلب" : "Checkout";
 }
 
-<section class="checkout-section">
+<section class="section-padding">
     <div class="container">
         <h2 class="page-title">@(isAr ? "بيانات الشحن والدفع" : "Shipping & Payment")</h2>
-        <div class="checkout-grid">
 
-            <div class="checkout-form">
-                <h3><i class="fas fa-map-marker-alt"></i> @(isAr ? "عنوان التوصيل" : "Delivery Address")</h3>
+        <div class="checkout-grid" style="display:grid; grid-template-columns: 1.5fr 1fr; gap:30px;">
+
+            <!-- Form -->
+            <div class="checkout-form" style="background:#fff; padding:30px; border-radius:12px; border:1px solid #eee;">
                 <form id="checkoutForm">
-                    <div class="form-group">
-                        <label>@(isAr ? "اسم المحل / التاجر" : "Shop / Merchant Name")</label>
-                        <input type="text" id="shopName" placeholder="@(isAr ? "مثال: سوبر ماركت الأمانة" : "Ex: Al-Amana Market")" required>
-                    </div>
-                    <div class="form-group">
-                        <label>@(isAr ? "رقم الموبايل" : "Phone Number")</label>
-                        <input type="tel" id="phone" placeholder="01xxxxxxxxx" required>
+                    <h3 style="margin-bottom:20px; font-size:1.2rem; color:var(--primary);">
+                        <i class="fas fa-map-marker-alt"></i> @(isAr ? "عنوان التوصيل" : "Shipping Address")
+                    </h3>
+
+                    <div class="form-group mb-3">
+                        <label>@(isAr ? "الاسم / اسم المحل" : "Name / Shop Name")</label>
+                        <input type="text" id="shopName" class="form-control" required placeholder="@(isAr ? "اسم المستلم" : "Receiver Name")">
                     </div>
 
-                    <div class="form-row">
+                    <div class="form-group mb-3">
+                        <label>@(isAr ? "رقم الموبايل" : "Phone Number")</label>
+                        <input type="tel" id="phone" class="form-control" required placeholder="01xxxxxxxxx">
+                    </div>
+
+                    <div class="row" style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:15px;">
                         <div class="form-group">
                             <label>@(isAr ? "المحافظة" : "Governorate")</label>
-                            <select id="govSelect" onchange="updateRegions()">
-                                <option value="" disabled selected>@(isAr ? "اختر المحافظة" : "Select Governorate")</option>
+                            <select id="govSelect" class="form-control" onchange="updateShippingCost()">
+                                <option value="القاهرة">@(isAr ? "القاهرة" : "Cairo")</option>
+                                <option value="الجيزة">@(isAr ? "الجيزة" : "Giza")</option>
+                                <option value="الإسكندرية">@(isAr ? "الإسكندرية" : "Alexandria")</option>
+                                <option value="أخرى">@(isAr ? "أخرى" : "Other")</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>@(isAr ? "المنطقة / الحي" : "City / District")</label>
-                            <select id="citySelect" disabled>
-                                <option value="" disabled selected>@(isAr ? "اختر المنطقة" : "Select Area")</option>
-                            </select>
+                            <label>@(isAr ? "المدينة / المنطقة" : "City / Area")</label>
+                            <input type="text" id="city" class="form-control" required>
                         </div>
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-group mb-4">
                         <label>@(isAr ? "العنوان بالتفصيل" : "Detailed Address")</label>
-                        <input type="text" id="addressDetail" placeholder="@(isAr ? "اسم الشارع، رقم العمارة، علامة مميزة" : "Street name, Building no.")" required>
+                        <input type="text" id="address" class="form-control" required placeholder="@(isAr ? "اسم الشارع - رقم العقار - علامة مميزة" : "Street - Building - Landmark")">
                     </div>
 
-                    <h3><i class="fas fa-wallet"></i> @(isAr ? "طريقة الدفع" : "Payment Method")</h3>
+                    <h3 style="margin-bottom:20px; font-size:1.2rem; color:var(--primary);">
+                        <i class="fas fa-wallet"></i> @(isAr ? "طريقة الدفع" : "Payment Method")
+                    </h3>
+
                     <div class="payment-options">
-                        <label class="payment-card selected">
+                        <label class="payment-card selected" style="display:flex; align-items:center; gap:10px; padding:15px; border:1px solid #FACC15; background:#fffbeb; border-radius:8px; cursor:pointer; margin-bottom:10px;">
                             <input type="radio" name="payment" value="Cash" checked>
-                            <div class="pay-icon"><i class="fas fa-money-bill-wave"></i></div>
+                            <i class="fas fa-money-bill-wave" style="color:green;"></i>
                             <span>@(isAr ? "دفع عند الاستلام (كاش)" : "Cash on Delivery")</span>
                         </label>
-                        <label class="payment-card">
-                            <input type="radio" name="payment" value="Wallet">
-                            <div class="pay-icon"><i class="fas fa-wallet"></i></div>
-                            <span>@(isAr ? "محفظة DISKA" : "DISKA Wallet")</span>
-                        </label>
+
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            <label class="payment-card" style="display:flex; align-items:center; gap:10px; padding:15px; border:1px solid #ddd; border-radius:8px; cursor:pointer;">
+                                <input type="radio" name="payment" value="Wallet">
+                                <i class="fas fa-wallet" style="color:#3b82f6;"></i>
+                                <span>@(isAr ? "المحفظة الإلكترونية" : "Wallet Balance")</span>
+                            </label>
+                        }
                     </div>
                 </form>
             </div>
 
-            <div class="order-summary-box new-design">
-                <h3>@(isAr ? "ملخص الفاتورة" : "Order Summary")</h3>
+            <!-- Summary -->
+            <div class="order-preview" style="background:#f8fafc; padding:25px; border-radius:12px; height:fit-content; border:1px solid #e2e8f0;">
+                <h3 style="margin-bottom:20px;">@(isAr ? "ملخص الفاتورة" : "Bill Summary")</h3>
 
-                <div class="checkout-items" id="checkoutItemsList">
-                    <!-- Loaded via JS -->
+                <div id="checkoutItems" style="max-height:200px; overflow-y:auto; margin-bottom:20px; border-bottom:1px solid #ddd;">
+                    <!-- Items via JS -->
                 </div>
 
-                <div class="summary-divider"></div>
-
-                <div class="cost-row">
-                    <span>@(isAr ? "المجموع الفرعي" : "Subtotal")</span>
-                    <span id="subTotal">0.00 @(isAr ? "ج.م" : "EGP")</span>
+                <div class="cost-row" style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                    <span>@(isAr ? "قيمة المنتجات" : "Subtotal")</span>
+                    <span id="subTotalDisplay">0.00</span>
                 </div>
-                <div class="cost-row">
-                    <span>@(isAr ? "مصاريف الشحن" : "Shipping Fees")</span>
-                    <span id="shippingCost" style="color: var(--danger);">@(isAr ? "-- اختر المحافظة --" : "-- Select Gov --")</span>
+                <div class="cost-row" style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                    <span>@(isAr ? "مصاريف الشحن" : "Shipping")</span>
+                    <span id="shippingDisplay">50.00</span>
                 </div>
-
-                <div class="summary-divider"></div>
-
-                <div class="total-row">
+                <hr>
+                <div class="cost-row total" style="display:flex; justify-content:space-between; margin-top:10px; font-size:1.3rem; font-weight:bold; color:var(--primary);">
                     <span>@(isAr ? "الإجمالي الكلي" : "Grand Total")</span>
-                    <span id="finalTotal">0.00 @(isAr ? "ج.م" : "EGP")</span>
+                    <span id="grandTotalDisplay">0.00</span>
                 </div>
 
-                <button type="button" onclick="submitOrder()" class="btn primary w-100 confirm-btn">
-                    @(isAr ? "تأكيد الطلب الآن" : "Confirm Order Now")
+                <button type="button" onclick="submitOrder()" class="btn primary w-100" style="margin-top:20px; padding:12px; font-size:1.1rem;">
+                    @(isAr ? "تأكيد الطلب" : "Confirm Order") <i class="fas fa-check-circle"></i>
                 </button>
             </div>
-
         </div>
     </div>
 </section>
 
 @section Scripts {
-    <script src="~/checkout.js"></script>
+    <script src="~/js/cart.js"></script>
     <script>
-        async function submitOrder() {
-            const form = document.getElementById('checkoutForm');
-            if (!form.checkValidity()) { form.reportValidity(); return; }
-
-            const cart = JSON.parse(localStorage.getItem('DISKA_CART')) || [];
-            if (cart.length === 0) { alert('@(isAr ? "السلة فارغة!" : "Cart is empty!")'); return; }
-
-            const shippingText = document.getElementById('shippingCost').innerText;
-            const shippingFees = parseFloat(shippingText) || 0;
-
-            const orderData = {
-                shopName: document.getElementById('shopName').value,
-                phone: document.getElementById('phone').value,
-                governorate: document.getElementById('govSelect').value,
-                city: document.getElementById('citySelect').value,
-                address: document.getElementById('addressDetail').value,
-                paymentMethod: document.querySelector('input[name="payment"]:checked').value,
-                shippingCost: shippingFees,
-                items: cart.map(i => ({ id: i.id.toString(), qty: i.qty, price: i.price }))
-            };
-
-            try {
-                const response = await fetch('/Cart/PlaceOrder', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(orderData)
-                });
-                const result = await response.json();
-                if (result.success) {
-                    alert('@(isAr ? "تم تأكيد طلبك بنجاح!" : "Order confirmed successfully!")');
-                    localStorage.removeItem('DISKA_CART');
-                    window.location.href = '/Order/MyOrders';
-                } else {
-                    alert('@(isAr ? "خطأ: " : "Error: ")' + result.message);
-                }
-            } catch (error) {
-                console.error(error);
-                alert('@(isAr ? "فشل الاتصال" : "Connection Failed")');
-            }
-        }
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCheckoutPreview();
+            updateShippingCost();
+        });
     </script>
 }

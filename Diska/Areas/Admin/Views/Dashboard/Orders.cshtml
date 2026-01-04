@@ -4,42 +4,65 @@
     Layout = "_AdminLayout";
 }
 
-<h2 style="margin-bottom: 30px;">إدارة كل الطلبات</h2>
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+    <h2 style="margin:0;">إدارة الطلبات</h2>
+    <div class="filters">
+        <a asp-action="Orders" asp-route-status="All" class="btn btn-outline @(Context.Request.Query["status"] == "All" ? "active" : "")">الكل</a>
+        <a asp-action="Orders" asp-route-status="Pending" class="btn btn-outline @(Context.Request.Query["status"] == "Pending" ? "active" : "")">قيد الانتظار</a>
+        <a asp-action="Orders" asp-route-status="Confirmed" class="btn btn-outline @(Context.Request.Query["status"] == "Confirmed" ? "active" : "")">مؤكد</a>
+    </div>
+</div>
 
-<table>
-    <thead>
-        <tr>
-            <th>#</th>
-            <th>العميل</th>
-            <th>رقم الهاتف</th>
-            <th>العنوان</th>
-            <th>الإجمالي</th>
-            <th>الحالة الحالية</th>
-            <th>تغيير الحالة</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var order in Model)
-        {
+<div class="card">
+    <table>
+        <thead>
             <tr>
-                <td>@order.Id</td>
-                <td>@order.CustomerName</td>
-                <td>@order.Phone</td>
-                <td>@order.Governorate - @order.City</td>
-                <td><strong>@order.TotalAmount.ToString("N2")</strong></td>
-                <td>@order.Status</td>
-                <td>
-                    <form asp-action="UpdateOrderStatus" method="post" style="display:flex; gap:5px;">
-                        <input type="hidden" name="id" value="@order.Id" />
-                        <select name="status" style="padding:5px; border-radius:5px; border:1px solid #ddd;">
-                            <option value="Pending" selected="@(order.Status == "Pending")">انتظار</option>
-                            <option value="Confirmed" selected="@(order.Status == "Confirmed")">تأكيد</option>
-                            <option value="Shipped" selected="@(order.Status == "Shipped")">شحن</option>
-                        </select>
-                        <button type="submit" class="btn primary small" style="padding:5px 10px;">حفظ</button>
-                    </form>
-                </td>
+                <th>رقم الطلب</th>
+                <th>العميل</th>
+                <th>التاريخ</th>
+                <th>الإجمالي</th>
+                <th>طريقة الدفع</th>
+                <th>الحالة</th>
+                <th>إجراءات</th>
             </tr>
-        }
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            @foreach (var order in Model)
+            {
+                <tr>
+                    <td>#@order.Id</td>
+                    <td>
+                        <strong>@order.CustomerName</strong>
+                        <div style="font-size:0.8rem; color:#666;">@order.Phone</div>
+                    </td>
+                    <td>@order.OrderDate.ToString("yyyy/MM/dd")</td>
+                    <td><strong>@order.TotalAmount.ToString("N0")</strong></td>
+                    <td>@order.PaymentMethod</td>
+                    <td>
+                        @{
+                            string bg = order.Status == "Pending" ? "#fffbeb" : (order.Status == "Confirmed" ? "#dbeafe" : (order.Status == "Cancelled" ? "#fee2e2" : "#dcfce7"));
+                            string color = order.Status == "Pending" ? "#d97706" : (order.Status == "Confirmed" ? "#2563eb" : (order.Status == "Cancelled" ? "#dc2626" : "#16a34a"));
+                        }
+                        <span class="badge" style="background:@bg; color:@color;">@order.Status</span>
+                    </td>
+                    <td>
+                        <div style="display:flex; gap:5px;">
+                            <form asp-action="UpdateOrderStatus" method="post" style="display:inline;">
+                                <input type="hidden" name="id" value="@order.Id" />
+                                @if (order.Status == "Pending")
+                                {
+                                    <button type="submit" name="status" value="Confirmed" class="btn btn-primary" style="padding:5px 10px; font-size:0.8rem;">قبول</button>
+                                }
+                                else if (order.Status == "Confirmed")
+                                {
+                                    <button type="submit" name="status" value="Shipped" class="btn btn-primary" style="padding:5px 10px; font-size:0.8rem; background:#7c3aed;">شحن</button>
+                                }
+                            </form>
+                            <a asp-action="OrderDetails" asp-route-id="@order.Id" class="btn btn-outline" style="padding:5px 10px; font-size:0.8rem;">تفاصيل</a>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

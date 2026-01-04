@@ -1,20 +1,22 @@
-﻿@{
-    ViewData["Title"] = "الإشعارات";
+﻿@using System.Globalization
+@{
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    ViewData["Title"] = isAr ? "الإشعارات" : "Notifications";
 }
 
-<section class="section-padding" style="padding-top: 50px; min-height: 60vh;">
+<section class="section-padding">
     <div class="container">
-        <div class="notif-header">
-            <h2>الإشعارات والتنبيهات 🔔</h2>
-            <button class="btn btn-outline-danger" id="clearNotifBtn" style="border: 1px solid #dc3545; color: #dc3545; background: transparent; padding: 5px 15px; border-radius: 5px; cursor: pointer;">
-                <i class="fas fa-trash-alt"></i> مسح الكل
+        <div class="notif-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h2 class="page-title" style="margin:0;">@(isAr ? "الإشعارات والتنبيهات 🔔" : "Notifications 🔔")</h2>
+            <button class="btn btn-outline" onclick="clearAllNotifications()" style="color:red; border-color:red;">
+                <i class="fas fa-trash-alt"></i> @(isAr ? "مسح الكل" : "Clear All")
             </button>
         </div>
 
-        <div class="notifications-list" id="fullNotifList">
+        <div id="fullNotifList" class="notifications-list" style="display:flex; flex-direction:column; gap:10px;">
             <div style="text-align:center; padding:40px;">
                 <i class="fas fa-spinner fa-spin fa-2x" style="color:var(--primary);"></i>
-                <p style="margin-top:10px;">جاري تحميل الإشعارات...</p>
+                <p style="margin-top:10px; color:#777;">@(isAr ? "جاري تحميل الإشعارات..." : "Loading...")</p>
             </div>
         </div>
     </div>
@@ -22,24 +24,11 @@
 
 @section Scripts {
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            loadNotificationsPage();
-
-            document.getElementById('clearNotifBtn').addEventListener('click', async () => {
-                if(confirm('هل أنت متأكد من مسح جميع الإشعارات؟')) {
-                    await fetch('/Notification/ClearAll', { method: 'POST' });
-                    loadNotificationsPage(); // إعادة التحميل
-                    // تحديث العداد في الهيدر أيضاً
-                    if(typeof updateNotificationBadge === 'function') updateNotificationBadge();
-                }
-            });
-        });
+        document.addEventListener('DOMContentLoaded', loadNotificationsPage);
 
         async function loadNotificationsPage() {
             const container = document.getElementById('fullNotifList');
             try {
-                // نستخدم نفس الـ API ولكن يمكن توسيعه لجلب الكل مع Pagination
-                // هنا سنستخدم GetRecent كمثال، ويمكنك عمل GetUserNotifications في الكنترولر لجلب الكل
                 const response = await fetch('/Notification/GetRecent');
                 const data = await response.json();
 
@@ -47,32 +36,35 @@
 
                 if (data.length === 0) {
                     container.innerHTML = `
-                        <div style="text-align:center; padding:40px; color:#777; background:#fff; border-radius:10px; border:1px solid #eee;">
-                            <i class="fas fa-bell-slash" style="font-size:2rem; margin-bottom:10px; opacity:0.5;"></i>
-                            <p>لا توجد إشعارات جديدة</p>
+                        <div style="text-align:center; padding:50px; background:#fff; border-radius:10px; border:1px solid #eee;">
+                            <i class="fas fa-bell-slash fa-3x" style="color:#ddd; margin-bottom:15px;"></i>
+                            <p>${'@(isAr ? "لا توجد إشعارات جديدة" : "No new notifications")'}</p>
                         </div>`;
                     return;
                 }
 
                 data.forEach(n => {
-                    const iconClass = n.type === 'Alert' ? 'fa-exclamation-triangle' :
-                                      n.type === 'Order' ? 'fa-box' : 'fa-info-circle';
-                    const bgClass = n.type === 'Alert' ? '#fef2f2' :
-                                    n.type === 'Order' ? '#f0f9ff' : '#fff';
-                    const iconColor = n.type === 'Alert' ? '#ef4444' :
-                                      n.type === 'Order' ? '#0ea5e9' : '#3b82f6';
+                    // تحديد الأيقونة واللون حسب النوع
+                    let icon = 'fa-info-circle';
+                    let color = 'var(--primary)';
+                    let bg = '#f0f9ff';
+
+                    if (n.type === 'Alert') { icon = 'fa-exclamation-triangle'; color = '#ef4444'; bg = '#fef2f2'; }
+                    else if (n.type === 'Order') { icon = 'fa-box'; color = '#10b981'; bg = '#ecfdf5'; }
 
                     const html = `
-                        <div class="notif-card ${n.isRead ? '' : 'unread'}" style="background:${n.isRead ? '#fff' : '#f8fafc'}; border-left: 4px solid ${n.isRead ? '#eee' : '#FACC15'};">
-                            <div class="icon" style="background:${bgClass}; color:${iconColor};">
-                                <i class="fas ${iconClass}"></i>
+                        <div class="notif-card ${n.isRead ? '' : 'unread'}" style="background:${n.isRead ? '#fff' : '#f8fafc'}; border-left:4px solid ${n.isRead ? '#ddd' : '#FACC15'}; padding:15px; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.02); display:flex; gap:15px; align-items:flex-start;">
+                            <div class="icon" style="width:40px; height:40px; background:${bg}; color:${color}; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                <i class="fas ${icon}"></i>
                             </div>
-                            <div class="content" style="flex:1;">
-                                <h4 style="font-weight:${n.isRead ? 'normal' : 'bold'};">${n.title}</h4>
-                                <p>${n.message}</p>
-                                <span class="time">${n.timeAgo}</span>
+                            <div style="flex:1;">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <h4 style="margin:0; font-size:1rem; font-weight:${n.isRead ? 'normal' : 'bold'}; color:${n.isRead ? '#555' : '#000'};">${n.title}</h4>
+                                    <span style="font-size:0.75rem; color:#999;">${n.timeAgo}</span>
+                                </div>
+                                <p style="margin:5px 0 0; color:#666; font-size:0.9rem;">${n.message}</p>
                             </div>
-                            ${!n.isRead ? `<button onclick="markAsRead(${n.id}, this)" style="font-size:0.8rem; color:#666; background:none; border:none; cursor:pointer;" title="تحديد كمقروء"><i class="fas fa-check-double"></i></button>` : ''}
+                            ${!n.isRead ? `<button onclick="markAsRead(${n.id}, this)" style="border:none; background:none; color:var(--primary); cursor:pointer;" title="Mark as read"><i class="fas fa-check-circle"></i></button>` : ''}
                         </div>
                     `;
                     container.insertAdjacentHTML('beforeend', html);
@@ -80,19 +72,28 @@
 
             } catch (error) {
                 console.error(error);
-                container.innerHTML = '<p style="text-align:center; color:red;">حدث خطأ في تحميل الإشعارات</p>';
             }
         }
 
-        async function markAsRead(id, btnElement) {
+        async function markAsRead(id, btn) {
             await fetch(`/Notification/MarkAsRead?id=${id}`, { method: 'POST' });
-            // تغيير الستايل فورياً لعدم الحاجة لإعادة التحميل
-            const card = btnElement.closest('.notif-card');
+            // تحديث الشكل فورياً
+            const card = btn.closest('.notif-card');
             card.style.background = '#fff';
-            card.style.borderLeft = '4px solid #eee';
+            card.style.borderLeftColor = '#ddd';
             card.querySelector('h4').style.fontWeight = 'normal';
-            btnElement.remove();
-            if(typeof updateNotificationBadge === 'function') updateNotificationBadge();
+            btn.remove();
+
+            // تحديث العداد في الهيدر إذا أمكن
+            if(window.updateNotificationBadge) window.updateNotificationBadge();
+        }
+
+        async function clearAllNotifications() {
+            if(!confirm('@(isAr ? "هل أنت متأكد من مسح الكل؟" : "Clear all notifications?")')) return;
+
+            await fetch('/Notification/ClearAll', { method: 'POST' });
+            loadNotificationsPage();
+            if(window.updateNotificationBadge) window.updateNotificationBadge();
         }
     </script>
 }

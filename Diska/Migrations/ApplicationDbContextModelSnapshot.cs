@@ -181,10 +181,6 @@ namespace Diska.Migrations
                     b.Property<decimal>("DealPrice")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Location")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -225,9 +221,6 @@ namespace Diska.Migrations
 
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
 
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
@@ -283,6 +276,9 @@ namespace Diska.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<decimal>("ShippingCost")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -292,9 +288,11 @@ namespace Diska.Migrations
 
                     b.Property<string>("UserId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Orders");
                 });
@@ -375,6 +373,7 @@ namespace Diska.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("ExpiryDate")
+                        .IsRequired()
                         .HasColumnType("datetime2");
 
                     b.Property<string>("ImageUrl")
@@ -383,7 +382,7 @@ namespace Diska.Migrations
 
                     b.Property<string>("MerchantId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -400,6 +399,7 @@ namespace Diska.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime?>("ProductionDate")
+                        .IsRequired()
                         .HasColumnType("datetime2");
 
                     b.Property<int>("StockQuantity")
@@ -411,6 +411,8 @@ namespace Diska.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CategoryId");
+
+                    b.HasIndex("MerchantId");
 
                     b.ToTable("Products");
                 });
@@ -620,6 +622,17 @@ namespace Diska.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("Diska.Models.Order", b =>
+                {
+                    b.HasOne("Diska.Models.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Diska.Models.OrderItem", b =>
                 {
                     b.HasOne("Diska.Models.Order", "Order")
@@ -658,7 +671,15 @@ namespace Diska.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Diska.Models.ApplicationUser", "Merchant")
+                        .WithMany()
+                        .HasForeignKey("MerchantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Category");
+
+                    b.Navigation("Merchant");
                 });
 
             modelBuilder.Entity("Diska.Models.WishlistItem", b =>

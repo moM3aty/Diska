@@ -1,23 +1,26 @@
 ﻿@model IEnumerable<Diska.Models.Product>
-
+@using System.Globalization
 @{
-    ViewData["Title"] = "نتائج البحث: " + ViewBag.SearchQuery;
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    var query = ViewBag.SearchQuery as string;
+    ViewData["Title"] = isAr ? $"بحث: {query}" : $"Search: {query}";
 }
 
 <section class="section-padding">
     <div class="container">
         <div class="section-header">
-            <h3>نتائج البحث عن: "@ViewBag.SearchQuery"</h3>
-            <span style="color:#666;">(@Model.Count() منتج)</span>
+            <h3>
+                @(isAr ? "نتائج البحث عن:" : "Search Results for:") <span style="color:var(--primary);">"@query"</span>
+            </h3>
+            <span style="color:#666;">@Model.Count() @(isAr ? "منتج" : "items")</span>
         </div>
 
         @if (!Model.Any())
         {
             <div style="text-align:center; padding:50px; background:#fff; border-radius:10px; border:1px solid #eee;">
-                <i class="fas fa-search" style="font-size:3rem; color:#ddd; margin-bottom:20px;"></i>
-                <h3>لم يتم العثور على منتجات</h3>
-                <p style="color:#666;">جرب البحث بكلمات مختلفة أو تصفح الأقسام الرئيسية.</p>
-                <a asp-action="Index" class="btn primary" style="margin-top:20px;">العودة للرئيسية</a>
+                <i class="fas fa-search" style="font-size:3rem; color:#eee; margin-bottom:20px;"></i>
+                <p style="font-size:1.2rem; color:#555;">@(isAr ? "لم نتمكن من العثور على أي منتجات تطابق بحثك." : "We couldn't find any products matching your search.")</p>
+                <a asp-action="Index" class="btn primary" style="margin-top:20px;">@(isAr ? "تصفح جميع الأقسام" : "Browse Categories")</a>
             </div>
         }
         else
@@ -25,37 +28,48 @@
             <div class="products-grid">
                 @foreach (var item in Model)
                 {
-                    <div class="product-card merchant-product" data-id="@item.Id" data-stock="@item.StockQuantity">
-                        <button class="fav-btn"><i class="fas fa-heart"></i></button>
+                    <div class="product-card" data-id="@item.Id" data-stock="@item.StockQuantity">
                         @if (item.OldPrice > item.Price)
                         {
-                            <div class="flash-badge"><i class="fas fa-star"></i> عرض</div>
+                            <div class="flash-badge">@(isAr ? "خصم" : "Sale")</div>
                         }
 
-                        <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id">
-                            <div class="product-img"><img src="~/@item.ImageUrl" alt="@item.Name"></div>
+                        <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id" class="product-img">
+                            <img src="~/@item.ImageUrl" alt="@item.Name" onerror="this.src='/images/default.png'">
                         </a>
 
                         <div class="product-info">
-                            <div class="in-cart-indicator"></div>
-                            <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id" style="color:inherit;">
-                                <h4>@item.Name</h4>
+                            <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id" style="text-decoration:none; color:inherit;">
+                                <h4>@(isAr? item.Name: (item.NameEn ?? item.Name))</h4>
                             </a>
-                            <div class="product-meta">
-                                <span><i class="fas fa-box-open"></i> @item.UnitsPerCarton / كرتونة</span>
-                            </div>
+
                             <div class="pricing">
-                                <span class="current-price">@item.Price.ToString("F2") ج.م</span>
+                                <span class="current-price">@item.Price.ToString("N2") @(isAr ? "ج.م" : "EGP")</span>
                             </div>
-                            <div class="card-actions" style="display:flex; gap:10px; margin-top:10px;">
-                                <div class="qty-control-card" style="display:flex; border:1px solid #ddd; border-radius:5px;">
-                                    <button class="card-minus" style="border:none; background:#eee; width:30px;">-</button>
-                                    <input type="number" class="manual-qty" value="1" min="1" max="@item.StockQuantity" style="width:50px; text-align:center; border:none; font-weight:bold;">
-                                    <button class="card-plus" style="border:none; background:#eee; width:30px;">+</button>
-                                </div>
-                                <button class="add-btn" style="flex:1; border:none; background:var(--primary); color:#fff; border-radius:5px;">
-                                    أضف <i class="fas fa-cart-plus"></i>
-                                </button>
+
+                            <div class="product-meta">
+                                <span><i class="fas fa-box"></i> @item.UnitsPerCarton</span>
+                                <span style="@(item.StockQuantity > 0 ? "color:green" : "color:red")">
+                                    @(item.StockQuantity > 0 ? (isAr ? "متوفر" : "In Stock") : (isAr ? "نفذت الكمية" : "Out of Stock"))
+                                </span>
+                            </div>
+
+                            <div class="add-to-cart" style="gap:10px;">
+                                @if (item.StockQuantity > 0)
+                                {
+                                    <div class="qty-control-card" style="display:flex; flex:1;">
+                                        <button class="qty-minus">-</button>
+                                        <input type="number" class="qty-val" value="1" min="1" max="@item.StockQuantity" style="width:40px; text-align:center; border:none;">
+                                        <button class="qty-plus">+</button>
+                                    </div>
+                                    <button class="add-btn" onclick="addToCart(this)" style="flex:2;">
+                                        @(isAr ? "أضف" : "Add") <i class="fas fa-cart-plus"></i>
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="add-btn" disabled style="width:100%; background:#ccc; cursor:not-allowed;">@(isAr ? "غير متاح" : "Unavailable")</button>
+                                }
                             </div>
                         </div>
                     </div>

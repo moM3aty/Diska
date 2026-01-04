@@ -1,0 +1,71 @@
+﻿@using System.Globalization
+@{
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    ViewData["Title"] = isAr ? "الشروط والأحكام" : "Terms & Conditions";
+}
+
+<section class="section-padding">
+    <div class="container">
+        <div class="policy-box" style="background:#fff; padding:40px; border-radius:10px; border:1px solid #eee;">
+            <h1 style="color:var(--primary); margin-bottom:30px; border-bottom:3px solid #FACC15; display:inline-block; padding-bottom:10px;">
+                @(isAr ? "الشروط والأحكام" : "Terms & Conditions")
+            </h1>
+
+            <div class="terms-content" style="line-height:1.8; color:#333;">
+                @if (isAr)
+                {
+                    <h3>1. مقدمة</h3>
+                    <p>أهلاً بك في منصة DISKA. باستعمالك لهذا الموقع والتطبيق، فإنك توافق على الالتزام بالشروط والأحكام التالية. يرجى قراءتها بعناية.</p>
+
+                    <h3>2. حساب التاجر والعميل</h3>
+                    <ul>
+                        <li>يجب أن تكون البيانات المقدمة أثناء التسجيل (الاسم، رقم الهاتف، السجل التجاري) صحيحة وحديثة.</li>
+                        <li>تحتفظ إدارة المنصة بحق طلب وثائق إضافية للتحقق من هوية التاجر قبل تفعيل الحساب.</li>
+                        <li>يتحمل المستخدم مسؤولية الحفاظ على سرية بيانات الدخول الخاصة به.</li>
+                    </ul>
+
+                    <h3>3. الطلبات والمخزون</h3>
+                    <ul>
+                        <li>جميع الطلبات تخضع لتوفر المنتج في المخزون.</li>
+                        <li>في حالة نفاد المخزون بعد تأكيد الطلب، سيتم إخطار العميل واقتراح بديل أو استرداد المبلغ إلى المحفظة.</li>
+                        <li>يحق للمنصة إلغاء أي طلب في حالة وجود خطأ تسعيري واضح أو شك في نشاط احتيالي.</li>
+                    </ul>
+
+                    <h3>4. الدفع والمحفظة</h3>
+                    <ul>
+                        <li>تتوفر طرق الدفع: الدفع عند الاستلام (كاش) والدفع عبر المحفظة الإلكترونية داخل التطبيق.</li>
+                        <li>رصيد المحفظة غير قابل للاستبدال نقداً خارج المنصة، ويستخدم فقط للمشتريات المستقبلية.</li>
+                    </ul>
+
+                    <h3>5. الملكية الفكرية</h3>
+                    <p>جميع حقوق المحتوى، التصاميم، والشعارات محفوظة لمنصة DISKA ولا يجوز نسخها أو استخدامها دون إذن كتابي.</p>
+                }
+                else
+                {
+                    <h3>1. Introduction</h3>
+                    <p>Welcome to DISKA. By using this website and app, you agree to comply with the following terms and conditions. Please read them carefully.</p>
+
+                    <h3>2. Accounts</h3>
+                    <ul>
+                        <li>Data provided during registration (Name, Phone, Commercial Register) must be accurate.</li>
+                        <li>Platform administration reserves the right to request additional documents for merchant verification.</li>
+                        <li>Users are responsible for maintaining the confidentiality of their login credentials.</li>
+                    </ul>
+
+                    <h3>3. Orders & Inventory</h3>
+                    <ul>
+                        <li>All orders are subject to product availability.</li>
+                        <li>If stock runs out after confirmation, the customer will be notified with an alternative or a refund to the wallet.</li>
+                        <li>The platform reserves the right to cancel orders in case of pricing errors or suspected fraud.</li>
+                    </ul>
+
+                    <h3>4. Payment & Wallet</h3>
+                    <ul>
+                        <li>Available payment methods: Cash on Delivery (COD) and In-App Wallet.</li>
+                        <li>Wallet balance is non-refundable as cash and can only be used for future purchases on the platform.</li>
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+</section>

@@ -5,81 +5,102 @@
     ViewData["Title"] = isAr ? "طلباتي" : "My Orders";
 }
 
-<section class="section-padding" style="padding-top: 20px;">
+<section class="section-padding">
     <div class="container">
-        <div class="orders-page-wrapper">
-            <h2 class="page-title">@(isAr ? "سجل الطلبات" : "Order History")</h2>
+        <h2 class="page-title">@(isAr ? "سجل طلباتي" : "My Order History")</h2>
 
-            <div class="orders-tabs">
-                <button class="tab-btn active" data-filter="all">@(isAr ? "الكل" : "All")</button>
-                <button class="tab-btn" data-filter="Pending">@(isAr ? "قيد الانتظار" : "Pending")</button>
-                <button class="tab-btn" data-filter="Confirmed">@(isAr ? "مؤكدة" : "Confirmed")</button>
+        @if (TempData["Message"] != null)
+        {
+            <div class="alert alert-success">@TempData["Message"]</div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger">@TempData["Error"]</div>
+        }
+
+        @if (!Model.Any())
+        {
+            <div style="text-align:center; padding:50px; background:#f8fafc; border-radius:10px;">
+                <i class="fas fa-box-open fa-3x" style="color:#cbd5e1; margin-bottom:15px;"></i>
+                <p style="color:#64748b;">@(isAr ? "لم تقم بأي طلبات بعد." : "No orders yet.")</p>
+                <a asp-controller="Home" asp-action="Index" class="btn primary small">@(isAr ? "ابدأ التسوق" : "Start Shopping")</a>
             </div>
-
-            <div id="ordersContainer" class="orders-list">
-                @if (!Model.Any())
+        }
+        else
+        {
+            <div class="orders-list">
+                @foreach (var order in Model)
                 {
-                    <div style="text-align:center; padding:40px; color:#777;">@(isAr ? "لا توجد طلبات سابقة." : "No previous orders.")</div>
-                }
-                else
-                {
-                    @foreach (var order in Model)
-                    {
-                        var statusClass = order.Status == "Pending" ? "pending" : (order.Status == "Confirmed" ? "confirmed" : "shipped");
-
-                        var statusText = order.Status;
-                        if (isAr)
-                        {
-                            if (order.Status == "Pending") statusText = "قيد الانتظار";
-                            else if (order.Status == "Confirmed") statusText = "مؤكد";
-                            else if (order.Status == "Shipped") statusText = "تم الشحن";
-                        }
-
-                        <div class="order-card-box" data-status="@order.Status">
-                            <div class="order-header">
-                                <span class="status-label @statusClass">@statusText</span>
-                                <span class="order-id">#@order.Id</span>
+                    <div class="order-card" style="background:#fff; border:1px solid #eee; border-radius:10px; margin-bottom:20px; overflow:hidden;">
+                        <!-- Header -->
+                        <div style="background:#f1f5f9; padding:15px; display:flex; justify-content:space-between; align-items:center;">
+                            <div>
+                                <span style="font-weight:bold; margin-left:10px;">#@order.Id</span>
+                                <span style="color:#666; font-size:0.9rem;">@order.OrderDate.ToString("dd/MM/yyyy")</span>
                             </div>
-
-                            <div class="order-body">
-                                <div class="order-row">
-                                    <span class="shop-name">@order.CustomerName</span>
-                                    <span class="order-price">@order.TotalAmount.ToString("F2") @(isAr ? "ج.م" : "EGP")</span>
-                                </div>
-                                <div class="order-row sub-info">
-                                    <span>@(isAr ? "عدد الأصناف:" : "Items:") @order.OrderItems.Count</span>
-                                    <span>@order.OrderDate.ToShortDateString()</span>
-                                </div>
-                            </div>
-
-                            <div class="order-footer">
-                                <a asp-action="Details" asp-route-id="@order.Id" class="btn-outline" style="text-decoration:none; display:inline-block; text-align:center;">
-                                    @(isAr ? "التفاصيل" : "Details")
-                                </a>
-                                <span class="delivery-date">@order.PaymentMethod</span>
+                            <div>
+                                @{
+                                    string statusColor = order.Status switch
+                                    {
+                                        "Pending" => "orange",
+                                        "Confirmed" => "blue",
+                                        "Shipped" => "purple",
+                                        "Delivered" => "green",
+                                        "Cancelled" => "red",
+                                        _ => "gray"
+                                    };
+                                    string statusText = isAr ? (order.Status == "Pending" ? "قيد المراجعة" : order.Status == "Confirmed" ? "مؤكد" : order.Status == "Cancelled" ? "ملغي" : order.Status) : order.Status;
+                                }
+                                <span style="background:@statusColor; color:#fff; padding:4px 10px; border-radius:15px; font-size:0.8rem;">@statusText</span>
                             </div>
                         </div>
-                    }
+
+                        <!-- Body -->
+                        <div style="padding:15px;">
+                            <div style="margin-bottom:10px; color:#555;">
+                                <i class="fas fa-cubes"></i> @(isAr ? "عدد الأصناف:" : "Items:") @order.OrderItems.Count
+                            </div>
+                            <div style="margin-bottom:10px; font-weight:bold; color:var(--primary);">
+                                <i class="fas fa-coins"></i> @(isAr ? "الإجمالي:" : "Total:") @order.TotalAmount.ToString("N2")
+                            </div>
+
+                            <!-- Tracking Bar (Simple) -->
+                            @if (order.Status != "Cancelled")
+                            {
+                                <div class="tracking-bar" style="display:flex; margin-top:20px; justify-content:space-between; position:relative;">
+                                    <div style="width:100%; height:2px; background:#ddd; position:absolute; top:10px; z-index:0;"></div>
+
+                                    <div style="text-align:center; z-index:1; background:#fff; padding:0 5px;">
+                                        <div style="width:20px; height:20px; background:@(order.Status == "Pending" || order.Status == "Confirmed" || order.Status == "Shipped" ? "green" : "#ddd"); border-radius:50%; margin:0 auto;"></div>
+                                        <small>@(isAr ? "استلام" : "Received")</small>
+                                    </div>
+                                    <div style="text-align:center; z-index:1; background:#fff; padding:0 5px;">
+                                        <div style="width:20px; height:20px; background:@(order.Status == "Confirmed" || order.Status == "Shipped" ? "green" : "#ddd"); border-radius:50%; margin:0 auto;"></div>
+                                        <small>@(isAr ? "تجهيز" : "Processing")</small>
+                                    </div>
+                                    <div style="text-align:center; z-index:1; background:#fff; padding:0 5px;">
+                                        <div style="width:20px; height:20px; background:@(order.Status == "Shipped" ? "green" : "#ddd"); border-radius:50%; margin:0 auto;"></div>
+                                        <small>@(isAr ? "شحن" : "Shipped")</small>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Footer Actions -->
+                        <div style="padding:15px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:10px;">
+                            <a asp-action="Details" asp-route-id="@order.Id" class="btn btn-outline" style="border:1px solid #ccc; padding:5px 15px; border-radius:5px; color:#333; text-decoration:none;">@(isAr ? "التفاصيل" : "Details")</a>
+
+                            @if (order.Status == "Pending")
+                            {
+                                <form asp-action="Cancel" method="post" onsubmit="return confirm('@(isAr ? "هل أنت متأكد من إلغاء الطلب؟" : "Confirm cancel order?")');">
+                                    <input type="hidden" name="id" value="@order.Id" />
+                                    <button type="submit" class="btn" style="background:#fee2e2; color:red; padding:5px 15px; border-radius:5px; border:none;">@(isAr ? "إلغاء الطلب" : "Cancel")</button>
+                                </form>
+                            }
+                        </div>
+                    </div>
                 }
             </div>
-        </div>
+        }
     </div>
 </section>
-
-@section Scripts {
-    <script>
-        const tabs = document.querySelectorAll('.tab-btn');
-        const cards = document.querySelectorAll('.order-card-box');
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                tabs.forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                const filter = tab.dataset.filter;
-                cards.forEach(card => {
-                    if (filter === 'all' || card.dataset.status === filter) card.style.display = 'block';
-                    else card.style.display = 'none';
-                });
-            });
-        });
-    </script>
-}

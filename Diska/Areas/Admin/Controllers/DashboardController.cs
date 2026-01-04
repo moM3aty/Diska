@@ -12,66 +12,90 @@ namespace Diska.Areas.Admin.Controllers
     public class DashboardController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public DashboardController(ApplicationDbContext context, UserManager<IdentityUser> userManager)
+        public DashboardController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
             _userManager = userManager;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            ViewBag.ProductsCount = _context.Products.Count();
-            ViewBag.OrdersCount = _context.Orders.Count();
-            ViewBag.UsersCount = _userManager.Users.Count();
-            ViewBag.Revenue = _context.Orders.Sum(o => (decimal?)o.TotalAmount) ?? 0;
-            var recentOrders = _context.Orders.OrderByDescending(o => o.OrderDate).Take(5).ToList();
+            // Bird's-eye view stats
+            var today = DateTime.Today;
+            ViewBag.DailySales = await _context.Orders
+                .Where(o => o.OrderDate.Date == today && o.Status != "Cancelled")
+                .SumAsync(o => (decimal?)o.TotalAmount) ?? 0;
+
+            ViewBag.PendingOrders = await _context.Orders.CountAsync(o => o.Status == "Pending");
+            ViewBag.TotalMerchants = await _userManager.GetUsersInRoleAsync("Merchant").ContinueWith(t => t.Result.Count);
+            ViewBag.LowStockItems = await _context.Products.CountAsync(p => p.StockQuantity < 10);
+
+            var recentOrders = await _context.Orders
+                .Include(o => o.User)
+                .OrderByDescending(o => o.OrderDate)
+                .Take(10)
+                .ToListAsync();
+
             return View(recentOrders);
         }
 
-        public IActionResult Products() => View(_context.Products.Include(p => p.Category).OrderByDescending(p => p.Id).ToList());
-        public IActionResult Orders() => View(_context.Orders.OrderByDescending(o => o.OrderDate).ToList());
-
-        // --- إضافة جديدة: تفاصيل الطلب ---
-        public IActionResult OrderDetails(int id)
+        public async Task<IActionResult> Orders(string status = "All")
         {
-            var order = _context.Orders
-                .Include(o => o.OrderItems)
-                .ThenInclude(oi => oi.Product)
-                .FirstOrDefault(o => o.Id == id);
+            var query = _context.Orders.Include(o => o.User).AsQueryable();
 
-            if (order == null) return NotFound();
+            if (status != "All")
+            {
+                query = query.Where(o => o.Status == status);
+            }
 
-            return View(order);
+            var orders = await query.OrderByDescending(o => o.OrderDate).ToListAsync();
+            return View(orders);
         }
 
         [HttpPost]
-        public IActionResult UpdateOrderStatus(int id, string status)
+        public async Task<IActionResult> UpdateOrderStatus(int id, string status)
         {
-            var order = _context.Orders.Find(id);
+            var order = await _context.Orders.FindAsync(id);
             if (order != null)
             {
                 order.Status = status;
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
             }
-            // إعادة توجيه لنفس صفحة التفاصيل إذا كنا فيها، أو لصفحة الطلبات
-            var referer = Request.Headers["Referer"].ToString();
-            if (!string.IsNullOrEmpty(referer)) return Redirect(referer);
-
-            return RedirectToAction("Orders");
+            return RedirectToAction(nameof(Orders));
         }
 
-        public IActionResult Users() => View(_userManager.Users.ToList());
-        public IActionResult Categories() => View(_context.Categories.ToList());
+        [HttpPost]
+        public async Task<IActionResult> RefundUser(string userId, decimal amount, string reason)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user != null && amount > 0)
+            {
+                user.WalletBalance += amount;
+                await _userManager.UpdateAsync(user);
+
+                // Optional: Log transaction here
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
+        public async Task<IActionResult> Merchants()
+        {
+            var merchants = await _userManager.GetUsersInRoleAsync("Merchant");
+            return View(merchants);
+        }
 
         [HttpPost]
-        public IActionResult CreateCategory(Category category) { if (ModelState.IsValid) { _context.Categories.Add(category); _context.SaveChanges(); } return RedirectToAction("Categories"); }
-        [HttpPost]
-        public IActionResult DeleteCategory(int id) { var cat = _context.Categories.Find(id); if (cat != null) { _context.Categories.Remove(cat); _context.SaveChanges(); } return RedirectToAction("Categories"); }
-
-        public IActionResult Messages() => View(_context.ContactMessages.OrderByDescending(m => m.DateSent).ToList());
-        [HttpPost]
-        public IActionResult DeleteMessage(int id) { var msg = _context.ContactMessages.Find(id); if (msg != null) { _context.ContactMessages.Remove(msg); _context.SaveChanges(); } return RedirectToAction("Messages"); }
+        public async Task<IActionResult> ToggleMerchantStatus(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user != null)
+            {
+                user.IsVerifiedMerchant = !user.IsVerifiedMerchant;
+                await _userManager.UpdateAsync(user);
+            }
+            return RedirectToAction(nameof(Merchants));
+        }
     }
 }

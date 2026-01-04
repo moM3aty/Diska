@@ -4,133 +4,160 @@
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
     ViewData["Title"] = isAr ? "الرئيسية" : "Home";
 
-    // استقبال قائمة الأقسام من الكنترولر
-    var categories = ViewBag.Categories as List<Diska.Models.Category>;
+    // الأقسام من قاعدة البيانات
+    var categories = ViewBag.Categories as IEnumerable<Diska.Models.Category>;
 
-    // مصفوفة ألوان للخلفيات (للتنويع)
-    string[] bgColors = { "#e3f2fd", "#ffebee", "#e8f5e9", "#fff3e0", "#f3e5f5" };
-    string[] iconColors = { "#2196f3", "#f44336", "#4caf50", "#ff9800", "#9c27b0" };
+    // ألوان للأيقونات (تجميلي)
+    string[] iconColors = { "#e0f2fe", "#fef3c7", "#dcfce7", "#fee2e2", "#f3e8ff", "#ffedd5" };
+    string[] textColors = { "#0284c7", "#d97706", "#16a34a", "#dc2626", "#9333ea", "#ea580c" };
 }
 
+<!-- 1. Hero Section -->
 <section class="hero-section">
     <div class="container">
         <div class="banner-card">
             <div class="banner-content">
-                <div class="hero-brand-block">
-                    <img src="~/images/ChatGPT_Image_22_ديسمبر_2025__12_14_35_ص-removebg-preview.png" alt="DISKA" class="hero-logo-img">
-                    <span class="brand-slogan">@(isAr ? "سوق الجملة في جيبك" : "Wholesale in your pocket")</span>
-                </div>
-
                 <div class="tag-box">
                     <span class="tag">@(isAr ? "عروض متتفوتش 🔥" : "Hot Deals 🔥")</span>
                 </div>
-
                 <h2 class="main-headline">@(isAr ? "خصومات حصرية على جميع المنتجات" : "Exclusive Discounts on All Products")</h2>
-                <p class="slogan-desc">@(isAr ? "أسهل طريقة لطلب بضاعة محلك، من المصنع إليك مباشرة بأرخص سعر." : "The easiest way to order stock for your shop, directly from factories at the best prices.")</p>
-
-                <a asp-controller="Home" asp-action="Deals" class="btn primary">@(isAr ? "تصفح العروض" : "Browse Offers")</a>
+                <p class="slogan-desc">
+                    @(isAr ? "Diska — التجارة بقت هنا. أسهل طريقة لطلب بضاعة محلك من المصنع مباشرة." : "Diska — Trade is here. The easiest way to order stock directly from factories.")
+                </p>
+                <a asp-action="Deals" class="btn primary">@(isAr ? "تصفح العروض" : "Shop Deals")</a>
             </div>
-
             <div class="banner-image">
-                <img src="~/images/مشروبات.webp" alt="Offers">
+                <!-- صورة البنر -->
+                <img src="~/images/banner-img.png" alt="Groceries" onerror="this.src='https://placehold.co/400x300?text=Offers'">
             </div>
         </div>
     </div>
 </section>
 
-<!-- Categories Section (Dynamic Link Fix) -->
-<section class="categories-section">
-    <div class="container">
-        <h3 class="section-title" style="margin-bottom:20px;">@(isAr ? "تسوق حسب الفئة" : "Shop by Category")</h3>
-        <div class="categories-grid">
-
-            @if (categories != null && categories.Any())
-            {
-                int i = 0;
-                foreach (var cat in categories)
+<!-- 2. Categories Section -->
+@if (categories != null && categories.Any())
+{
+    <section class="categories-section">
+        <div class="container">
+            <div class="section-header">
+                <h3>@(isAr ? "تسوق حسب القسم" : "Shop by Category")</h3>
+            </div>
+            <div class="categories-grid">
+                @{
+                    int i = 0;
+                }
+                @foreach (var cat in categories)
                 {
-                    // استخدام الألوان بالتناوب
-                    var bg = bgColors[i % bgColors.Length];
-                    var color = iconColors[i % iconColors.Length];
+                    var bg = iconColors[i % iconColors.Length];
+                    var color = textColors[i % textColors.Length];
                     i++;
 
-                    // الرابط يستخدم الآن الـ ID الحقيقي من قاعدة البيانات
                     <a asp-controller="Product" asp-action="Category" asp-route-id="@cat.Id" class="cat-item">
-                        <div class="icon" style="background-color: @bg;">
-                            <!-- استخدام الأيقونة المخزنة في الداتابيز أو أيقونة افتراضية -->
-                            <i class="@(string.IsNullOrEmpty(cat.IconClass) ? "fas fa-box" : cat.IconClass)" style="color: @color;"></i>
+                        <div class="icon" style="background-color: @bg; color: @color;">
+                            <i class="@cat.IconClass"></i>
                         </div>
                         <span>@(isAr? cat.Name: (cat.NameEn ?? cat.Name))</span>
                     </a>
                 }
+                <!-- رابط الصفقات -->
+                <a asp-controller="Home" asp-action="Deals" class="cat-item">
+                    <div class="icon" style="background-color: #ffedd5; color: #ea580c;">
+                        <i class="fas fa-fire"></i>
+                    </div>
+                    <span>@(isAr ? "صفقات" : "Deals")</span>
+                </a>
+            </div>
+        </div>
+    </section>
+}
+
+<!-- 3. Featured Products -->
+<section id="products" class="products-section">
+    <div class="container">
+        <div class="section-header">
+            <h3>@(isAr ? "أحدث المنتجات" : "New Arrivals")</h3>
+            <a href="#" class="view-all">@(isAr ? "عرض الكل" : "View All") <i class="fas fa-arrow-left"></i></a>
+        </div>
+
+        <div class="products-grid">
+            @if (Model != null && Model.Any())
+            {
+                foreach (var item in Model)
+                {
+                    <div class="product-card" data-id="@item.Id" data-stock="@item.StockQuantity">
+
+                        <!-- خصم -->
+                        @if (item.OldPrice.HasValue && item.OldPrice > item.Price)
+                        {
+                            <span class="flash-badge"><i class="fas fa-bolt"></i> @(isAr ? "خصم" : "Sale")</span>
+                        }
+
+                        <!-- زر المفضلة -->
+                        <button class="fav-btn" onclick="toggleWishlist(@item.Id, this)"><i class="far fa-heart"></i></button>
+
+                        <div class="product-img">
+                            <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id">
+                                <img src="~/@item.ImageUrl" alt="@item.Name" onerror="this.src='https://placehold.co/200x200?text=Product'">
+                            </a>
+                        </div>
+
+                        <div class="product-info">
+                            <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id" style="text-decoration:none; color:inherit;">
+                                <h4>@(isAr? item.Name: (item.NameEn ?? item.Name))</h4>
+                            </a>
+
+                            <div class="pricing">
+                                <span class="current-price">@item.Price.ToString("N2") @(isAr ? "ج.م" : "EGP")</span>
+                                @if (item.OldPrice.HasValue)
+                                {
+                                    <span class="old-price">@item.OldPrice.Value.ToString("N2")</span>
+                                }
+                                <span class="unit">/ @(isAr ? "قطعة" : "Unit")</span>
+                            </div>
+
+                            <div class="wholesale-info">
+                                <i class="fas fa-box"></i> @(isAr ? $"كرتونة: {item.UnitsPerCarton} قطعة" : $"Carton: {item.UnitsPerCarton}")
+                            </div>
+
+                            <div class="add-to-cart">
+                                <button class="add-btn btn primary w-100" onclick="addToCart(this)">
+                                    @(isAr ? "إضافة للسلة" : "Add to Cart") <i class="fas fa-cart-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
             }
-
-            <!-- رابط ثابت للصفقات -->
-            <a asp-controller="Home" asp-action="Deals" class="cat-item">
-                <div class="icon" style="background-color: #fff3e0;"><i class="fas fa-fire" style="color: #ff9800;"></i></div>
-                <span>@(isAr ? "عروض خاصة" : "Special Offers")</span>
-            </a>
-
+            else
+            {
+                <div style="grid-column:1/-1; text-align:center; padding:40px; color:#777;">
+                    <i class="fas fa-box-open fa-3x" style="margin-bottom:10px; opacity:0.5;"></i>
+                    <p>@(isAr ? "لا توجد منتجات متاحة حالياً." : "No products available.")</p>
+                </div>
+            }
         </div>
     </div>
 </section>
 
-<section id="products" class="products-section bg-light">
+<!-- 4. Features/Trust Section -->
+<section class="section-padding bg-light">
     <div class="container">
-        <div class="section-header">
-            <h3>@(isAr ? "الأصناف في مكان واحد" : "All Items")</h3>
-            <a href="#" class="view-all">@(isAr ? "عرض الكل" : "View All") <i class="@(isAr ? "fas fa-arrow-left" : "fas fa-arrow-right")"></i></a>
-        </div>
-
-        <div class="products-grid">
-            @foreach (var item in Model)
-            {
-                <div class="product-card merchant-product" data-id="@item.Id" data-stock="@item.StockQuantity">
-                    <button class="fav-btn"><i class="fas fa-heart"></i></button>
-                    @if (item.OldPrice > item.Price)
-                    {
-                        <div class="flash-badge"><i class="fas fa-star"></i> @(isAr ? "خصم" : "Sale")</div>
-                    }
-
-                    <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id" style="text-decoration:none;">
-                        <div class="product-img"><img src="~/@item.ImageUrl" alt="@item.Name"></div>
-                    </a>
-
-                    <div class="product-info">
-                        <div class="in-cart-indicator"></div>
-
-                        <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id" style="text-decoration:none; color:inherit;">
-                            <h4>@(isAr? item.Name: (item.NameEn ?? item.Name))</h4>
-                        </a>
-
-                        <p class="product-desc-short">@item.Description</p>
-
-                        <div class="product-meta">
-                            <span><i class="fas fa-box-open"></i> @item.UnitsPerCarton / @(isAr ? "كرتونة" : "Carton")</span>
-                            <span class="stock-info">@(isAr ? "متاح:" : "Stock:") @item.StockQuantity</span>
-                        </div>
-
-                        <div class="pricing">
-                            <span class="current-price">@item.Price.ToString("F2") @(isAr ? "ج.م" : "EGP")</span>
-                            @if (item.OldPrice.HasValue)
-                            {
-                                <span class="old-price">@item.OldPrice.Value.ToString("F2") @(isAr ? "ج.م" : "EGP")</span>
-                            }
-                        </div>
-
-                        <div class="card-actions" style="display:flex; gap:10px; margin-top:10px;">
-                            <div class="qty-control-card" style="display:flex; border:1px solid #ddd; border-radius:5px;">
-                                <button class="card-minus" style="border:none; background:#eee; width:30px; cursor:pointer;">-</button>
-                                <input type="number" class="manual-qty" value="1" min="1" max="@item.StockQuantity" style="width:50px; text-align:center; border:none; font-weight:bold;">
-                                <button class="card-plus" style="border:none; background:#eee; width:30px; cursor:pointer;">+</button>
-                            </div>
-                            <button class="add-btn" style="flex:1; border:none; background:var(--primary); color:#fff; border-radius:5px; cursor:pointer;">
-                                @(isAr ? "أضف" : "Add") <i class="fas fa-cart-plus"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            }
+        <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+            <div class="stat-box" style="text-align:center;">
+                <i class="fas fa-truck fa-2x" style="color:var(--primary); margin-bottom:15px;"></i>
+                <h4>@(isAr ? "شحن لجميع المحافظات" : "Nationwide Shipping")</h4>
+                <p style="font-size:0.9rem; color:#666;">@(isAr ? "توصيل سريع وآمن لباب محلك" : "Fast and secure delivery to your shop")</p>
+            </div>
+            <div class="stat-box" style="text-align:center;">
+                <i class="fas fa-wallet fa-2x" style="color:var(--primary); margin-bottom:15px;"></i>
+                <h4>@(isAr ? "دفع عند الاستلام" : "Cash on Delivery")</h4>
+                <p style="font-size:0.9rem; color:#666;">@(isAr ? "افحص بضاعتك قبل ما تدفع" : "Inspect your goods before paying")</p>
+            </div>
+            <div class="stat-box" style="text-align:center;">
+                <i class="fas fa-headset fa-2x" style="color:var(--primary); margin-bottom:15px;"></i>
+                <h4>@(isAr ? "دعم فني 24/7" : "24/7 Support")</h4>
+                <p style="font-size:0.9rem; color:#666;">@(isAr ? "فريق كامل لخدمتك في أي وقت" : "Full team ready to help you")</p>
+            </div>
         </div>
     </div>
 </section>

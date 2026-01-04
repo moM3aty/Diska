@@ -1,41 +1,71 @@
 ﻿@model IEnumerable<Diska.Models.DealRequest>
-
+@using System.Globalization
 @{
-    ViewData["Title"] = "طلبات خاصة";
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    ViewData["Title"] = isAr ? "طلبات خاصة" : "Special Requests";
 }
 
 <section class="section-padding">
     <div class="container">
-        <div style="display:flex; justify-content:space-between; align-items:center; padding-top:20px;">
-            <h2 class="page-title" style="margin:0;">طلبات الشراء النشطة</h2>
-            <button class="btn primary small" onclick="document.getElementById('reqModal').style.display='flex'">
-                <i class="fas fa-plus"></i> أضف طلب شراء
+        <div style="display:flex; justify-content:space-between; align-items:center; padding-top:20px; margin-bottom:20px;">
+            <div>
+                <h2 class="page-title" style="margin:0;">@(isAr ? "طلبات الشراء الخاصة" : "Special Buy Requests")</h2>
+                <p style="color:#666; font-size:0.9rem;">@(isAr ? "اطلب كميات خاصة وسيقوم التجار بتقديم عروضهم لك." : "Request bulk quantities and merchants will offer you deals.")</p>
+            </div>
+
+            <button class="btn primary small" onclick="openRequestModal()">
+                <i class="fas fa-plus-circle"></i> @(isAr ? "أضف طلب شراء" : "New Request")
             </button>
         </div>
 
-        <div class="requests-list" style="margin-top:20px;">
+        @if (TempData["Message"] != null)
+        {
+            <div class="alert alert-success">@TempData["Message"]</div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger">@TempData["Error"]</div>
+        }
+
+        <div class="requests-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:20px;">
             @if (!Model.Any())
             {
-                <p style="text-align:center; padding:30px; color:#777;">لا توجد طلبات شراء حالياً. كن أول من يطلب!</p>
+                <div style="grid-column: 1/-1; text-align:center; padding:40px; background:#f8fafc; border-radius:10px; color:#777;">
+                    <i class="fas fa-bullhorn fa-2x" style="margin-bottom:10px; opacity:0.5;"></i>
+                    <p>@(isAr ? "لا توجد طلبات شراء نشطة حالياً." : "No active requests at the moment.")</p>
+                </div>
             }
             else
             {
                 @foreach (var req in Model)
                 {
-                    <div class="request-card" style="background:#fff; padding:20px; border-radius:10px; margin-bottom:15px; border-right:5px solid var(--accent); box-shadow:0 2px 10px rgba(0,0,0,0.05);">
-                        <div style="display:flex; justify-content:space-between; align-items:start;">
+                    <div class="request-card" style="background:#fff; border:1px solid #eee; border-radius:10px; padding:20px; position:relative; overflow:hidden; box-shadow:0 2px 5px rgba(0,0,0,0.02);">
+                        <div style="border-left: 4px solid var(--accent); position:absolute; top:0; left:0; bottom:0;"></div>
+
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:15px;">
                             <div>
-                                <h3 style="color:var(--primary); margin-bottom:5px;">@req.ProductName</h3>
-                                <p style="color:#666; font-size:0.9rem;">الكمية المطلوبة: @req.TargetQuantity</p>
-                                <span style="background:#e0f2fe; padding:2px 8px; border-radius:4px; font-size:0.8rem; color:#0284c7;">المكان: @req.Location</span>
+                                <h3 style="margin:0 0 5px; font-size:1.1rem; color:var(--primary);">@req.ProductName</h3>
+                                <div style="font-size:0.85rem; color:#666;">
+                                    <i class="fas fa-map-marker-alt" style="color:var(--accent);"></i> @req.Location
+                                </div>
                             </div>
-                            <div style="text-align:center;">
-                                <span style="font-size:1.2rem; font-weight:bold; color:var(--primary);">@req.DealPrice ج.م</span>
-                                <small style="display:block; color:#888;">السعر المستهدف</small>
+                            <div style="text-align:center; background:#f0f9ff; padding:5px 10px; border-radius:8px;">
+                                <span style="display:block; font-weight:bold; color:#0284c7;">@req.DealPrice.ToString("N0")</span>
+                                <small style="font-size:0.7rem; color:#64748b;">@(isAr ? "السعر المستهدف" : "Target Price")</small>
                             </div>
                         </div>
-                        <hr style="margin:15px 0; border:0; border-top:1px solid #eee;">
-                        <button class="btn primary w-100" style="opacity:0.8;">قدم عرض (للتاجر)</button>
+
+                        <div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:10px; border-radius:6px; font-size:0.9rem;">
+                            <span>@(isAr ? "الكمية:" : "Qty:") <strong>@req.TargetQuantity</strong></span>
+                            <span style="color:#666;">@req.RequestDate.ToString("dd/MM/yyyy")</span>
+                        </div>
+
+                        @if (User.IsInRole("Merchant"))
+                        {
+                            <button class="btn btn-outline w-100" style="margin-top:15px; border:1px solid var(--primary); color:var(--primary);">
+                                @(isAr ? "تقديم عرض (قريباً)" : "Make Offer (Soon)")
+                            </button>
+                        }
                     </div>
                 }
             }
@@ -43,41 +73,56 @@
     </div>
 </section>
 
-<!-- Modal for New Request -->
-<div id="reqModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:2000; align-items:center; justify-content:center;">
-    <div style="background:#fff; padding:30px; border-radius:15px; width:90%; max-width:500px; position:relative;">
-        <span onclick="document.getElementById('reqModal').style.display='none'" style="position:absolute; top:15px; right:20px; cursor:pointer; font-size:1.5rem;">&times;</span>
+<!-- Modal -->
+<div id="reqModal" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center;">
+    <div class="modal-content" style="background:#fff; padding:30px; border-radius:15px; width:90%; max-width:500px; position:relative;">
+        <button onclick="document.getElementById('reqModal').style.display='none'" style="position:absolute; top:15px; right:15px; border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
 
-        <h3 style="color: var(--primary); margin-bottom: 20px; text-align: center;">طلب شراء جديد</h3>
+        <h3 style="text-align:center; margin-bottom:20px; color:var(--primary);">@(isAr ? "إضافة طلب جديد" : "New Request")</h3>
 
         <form asp-action="Create" method="post">
-            <div class="form-group" style="margin-bottom:15px;">
-                <label>اسم المنتج</label>
-                <input type="text" name="ProductName" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;" required>
+            <div class="form-group mb-3">
+                <label>@(isAr ? "اسم المنتج المطلوب" : "Product Name")</label>
+                <input type="text" name="ProductName" class="form-control" required placeholder="@(isAr ? "مثال: زيت خليط 700 مل" : "Ex: Mixed Oil 700ml")">
             </div>
 
-            <div class="form-group" style="margin-bottom:15px;">
-                <label>الكمية المطلوبة</label>
-                <input type="number" name="TargetQuantity" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;" required>
-            </div>
-
-            <div class="form-row" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
-                <div>
-                    <label>السعر الأصلي (تقديري)</label>
-                    <input type="number" name="OriginalPrice" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;">
+            <div class="row" style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:15px;">
+                <div class="form-group">
+                    <label>@(isAr ? "الكمية المطلوبة" : "Quantity")</label>
+                    <input type="number" name="TargetQuantity" class="form-control" required placeholder="100">
                 </div>
-                <div>
-                    <label>السعر المستهدف</label>
-                    <input type="number" name="DealPrice" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;" required>
+                <div class="form-group">
+                    <label>@(isAr ? "السعر المستهدف (للقطعة)" : "Target Price")</label>
+                    <input type="number" name="DealPrice" class="form-control" required placeholder="0.00">
                 </div>
             </div>
 
-            <div class="form-group" style="margin-bottom:20px;">
-                <label>المكان (المدينة)</label>
-                <input type="text" name="Location" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;" required>
+            <div class="form-group mb-4">
+                <label>@(isAr ? "مكان التوصيل (المدينة)" : "Location")</label>
+                <input type="text" name="Location" class="form-control" required placeholder="@(isAr ? "القاهرة، مدينة نصر" : "Cairo, Nasr City")">
             </div>
 
-            <button type="submit" class="btn primary w-100" style="padding:12px;">نشر الطلب</button>
+            <button type="submit" class="btn primary w-100">@(isAr ? "نشر الطلب" : "Post Request")</button>
         </form>
     </div>
 </div>
+
+<script>
+    function openRequestModal() {
+        @if (User.Identity.IsAuthenticated)
+        {
+                <text>document.getElementById('reqModal').style.display = 'flex';</text>
+        }
+        else
+        {
+                <text>window.location.href = '/Account/Login';</text>
+        }
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(e) {
+        if(e.target == document.getElementById('reqModal')) {
+            document.getElementById('reqModal').style.display = 'none';
+        }
+    }
+</script>

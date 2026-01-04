@@ -1,47 +1,69 @@
-﻿@{
-    ViewData["Title"] = "إعدادات الحساب";
+﻿@model Diska.Models.ApplicationUser
+@using System.Globalization
+@{
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    ViewData["Title"] = isAr ? "الإعدادات" : "Settings";
 }
 
 <section class="section-padding">
     <div class="container">
         <div class="profile-grid" style="display:grid; grid-template-columns: 1fr 3fr; gap:30px;">
 
-            <!-- نفس السايدبار للبروفايل -->
-            <div class="profile-sidebar" style="background:#fff; padding:30px; border-radius:10px;">
-                <ul style="list-style:none; padding:0;">
-                    <li style="padding:10px; border-bottom:1px solid #eee;"><a asp-action="Profile">الرئيسية</a></li>
-                    <li style="padding:10px; border-bottom:1px solid #eee;"><a asp-controller="Order" asp-action="MyOrders">طلباتي</a></li>
-                    <li style="padding:10px; background:#f8fafc; border-radius:5px; font-weight:bold;"><a asp-action="Settings" style="color:var(--primary);">الإعدادات</a></li>
+            <!-- Sidebar (Reuse or Partial in real app) -->
+            <div class="profile-sidebar" style="background:#fff; padding:30px; border-radius:15px; border:1px solid #eee;">
+                <ul class="sidebar-links" style="list-style:none; padding:0;">
+                    <li style="margin-bottom:10px;"><a asp-action="Profile" style="color:#666; text-decoration:none; display:block; padding:10px;"> <i class="fas fa-arrow-right"></i> @(isAr ? "العودة للملف الشخصي" : "Back to Profile")</a></li>
+                    <li style="margin-bottom:10px;"><a href="#" class="active" style="display:block; padding:10px; background:#f8fafc; border-radius:8px; color:var(--primary); font-weight:bold;"> <i class="fas fa-user-edit"></i> @(isAr ? "تعديل البيانات" : "Edit Info")</a></li>
                 </ul>
             </div>
 
-            <div class="profile-content" style="background:#fff; padding:30px; border-radius:10px; border:1px solid #eee;">
-                <h2 style="margin-bottom:20px; color:var(--primary);">تعديل البيانات الشخصية</h2>
+            <!-- Settings Form -->
+            <div class="settings-content" style="background:#fff; padding:30px; border-radius:15px; border:1px solid #eee;">
+                <h3 style="margin-bottom:25px; border-bottom:1px solid #eee; padding-bottom:15px; color:var(--primary);">@(isAr ? "تعديل البيانات الشخصية" : "Edit Profile")</h3>
+
+                @if (TempData["Success"] != null)
+                {
+                    <div class="alert alert-success" style="background:#dcfce7; color:#166534; padding:15px; border-radius:8px; margin-bottom:20px;">
+                        @TempData["Success"]
+                    </div>
+                }
 
                 <form asp-action="UpdateProfile" method="post">
-                    <div class="form-row" style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                    <div class="form-row" style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-bottom:20px;">
                         <div class="form-group">
-                            <label>الاسم بالكامل</label>
-                            <input type="text" name="FullName" value="@ViewBag.FullName" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;">
+                            <label style="display:block; margin-bottom:5px; font-weight:bold;">@(isAr ? "الاسم بالكامل" : "Full Name")</label>
+                            <input type="text" name="FullName" value="@Model.FullName" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
                         </div>
                         <div class="form-group">
-                            <label>رقم الموبايل</label>
-                            <input type="tel" name="PhoneNumber" value="@ViewBag.PhoneNumber" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;">
+                            <label style="display:block; margin-bottom:5px; font-weight:bold;">@(isAr ? "رقم الهاتف" : "Phone Number")</label>
+                            <input type="text" value="@Model.PhoneNumber" class="form-control" disabled style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; background:#f1f5f9; cursor:not-allowed;" title="Cannot change phone number">
                         </div>
                     </div>
 
-                    <div class="form-group" style="margin-top:15px;">
-                        <label>اسم المحل / النشاط التجاري</label>
-                        <input type="text" name="ShopName" value="@ViewBag.ShopName" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;">
+                    @if (User.IsInRole("Merchant"))
+                    {
+                        <div class="form-group" style="margin-bottom:20px;">
+                            <label style="display:block; margin-bottom:5px; font-weight:bold;">@(isAr ? "اسم المحل / النشاط" : "Shop Name")</label>
+                            <input type="text" name="ShopName" value="@Model.ShopName" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
+                        </div>
+                        <div class="form-group" style="margin-bottom:20px;">
+                            <label style="display:block; margin-bottom:5px; font-weight:bold;">@(isAr ? "السجل التجاري" : "Commercial Register")</label>
+                            <input type="text" name="CommercialRegister" value="@Model.CommercialRegister" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
+                        </div>
+                    }
+
+                    <h4 style="margin-top:30px; margin-bottom:20px; color:var(--primary);">@(isAr ? "تغيير كلمة المرور" : "Change Password")</h4>
+
+                    <div class="form-group" style="margin-bottom:15px;">
+                        <input type="password" name="CurrentPassword" placeholder="@(isAr ? "كلمة المرور الحالية" : "Current Password")" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
+                    </div>
+                    <div class="form-group" style="margin-bottom:20px;">
+                        <input type="password" name="NewPassword" placeholder="@(isAr ? "كلمة المرور الجديدة" : "New Password")" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
                     </div>
 
-                    <h3 style="margin-top:30px; margin-bottom:15px; font-size:1.1rem;">تغيير كلمة المرور</h3>
-                    <div class="form-group">
-                        <input type="password" name="CurrentPassword" placeholder="كلمة المرور الحالية" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; margin-bottom:10px;">
-                        <input type="password" name="NewPassword" placeholder="كلمة المرور الجديدة" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;">
-                    </div>
-
-                    <button class="btn primary" style="margin-top:20px; padding:10px 30px;">حفظ التغييرات</button>
+                    <button type="submit" class="btn primary" style="padding:12px 30px; border-radius:8px; border:none; font-weight:bold; background:var(--primary); color:#fff; cursor:pointer;">
+                        @(isAr ? "حفظ التغييرات" : "Save Changes")
+                    </button>
                 </form>
             </div>
         </div>

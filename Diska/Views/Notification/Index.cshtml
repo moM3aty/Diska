@@ -1,0 +1,77 @@
+﻿@using System.Globalization
+@{
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    ViewData["Title"] = isAr ? "الإشعارات" : "Notifications";
+}
+
+<section class="section-padding" style="min-height: 70vh;">
+    <div class="container">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #eee; padding-bottom:15px;">
+            <h2 style="margin:0;">@(isAr ? "الإشعارات" : "Notifications") 🔔</h2>
+            <button class="btn" onclick="clearAllNotifications()" style="color:#dc2626; background:transparent; border:1px solid #dc2626; padding:5px 15px; border-radius:5px;">
+                @(isAr ? "مسح الكل" : "Clear All")
+            </button>
+        </div>
+
+        <div id="notificationsPageList">
+            <!-- Loaded via JS -->
+            <div style="text-align:center; padding:50px;">
+                <i class="fas fa-spinner fa-spin fa-2x" style="color:var(--primary);"></i>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAllNotifications();
+        });
+
+        async function loadAllNotifications() {
+            const container = document.getElementById('notificationsPageList');
+            try {
+                const response = await fetch('/Notification/GetRecent');
+                const data = await response.json();
+
+                container.innerHTML = '';
+
+                if (data.length === 0) {
+                    container.innerHTML = `<div style="text-align:center; padding:40px; color:#777;">@(isAr ? "لا توجد إشعارات حالياً" : "No notifications found")</div>`;
+                    return;
+                }
+
+                data.forEach(n => {
+                    const html = `
+                        <div class="notif-item" style="background:${n.isRead ? '#fff' : '#f0f9ff'}; padding:15px; border-bottom:1px solid #eee; display:flex; align-items:start; gap:15px; transition:0.2s;">
+                            <div style="width:10px; height:10px; background:${n.isRead ? 'transparent' : '#2563eb'}; border-radius:50%; margin-top:8px;"></div>
+                            <div style="flex:1;">
+                                <h4 style="margin:0 0 5px; font-size:1rem; font-weight:${n.isRead ? 'normal' : 'bold'};">${n.title}</h4>
+                                <p style="margin:0; color:#666; font-size:0.9rem;">${n.message}</p>
+                                <span style="font-size:0.8rem; color:#999; margin-top:5px; display:block;">${n.timeAgo}</span>
+                            </div>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', html);
+                });
+
+                // Mark all as read visually after loading (optional)
+                // In a real app, you might want to mark them read only when viewed
+
+            } catch (error) {
+                console.error(error);
+                container.innerHTML = '<p style="color:red; text-align:center;">Error loading data</p>';
+            }
+        }
+
+        async function clearAllNotifications() {
+            if(!confirm('@(isAr ? "هل أنت متأكد؟" : "Are you sure?")')) return;
+
+            await fetch('/Notification/ClearAll', { method: 'POST' });
+            loadAllNotifications();
+            // Update header badge
+            const badge = document.querySelector('.notif-badge');
+            if(badge) badge.style.display = 'none';
+        }
+    </script>
+}

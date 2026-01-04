@@ -4,45 +4,47 @@
     Layout = "_AdminLayout";
 }
 
-<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
-    <h2 style="color: var(--primary);">أقسام الموقع</h2>
-    <!-- نموذج إضافة سريع -->
-    <div style="background:#fff; padding:15px; border-radius:10px; border:1px solid #ddd; width: 50%;">
-        <form asp-action="CreateCategory" method="post" style="display:flex; gap:10px;">
-            <input type="text" name="Name" placeholder="اسم القسم الجديد" required style="flex:1; padding:8px; border:1px solid #ccc; border-radius:5px;">
-            <input type="text" name="IconClass" placeholder="أيقونة (fas fa-box)" style="width:150px; padding:8px; border:1px solid #ccc; border-radius:5px;">
-            <button class="btn primary small">إضافة</button>
-        </form>
-    </div>
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+    <h2 style="margin:0;">أقسام المتجر</h2>
+
+    <!-- Quick Add Form -->
+    <form asp-action="CreateCategory" method="post" style="display:flex; gap:10px; background:#fff; padding:10px; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.05);">
+        <input type="text" name="Name" placeholder="اسم القسم بالعربي" required style="padding:8px; border:1px solid #ddd; border-radius:5px;">
+        <input type="text" name="NameEn" placeholder="Name in English" style="padding:8px; border:1px solid #ddd; border-radius:5px;">
+        <input type="text" name="IconClass" placeholder="fa-icon (ex: fas fa-box)" style="padding:8px; border:1px solid #ddd; border-radius:5px;">
+        <button type="submit" class="btn btn-primary" style="padding:8px 15px;">إضافة</button>
+    </form>
 </div>
 
-<table>
-    <thead>
-        <tr>
-            <th>#</th>
-            <th>اسم القسم</th>
-            <th>الأيقونة</th>
-            <th>عدد المنتجات</th>
-            <th>إجراءات</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
-        {
+<div class="card">
+    <table>
+        <thead>
             <tr>
-                <td>@item.Id</td>
-                <td>@item.Name</td>
-                <td><i class="@item.IconClass"></i> (@item.IconClass)</td>
-                <td>@item.Products?.Count()</td>
-                <td>
-                    <form asp-action="DeleteCategory" method="post" onsubmit="return confirm('حذف هذا القسم؟');">
-                        <input type="hidden" name="id" value="@item.Id" />
-                        <button type="submit" style="color:red; background:none; border:none; cursor:pointer;">
-                            <i class="fas fa-trash"></i> حذف
-                        </button>
-                    </form>
-                </td>
+                <th>#</th>
+                <th>الأيقونة</th>
+                <th>الاسم (عربي)</th>
+                <th>الاسم (إنجليزي)</th>
+                <th>عدد المنتجات</th>
+                <th>إجراءات</th>
             </tr>
-        }
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Id</td>
+                    <td><i class="@item.IconClass fa-lg" style="color:#555;"></i></td>
+                    <td>@item.Name</td>
+                    <td>@item.NameEn</td>
+                    <td>@(item.Products?.Count ?? 0)</td>
+                    <td>
+                        <form asp-action="DeleteCategory" method="post" onsubmit="return confirm('حذف هذا القسم؟ قد يؤثر على المنتجات المرتبطة.');">
+                            <input type="hidden" name="id" value="@item.Id" />
+                            <button type="submit" class="btn" style="color:red; background:none; padding:0;"><i class="fas fa-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

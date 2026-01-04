@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Diska.Data;
-using Diska.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace Diska.Controllers
@@ -14,37 +13,39 @@ namespace Diska.Controllers
             _context = context;
         }
 
-        public IActionResult Details(int id)
+        // تفاصيل المنتج
+        public async Task<IActionResult> Details(int id)
         {
-            var product = _context.Products.Include(p => p.Category).FirstOrDefault(p => p.Id == id);
+            var product = await _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.PriceTiers.OrderBy(t => t.MinQuantity)) // ترتيب الشرائح
+                .FirstOrDefaultAsync(p => p.Id == id);
 
-            if (product == null) return RedirectToAction("Index", "Home");
+            if (product == null) return NotFound();
+
+            // اقتراح منتجات مشابهة من نفس القسم
+            ViewBag.RelatedProducts = await _context.Products
+                .Where(p => p.CategoryId == product.CategoryId && p.Id != product.Id)
+                .Take(4)
+                .ToListAsync();
 
             return View(product);
         }
 
-
-        public IActionResult Category(int id, decimal? minPrice, decimal? maxPrice, string sort)
+        // عرض المنتجات حسب القسم
+        public async Task<IActionResult> Category(int id)
         {
-            var category = _context.Categories.Find(id);
+            var category = await _context.Categories.FindAsync(id);
+            if (category == null) return NotFound();
 
-            if (category == null) return RedirectToAction("Index", "Home");
+            ViewBag.CategoryName = System.Globalization.CultureInfo.CurrentCulture.Name.StartsWith("ar") ? category.Name : (category.NameEn ?? category.Name);
 
-            var products = _context.Products
-                .Where(p => p.CategoryId == id)
-                .Include(p => p.Category) 
-                .AsQueryable();
+            var products = await _context.Products
+                .Where(p => p.CategoryId == id && p.StockQuantity > 0)
+                .OrderByDescending(p => p.Id)
+                .ToListAsync();
 
-            if (minPrice.HasValue) products = products.Where(p => p.Price >= minPrice.Value);
-            if (maxPrice.HasValue) products = products.Where(p => p.Price <= maxPrice.Value);
-
-            if (sort == "price_asc") products = products.OrderBy(p => p.Price);
-            else if (sort == "price_desc") products = products.OrderByDescending(p => p.Price);
-            else products = products.OrderByDescending(p => p.Id);
-
-            ViewBag.CurrentCategory = category;
-
-            return View(products.ToList());
+            return View(products);
         }
     }
 }

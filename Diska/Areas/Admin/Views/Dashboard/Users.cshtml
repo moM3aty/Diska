@@ -1,38 +1,108 @@
-﻿@model IEnumerable<Microsoft.AspNetCore.Identity.IdentityUser>
+﻿@model IEnumerable<Diska.Models.ApplicationUser>
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<Diska.Models.ApplicationUser> UserManager
 @{
-    ViewData["Title"] = "المستخدمين";
+    ViewData["Title"] = "إدارة المستخدمين";
     Layout = "_AdminLayout";
 }
 
-<h2 style="margin-bottom: 30px; color: var(--primary);">إدارة المستخدمين المسجلين</h2>
+<div style="margin-bottom:20px;">
+    <h2 style="margin:0;">قاعدة بيانات المستخدمين</h2>
+</div>
 
-<table>
-    <thead>
-        <tr>
-            <th>المعرف (ID)</th>
-            <th>اسم المستخدم / البريد</th>
-            <th>رقم الهاتف</th>
-            <th>حالة البريد</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var user in Model)
-        {
+<div class="card">
+    <table>
+        <thead>
             <tr>
-                <td style="font-size:0.8rem; color:#888;">@user.Id</td>
-                <td>@user.Email</td>
-                <td>@(user.PhoneNumber ?? "غير مسجل")</td>
-                <td>
-                    @if (user.EmailConfirmed)
-                    {
-                        <span style="color:green; font-weight:bold;">مفعل</span>
-                    }
-                    else
-                    {
-                        <span style="color:orange;">غير مفعل</span>
-                    }
-                </td>
+                <th>الاسم / المحل</th>
+                <th>رقم الهاتف</th>
+                <th>النوع</th>
+                <th>الرصيد (Wallet)</th>
+                <th>حالة الحساب</th>
+                <th>إجراءات</th>
             </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Model)
+            {
+                var roles = await UserManager.GetRolesAsync(user);
+                var roleName = roles.FirstOrDefault() ?? "Customer";
+
+                <tr>
+                    <td>
+                        <strong>@user.FullName</strong>
+                        @if (!string.IsNullOrEmpty(user.ShopName))
+                        {
+                            <div style="font-size:0.8rem; color:#666;">@user.ShopName</div>
+                        }
+                    </td>
+                    <td>@user.PhoneNumber</td>
+                    <td>
+                        @if (roleName == "Admin")
+                        {
+                            <span class="badge" style="background:#000; color:#fff;">Admin</span>
+                        }
+                        else if (roleName == "Merchant")
+                        {
+
+                            <span class="badge" style="background:#7c3aed; color:#fff;">تاجر</span>
+                        }
+                        else
+                        {
+
+                            <span class="badge" style="background:#e2e8f0; color:#333;">عميل</span>
+                        }
+                    </td>
+                    <td>
+                        <span style="font-weight:bold; color:@(user.WalletBalance > 0 ? "green" : "black")">@user.WalletBalance.ToString("N2")</span>
+                    </td>
+                    <td>
+                        <span class="badge" style="background:#dcfce7; color:#166534;">نشط</span>
+                    </td>
+                    <td>
+                        <!-- زرار لتعديل الرصيد (استرداد/تعويض) -->
+                        <button type="button" onclick="promptRefund('@user.Id', '@user.FullName')" class="btn" style="background:#e0f2fe; color:#0284c7; padding:5px 10px; font-size:0.8rem;">
+                            <i class="fas fa-wallet"></i> رصيد
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<script>
+    function promptRefund(userId, userName) {
+        const amount = prompt("أدخل المبلغ لإضافته لمحفظة " + userName + ":");
+        if(amount && !isNaN(amount)) {
+            const reason = prompt("سبب الإضافة (مثل: استرداد، تعويض):");
+            if(reason) {
+                // إنشاء فورم وإرساله برمجياً
+                const form = document.createElement('form');
+                form.method = 'post';
+                form.action = '/Admin/Dashboard/RefundUser';
+
+                const idInput = document.createElement('input');
+                idInput.type = 'hidden';
+                idInput.name = 'userId';
+                idInput.value = userId;
+
+                const amtInput = document.createElement('input');
+                amtInput.type = 'hidden';
+                amtInput.name = 'amount';
+                amtInput.value = amount;
+
+                const rsnInput = document.createElement('input');
+                rsnInput.type = 'hidden';
+                rsnInput.name = 'reason';
+                rsnInput.value = reason;
+
+                form.appendChild(idInput);
+                form.appendChild(amtInput);
+                form.appendChild(rsnInput);
+                document.body.appendChild(form);
+                form.submit();
+            }
         }
-    </tbody>
-</table>
+    }
+</script>

@@ -1,0 +1,76 @@
+﻿@model Diska.Models.Survey
+@using System.Globalization
+@{
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+}
+
+@if (Model != null)
+{
+    <div id="surveyPopup" class="survey-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:9999; justify-content:center; align-items:center;">
+        <div class="survey-box" style="background:#fff; width:90%; max-width:500px; padding:30px; border-radius:15px; position:relative; box-shadow:0 10px 40px rgba(0,0,0,0.2); animation: slideIn 0.3s ease-out;">
+            <button onclick="closeSurvey()" style="position:absolute; top:15px; right:15px; border:none; background:none; font-size:1.5rem; cursor:pointer; color:#999;">&times;</button>
+
+            <h3 style="text-align:center; color:var(--primary); margin-bottom:10px;">@Model.Title</h3>
+            <p style="text-align:center; color:#666; font-size:0.9rem; margin-bottom:20px;">@(isAr ? "رأيك يهمنا لتحسين الخدمة" : "We value your feedback")</p>
+
+            <form id="surveyForm" onsubmit="submitSurvey(event)">
+                <input type="hidden" name="surveyId" value="@Model.Id" />
+
+                @foreach (var q in Model.Questions)
+                {
+                    <div class="survey-q" style="margin-bottom:20px;">
+                        <label style="display:block; font-weight:bold; margin-bottom:8px;">@q.QuestionText</label>
+
+                        @if (q.Type == "Text")
+                        {
+                            <textarea name="q_@q.Id" class="form-control" rows="3" required style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;"></textarea>
+                        }
+                        else if (q.Type == "YesNo")
+                        {
+                            <div style="display:flex; gap:15px;">
+                                <label><input type="radio" name="q_@q.Id" value="Yes" required> @(isAr ? "نعم" : "Yes")</label>
+                                <label><input type="radio" name="q_@q.Id" value="No"> @(isAr ? "لا" : "No")</label>
+                            </div>
+                        }
+                        else if (q.Type == "Star")
+                        {
+                            <div class="star-rating" style="direction:ltr; display:flex; gap:5px;">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    <label style="cursor:pointer;">
+                                        <input type="radio" name="q_@q.Id" value="@i" style="display:none;" onchange="updateStars(this)">
+                                        <i class="far fa-star fa-lg" style="color:#FACC15;"></i>
+                                    </label>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+
+                <button type="submit" class="btn primary w-100" style="padding:12px; font-weight:bold;">@(isAr ? "إرسال الإجابات" : "Submit Answers")</button>
+            </form>
+        </div>
+    </div>
+
+    <style>
+        @@keyframes slideIn {
+            from
+
+        {
+            transform: translateY(20px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        }
+
+        .star-rating input:checked ~ i, .star-rating label:hover ~ i {
+            font-weight: 900;
+        }
+        /* Simple CSS logic, JS can enhance */
+    </style>
+}

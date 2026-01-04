@@ -4,35 +4,60 @@
     ViewData["Title"] = isAr ? "سلة المشتريات" : "Shopping Cart";
 }
 
-<section class="cart-section">
+<section class="section-padding cart-section">
     <div class="container">
-        <h2 style="margin-bottom: 20px;">@(isAr ? "سلة المشتريات" : "Shopping Cart")</h2>
+        <h2 class="page-title">@(isAr ? "سلة المشتريات" : "Shopping Cart")</h2>
 
-        <div class="cart-layout">
-            <div class="cart-items">
-                <!-- Items injected via JS -->
-                <p style="text-align:center; padding: 20px;">@(isAr ? "جاري تحميل السلة..." : "Loading cart...")</p>
+        <div class="cart-layout" style="display:grid; grid-template-columns: 2fr 1fr; gap:30px;">
+
+            <!-- Items List -->
+            <div class="cart-items-container">
+                <div id="cartItemsList">
+                    <!-- Items injected via JS -->
+                    <div style="text-align:center; padding:40px; color:#666;">
+                        <i class="fas fa-spinner fa-spin fa-2x"></i>
+                        <p>@(isAr ? "جاري تحميل السلة..." : "Loading cart...")</p>
+                    </div>
+                </div>
             </div>
 
-            <div class="cart-summary">
-                <h3>@(isAr ? "ملخص الطلب" : "Order Summary")</h3>
-                <div class="summary-row">
+            <!-- Summary -->
+            <div class="cart-summary-box" style="background:#f8fafc; padding:25px; border-radius:12px; height:fit-content; border:1px solid #e2e8f0;">
+                <h3 style="margin-bottom:20px; color:var(--primary);">@(isAr ? "ملخص الطلب" : "Order Summary")</h3>
+
+                <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
                     <span>@(isAr ? "المجموع الفرعي" : "Subtotal")</span>
-                    <span id="cartSubTotal">0.00 @(isAr ? "ج.م" : "EGP")</span>
+                    <span id="cartSubtotal" style="font-weight:bold;">0.00</span>
                 </div>
-                <div class="summary-row">
+
+                <div style="display:flex; justify-content:space-between; margin-bottom:15px; color:#666; font-size:0.9rem;">
                     <span>@(isAr ? "الضريبة (14%)" : "VAT (14%)")</span>
-                    <span>@(isAr ? "مشمولة" : "Included")</span>
+                    <span>@(isAr ? "شامل الضريبة" : "Inclusive")</span>
                 </div>
-                <div class="summary-row total">
-                    <span>@(isAr ? "الإجمالي" : "Total")</span>
-                    <span id="cartTotal">0.00 @(isAr ? "ج.م" : "EGP")</span>
+
+                <hr style="border:0; border-top:1px solid #ddd; margin:15px 0;">
+
+                <div style="display:flex; justify-content:space-between; margin-bottom:20px; font-size:1.2rem;">
+                    <strong>@(isAr ? "الإجمالي" : "Total")</strong>
+                    <strong id="cartTotal" style="color:var(--primary);">0.00</strong>
                 </div>
-                <a asp-action="Checkout" class="btn primary w-100 checkout-btn" style="text-align: center; text-decoration: none;">
-                    @(isAr ? "إتمام الشراء" : "Proceed to Checkout")
+
+                <a asp-action="Checkout" class="btn primary w-100" style="text-align:center; display:block; text-decoration:none;">
+                    @(isAr ? "متابعة الشراء" : "Proceed to Checkout") <i class="fas fa-arrow-left"></i>
                 </a>
-                <a asp-controller="Home" asp-action="Index" class="continue-shopping">@(isAr ? "متابعة التسوق" : "Continue Shopping")</a>
+
+                <a asp-controller="Home" asp-action="Index" style="display:block; text-align:center; margin-top:15px; color:#666; text-decoration:none; font-size:0.9rem;">
+                    @(isAr ? "العودة للتسوق" : "Continue Shopping")
+                </a>
             </div>
         </div>
     </div>
 </section>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCartPage();
+        });
+    </script>
+}

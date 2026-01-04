@@ -4,38 +4,67 @@
     Layout = "_AdminLayout";
 }
 
-<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
-    <h2>جميع المنتجات</h2>
-    <a asp-controller="Merchant" asp-action="Index" class="btn primary">إضافة منتج جديد</a>
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+    <h2 style="margin:0;">إدارة المنتجات والمخزون</h2>
+    <!-- يمكن إضافة زر تصدير أو طباعة هنا -->
+    <span class="badge" style="background:#e0f2fe; color:#0284c7; font-size:0.9rem;">إجمالي: @Model.Count()</span>
 </div>
 
-<table>
-    <thead>
-        <tr>
-            <th>الصورة</th>
-            <th>اسم المنتج</th>
-            <th>السعر</th>
-            <th>الكمية</th>
-            <th>التصنيف</th>
-            <th>إجراءات</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
-        {
+<div class="card">
+    <table>
+        <thead>
             <tr>
-                <td><img src="~/@item.ImageUrl" style="width:50px; height:50px; object-fit:contain;"></td>
-                <td>@item.Name</td>
-                <td>@item.Price.ToString("N2")</td>
-                <td>@item.StockQuantity</td>
-                <td>@(item.Category?.Name ?? "بدون")</td>
-                <td>
-                    <form asp-controller="Merchant" asp-action="Delete" method="post" onsubmit="return confirm('هل أنت متأكد؟');" style="display:inline;">
-                        <input type="hidden" name="id" value="@item.Id" />
-                        <button type="submit" style="color:red; background:none; border:none; cursor:pointer;"><i class="fas fa-trash"></i> حذف</button>
-                    </form>
-                </td>
+                <th>صورة</th>
+                <th>اسم المنتج</th>
+                <th>التاجر</th>
+                <th>القسم</th>
+                <th>السعر</th>
+                <th>المخزون</th>
+                <th>إجراءات</th>
             </tr>
-        }
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td><img src="~/@item.ImageUrl" style="width:40px; height:40px; object-fit:contain; border-radius:5px;"></td>
+                    <td>
+                        <strong>@item.Name</strong>
+                        @if (item.IsExpired)
+                        {
+                            <span class="badge" style="background:red; color:white;">منتهي</span>
+                        }
+                    </td>
+                    <td>@(item.Merchant?.ShopName ?? "غير معروف")</td>
+                    <td>@item.Category?.Name</td>
+                    <td>@item.Price.ToString("N0")</td>
+                    <td>
+                        @if (item.StockQuantity == 0)
+                        {
+                            <span style="color:red; font-weight:bold;">0</span>
+                        }
+                        else if (item.StockQuantity < 10)
+                        {
+                            <span style="color:orange; font-weight:bold;">@item.StockQuantity</span>
+                        }
+                        else
+                        {
+                            <span style="color:green;">@item.StockQuantity</span>
+                        }
+                    </td>
+                    <td>
+                        <!-- في لوحة الأدمن، الحذف يكون نهائي أو إخفاء -->
+                        <!-- سنفترض وجود أكشن للحذف في الكنترولر -->
+                        <form asp-controller="Merchant" asp-action="Delete" method="post" onsubmit="return confirm('حذف هذا المنتج نهائياً؟');">
+                            <input type="hidden" name="id" value="@item.Id" />
+                            <input type="hidden" name="returnUrl" value="/Admin/Dashboard/Products" />
+                            <button type="submit" class="btn" style="background:#fee2e2; color:red; padding:5px 10px; font-size:0.8rem;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

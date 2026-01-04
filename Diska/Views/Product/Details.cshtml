@@ -7,81 +7,106 @@
 
 <section class="product-details-section">
     <div class="container">
+        <!-- Breadcrumb -->
         <div class="breadcrumb">
-            <a asp-controller="Home" asp-action="Index">@(isAr ? "الرئيسية" : "Home")</a> / <span>@(isAr? Model.Name: (Model.NameEn ?? Model.Name))</span>
+            <a asp-controller="Home" asp-action="Index">@(isAr ? "الرئيسية" : "Home")</a> /
+            <span>@(isAr? Model.Category.Name : (Model.Category.NameEn ?? Model.Category.Name))</span> /
+            <span>@(isAr? Model.Name: (Model.NameEn ?? Model.Name))</span>
         </div>
 
         <div class="details-grid">
+            <!-- Image -->
             <div class="details-img">
                 <img src="~/@Model.ImageUrl" alt="@Model.Name">
             </div>
 
-            <div class="details-info product-card merchant-product" data-id="@Model.Id" data-stock="@Model.StockQuantity">
-                <span class="brand-tag">@(isAr ? "ماركة" : "Brand")</span>
-                <button class="fav-btn" style="position: relative; float: @(isAr ? "left" : "right"); top: 0; left: 0; border: 1px solid #ddd;">
-                    <i class="fas fa-heart"></i>
-                </button>
-
+            <!-- Info -->
+            <div class="details-info product-card" data-id="@Model.Id">
+                <!-- Class product-card added for JS hook -->
                 <h1>@(isAr? Model.Name: (Model.NameEn ?? Model.Name))</h1>
-
-                <div class="product-meta" style="margin: 10px 0; flex-direction: @(isAr ? "row" : "row-reverse");">
-                    <span><i class="fas fa-box-open"></i> @Model.UnitsPerCarton @(isAr ? "زجاجات / كرتونة" : "Units / Carton")</span>
-                    <span class="stock-info">@(isAr ? "متاح:" : "Stock:") @Model.StockQuantity</span>
-                </div>
-
-                <p class="sku">@(isAr ? "كود المنتج:" : "SKU:") #@Model.Id</p>
+                <p class="sku">SKU: #@Model.Id</p>
 
                 <div class="main-price">
-                    <strong class="current-price">@Model.Price.ToString("F2") @(isAr ? "ج.م" : "EGP")</strong>
+                    <span class="current-price">@Model.Price.ToString("N2") @(isAr ? "ج.م" : "EGP")</span>
                     @if (Model.OldPrice.HasValue)
                     {
-                        <span class="old-price old">@Model.OldPrice.Value.ToString("F2") @(isAr ? "ج.م" : "EGP")</span>
+                        <span class="old-price">@Model.OldPrice.Value.ToString("N2")</span>
                     }
                 </div>
 
-                <div class="wholesale-table">
-                    <h4>@(isAr ? "أسعار الجملة" : "Wholesale Tiers")</h4>
-                    <table>
-                        <tr>
-                            <th>@(isAr ? "الكمية" : "Quantity")</th>
-                            <th>@(isAr ? "السعر للوحدة" : "Unit Price")</th>
-                            <th>@(isAr ? "التوفير" : "Saving")</th>
-                        </tr>
-                        <tr>
-                            <td>1 - 4</td>
-                            <td>@Model.Price @(isAr ? "ج.م" : "EGP")</td>
-                            <td>-</td>
-                        </tr>
-                        <tr class="highlight">
-                            <td>5 - 19</td>
-                            <td>@((Model.Price * 0.95m).ToString("F2")) @(isAr ? "ج.م" : "EGP")</td>
-                            <td>5%</td>
-                        </tr>
-                        <tr>
-                            <td>20+</td>
-                            <td>@((Model.Price * 0.90m).ToString("F2")) @(isAr ? "ج.م" : "EGP")</td>
-                            <td>10%</td>
-                        </tr>
-                    </table>
+                <div class="meta-info">
+                    <p><i class="fas fa-box"></i> @(isAr ? $"الوحدة: {Model.UnitsPerCarton} قطعة/كرتونة" : $"Unit: {Model.UnitsPerCarton} pcs/carton")</p>
+                    <p>
+                        <i class="fas fa-cubes"></i>
+                        @(isAr ? "المخزون:" : "Stock:")
+                        <span style="color: @(Model.StockQuantity > 10 ? "green" : "red"); font-weight:bold;">
+                            @(Model.StockQuantity > 0 ? Model.StockQuantity.ToString() : (isAr ? "نفذت الكمية" : "Out of Stock"))
+                        </span>
+                    </p>
                 </div>
 
-                <div class="card-actions details-actions" style="display:flex; gap:15px; margin-top:20px;">
-                    <div class="qty-control-card" style="display:flex; border:1px solid #ddd; border-radius:5px; height:50px;">
-                        <button class="card-minus" style="width:40px; font-size:1.2rem;">-</button>
-                        <input type="number" class="manual-qty" value="1" min="1" max="@Model.StockQuantity" style="width:60px; font-size:1.2rem; text-align:center; border:none; font-weight:bold;">
-                        <button class="card-plus" style="width:40px; font-size:1.2rem;">+</button>
+                <!-- B2B Tiered Pricing Table -->
+                @if (Model.PriceTiers != null && Model.PriceTiers.Any())
+                {
+                    <div class="wholesale-table">
+                        <h4>@(isAr ? "خصومات الكميات (الجملة)" : "Bulk Discounts")</h4>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>@(isAr ? "الكمية" : "Quantity")</th>
+                                    <th>@(isAr ? "السعر للقطعة" : "Unit Price")</th>
+                                    <th>@(isAr ? "التوفير" : "Savings")</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var tier in Model.PriceTiers)
+                                {
+                                    var saving = Model.Price - tier.UnitPrice;
+                                    <tr class="highlight">
+                                        <td>@tier.MinQuantity - @tier.MaxQuantity</td>
+                                        <td>@tier.UnitPrice.ToString("N2")</td>
+                                        <td style="color:green;">@saving.ToString("N2") @(isAr ? "ج.م" : "EGP")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
                     </div>
+                }
 
-                    <button class="add-btn" style="flex:1; height:50px; font-size:1.1rem; justify-content:center; border-radius: 8px; cursor: pointer; background-color: #FACC15; border: none; font-weight: bold; display: flex; align-items: center; gap: 10px;">
-                        @(isAr ? "إضافة للسلة" : "Add to Cart") <i class="fas fa-cart-plus"></i>
-                    </button>
-                </div>
+                <!-- Actions -->
+                @if (Model.StockQuantity > 0)
+                {
+                    <div class="details-actions">
+                        <div class="qty-control">
+                            <button onclick="changeQty(-1)">-</button>
+                            <input type="number" id="qtyInput" value="1" min="1" max="@Model.StockQuantity" readonly class="manual-qty">
+                            <button onclick="changeQty(1)">+</button>
+                        </div>
+                        <button class="btn primary add-big-btn add-btn" onclick="addToCart(this)">
+                            @(isAr ? "إضافة للسلة" : "Add to Cart") <i class="fas fa-cart-plus"></i>
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <button class="btn" disabled style="background:#ccc; width:100%;">@(isAr ? "غير متوفر حالياً" : "Currently Unavailable")</button>
+                }
 
-                <div class="meta-info" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
-                    <p><i class="fas fa-truck"></i> @(isAr ? "توصيل خلال 24 ساعة" : "Delivery within 24 hours")</p>
-                    <p><i class="fas fa-undo"></i> @(isAr ? "استرجاع مجاني" : "Free Returns")</p>
+                <div class="description" style="margin-top:20px;">
+                    <h3>@(isAr ? "تفاصيل المنتج" : "Description")</h3>
+                    <p>@(isAr? Model.Description: (Model.DescriptionEn ?? Model.Description))</p>
                 </div>
             </div>
         </div>
     </div>
 </section>
+
+<script>
+    function changeQty(amount) {
+        const input = document.getElementById('qtyInput');
+        let val = parseInt(input.value) + amount;
+        if (val >= 1 && val <= parseInt(input.getAttribute('max'))) {
+            input.value = val;
+        }
+    }
+</script>
