@@ -1,0 +1,147 @@
+﻿@{
+    ViewData["Title"] = "إتمام الطلب";
+}
+
+<section class="checkout-section">
+    <div class="container">
+        <h2 class="page-title">بيانات الشحن والدفع</h2>
+        <div class="checkout-grid">
+
+            <div class="checkout-form">
+                <h3><i class="fas fa-map-marker-alt"></i> عنوان التوصيل</h3>
+                <form id="checkoutForm">
+                    <div class="form-group">
+                        <label>اسم المحل / التاجر</label>
+                        <input type="text" id="shopName" placeholder="مثال: سوبر ماركت الأمانة" required>
+                    </div>
+                    <div class="form-group">
+                        <label>رقم الموبايل</label>
+                        <input type="tel" id="phone" placeholder="01xxxxxxxxx" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>المحافظة</label>
+                            <select id="govSelect" onchange="updateRegions()">
+                                <option value="" disabled selected>اختر المحافظة</option>
+                                <!-- سيتم ملؤها بواسطة JS -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>المنطقة / الحي</label>
+                            <select id="citySelect" disabled>
+                                <option value="" disabled selected>اختر المنطقة</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>العنوان بالتفصيل</label>
+                        <input type="text" id="addressDetail" placeholder="اسم الشارع، رقم العمارة، علامة مميزة" required>
+                    </div>
+
+                    <h3><i class="fas fa-wallet"></i> طريقة الدفع</h3>
+                    <div class="payment-options">
+                        <label class="payment-card selected">
+                            <input type="radio" name="payment" value="Cash" checked>
+                            <div class="pay-icon"><i class="fas fa-money-bill-wave"></i></div>
+                            <span>دفع عند الاستلام (كاش)</span>
+                        </label>
+                        <label class="payment-card">
+                            <input type="radio" name="payment" value="Wallet">
+                            <div class="pay-icon"><i class="fas fa-wallet"></i></div>
+                            <span>محفظة DISKA</span>
+                        </label>
+                    </div>
+                </form>
+            </div>
+
+            <div class="order-summary-box new-design">
+                <h3>ملخص الفاتورة</h3>
+
+                <div class="checkout-items" id="checkoutItemsList">
+                    <!-- سيتم تعبئتها بواسطة JS -->
+                </div>
+
+                <div class="summary-divider"></div>
+
+                <div class="cost-row">
+                    <span>المجموع الفرعي</span>
+                    <span id="subTotal">0.00 ج.م</span>
+                </div>
+                <div class="cost-row">
+                    <span>مصاريف الشحن</span>
+                    <span id="shippingCost" style="color: var(--danger);">-- اختر المحافظة --</span>
+                </div>
+
+                <div class="summary-divider"></div>
+
+                <div class="total-row">
+                    <span>الإجمالي الكلي</span>
+                    <span id="finalTotal">0.00 ج.م</span>
+                </div>
+
+                <button type="button" onclick="submitOrder()" class="btn primary w-100 confirm-btn">
+                    تأكيد الطلب الآن
+                </button>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="~/checkout.js"></script>
+    <script>
+        // دالة مخصصة لإرسال الطلب للسيرفر بدلاً من مجرد تنبيه
+        async function submitOrder() {
+            const form = document.getElementById('checkoutForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const cart = JSON.parse(localStorage.getItem('DISKA_CART')) || [];
+            if (cart.length === 0) {
+                alert("السلة فارغة!");
+                return;
+            }
+
+            // قراءة تكلفة الشحن من النص (مثال: "50 ج.م" -> 50)
+            const shippingText = document.getElementById('shippingCost').innerText;
+            const shippingFees = parseFloat(shippingText) || 0;
+
+            const orderData = {
+                shopName: document.getElementById('shopName').value,
+                phone: document.getElementById('phone').value,
+                governorate: document.getElementById('govSelect').value,
+                city: document.getElementById('citySelect').value,
+                address: document.getElementById('addressDetail').value,
+                paymentMethod: document.querySelector('input[name="payment"]:checked').value,
+                shippingCost: shippingFees,
+                items: cart.map(i => ({ id: i.id.toString(), qty: i.qty, price: i.price }))
+            };
+
+            try {
+                const response = await fetch('/Cart/PlaceOrder', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(orderData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('تم تأكيد طلبك بنجاح رقم #' + result.orderId);
+                    localStorage.removeItem('DISKA_CART');
+                    window.location.href = '/Order/MyOrders';
+                } else {
+                    alert('حدث خطأ: ' + result.message);
+                }
+            } catch (error) {
+                console.error(error);
+                alert('فشل الاتصال بالسيرفر');
+            }
+        }
+    </script>
+}

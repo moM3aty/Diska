@@ -1,0 +1,83 @@
+﻿@model IEnumerable<Diska.Models.DealRequest>
+
+@{
+    ViewData["Title"] = "طلبات خاصة";
+}
+
+<section class="section-padding">
+    <div class="container">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding-top:20px;">
+            <h2 class="page-title" style="margin:0;">طلبات الشراء النشطة</h2>
+            <button class="btn primary small" onclick="document.getElementById('reqModal').style.display='flex'">
+                <i class="fas fa-plus"></i> أضف طلب شراء
+            </button>
+        </div>
+
+        <div class="requests-list" style="margin-top:20px;">
+            @if (!Model.Any())
+            {
+                <p style="text-align:center; padding:30px; color:#777;">لا توجد طلبات شراء حالياً. كن أول من يطلب!</p>
+            }
+            else
+            {
+                @foreach (var req in Model)
+                {
+                    <div class="request-card" style="background:#fff; padding:20px; border-radius:10px; margin-bottom:15px; border-right:5px solid var(--accent); box-shadow:0 2px 10px rgba(0,0,0,0.05);">
+                        <div style="display:flex; justify-content:space-between; align-items:start;">
+                            <div>
+                                <h3 style="color:var(--primary); margin-bottom:5px;">@req.ProductName</h3>
+                                <p style="color:#666; font-size:0.9rem;">الكمية المطلوبة: @req.TargetQuantity</p>
+                                <span style="background:#e0f2fe; padding:2px 8px; border-radius:4px; font-size:0.8rem; color:#0284c7;">المكان: @req.Location</span>
+                            </div>
+                            <div style="text-align:center;">
+                                <span style="font-size:1.2rem; font-weight:bold; color:var(--primary);">@req.DealPrice ج.م</span>
+                                <small style="display:block; color:#888;">السعر المستهدف</small>
+                            </div>
+                        </div>
+                        <hr style="margin:15px 0; border:0; border-top:1px solid #eee;">
+                        <button class="btn primary w-100" style="opacity:0.8;">قدم عرض (للتاجر)</button>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</section>
+
+<!-- Modal for New Request -->
+<div id="reqModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:2000; align-items:center; justify-content:center;">
+    <div style="background:#fff; padding:30px; border-radius:15px; width:90%; max-width:500px; position:relative;">
+        <span onclick="document.getElementById('reqModal').style.display='none'" style="position:absolute; top:15px; right:20px; cursor:pointer; font-size:1.5rem;">&times;</span>
+
+        <h3 style="color: var(--primary); margin-bottom: 20px; text-align: center;">طلب شراء جديد</h3>
+
+        <form asp-action="Create" method="post">
+            <div class="form-group" style="margin-bottom:15px;">
+                <label>اسم المنتج</label>
+                <input type="text" name="ProductName" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;" required>
+            </div>
+
+            <div class="form-group" style="margin-bottom:15px;">
+                <label>الكمية المطلوبة</label>
+                <input type="number" name="TargetQuantity" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;" required>
+            </div>
+
+            <div class="form-row" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
+                <div>
+                    <label>السعر الأصلي (تقديري)</label>
+                    <input type="number" name="OriginalPrice" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;">
+                </div>
+                <div>
+                    <label>السعر المستهدف</label>
+                    <input type="number" name="DealPrice" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;" required>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:20px;">
+                <label>المكان (المدينة)</label>
+                <input type="text" name="Location" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;" required>
+            </div>
+
+            <button type="submit" class="btn primary w-100" style="padding:12px;">نشر الطلب</button>
+        </form>
+    </div>
+</div>

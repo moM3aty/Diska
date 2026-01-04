@@ -1,0 +1,65 @@
+﻿@{
+    ViewData["Title"] = "تسجيل الدخول";
+    Layout = null; // لا نستخدم الـ Layout الرئيسي هنا كما في التصميم الأصلي
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"] | DISKA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/style.css">
+    <style>
+        .auth-logo-img {
+            height: 80px;
+            width: auto;
+            margin-bottom: 15px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+    </style>
+</head>
+<body class="auth-body">
+
+    <div class="auth-container">
+        <div class="auth-header">
+            <img src="~/images/logo.png" alt="DISKA Logo" class="auth-logo-img" onerror="this.style.display='none'">
+            <h2>مرحباً بك في DISKA</h2>
+            <p>سجل دخولك لمتابعة طلبات الجملة</p>
+        </div>
+
+        <form class="auth-form" asp-action="Login" method="post">
+            <div class="form-group">
+                <label>رقم الموبايل</label>
+                <input type="tel" name="phone" placeholder="أدخل رقم الموبايل" required>
+            </div>
+            <div class="form-group">
+                <label>كلمة المرور</label>
+                <input type="password" name="password" placeholder="********" required>
+            </div>
+
+            @if (ViewBag.Error != null)
+            {
+                <p style="color:red; text-align:center;">@ViewBag.Error</p>
+            }
+
+            <button type="submit" class="btn primary w-100">تسجيل الدخول</button>
+        </form>
+
+        <div class="auth-footer">
+            <p>ليس لديك حساب؟ <a asp-action="Signup">إنشاء حساب جديد</a></p>
+            <a href="#" class="forgot-pass">نسيت كلمة المرور؟</a>
+        </div>
+
+        <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
+            <p>هل تريد بيع منتجاتك؟ <a asp-controller="Merchant" asp-action="Index" style="color: var(--accent); font-weight: bold;">سجل كتاجر الآن</a></p>
+        </div>
+
+        <a asp-controller="Home" asp-action="Index" class="back-home">العودة للرئيسية</a>
+    </div>
+
+</body>
+</html>

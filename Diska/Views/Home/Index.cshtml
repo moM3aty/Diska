@@ -1,0 +1,134 @@
+﻿@model IEnumerable<Diska.Models.Product>
+
+@{
+    ViewData["Title"] = "الرئيسية";
+}
+
+<section class="hero-section">
+    <div class="container">
+        <div class="banner-card">
+            <div class="banner-content">
+                <div class="hero-brand-block">
+                    <img src="~/images/ChatGPT_Image_22_ديسمبر_2025__12_14_35_ص-removebg-preview.png" alt="DISKA" class="hero-logo-img">
+                    <span class="brand-slogan">سوق الجملة في جيبك</span>
+                </div>
+
+                <div class="tag-box">
+                    <span class="tag">عروض متتفوتش 🔥</span>
+                </div>
+
+                <h2 class="main-headline">خصومات حصرية على جميع المنتجات</h2>
+                <p class="slogan-desc">أسهل طريقة لطلب بضاعة محلك، من المصنع إليك مباشرة بأرخص سعر.</p>
+
+                <a asp-action="Deals" class="btn primary">تصفح العروض</a>
+            </div>
+
+            <div class="banner-image">
+                <img src="~/images/مشروبات.webp" alt="Offers">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Categories -->
+<section class="categories-section">
+    <div class="container">
+        <h3 class="section-title" style="margin-bottom:20px;">تسوق حسب الفئة</h3>
+        <div class="categories-grid">
+            <a asp-controller="Product" asp-action="Category" asp-route-id="1" class="cat-item">
+                <div class="icon" style="background-color: #e3f2fd;">
+                    <i class="fas fa-bottle-water" style="color: #2196f3;"></i>
+                </div>
+                <span>مشروبات</span>
+            </a>
+            <a asp-controller="Product" asp-action="Category" asp-route-id="2" class="cat-item">
+                <div class="icon" style="background-color: #ffebee;">
+                    <i class="fas fa-cookie-bite" style="color: #f44336;"></i>
+                </div>
+                <span>سناكس</span>
+            </a>
+            <a asp-controller="Product" asp-action="Category" asp-route-id="3" class="cat-item">
+                <div class="icon" style="background-color: #e8f5e9;">
+                    <i class="fas fa-pump-soap"
+                       style="color: #4caf50;"></i>
+                </div>
+                <span>منظفات</span>
+            </a>
+            <a asp-controller="Home" asp-action="Deals" class="cat-item">
+                <div class="icon" style="background-color: #fff3e0;">
+                    <i class="fas fa-box-open"
+                       style="color: #ff9800;"></i>
+                </div>
+                <span>عروض خاصة</span>
+            </a>
+            <a asp-controller="Product" asp-action="Category" asp-route-id="4" class="cat-item">
+                <div class="icon" style="background-color: #f3e5f5;">
+                    <i class="fas fa-truck-loading"
+                       style="color: #9c27b0;"></i>
+                </div>
+                <span>توصيل سريع</span>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Products Grid -->
+<section id="products" class="products-section bg-light">
+    <div class="container">
+        <div class="section-header">
+            <h3>الأصناف في مكان واحد</h3>
+            <a href="#" class="view-all">عرض الكل <i class="fas fa-arrow-left"></i></a>
+        </div>
+
+        <div class="products-grid">
+            @foreach (var item in Model)
+            {
+                <div class="product-card merchant-product" data-id="@item.Id" data-stock="@item.StockQuantity">
+                    <button class="fav-btn"><i class="fas fa-heart"></i></button>
+                    @if (item.OldPrice > item.Price)
+                    {
+                        <div class="flash-badge"><i class="fas fa-star"></i> خصم</div>
+                    }
+
+                    <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id" style="text-decoration:none;">
+                        <div class="product-img"><img src="~/@item.ImageUrl" alt="@item.Name"></div>
+                    </a>
+
+                    <div class="product-info">
+                        <div class="in-cart-indicator"></div>
+
+                        <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id" style="text-decoration:none; color:inherit;">
+                            <h4>@item.Name</h4>
+                        </a>
+
+                        <p class="product-desc-short">@item.Description</p>
+
+                        <div class="product-meta">
+                            <span><i class="fas fa-box-open"></i> @item.UnitsPerCarton / كرتونة</span>
+                            <span class="stock-info">متاح: @item.StockQuantity</span>
+                        </div>
+
+                        <div class="pricing">
+                            <span class="current-price">@item.Price.ToString("F2") ج.م</span>
+                            @if (item.OldPrice.HasValue)
+                            {
+                                <span class="old-price">@item.OldPrice.Value.ToString("F2") ج.م</span>
+                            }
+                        </div>
+
+                        <div class="card-actions" style="display:flex; gap:10px; margin-top:10px;">
+                            <div class="qty-control-card" style="display:flex; border:1px solid #ddd; border-radius:5px;">
+                                <button class="card-minus" style="border:none; background:#eee; width:30px; cursor:pointer;">-</button>
+                                <input type="number" class="manual-qty" value="1" min="1" max="@item.StockQuantity" style="width:50px; text-align:center; border:none; font-weight:bold;">
+                                <button class="card-plus" style="border:none; background:#eee; width:30px; cursor:pointer;">+</button>
+                            </div>
+                            <button class="add-btn" style="flex:1; border:none; background:var(--primary); color:#fff; border-radius:5px; cursor:pointer;">
+                                أضف <i class="fas fa-cart-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>

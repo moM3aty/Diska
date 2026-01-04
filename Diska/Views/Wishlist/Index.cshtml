@@ -1,0 +1,51 @@
+﻿@{
+    ViewData["Title"] = "المفضلة";
+}
+
+<section class="section-padding">
+    <div class="container">
+        <h2 style="margin-bottom: 30px;padding-top: 40px;">قائمة المفضلة ❤️</h2>
+
+        <div class="products-grid-wishlist" id="wishlistContainer">
+            <!-- سيتم ملء المنتجات هنا بواسطة JavaScript -->
+            <p style="text-align:center; width:100%; color:#777;">جاري تحميل المفضلة...</p>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        // منطق عرض المفضلة المخصص لهذه الصفحة
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('wishlistContainer');
+            const wishlist = JSON.parse(localStorage.getItem('DISKA_WISHLIST')) || [];
+
+            if(wishlist.length === 0) {
+                container.innerHTML = '<div style="text-align:center; width:100%; grid-column:1/-1; padding:40px;">لا توجد منتجات في المفضلة</div>';
+                return;
+            }
+
+            container.innerHTML = '';
+            wishlist.forEach(item => {
+                const html = `
+                    <div class="product-card">
+                        <div class="product-img"><img src="${item.image}" alt="${item.name}"></div>
+                        <div class="product-info">
+                            <h4>${item.name}</h4>
+                            <div class="pricing"><span class="current-price">${item.price} ج.م</span></div>
+                            <button class="btn primary w-100" onclick="removeItemFromWishlist('${item.id}')">إزالة ❌</button>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', html);
+            });
+        });
+
+        function removeItemFromWishlist(id) {
+            let wishlist = JSON.parse(localStorage.getItem('DISKA_WISHLIST')) || [];
+            wishlist = wishlist.filter(item => item.id != id);
+            localStorage.setItem('DISKA_WISHLIST', JSON.stringify(wishlist));
+            location.reload();
+        }
+    </script>
+}

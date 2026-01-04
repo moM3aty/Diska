@@ -1,0 +1,143 @@
+﻿@model IEnumerable<Diska.Models.Product>
+
+@{
+    ViewData["Title"] = "لوحة التاجر";
+}
+
+<header class="main-header">
+    <div class="container header-container">
+        <a asp-controller="Home" asp-action="Index" class="logo">
+            <img src="~/images/ChatGPT_Image_22_ديسمبر_2025__12_14_35_ص-removebg-preview.png" alt="DISKA Logo">
+        </a>
+        <div class="header-actions">
+            <a asp-controller="Home" asp-action="Index" class="action-item" style="color: #fff; font-size: 0.9rem;">
+                <i class="fas fa-home"></i> العودة للمتجر
+            </a>
+        </div>
+    </div>
+</header>
+
+<section class="section-padding">
+    <div class="container">
+        <div class="merchant-grid">
+
+            <!-- نموذج إضافة منتج -->
+            <div class="merchant-form-box">
+                <h2 style="margin-bottom: 20px; color: var(--primary);">إضافة بضاعة جديدة</h2>
+
+                <form asp-action="AddProduct" method="post" enctype="multipart/form-data">
+
+                    <div class="form-group upload-box">
+                        <label for="imageFile" class="upload-label">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <span>اضغط لرفع صورة المنتج</span>
+                        </label>
+                        <input type="file" name="imageFile" id="imageFile" accept="image/*" class="form-control" style="display:none;" onchange="previewImage(this)">
+                        <img id="imgPreview" style="max-height:100px; display:none; margin-top:10px;" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>اسم المنتج</label>
+                        <input type="text" name="Name" class="form-control" placeholder="مثال: كرتونة شيبسي عائلي" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>تاريخ الإنتاج</label>
+                            <input type="date" name="ProductionDate" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>تاريخ الانتهاء</label>
+                            <input type="date" name="ExpiryDate" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>السعر الحالي</label>
+                            <input type="number" name="Price" step="0.01" class="form-control" placeholder="0.00" required>
+                        </div>
+                        <div class="form-group">
+                            <label>السعر قبل الخصم</label>
+                            <input type="number" name="OldPrice" step="0.01" class="form-control" placeholder="اختياري">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>عدد العبوات (الكرتونة)</label>
+                            <input type="number" name="UnitsPerCarton" class="form-control" placeholder="مثال: 12" required>
+                        </div>
+                        <div class="form-group">
+                            <label>المخزون</label>
+                            <input type="number" name="StockQuantity" class="form-control" placeholder="مثال: 100" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>الوصف</label>
+                        <textarea name="Description" rows="3" class="form-control" placeholder="تفاصيل المنتج..."></textarea>
+                    </div>
+
+                    <!-- حقل مخفي للتصنيف مؤقتاً أو قائمة منسدلة -->
+                    <input type="hidden" name="CategoryId" value="1">
+
+                    <button type="submit" class="btn primary w-100">نشر المنتج</button>
+                </form>
+            </div>
+
+            <!-- قائمة المنتجات -->
+            <div class="merchant-sidebar">
+                <div class="my-products-list" style="background: #fff; padding: 20px; border-radius: 15px; border: 1px solid #eee; margin-bottom: 20px;">
+                    <h3 style="color: var(--primary); margin-bottom: 15px;">منتجاتي المعروضة</h3>
+
+                    @if (!Model.Any())
+                    {
+                        <p style="color: #777; font-size: 0.9rem;">لا توجد منتجات مضافة حالياً.</p>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <div class="merchant-item" style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:5px;">
+                                <div style="display:flex; gap:10px;">
+                                    <img src="~/@item.ImageUrl" style="width:40px; height:40px; object-fit:contain;">
+                                    <div>
+                                        <strong style="font-size:0.9rem;">@item.Name</strong>
+                                        <div style="font-size:0.8rem; color:#666;">مخزون: @item.StockQuantity</div>
+                                    </div>
+                                </div>
+                                <form asp-action="Delete" method="post" onsubmit="return confirm('حذف المنتج؟');">
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <button type="submit" style="background:none; border:none; color:red;"><i class="fas fa-trash"></i></button>
+                                </form>
+                            </div>
+                        }
+                    }
+                </div>
+
+                <div class="merchant-info">
+                    <h3><i class="fas fa-lightbulb"></i> نصائح للبيع</h3>
+                    <ul>
+                        <li>ارفع صور واضحة للمنتج بخلفية بيضاء.</li>
+                        <li>السعر المنافس يضمن لك بيع أسرع.</li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<script>
+    function previewImage(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                document.getElementById('imgPreview').src = e.target.result;
+                document.getElementById('imgPreview').style.display = 'block';
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+</script>

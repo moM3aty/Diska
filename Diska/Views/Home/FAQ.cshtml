@@ -1,0 +1,62 @@
+﻿@{
+    ViewData["Title"] = "الأسئلة الشائعة";
+}
+
+<section class="section-padding">
+    <div class="container">
+        <h2 class="page-title" style="padding-top: 20px;">الأسئلة الشائعة</h2>
+
+        <div class="faq-list">
+            <div class="faq-item">
+                <div class="faq-question">
+                    كيف يمكنني التسجيل كتاجر؟
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    يمكنك الضغط على زر "حساب تاجر" في الصفحة الرئيسية، ورفع المستندات المطلوبة (السجل التجاري والبطاقة الضريبية) وسيتم تفعيل حسابك خلال 24 ساعة.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    ما هو الحد الأدنى للطلب؟
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    يختلف الحد الأدنى حسب المورد، ولكن بشكل عام الحد الأدنى لطلبات الجملة هو 1000 جنيه مصري.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    هل يوجد دفع عند الاستلام؟
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    نعم، نوفر خدمة الدفع عند الاستلام (كاش) لجميع المحافظات، بالإضافة للدفع الإلكتروني والمحافظ.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    كيف يمكنني تتبع طلبي؟
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    يمكنك متابعة حالة الطلب من صفحة "طلباتي" في حسابك الشخصي، ستتغير الحالة من "قيد الانتظار" إلى "تم الشحن" فور خروج الطلب.
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.faq-question').forEach(item => {
+            item.addEventListener('click', () => {
+                const parent = item.parentElement;
+                parent.classList.toggle('active');
+            });
+        });
+    </script>
+}

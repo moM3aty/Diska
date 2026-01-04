@@ -1,0 +1,92 @@
+﻿@model Diska.Models.Order
+@{
+    ViewData["Title"] = "تفاصيل الطلب #" + Model.Id;
+    Layout = "_AdminLayout";
+}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+    <h2 style="color:var(--primary);">تفاصيل الطلب #@Model.Id</h2>
+    <a asp-action="Orders" class="btn btn-outline" style="border:1px solid #ccc; padding:8px 15px; border-radius:5px; text-decoration:none; color:#333;">عودة للطلبات</a>
+</div>
+
+<div style="display:grid; grid-template-columns: 2fr 1fr; gap:30px;">
+
+    <!-- قائمة المنتجات -->
+    <div style="background:#fff; padding:20px; border-radius:10px; border:1px solid #eee; box-shadow:0 4px 10px rgba(0,0,0,0.05);">
+        <h3 style="border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:20px;">المنتجات المطلوبة</h3>
+        <table style="width:100%;">
+            <thead>
+                <tr style="background:#f9f9f9;">
+                    <th style="padding:10px;">المنتج</th>
+                    <th style="padding:10px;">السعر</th>
+                    <th style="padding:10px;">الكمية</th>
+                    <th style="padding:10px;">الإجمالي</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.OrderItems)
+                {
+                    <tr>
+                        <td style="padding:15px 10px; border-bottom:1px solid #eee;">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                @if (item.Product != null)
+                                {
+                                    <img src="~/@item.Product.ImageUrl" style="width:40px; height:40px; object-fit:contain; border:1px solid #eee; border-radius:5px;">
+                                    <span>@item.Product.Name</span>
+                                }
+                                else
+                                {
+                                    <span>منتج محذوف (@item.ProductId)</span>
+                                }
+                            </div>
+                        </td>
+                        <td style="padding:10px; border-bottom:1px solid #eee;">@item.UnitPrice.ToString("N2")</td>
+                        <td style="padding:10px; border-bottom:1px solid #eee;">x @item.Quantity</td>
+                        <td style="padding:10px; border-bottom:1px solid #eee; font-weight:bold;">@((item.UnitPrice * item.Quantity).ToString("N2"))</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div style="margin-top:20px; text-align:left; font-size:1.2rem;">
+            الإجمالي الكلي: <strong style="color:var(--primary);">@Model.TotalAmount.ToString("N2") ج.م</strong>
+        </div>
+    </div>
+
+    <!-- معلومات العميل والحالة -->
+    <div style="display:flex; flex-direction:column; gap:20px;">
+
+        <div style="background:#fff; padding:20px; border-radius:10px; border:1px solid #eee; box-shadow:0 4px 10px rgba(0,0,0,0.05);">
+            <h3 style="margin-bottom:15px; color:#555;">بيانات العميل</h3>
+            <p><strong>الاسم:</strong> @Model.CustomerName</p>
+            <p><strong>الهاتف:</strong> <a href="tel:@Model.Phone">@Model.Phone</a></p>
+            <p><strong>التاريخ:</strong> @Model.OrderDate.ToString("yyyy-MM-dd hh:mm tt")</p>
+            <p><strong>الدفع:</strong> @Model.PaymentMethod</p>
+        </div>
+
+        <div style="background:#fff; padding:20px; border-radius:10px; border:1px solid #eee; box-shadow:0 4px 10px rgba(0,0,0,0.05);">
+            <h3 style="margin-bottom:15px; color:#555;">عنوان التوصيل</h3>
+            <p>@Model.Governorate - @Model.City</p>
+            <p style="color:#777; font-size:0.9rem;">@Model.Address</p>
+        </div>
+
+        <div style="background:#fff; padding:20px; border-radius:10px; border:1px solid #eee; box-shadow:0 4px 10px rgba(0,0,0,0.05);">
+            <h3 style="margin-bottom:15px; color:#555;">تحديث الحالة</h3>
+            <form asp-action="UpdateOrderStatus" method="post">
+                <input type="hidden" name="id" value="@Model.Id" />
+                <div style="margin-bottom:15px;">
+                    <label style="display:block; margin-bottom:5px;">الحالة الحالية: <strong>@Model.Status</strong></label>
+                    <select name="status" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;">
+                        <option value="Pending" selected="@(Model.Status == "Pending")">قيد الانتظار (Pending)</option>
+                        <option value="Confirmed" selected="@(Model.Status == "Confirmed")">مؤكد (Confirmed)</option>
+                        <option value="Shipped" selected="@(Model.Status == "Shipped")">تم الشحن (Shipped)</option>
+                        <option value="Delivered" selected="@(Model.Status == "Delivered")">تم التسليم (Delivered)</option>
+                        <option value="Cancelled" selected="@(Model.Status == "Cancelled")">ملغي (Cancelled)</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn primary w-100" style="padding:10px;">حفظ التغيير</button>
+            </form>
+        </div>
+
+    </div>
+</div>

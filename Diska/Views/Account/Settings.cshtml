@@ -1,0 +1,49 @@
+﻿@{
+    ViewData["Title"] = "إعدادات الحساب";
+}
+
+<section class="section-padding">
+    <div class="container">
+        <div class="profile-grid" style="display:grid; grid-template-columns: 1fr 3fr; gap:30px;">
+
+            <!-- نفس السايدبار للبروفايل -->
+            <div class="profile-sidebar" style="background:#fff; padding:30px; border-radius:10px;">
+                <ul style="list-style:none; padding:0;">
+                    <li style="padding:10px; border-bottom:1px solid #eee;"><a asp-action="Profile">الرئيسية</a></li>
+                    <li style="padding:10px; border-bottom:1px solid #eee;"><a asp-controller="Order" asp-action="MyOrders">طلباتي</a></li>
+                    <li style="padding:10px; background:#f8fafc; border-radius:5px; font-weight:bold;"><a asp-action="Settings" style="color:var(--primary);">الإعدادات</a></li>
+                </ul>
+            </div>
+
+            <div class="profile-content" style="background:#fff; padding:30px; border-radius:10px; border:1px solid #eee;">
+                <h2 style="margin-bottom:20px; color:var(--primary);">تعديل البيانات الشخصية</h2>
+
+                <form asp-action="UpdateProfile" method="post">
+                    <div class="form-row" style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                        <div class="form-group">
+                            <label>الاسم بالكامل</label>
+                            <input type="text" name="FullName" value="@ViewBag.FullName" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;">
+                        </div>
+                        <div class="form-group">
+                            <label>رقم الموبايل</label>
+                            <input type="tel" name="PhoneNumber" value="@ViewBag.PhoneNumber" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;">
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-top:15px;">
+                        <label>اسم المحل / النشاط التجاري</label>
+                        <input type="text" name="ShopName" value="@ViewBag.ShopName" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;">
+                    </div>
+
+                    <h3 style="margin-top:30px; margin-bottom:15px; font-size:1.1rem;">تغيير كلمة المرور</h3>
+                    <div class="form-group">
+                        <input type="password" name="CurrentPassword" placeholder="كلمة المرور الحالية" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px; margin-bottom:10px;">
+                        <input type="password" name="NewPassword" placeholder="كلمة المرور الجديدة" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;">
+                    </div>
+
+                    <button class="btn primary" style="margin-top:20px; padding:10px 30px;">حفظ التغييرات</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>

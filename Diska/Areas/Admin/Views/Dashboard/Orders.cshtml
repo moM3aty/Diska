@@ -1,0 +1,45 @@
+﻿@model IEnumerable<Diska.Models.Order>
+@{
+    ViewData["Title"] = "إدارة الطلبات";
+    Layout = "_AdminLayout";
+}
+
+<h2 style="margin-bottom: 30px;">إدارة كل الطلبات</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>العميل</th>
+            <th>رقم الهاتف</th>
+            <th>العنوان</th>
+            <th>الإجمالي</th>
+            <th>الحالة الحالية</th>
+            <th>تغيير الحالة</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var order in Model)
+        {
+            <tr>
+                <td>@order.Id</td>
+                <td>@order.CustomerName</td>
+                <td>@order.Phone</td>
+                <td>@order.Governorate - @order.City</td>
+                <td><strong>@order.TotalAmount.ToString("N2")</strong></td>
+                <td>@order.Status</td>
+                <td>
+                    <form asp-action="UpdateOrderStatus" method="post" style="display:flex; gap:5px;">
+                        <input type="hidden" name="id" value="@order.Id" />
+                        <select name="status" style="padding:5px; border-radius:5px; border:1px solid #ddd;">
+                            <option value="Pending" selected="@(order.Status == "Pending")">انتظار</option>
+                            <option value="Confirmed" selected="@(order.Status == "Confirmed")">تأكيد</option>
+                            <option value="Shipped" selected="@(order.Status == "Shipped")">شحن</option>
+                        </select>
+                        <button type="submit" class="btn primary small" style="padding:5px 10px;">حفظ</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -1,0 +1,41 @@
+﻿@model IEnumerable<Diska.Models.Product>
+@{
+    ViewData["Title"] = "إدارة المنتجات";
+    Layout = "_AdminLayout";
+}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
+    <h2>جميع المنتجات</h2>
+    <a asp-controller="Merchant" asp-action="Index" class="btn primary">إضافة منتج جديد</a>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>الصورة</th>
+            <th>اسم المنتج</th>
+            <th>السعر</th>
+            <th>الكمية</th>
+            <th>التصنيف</th>
+            <th>إجراءات</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td><img src="~/@item.ImageUrl" style="width:50px; height:50px; object-fit:contain;"></td>
+                <td>@item.Name</td>
+                <td>@item.Price.ToString("N2")</td>
+                <td>@item.StockQuantity</td>
+                <td>@(item.Category?.Name ?? "بدون")</td>
+                <td>
+                    <form asp-controller="Merchant" asp-action="Delete" method="post" onsubmit="return confirm('هل أنت متأكد؟');" style="display:inline;">
+                        <input type="hidden" name="id" value="@item.Id" />
+                        <button type="submit" style="color:red; background:none; border:none; cursor:pointer;"><i class="fas fa-trash"></i> حذف</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

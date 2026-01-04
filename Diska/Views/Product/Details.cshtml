@@ -1,0 +1,93 @@
+﻿@model Diska.Models.Product
+
+@{
+    ViewData["Title"] = Model.Name;
+}
+
+<section class="product-details-section">
+    <div class="container">
+        <!-- Breadcrumb -->
+        <div class="breadcrumb">
+            <a asp-controller="Home" asp-action="Index">الرئيسية</a> / <span>@Model.Name</span>
+        </div>
+
+        <div class="details-grid">
+
+            <div class="details-img">
+                <img src="~/@Model.ImageUrl" alt="@Model.Name">
+            </div>
+
+            <div class="details-info product-card merchant-product" data-id="@Model.Id" data-stock="@Model.StockQuantity">
+
+                <span class="brand-tag">ماركة</span>
+
+                <button class="fav-btn" style="position: relative; float: left; top: 0; left: 0; border: 1px solid #ddd;">
+                    <i class="fas fa-heart"></i>
+                </button>
+
+                <h1>@Model.Name</h1>
+
+                <div class="product-meta" style="margin: 10px 0;">
+                    <span><i class="fas fa-box-open"></i> @Model.UnitsPerCarton زجاجات / كرتونة</span>
+                    <span class="stock-info">متاح: @Model.StockQuantity كرتونة</span>
+                </div>
+
+                <p class="sku">كود المنتج: #@Model.Id</p>
+
+                <div class="main-price">
+                    <strong class="current-price">@Model.Price.ToString("F2") ج.م</strong>
+                    @if (Model.OldPrice.HasValue)
+                    {
+                        <span class="old-price old">@Model.OldPrice.Value.ToString("F2") ج.م</span>
+                    }
+                </div>
+
+                <!-- Wholesale Table (Static Logic for UI Demo) -->
+                <div class="wholesale-table">
+                    <h4>أسعار الجملة (الشرائح)</h4>
+                    <table>
+                        <tr>
+                            <th>الكمية</th>
+                            <th>السعر للوحدة</th>
+                            <th>التوفير</th>
+                        </tr>
+                        <tr>
+                            <td>1 - 4</td>
+                            <td>@Model.Price ج.م</td>
+                            <td>-</td>
+                        </tr>
+                        <tr class="highlight">
+                            <td>5 - 19</td>
+                            <td>@((Model.Price * 0.95m).ToString("F2")) ج.م</td>
+                            <td>5%</td>
+                        </tr>
+                        <tr>
+                            <td>20+</td>
+                            <td>@((Model.Price * 0.90m).ToString("F2")) ج.م</td>
+                            <td>10%</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="card-actions details-actions" style="display:flex; gap:15px; margin-top:20px;">
+
+                    <div class="qty-control-card" style="display:flex; border:1px solid #ddd; border-radius:5px; height:50px;">
+                        <button class="card-minus" style="width:40px; font-size:1.2rem;">-</button>
+                        <input type="number" class="manual-qty" value="1" min="1" max="@Model.StockQuantity" style="width:60px; font-size:1.2rem; text-align:center; border:none; font-weight:bold;">
+                        <button class="card-plus" style="width:40px; font-size:1.2rem;">+</button>
+                    </div>
+
+                    <button class="add-btn" style="flex:1; height:50px; font-size:1.2rem; justify-content:center; border-radius: 8px; cursor: pointer; background-color: #FACC15; border: none; font-weight: bold; display: flex; align-items: center; gap: 10px;">
+                        إضافة للسلة <i class="fas fa-cart-plus"></i>
+                    </button>
+                </div>
+
+                <div class="meta-info" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+                    <p><i class="fas fa-truck"></i> توصيل خلال 24 ساعة</p>
+                    <p><i class="fas fa-undo"></i> استرجاع مجاني في حالة التلف</p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>

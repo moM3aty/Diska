@@ -1,0 +1,38 @@
+﻿@model IEnumerable<Microsoft.AspNetCore.Identity.IdentityUser>
+@{
+    ViewData["Title"] = "المستخدمين";
+    Layout = "_AdminLayout";
+}
+
+<h2 style="margin-bottom: 30px; color: var(--primary);">إدارة المستخدمين المسجلين</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>المعرف (ID)</th>
+            <th>اسم المستخدم / البريد</th>
+            <th>رقم الهاتف</th>
+            <th>حالة البريد</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in Model)
+        {
+            <tr>
+                <td style="font-size:0.8rem; color:#888;">@user.Id</td>
+                <td>@user.Email</td>
+                <td>@(user.PhoneNumber ?? "غير مسجل")</td>
+                <td>
+                    @if (user.EmailConfirmed)
+                    {
+                        <span style="color:green; font-weight:bold;">مفعل</span>
+                    }
+                    else
+                    {
+                        <span style="color:orange;">غير مفعل</span>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

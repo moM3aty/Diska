@@ -1,0 +1,75 @@
+﻿@{
+    ViewData["Title"] = "إنشاء حساب جديد";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"] | DISKA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/style.css">
+    <style>
+        .auth-logo-img {
+            height: 70px;
+            width: auto;
+            margin-bottom: 15px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+    </style>
+</head>
+<body class="auth-body">
+
+    <div class="auth-container" style="margin-top:50px;">
+        <div class="auth-header">
+            <img src="~/images/logo.png" alt="DISKA Logo" class="auth-logo-img" onerror="this.style.display='none'">
+            <h2>إنشاء حساب جديد</h2>
+            <p>انضم إلينا وابدأ في توفير نفقاتك</p>
+        </div>
+
+        <form class="auth-form" asp-action="Signup" method="post">
+            <div class="form-group">
+                <label>الاسم بالكامل</label>
+                <input type="text" name="fullName" placeholder="أدخل اسمك الثلاثي" required>
+            </div>
+
+            <div class="form-group">
+                <label>اسم المحل / النشاط التجاري</label>
+                <input type="text" name="shopName" placeholder="مثال: سوبر ماركت الأمانة" required>
+            </div>
+
+            <div class="form-group">
+                <label>رقم الموبايل</label>
+                <input type="tel" name="phone" placeholder="01xxxxxxxxx" required>
+            </div>
+
+            <div class="form-group">
+                <label>كلمة المرور</label>
+                <input type="password" name="password" placeholder="********" required>
+            </div>
+
+            <div class="form-group">
+                <label>تأكيد كلمة المرور</label>
+                <input type="password" name="confirmPassword" placeholder="********" required>
+            </div>
+
+            <button class="btn primary w-100">تسجيل حساب</button>
+        </form>
+
+        <div class="auth-footer">
+            <p>لديك حساب بالفعل؟ <a asp-action="Login">تسجيل الدخول</a></p>
+        </div>
+
+        <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
+            <p>هل تريد بيع منتجاتك؟ <a asp-controller="Merchant" asp-action="Index" style="color: var(--accent); font-weight: bold;">سجل كتاجر الآن</a></p>
+        </div>
+
+        <a asp-controller="Home" asp-action="Index" class="back-home">العودة للرئيسية</a>
+    </div>
+
+</body>
+</html>

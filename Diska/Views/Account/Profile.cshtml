@@ -1,0 +1,68 @@
+﻿@{
+    ViewData["Title"] = "حسابي";
+}
+
+<section class="section-padding">
+    <div class="container">
+        <div class="profile-grid" style="display:grid; grid-template-columns: 1fr 3fr; gap:30px;">
+
+            <!-- Sidebar -->
+            <div class="profile-sidebar" style="background:#fff; padding:40px; border-radius:10px;">
+                <div style="text-align:center; margin-bottom:20px;">
+                    <div style="width:80px; height:80px; background:#eee; border-radius:50%; margin:0 auto 10px; display:flex; align-items:center; justify-content:center; font-size:2rem; color:#aaa;">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <h4>@ViewBag.UserName</h4>
+                    <span style="color:#666;">@ViewBag.UserType</span>
+                </div>
+                <ul style="list-style:none; padding:0;">
+                    <li style="padding:10px; border-bottom:1px solid #eee;">
+                        <a asp-controller="Order" asp-action="MyOrders" style="color:var(--primary); font-weight:bold;">📦 طلباتي</a>
+                    </li>
+                    <li style="padding:10px; border-bottom:1px solid #eee;">
+                        <a asp-controller="Wishlist" asp-action="Index">❤️ المفضلة</a>
+                    </li>
+                    <li style="padding:10px; border-bottom:1px solid #eee;">
+                        <a asp-controller="Home" asp-action="Contact">📍 العناوين</a>
+                    </li>
+                    <li style="padding:10px;">
+                        <a asp-action="Logout" style="color:red;">تسجيل خروج</a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Orders Content (Static Preview + Link to Full Orders) -->
+            <div class="profile-content" style="padding-top: 40px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h2>أحدث الطلبات</h2>
+                    <a asp-controller="Order" asp-action="MyOrders" class="btn primary small">عرض كل الطلبات</a>
+                </div>
+
+                <div id="ordersList">
+                    <!-- Static Data Example for Profile View -->
+                    <div style="background:#fff; padding:20px; border-radius:10px; margin-bottom:15px; border:1px solid #eee;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                            <strong>طلب #10254</strong>
+                            <span style="background:#dcfce7; color:#166534; padding:2px 8px; border-radius:4px;">تم التسليم</span>
+                        </div>
+                        <p style="color:#666;">التاريخ: 20/12/2025</p>
+                        <p>الإجمالي: <strong>5,400 ج.م</strong></p>
+                    </div>
+
+                    <div style="background:#fff; padding:20px; border-radius:10px; margin-bottom:15px; border:1px solid #eee;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                            <strong>طلب #10255</strong>
+                            <span style="background:#fff7ed; color:#9a3412; padding:2px 8px; border-radius:4px;">جاري التجهيز</span>
+                        </div>
+                        <p style="color:#666;">التاريخ: 22/12/2025</p>
+                        <p>الإجمالي: <strong>1,200 ج.م</strong></p>
+                        <div style="margin-top:10px; height:5px; background:#eee; border-radius:5px; overflow:hidden;">
+                            <div style="width:40%; height:100%; background:var(--primary);"></div>
+                        </div>
+                        <small style="color:var(--primary);">تم استلام الطلب -> جاري التجهيز</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

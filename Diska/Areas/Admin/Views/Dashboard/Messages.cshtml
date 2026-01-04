@@ -1,0 +1,43 @@
+﻿@model IEnumerable<Diska.Models.ContactMessage>
+@{
+    ViewData["Title"] = "رسائل الزوار";
+    Layout = "_AdminLayout";
+}
+
+<h2 style="margin-bottom: 30px; color: var(--primary);">رسائل اتصل بنا</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>التاريخ</th>
+            <th>الاسم</th>
+            <th>البيانات</th>
+            <th>الموضوع</th>
+            <th>الرسالة</th>
+            <th>حذف</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var msg in Model)
+        {
+            <tr>
+                <td style="white-space:nowrap; font-size:0.85rem;">@msg.DateSent.ToString("yyyy-MM-dd HH:mm")</td>
+                <td>@msg.Name</td>
+                <td style="font-size:0.85rem;">
+                    <div><i class="fas fa-phone"></i> @msg.Phone</div>
+                    <div><i class="fas fa-envelope"></i> @msg.Email</div>
+                </td>
+                <td>@msg.Subject</td>
+                <td style="max-width:300px;">@msg.Message</td>
+                <td>
+                    <form asp-action="DeleteMessage" method="post" onsubmit="return confirm('حذف الرسالة؟');">
+                        <input type="hidden" name="id" value="@msg.Id" />
+                        <button type="submit" style="color:red; background:none; border:none; cursor:pointer;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

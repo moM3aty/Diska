@@ -1,0 +1,51 @@
+﻿<!-- jQuery Validation (Latest) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js" xintegrity="sha512-rstIgDs0xPgmG6RX1Aba4KV5cWJbAMcvRCVmglpam9SoHZiUCyQVDdH2LPlxoHtrv17XWblE/V/PP+Tr04hbtA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<!-- jQuery Validation Unobtrusive (Latest for ASP.NET Core) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/4.0.0/jquery.validate.unobtrusive.min.js" xintegrity="sha512-xq+Vm8jC94ynOikewaQXMEkJIOBp7iag625G0odD4JtF5n01k0ISj4xxnvtKWZzmpBDurWXe+99xIYOGURa75Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<!-- Arabic Localization for Validation Messages -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/localization/messages_ar.min.js" xintegrity="sha512-nb2K94C/t0XVVH/z7jdPjNVYPbGDWl/SQbZPMDkRENAgtYkPF7mR2/y+YQMdEb3CYaKsx80DbU/gWAX1OazXhg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<!-- Professional Bootstrap 5 Integration Script -->
+<script>
+    $(document).ready(function () {
+        // تهيئة الإعدادات الافتراضية لتتوافق مع تصميم Bootstrap
+        var defaultSettings = {
+            highlight: function (element) {
+                $(element).addClass('is-invalid').removeClass('is-valid');
+                $(element).closest('.form-group').find('.input-group-text').css('border-color', '#dc3545');
+            },
+            unhighlight: function (element) {
+                $(element).removeClass('is-invalid').addClass('is-valid');
+                $(element).closest('.form-group').find('.input-group-text').css('border-color', '#198754');
+            },
+            errorElement: 'span',
+            errorClass: 'invalid-feedback',
+            errorPlacement: function (error, element) {
+                // معالجة مكان ظهور الخطأ في حالة وجود Input Group
+                if (element.parent('.input-group').length) {
+                    error.insertAfter(element.parent());
+                } else {
+                    error.insertAfter(element);
+                }
+            }
+        };
+
+        $.validator.setDefaults(defaultSettings);
+
+        // إعادة تطبيق التنسيقات على العناصر التي يتم التحقق منها بواسطة Unobtrusive
+        // لأن Unobtrusive قد يتجاوز بعض الإعدادات الافتراضية
+        var $forms = $('form');
+        $forms.each(function () {
+            var $form = $(this);
+            var validator = $form.data('validator');
+            if (validator) {
+                validator.settings.highlight = defaultSettings.highlight;
+                validator.settings.unhighlight = defaultSettings.unhighlight;
+                validator.settings.errorClass = defaultSettings.errorClass;
+                // validator.settings.errorPlacement = defaultSettings.errorPlacement; // Unobtrusive handles placement usually
+            }
+        });
+    });
+</script>

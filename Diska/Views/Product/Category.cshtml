@@ -1,0 +1,98 @@
+﻿@model IEnumerable<Diska.Models.Product>
+
+@{
+    ViewData["Title"] = ViewBag.CategoryName ?? "المنتجات";
+}
+
+<section class="category-section section-padding">
+    <div class="container">
+
+        <div class="breadcrumb">
+            <a asp-controller="Home" asp-action="Index">الرئيسية</a> / <span>@(ViewBag.CategoryName ?? "كل المنتجات")</span>
+        </div>
+
+        <div class="category-layout">
+
+            <!-- Sidebar Filters -->
+            <aside class="sidebar">
+                <div class="filter-group">
+                    <h3>نطاق السعر</h3>
+                    <form asp-action="Category" method="get">
+                        <input type="hidden" name="id" value="@ViewBag.CategoryId" />
+                        <div class="price-range">
+                            <input type="number" name="minPrice" placeholder="من" value="@Context.Request.Query["minPrice"]">
+                            <input type="number" name="maxPrice" placeholder="إلى" value="@Context.Request.Query["maxPrice"]">
+                        </div>
+                        <button type="submit" class="btn primary w-100" style="margin-top:10px;">تصفية</button>
+                    </form>
+                </div>
+
+                <div class="filter-group">
+                    <h3>الماركات</h3>
+                    <label><input type="checkbox"> بيبسي</label>
+                    <label><input type="checkbox"> جهينة</label>
+                    <label><input type="checkbox"> شيبسي</label>
+                </div>
+            </aside>
+
+            <!-- Products Grid -->
+            <main class="category-products">
+                <div class="products-header">
+                    <h2>@ViewBag.CategoryName <small style="color:#666; font-size:0.9rem;">(@Model.Count() منتج)</small></h2>
+                    <select onchange="location = this.value;">
+                        <option>ترتيب حسب</option>
+                        <option value="?sort=price_asc">السعر: الأقل للأعلى</option>
+                        <option value="?sort=price_desc">السعر: الأعلى للأقل</option>
+                    </select>
+                </div>
+
+                @if (!Model.Any())
+                {
+                    <div style="text-align:center; padding:50px; background:#fff; border-radius:10px;">
+                        <i class="fas fa-box-open" style="font-size:3rem; color:#eee; margin-bottom:10px;"></i>
+                        <p>لا توجد منتجات في هذا القسم حالياً.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="products-grid">
+                        @foreach (var item in Model)
+                        {
+                            <div class="product-card merchant-product" data-id="@item.Id" data-stock="@item.StockQuantity">
+                                <button class="fav-btn"><i class="fas fa-heart"></i></button>
+                                <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id">
+                                    <div class="product-img"><img src="~/@item.ImageUrl" alt="@item.Name"></div>
+                                </a>
+                                <div class="product-info">
+                                    <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id" style="color:inherit;">
+                                        <h4>@item.Name</h4>
+                                    </a>
+                                    <div class="product-meta">
+                                        <span><i class="fas fa-box-open"></i> @item.UnitsPerCarton / كرتونة</span>
+                                    </div>
+                                    <div class="pricing">
+                                        <span class="current-price">@item.Price.ToString("F2") ج.م</span>
+                                        @if (item.OldPrice > item.Price)
+                                        {
+                                            <span class="old-price">@item.OldPrice</span>
+                                        }
+                                    </div>
+                                    <div class="card-actions" style="display:flex; gap:10px;">
+                                        <div class="qty-control-card" style="display:flex; border:1px solid #ddd; border-radius:5px;">
+                                            <button class="card-minus" style="border:none; background:#eee; width:30px;">-</button>
+                                            <input type="number" class="manual-qty" value="1" min="1" max="@item.StockQuantity" style="width:50px; text-align:center; border:none; font-weight:bold;">
+                                            <button class="card-plus" style="border:none; background:#eee; width:30px;">+</button>
+                                        </div>
+                                        <button class="add-btn" style="flex:1; border:none; background:var(--primary); color:#fff; border-radius:5px;">
+                                            أضف <i class="fas fa-cart-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </main>
+        </div>
+    </div>
+</section>

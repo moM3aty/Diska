@@ -1,0 +1,74 @@
+﻿@model IEnumerable<Diska.Models.Order>
+@{
+    ViewData["Title"] = "لوحة القيادة";
+    Layout = "_AdminLayout";
+}
+
+<h2 style="margin-bottom: 30px; color: var(--primary);">ملخص الأداء</h2>
+
+<!-- Stats Grid -->
+<div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; display: grid; margin-bottom: 40px;">
+    <div class="stat-card">
+        <i class="fas fa-box fa-2x" style="color: #3b82f6;"></i>
+        <h2>@ViewBag.ProductsCount</h2>
+        <p>إجمالي المنتجات</p>
+    </div>
+    <div class="stat-card">
+        <i class="fas fa-shopping-cart fa-2x" style="color: #f59e0b;"></i>
+        <h2>@ViewBag.OrdersCount</h2>
+        <p>إجمالي الطلبات</p>
+    </div>
+    <div class="stat-card">
+        <i class="fas fa-users fa-2x" style="color: #10b981;"></i>
+        <h2>@ViewBag.UsersCount</h2>
+        <p>المستخدمين المسجلين</p>
+    </div>
+    <div class="stat-card">
+        <i class="fas fa-wallet fa-2x" style="color: #ef4444;"></i>
+        <h2>@(((decimal)ViewBag.Revenue).ToString("N0"))</h2>
+        <p>إجمالي المبيعات (ج.م)</p>
+    </div>
+</div>
+
+<!-- Recent Orders Table -->
+<h3 style="margin-bottom: 20px;">آخر الطلبات</h3>
+<table>
+    <thead>
+        <tr>
+            <th>رقم الطلب</th>
+            <th>العميل</th>
+            <th>المبلغ</th>
+            <th>التاريخ</th>
+            <th>الحالة</th>
+            <th>إجراء</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var order in Model)
+        {
+            <tr>
+                <td>#@order.Id</td>
+                <td>@order.CustomerName</td>
+                <td>@order.TotalAmount.ToString("N2") ج.م</td>
+                <td>@order.OrderDate.ToShortDateString()</td>
+                <td>
+                    @if (order.Status == "Pending")
+                    {
+                        <span style="background:#fffbeb; color:#f59e0b; padding:5px 10px; border-radius:15px; font-size:0.8rem;">قيد الانتظار</span>
+                    }
+                    else if (order.Status == "Confirmed")
+                    {
+
+                        <span style="background:#e0f2fe; color:#0284c7; padding:5px 10px; border-radius:15px; font-size:0.8rem;">مؤكد</span>
+                    }
+                    else
+                    {
+
+                        <span style="background:#dcfce7; color:#16a34a; padding:5px 10px; border-radius:15px; font-size:0.8rem;">تم الشحن</span>
+                    }
+                </td>
+                <td><a href="#" class="btn-outline">التفاصيل</a></td>
+            </tr>
+        }
+    </tbody>
+</table>

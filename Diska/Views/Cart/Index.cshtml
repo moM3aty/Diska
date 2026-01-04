@@ -1,0 +1,45 @@
+﻿@{
+    ViewData["Title"] = "سلة المشتريات";
+}
+
+<section class="cart-section">
+    <div class="container">
+        <h2>سلة المشتريات</h2>
+
+        <div class="cart-layout">
+            <div class="cart-items">
+                <!-- سيتم ملء هذا الجزء بواسطة JavaScript من script.js بناءً على LocalStorage -->
+                <p style="text-align:center; padding: 20px;">جاري تحميل السلة...</p>
+            </div>
+
+            <div class="cart-summary">
+                <h3>ملخص الطلب</h3>
+                <div class="summary-row">
+                    <span>المجموع الفرعي</span>
+                    <span id="cartSubTotal">0.00 ج.م</span>
+                </div>
+                <div class="summary-row">
+                    <span>الضريبة (14%)</span>
+                    <span>مشمولة</span>
+                </div>
+                <div class="summary-row total">
+                    <span>الإجمالي</span>
+                    <span id="cartTotal">0.00 ج.م</span>
+                </div>
+                <a asp-action="Checkout" class="btn primary w-100 checkout-btn" style="text-align: center; text-decoration: none;">إتمام الشراء</a>
+                <a asp-controller="Home" asp-action="Index" class="continue-shopping">متابعة التسوق</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <!-- نعتمد على السكريبت الأساسي لعرض السلة لأنه يستخدم LocalStorage -->
+    <script>
+        // كود بسيط لربط عرض الإجماليات بالعناصر الصحيحة إذا اختلفت المعرفات
+        document.addEventListener('DOMContentLoaded', () => {
+            // نترك script.js يقوم بعمله، ولكن قد نحتاج لتعديل بسيط في script.js ليتوافق مع أسماء المعرفات الجديدة إذا لزم الأمر
+            // حالياً script.js يستخدم كلاسات .cart-items و .summary-row وهذا متوافق
+        });
+    </script>
+}
