@@ -1,12 +1,14 @@
-﻿@{
-    ViewData["Title"] = "تواصل معنا";
+﻿@using System.Globalization
+@{
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    ViewData["Title"] = isAr ? "تواصل معنا" : "Contact Us";
 }
 
 <section class="section-padding">
     <div class="container">
 
         <div class="breadcrumb">
-            <a asp-controller="Home" asp-action="Index">الرئيسية</a> / <span>تواصل معنا</span>
+            <a asp-controller="Home" asp-action="Index">@(isAr ? "الرئيسية" : "Home")</a> / <span>@(isAr ? "تواصل معنا" : "Contact Us")</span>
         </div>
 
         <div class="contact-page-wrapper">
@@ -15,34 +17,25 @@
                 <div class="c-item">
                     <div class="icon"><i class="fas fa-map-marker-alt"></i></div>
                     <div>
-                        <h4>المقر الرئيسي</h4>
-                        <p>123 شارع التسعين، التجمع الخامس، القاهرة، مصر.</p>
+                        <h4>@(isAr ? "المقر الرئيسي" : "Main Office")</h4>
+                        <p>@(isAr ? "123 شارع التسعين، التجمع الخامس، القاهرة" : "123 El-Teseen St, 5th Settlement, Cairo")</p>
                     </div>
                 </div>
 
                 <div class="c-item">
                     <div class="icon"><i class="fas fa-phone-alt"></i></div>
                     <div>
-                        <h4>أرقام الهاتف</h4>
-                        <p>المبيعات: <a href="tel:01000000000">01000000000</a></p>
-                        <p>الدعم الفني: <a href="tel:01100000000">01100000000</a></p>
+                        <h4>@(isAr ? "أرقام الهاتف" : "Phone Numbers")</h4>
+                        <p>@(isAr ? "المبيعات" : "Sales"): <a href="tel:01000000000">01000000000</a></p>
+                        <p>@(isAr ? "الدعم" : "Support"): <a href="tel:01100000000">01100000000</a></p>
                     </div>
                 </div>
 
                 <div class="c-item">
                     <div class="icon"><i class="fas fa-envelope"></i></div>
                     <div>
-                        <h4>البريد الإلكتروني</h4>
+                        <h4>@(isAr ? "البريد الإلكتروني" : "Email Address")</h4>
                         <p><a href="mailto:support@diska.com">support@diska.com</a></p>
-                        <p><a href="mailto:sales@diska.com">sales@diska.com</a></p>
-                    </div>
-                </div>
-
-                <div class="c-item">
-                    <div class="icon"><i class="fas fa-clock"></i></div>
-                    <div>
-                        <h4>مواعيد العمل</h4>
-                        <p>من السبت إلى الخميس<br>من الساعة 9:00 صباحاً حتى 6:00 مساءً</p>
                     </div>
                 </div>
 
@@ -53,44 +46,52 @@
             </div>
 
             <div class="contact-form-card">
-                <h2>هل لديك استفسار؟</h2>
-                <p>املأ النموذج التالي وسيتم الرد عليك في أقرب وقت ممكن.</p>
+                <h2>@(isAr ? "هل لديك استفسار؟" : "Have a question?")</h2>
+                <p>@(isAr ? "املأ النموذج التالي وسيتم الرد عليك قريباً." : "Fill out the form below and we will reply shortly.")</p>
 
-                <form onsubmit="event.preventDefault(); alert('تم إرسال رسالتك بنجاح! سيتم التواصل معك قريباً.'); location.reload();">
+                <form asp-action="Contact" method="post">
                     <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                         <div class="form-group">
-                            <label>الاسم بالكامل</label>
-                            <input type="text" placeholder="أدخل اسمك" required>
+                            <label>@(isAr ? "الاسم بالكامل" : "Full Name")</label>
+                            <input type="text" name="Name" placeholder="@(isAr ? "أدخل اسمك" : "Enter your name")" required>
                         </div>
                         <div class="form-group">
-                            <label>رقم الموبايل</label>
-                            <input type="tel" placeholder="01xxxxxxxxx" required>
+                            <label>@(isAr ? "رقم الموبايل" : "Phone")</label>
+                            <input type="tel" name="Phone" placeholder="01xxxxxxxxx" required>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label>البريد الإلكتروني</label>
-                        <input type="email" placeholder="email@example.com">
+                        <label>@(isAr ? "البريد الإلكتروني" : "Email")</label>
+                        <input type="email" name="Email" placeholder="email@example.com">
                     </div>
 
                     <div class="form-group">
-                        <label>نوع الاستفسار</label>
-                        <select style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px;">
-                            <option>شكوى بخصوص طلب</option>
-                            <option>استفسار عن منتج</option>
-                            <option>طلب تسجيل تاجر</option>
-                            <option>اقتراح</option>
-                            <option>أخرى</option>
+                        <label>@(isAr ? "الموضوع" : "Subject")</label>
+                        <select name="Subject" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px;">
+                            @if (isAr)
+                            {
+                                <option>شكوى بخصوص طلب</option>
+                                <option>استفسار عن منتج</option>
+                                <option>طلب تسجيل تاجر</option>
+                                <option>أخرى</option>
+                            }
+                            else
+                            {
+                                <option>Order Issue</option>
+                                <option>Product Inquiry</option>
+                                <option>Merchant Registration</option>
+                                <option>Other</option>
+                            }
                         </select>
                     </div>
 
                     <div class="form-group">
-                        <label>الرسالة</label>
-                        <textarea rows="5" placeholder="اكتب تفاصيل رسالتك هنا..." required
-                                  style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px;"></textarea>
+                        <label>@(isAr ? "الرسالة" : "Message")</label>
+                        <textarea name="Message" rows="5" placeholder="@(isAr ? "اكتب تفاصيل رسالتك..." : "Write your message here...")" required style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px;"></textarea>
                     </div>
 
-                    <button class="btn primary w-100">إرسال الرسالة</button>
+                    <button class="btn primary w-100">@(isAr ? "إرسال الرسالة" : "Send Message")</button>
                 </form>
             </div>
 

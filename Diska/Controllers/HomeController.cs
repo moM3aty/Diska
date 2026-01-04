@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Diska.Models;
 using Diska.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 
 namespace Diska.Controllers
 {
@@ -10,21 +11,37 @@ namespace Diska.Controllers
     {
         private readonly ILogger<HomeController> _logger;
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public HomeController(ILogger<HomeController> logger, ApplicationDbContext context)
+        public HomeController(ILogger<HomeController> logger, ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
             _logger = logger;
             _context = context;
+            _userManager = userManager;
         }
 
         public IActionResult Index()
         {
-            // جلب المنتجات مع التصنيفات لعرضها
+            // 1. جلب المنتجات (للعرض في الأسفل)
             var products = _context.Products.Include(p => p.Category).OrderByDescending(p => p.Id).Take(12).ToList();
+
+            // 2. جلب الأقسام (للعرض في الأعلى) - الحل لمشكلة الروابط
+            var categories = _context.Categories.ToList();
+            ViewBag.Categories = categories;
+
             return View(products);
         }
 
-        // دالة البحث الجديدة
+        // --- باقي الكود كما هو ---
+        public IActionResult MerchantLanding()
+        {
+            if (User.Identity.IsAuthenticated && User.IsInRole("Merchant"))
+            {
+                return RedirectToAction("Index", "Merchant");
+            }
+            return View();
+        }
+
         [HttpGet]
         public IActionResult Search(string query)
         {
@@ -32,7 +49,6 @@ namespace Diska.Controllers
 
             if (!string.IsNullOrEmpty(query))
             {
-                // البحث في الاسم، الوصف، واسم التصنيف
                 products = products.Where(p => p.Name.Contains(query) || p.Description.Contains(query) || p.Category.Name.Contains(query));
             }
 
@@ -40,21 +56,25 @@ namespace Diska.Controllers
             return View(products.ToList());
         }
 
-        // --- الصفحات الثابتة ---
+        public IActionResult Deals()
+        {
+            var deals = _context.GroupDeals
+                .Include(d => d.Product)
+                .Where(d => d.IsActive && d.EndDate > DateTime.Now)
+                .OrderBy(d => d.EndDate)
+                .ToList();
+
+            return View(deals);
+        }
+
         public IActionResult About() => View();
         public IActionResult FAQ() => View();
         public IActionResult Policies() => View();
-        public IActionResult Deals() => View();
         public IActionResult Notifications() => View();
 
-        // --- صفحة اتصل بنا (GET) ---
         [HttpGet]
-        public IActionResult Contact()
-        {
-            return View();
-        }
+        public IActionResult Contact() => View();
 
-        // --- صفحة اتصل بنا (POST) لحفظ الرسالة ---
         [HttpPost]
         public IActionResult Contact(ContactMessage model)
         {
@@ -63,9 +83,7 @@ namespace Diska.Controllers
                 model.DateSent = DateTime.Now;
                 _context.ContactMessages.Add(model);
                 _context.SaveChanges();
-
-                // رسالة نجاح للمستخدم (يمكن عرضها بـ ViewBag أو TempData)
-                TempData["SuccessMessage"] = "تم استلام رسالتك بنجاح، شكراً لتواصلك معنا.";
+                TempData["SuccessMessage"] = "تم استلام رسالتك بنجاح";
                 return RedirectToAction(nameof(Contact));
             }
             return View(model);

@@ -1,45 +1,38 @@
-﻿@{
-    ViewData["Title"] = "سلة المشتريات";
+﻿@using System.Globalization
+@{
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    ViewData["Title"] = isAr ? "سلة المشتريات" : "Shopping Cart";
 }
 
 <section class="cart-section">
     <div class="container">
-        <h2>سلة المشتريات</h2>
+        <h2 style="margin-bottom: 20px;">@(isAr ? "سلة المشتريات" : "Shopping Cart")</h2>
 
         <div class="cart-layout">
             <div class="cart-items">
-                <!-- سيتم ملء هذا الجزء بواسطة JavaScript من script.js بناءً على LocalStorage -->
-                <p style="text-align:center; padding: 20px;">جاري تحميل السلة...</p>
+                <!-- Items injected via JS -->
+                <p style="text-align:center; padding: 20px;">@(isAr ? "جاري تحميل السلة..." : "Loading cart...")</p>
             </div>
 
             <div class="cart-summary">
-                <h3>ملخص الطلب</h3>
+                <h3>@(isAr ? "ملخص الطلب" : "Order Summary")</h3>
                 <div class="summary-row">
-                    <span>المجموع الفرعي</span>
-                    <span id="cartSubTotal">0.00 ج.م</span>
+                    <span>@(isAr ? "المجموع الفرعي" : "Subtotal")</span>
+                    <span id="cartSubTotal">0.00 @(isAr ? "ج.م" : "EGP")</span>
                 </div>
                 <div class="summary-row">
-                    <span>الضريبة (14%)</span>
-                    <span>مشمولة</span>
+                    <span>@(isAr ? "الضريبة (14%)" : "VAT (14%)")</span>
+                    <span>@(isAr ? "مشمولة" : "Included")</span>
                 </div>
                 <div class="summary-row total">
-                    <span>الإجمالي</span>
-                    <span id="cartTotal">0.00 ج.م</span>
+                    <span>@(isAr ? "الإجمالي" : "Total")</span>
+                    <span id="cartTotal">0.00 @(isAr ? "ج.م" : "EGP")</span>
                 </div>
-                <a asp-action="Checkout" class="btn primary w-100 checkout-btn" style="text-align: center; text-decoration: none;">إتمام الشراء</a>
-                <a asp-controller="Home" asp-action="Index" class="continue-shopping">متابعة التسوق</a>
+                <a asp-action="Checkout" class="btn primary w-100 checkout-btn" style="text-align: center; text-decoration: none;">
+                    @(isAr ? "إتمام الشراء" : "Proceed to Checkout")
+                </a>
+                <a asp-controller="Home" asp-action="Index" class="continue-shopping">@(isAr ? "متابعة التسوق" : "Continue Shopping")</a>
             </div>
         </div>
     </div>
 </section>
-
-@section Scripts {
-    <!-- نعتمد على السكريبت الأساسي لعرض السلة لأنه يستخدم LocalStorage -->
-    <script>
-        // كود بسيط لربط عرض الإجماليات بالعناصر الصحيحة إذا اختلفت المعرفات
-        document.addEventListener('DOMContentLoaded', () => {
-            // نترك script.js يقوم بعمله، ولكن قد نحتاج لتعديل بسيط في script.js ليتوافق مع أسماء المعرفات الجديدة إذا لزم الأمر
-            // حالياً script.js يستخدم كلاسات .cart-items و .summary-row وهذا متوافق
-        });
-    </script>
-}

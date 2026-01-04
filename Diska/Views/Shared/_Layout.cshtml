@@ -1,15 +1,35 @@
 ﻿@using Microsoft.AspNetCore.Identity
-@inject SignInManager<IdentityUser> SignInManager
-@inject UserManager<IdentityUser> UserManager
+@using System.Globalization
+@using Diska.Models
+<!-- تصحيح الحقن هنا لاستخدام ApplicationUser -->
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+
+@{
+    var isRtl = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    var dir = isRtl ? "rtl" : "ltr";
+    var lang = isRtl ? "ar" : "en";
+}
 
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="@lang" dir="@dir">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@ViewData["Title"] - DISKA</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+
+    @if (isRtl)
+    {
+        <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+        <style>body { font-family: 'Cairo', sans-serif; }</style>
+    }
+    else
+    {
+        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+        <style>body { font-family: 'Roboto', sans-serif; }</style>
+    }
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="~/style.css">
 </head>
@@ -25,7 +45,7 @@
 
             <div class="search-box">
                 <form asp-controller="Home" asp-action="Search" method="get" style="display:flex; width:100%;">
-                    <input type="text" name="query" placeholder="ابحث عن منتج، مورد، أو علامة تجارية..." value="@Context.Request.Query["query"]">
+                    <input type="text" name="query" placeholder="@(isRtl ? "ابحث عن منتج، مورد، أو علامة تجارية..." : "Search for products, suppliers...")" value="@Context.Request.Query["query"]">
                     <button type="submit"><i class="fas fa-search"></i></button>
                 </form>
             </div>
@@ -35,49 +55,41 @@
                 @if (SignInManager.IsSignedIn(User))
                 {
                     <div style="display:none; @(SignInManager.IsSignedIn(User) ? "display:flex;" : "") flex-direction:column; justify-content:center; align-items:flex-end; margin-left:10px;">
-                        <span style="font-size:0.7rem; color:#cbd5e1;">مرحباً،</span>
+                        <span style="font-size:0.7rem; color:#cbd5e1;">@(isRtl ? "مرحباً" : "Hello")</span>
                         <strong style="font-size:0.85rem; color:#fff;">@User.Identity.Name</strong>
                     </div>
 
-                    <!-- زر لوحة التحكم يظهر للأدمن فقط -->
                     @if (User.IsInRole("Admin"))
                     {
-                        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="action-item" title="لوحة التحكم" style="color:#FACC15 !important;">
+                        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="action-item" title="@(isRtl ? "لوحة التحكم" : "Dashboard")" style="color:#FACC15 !important;">
                             <i class="fas fa-cogs"></i>
                         </a>
                     }
 
-                    <a asp-controller="Account" asp-action="Logout" class="action-item" title="تسجيل خروج" style="color:#ef4444 !important;">
+                    <a asp-controller="Account" asp-action="Logout" class="action-item" title="@(isRtl ? "خروج" : "Logout")" style="color:#ef4444 !important;">
                         <i class="fas fa-sign-out-alt"></i>
                     </a>
                 }
                 else
                 {
-                    <a asp-controller="Account" asp-action="Login" class="action-item">
-                        <i class="fas fa-user"></i>
-                        <div class="info">
-                            <span>حسابي</span>
-                            <strong>تسجيل دخول</strong>
-                        </div>
-                    </a>
+                   
                 }
 
                 <a asp-controller="Cart" asp-action="Index" class="action-item cart-icon" style="text-decoration: none;">
                     <i class="fas fa-shopping-cart"></i>
                     <span class="badge">@ViewBag.CartCount</span>
-                    <span class="icon-label">السلة</span>
+                    <span class="icon-label">@(isRtl ? "السلة" : "Cart")</span>
                 </a>
 
                 <a asp-controller="Wishlist" asp-action="Index" class="action-item" style="text-decoration: none;">
                     <i class="fas fa-heart"></i>
-                    <span class="icon-label">المفضلة</span>
+                    <span class="icon-label">@(isRtl ? "المفضلة" : "Wishlist")</span>
                 </a>
 
-                <a asp-controller="Home" asp-action="Notifications" class="action-item notif-icon-container"
-                   style="text-decoration: none; position: relative;">
+                <a asp-controller="Home" asp-action="Notifications" class="action-item notif-icon-container" style="text-decoration: none; position: relative;">
                     <i class="fas fa-bell"></i>
                     <span class="badge notif-badge" style="background:red; display:none;">0</span>
-                    <span class="icon-label">إشعارات</span>
+                    <span class="icon-label">@(isRtl ? "تنبيهات" : "Alerts")</span>
                 </a>
 
                 <div class="action-item mobile-menu-btn">
@@ -90,39 +102,33 @@
 
     <div class="mobile-sidebar">
         <div class="sidebar-header">
-            <h3>القائمة الرئيسية</h3>
+            <h3>@(isRtl ? "القائمة الرئيسية" : "Main Menu")</h3>
             <button class="close-menu"><i class="fas fa-times"></i></button>
         </div>
 
         <ul class="sidebar-links">
             @if (SignInManager.IsSignedIn(User))
             {
-                <li style="background:#f1f5f9; padding:15px; border-radius:8px; margin-bottom:15px;">
-                    <span style="color:#666; font-size:0.8rem;">مرحباً بك</span><br>
-                    <strong style="color:var(--primary); font-size:1.1rem;">@User.Identity.Name</strong>
-                </li>
-                @if (User.IsInRole("Admin"))
-                {
-                    <li><a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" style="color:#FACC15;"><i class="fas fa-cogs"></i> لوحة التحكم</a></li>
-                }
-                <li><a asp-controller="Account" asp-action="Profile"><i class="fas fa-user-circle"></i> الملف الشخصي</a></li>
-                <li><a asp-controller="Order" asp-action="MyOrders"><i class="fas fa-box"></i> سجل الطلبات</a></li>
-                <li><a asp-controller="Account" asp-action="Logout" style="color:red;"><i class="fas fa-sign-out-alt"></i> تسجيل خروج</a></li>
+                <li><a asp-controller="Account" asp-action="Profile"><i class="fas fa-user-circle"></i> @(isRtl ? "حسابي" : "My Account")</a></li>
+                <li><a asp-controller="Order" asp-action="MyOrders"><i class="fas fa-box"></i> @(isRtl ? "طلباتي" : "My Orders")</a></li>
             }
             else
             {
-                <li><a asp-controller="Account" asp-action="Login"><i class="fas fa-sign-in-alt"></i> تسجيل دخول</a></li>
-                <li><a asp-controller="Account" asp-action="Signup"><i class="fas fa-user-plus"></i> إنشاء حساب جديد</a></li>
+                <li><a asp-controller="Account" asp-action="Login"><i class="fas fa-wallet"></i> @(isRtl ? "دخول / تسجيل" : "Login / Sign up")</a></li>
             }
 
             <hr style="border:0; border-top:1px solid #eee; margin:10px 0;">
 
-            <li><a asp-controller="Home" asp-action="Index"><i class="fas fa-home"></i> الرئيسية</a></li>
-            <li><a asp-controller="Merchant" asp-action="Index"><i class="fas fa-store"></i> بيع معنا</a></li>
-            <li><a asp-controller="Cart" asp-action="Index"><i class="fas fa-shopping-cart"></i> سلة المشتريات</a></li>
-            <li><a asp-controller="Home" asp-action="Deals"><i class="fas fa-fire" style="color:red;"></i> العروض والصفقات</a></li>
-            <li><a asp-controller="Request" asp-action="Index"><i class="fas fa-bullhorn"></i> طلبات خاصة</a></li>
-            <li><a asp-controller="Home" asp-action="Contact"><i class="fas fa-headset"></i> اتصل بنا</a></li>
+            <li><a asp-controller="Home" asp-action="Index"><i class="fas fa-home"></i> @(isRtl ? "الرئيسية" : "Home")</a></li>
+            <li><a asp-controller="Cart" asp-action="Index"><i class="fas fa-shopping-cart"></i> @(isRtl ? "السلة" : "Cart")</a></li>
+            <li><a asp-controller="Home" asp-action="Deals"><i class="fas fa-fire" style="color:red;"></i> @(isRtl ? "العروض والصفقات" : "Deals & Offers")</a></li>
+            <li><a asp-controller="Request" asp-action="Index"><i class="fas fa-bullhorn"></i> @(isRtl ? "طلبات خاصة" : "Special Requests")</a></li>
+            <li><a asp-controller="Merchant" asp-action="Index"><i class="fas fa-store"></i> @(isRtl ? "لوحة التاجر" : "Merchant Panel")</a></li>
+
+            <li><a asp-controller="Home" asp-action="About"><i class="fas fa-info-circle"></i> @(isRtl ? "من نحن" : "About Us")</a></li>
+            <li><a asp-controller="Home" asp-action="Contact"><i class="fas fa-headset"></i> @(isRtl ? "تواصل معنا" : "Contact Us")</a></li>
+            <li><a asp-controller="Home" asp-action="FAQ"><i class="fas fa-question-circle"></i> @(isRtl ? "الأسئلة الشائعة" : "FAQ")</a></li>
+            <li><a asp-controller="Home" asp-action="Policies"><i class="fas fa-shield-alt"></i> @(isRtl ? "السياسات" : "Policies")</a></li>
         </ul>
     </div>
     <div class="menu-overlay"></div>
@@ -136,36 +142,42 @@
                     <a asp-controller="Home" asp-action="Index" class="logo">
                         <img src="~/images/ChatGPT_Image_22_ديسمبر_2025__12_14_35_ص-removebg-preview.png" alt="DISKA Logo">
                     </a>
-                    <p style="margin-top: 15px; color: #cbd5e1;">منصتك الأولى لتجارة الجملة.</p>
+                    <p style="margin-top: 15px; color: #cbd5e1;">@(isRtl ? "منصتك الأولى لتجارة الجملة في مصر." : "Your #1 Wholesale Platform in Egypt.")</p>
                 </div>
                 <div>
-                    <h4>روابط هامة</h4>
+                    <h4>@(isRtl ? "روابط هامة" : "Important Links")</h4>
                     <ul>
-                        <li><a asp-controller="Home" asp-action="About">من نحن</a></li>
-                        <li><a asp-controller="Merchant" asp-action="Index">تجار الجملة</a></li>
-                        <li><a asp-controller="Home" asp-action="Contact">تواصل معنا</a></li>
+                        <li><a asp-controller="Home" asp-action="About">@(isRtl ? "من نحن" : "About Us")</a></li>
+                        <li><a asp-controller="Merchant" asp-action="Index">@(isRtl ? "بيع معنا" : "Sell with Us")</a></li>
+                        <li><a asp-controller="Home" asp-action="Contact">@(isRtl ? "تواصل معنا" : "Contact Us")</a></li>
                     </ul>
                 </div>
                 <div>
-                    <h4>سياسات</h4>
+                    <h4>@(isRtl ? "المساعدة والسياسات" : "Support & Policies")</h4>
                     <ul>
-                        <li><a asp-controller="Home" asp-action="Policies">الشحن والإرجاع</a></li>
-                        <li><a asp-controller="Home" asp-action="FAQ">الأسئلة الشائعة</a></li>
+                        <li><a asp-controller="Home" asp-action="Policies">@(isRtl ? "الشحن والإرجاع" : "Shipping & Returns")</a></li>
+                        <li><a asp-controller="Home" asp-action="FAQ">@(isRtl ? "الأسئلة الشائعة" : "FAQ")</a></li>
                     </ul>
                 </div>
             </div>
             <div class="copyrights">
-                <p>&copy; 2025 DISKA - جميع الحقوق محفوظة | تطوير GMTWEB</p>
+                <p>&copy; 2025 DISKA - @(isRtl ? "جميع الحقوق محفوظة" : "All Rights Reserved")</p>
+                <p>Design and programming by <a href="#" target="_blank"><strong style="color: #FACC15;">GMTWEB</strong></a></p>
             </div>
         </div>
     </footer>
 
     <div class="floating-container">
-        <a href="javascript:void(0)" id="langSwitcher" class="float-btn lang-btn" title="Change Language"><i class="fas fa-globe"></i></a>
-        <a href="https://wa.me/201000000000" target="_blank" class="float-btn whatsapp-btn" title="تواصل معنا"><i class="fab fa-whatsapp"></i></a>
+        <a href="javascript:void(0)" id="langSwitcher" class="float-btn lang-btn" title="Change Language">
+            <i class="fas fa-globe"></i>
+        </a>
+        <a href="https://wa.me/201000000000" target="_blank" class="float-btn whatsapp-btn" title="WhatsApp">
+            <i class="fab fa-whatsapp"></i>
+        </a>
     </div>
 
     <script src="~/script.js"></script>
+    <script src="~/js/system-core.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

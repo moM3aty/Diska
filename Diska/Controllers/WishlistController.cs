@@ -9,30 +9,35 @@ namespace Diska.Controllers
     public class WishlistController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private readonly UserManager<IdentityUser> _userManager;
+        // تصحيح: استخدام ApplicationUser
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public WishlistController(ApplicationDbContext context, UserManager<IdentityUser> userManager)
+        public WishlistController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
             _userManager = userManager;
         }
 
-        // عرض المفضلة (من الداتابيز للمستخدم المسجل، أو View عادي للزائر)
         public async Task<IActionResult> Index()
         {
             if (User.Identity.IsAuthenticated)
             {
                 var user = await _userManager.GetUserAsync(User);
-                var items = _context.WishlistItems
-                    .Where(w => w.UserId == user.Id)
-                    .Include(w => w.Product)
-                    .ToList();
-                return View("IndexDB", items); // فيو جديد للمستخدمين المسجلين
+                if (user != null)
+                {
+                    var items = _context.WishlistItems
+                        .Where(w => w.UserId == user.Id)
+                        .Include(w => w.Product)
+                        .ToList();
+                    // عرض صفحة المفضلة الخاصة بالمستخدم المسجل (يمكنك إنشاء View باسم IndexDB أو استخدام Index وتمرير الموديل)
+                    // هنا سنعيد نفس الـ View وسنقوم بتعديلها لاحقاً لتقبل الموديل، أو نتركها تعتمد على الـ JS حالياً
+                    // للأمان، سنمرر البيانات للـ View
+                    return View(items);
+                }
             }
-            return View(); // الفيو القديم المعتمد على LocalStorage للزوار
+            return View(new List<WishlistItem>());
         }
 
-        // إضافة/حذف منتج (AJAX)
         [HttpPost]
         public async Task<IActionResult> Toggle(int productId)
         {
@@ -42,6 +47,8 @@ namespace Diska.Controllers
             }
 
             var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Json(new { success = false, message = "خطأ في المستخدم" });
+
             var existingItem = _context.WishlistItems.FirstOrDefault(w => w.UserId == user.Id && w.ProductId == productId);
 
             if (existingItem != null)

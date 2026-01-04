@@ -1,5 +1,7 @@
-﻿@{
-    ViewData["Title"] = "من نحن";
+﻿@using System.Globalization
+@{
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    ViewData["Title"] = isAr ? "من نحن" : "About Us";
 }
 
 <section class="section-padding">
@@ -8,26 +10,39 @@
 
             <div class="logo-icon" style="margin: 0 auto 20px; width: 80px; height: 80px; font-size: 2.5rem; background: var(--accent); color: var(--primary); border-radius: 20px; display: flex; align-items: center; justify-content: center;">%</div>
 
-            <h1 style="color: var(--primary); margin-bottom: 20px; font-weight: 800;">عن منصة DISKA</h1>
+            <h1 style="color: var(--primary); margin-bottom: 20px; font-weight: 800;">
+                @(isAr ? "عن منصة DISKA" : "About DISKA")
+            </h1>
 
-            <p style="font-size: 1.1rem; line-height: 1.8; color: #555; max-width: 800px; margin: 0 auto;">
-                ديسكا هي المنصة الأولى من نوعها في سوق الجملة (B2B)، تهدف لربط التجار والموردين وأصحاب المصانع بمحلات التجزئة والسوبر ماركت بشكل مباشر.
-                <br><br>
-                نسعى لتوفير أفضل الأسعار من خلال تجميع الطلبات (الصفقات) وإلغاء الحلقات الوسيطة، مما يضمن هامش ربح أعلى للتاجر وتوفير أكبر للمشتري.
-            </p>
+            @if (isAr)
+            {
+                <p style="font-size: 1.1rem; line-height: 1.8; color: #555; max-width: 800px; margin: 0 auto;">
+                    ديسكا هي المنصة الأولى من نوعها في سوق الجملة (B2B)، تهدف لربط التجار والموردين وأصحاب المصانع بمحلات التجزئة والسوبر ماركت بشكل مباشر.
+                    <br><br>
+                    نسعى لتوفير أفضل الأسعار من خلال تجميع الطلبات (الصفقات) وإلغاء الحلقات الوسيطة، مما يضمن هامش ربح أعلى للتاجر وتوفير أكبر للمشتري.
+                </p>
+            }
+            else
+            {
+                <p style="font-size: 1.1rem; line-height: 1.8; color: #555; max-width: 800px; margin: 0 auto;">
+                    DISKA is the first B2B wholesale platform of its kind in Egypt, aiming to connect merchants, suppliers, and factory owners directly with retail shops and supermarkets.
+                    <br><br>
+                    We aim to provide the best prices by aggregating orders (Deals) and eliminating intermediaries, ensuring higher profit margins for merchants and greater savings for buyers.
+                </p>
+            }
 
             <div class="stats-grid" style="margin-top: 50px;">
                 <div class="stat-box">
                     <h3 style="color: var(--accent); font-size: 2rem; font-weight: 900;">+5000</h3>
-                    <p style="font-weight: bold; color: var(--primary);">منتج متنوع</p>
+                    <p style="font-weight: bold; color: var(--primary);">@(isAr ? "منتج متنوع" : "Products")</p>
                 </div>
                 <div class="stat-box">
                     <h3 style="color: var(--accent); font-size: 2rem; font-weight: 900;">+1000</h3>
-                    <p style="font-weight: bold; color: var(--primary);">تاجر ومورد</p>
+                    <p style="font-weight: bold; color: var(--primary);">@(isAr ? "تاجر ومورد" : "Merchants")</p>
                 </div>
                 <div class="stat-box">
                     <h3 style="color: var(--accent); font-size: 2rem; font-weight: 900;">24/7</h3>
-                    <p style="font-weight: bold; color: var(--primary);">دعم فني</p>
+                    <p style="font-weight: bold; color: var(--primary);">@(isAr ? "دعم فني" : "Support")</p>
                 </div>
             </div>
         </div>

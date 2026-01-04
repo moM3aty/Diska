@@ -1,14 +1,14 @@
 ﻿@model Diska.Models.Product
 
 @{
-    ViewData["Title"] = "تعديل المنتج والأسعار";
+    ViewData["Title"] = "تعديل المنتج";
 }
 
 <section class="section-padding">
     <div class="container">
-        <div class="merchant-form-box">
+        <div class="merchant-form-box" style="max-width: 900px; margin: 0 auto;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                <h2 style="color: var(--primary);">إدارة المنتج: @Model.Name</h2>
+                <h2 style="color: var(--primary);">تعديل المنتج: @Model.Name</h2>
                 <a asp-action="Index" class="btn btn-outline" style="border:1px solid #ccc;">رجوع</a>
             </div>
 
@@ -16,19 +16,24 @@
                 <input type="hidden" asp-for="Id" />
 
                 <div class="form-row" style="display:grid; grid-template-columns: 1fr 2fr; gap:30px;">
-                    <!-- بيانات أساسية -->
+                    <!-- الصورة -->
                     <div>
                         <div style="text-align:center; margin-bottom:20px;">
-                            <img src="~/@Model.ImageUrl" id="previewImg" style="width:100%; max-height:200px; object-fit:contain; border:1px solid #eee; border-radius:10px; margin-bottom:10px;">
+                            <img src="~/@Model.ImageUrl" id="previewImg" style="width:100%; max-height:250px; object-fit:contain; border:1px solid #eee; border-radius:10px; margin-bottom:10px;">
                             <label for="imageFile" class="btn primary small" style="cursor:pointer; display:block;">تغيير الصورة</label>
                             <input type="file" name="imageFile" id="imageFile" style="display:none;" onchange="document.getElementById('previewImg').src = window.URL.createObjectURL(this.files[0])">
                         </div>
                     </div>
 
+                    <!-- البيانات -->
                     <div>
                         <div class="form-group">
-                            <label>اسم المنتج</label>
+                            <label>اسم المنتج (عربي)</label>
                             <input asp-for="Name" class="form-control" required />
+                        </div>
+                        <div class="form-group">
+                            <label>اسم المنتج (إنجليزي)</label>
+                            <input asp-for="NameEn" class="form-control" />
                         </div>
 
                         <div class="form-row">
@@ -38,17 +43,17 @@
                             </div>
                             <div class="form-group">
                                 <label>وحدات الكرتونة</label>
-                                <input asp-for="UnitsPerCarton" class="form-control" required placeholder="مثال: 12 قطعة" />
+                                <input asp-for="UnitsPerCarton" class="form-control" required />
                             </div>
                         </div>
 
                         <div class="form-row">
                             <div class="form-group">
-                                <label>السعر الأساسي (قطاعي)</label>
+                                <label>السعر الأساسي</label>
                                 <input asp-for="Price" class="form-control" required />
                             </div>
                             <div class="form-group">
-                                <label>الكمية بالمخزن</label>
+                                <label>المخزون</label>
                                 <input asp-for="StockQuantity" class="form-control" required />
                             </div>
                         </div>
@@ -57,28 +62,30 @@
 
                 <hr style="margin: 30px 0; border:0; border-top:1px solid #eee;">
 
-                <!-- نظام شرائح الأسعار (Business Logic Core) -->
-                <h3 style="margin-bottom:15px; font-size:1.2rem; color:var(--primary);">شرائح أسعار الجملة (Tiered Pricing)</h3>
-                <p style="color:#666; font-size:0.9rem; margin-bottom:15px;">حدد أسعاراً أقل للكميات الكبيرة لتشجيع التجار على الشراء.</p>
-
+                <!-- شرائح الأسعار -->
+                <h3 style="margin-bottom:15px; font-size:1.2rem; color:var(--primary);">شرائح أسعار الجملة</h3>
                 <table class="table" style="width:100%; text-align:center; border:1px solid #eee; margin-bottom:15px;">
                     <thead style="background:#f8f9fa;">
                         <tr>
                             <th>من (كمية)</th>
                             <th>إلى (كمية)</th>
-                            <th>سعر القطعة (ج.م)</th>
+                            <th>السعر للقطعة</th>
                             <th>حذف</th>
                         </tr>
                     </thead>
                     <tbody id="tiersContainer">
-                        <!-- سيتم ملؤها ديناميكياً أو من الداتابيز -->
-                        <!-- مثال ثابت للعرض، يجب ربطه بـ Model.PriceTiers في الباك اند -->
-                        <tr>
-                            <td><input type="number" name="Tiers[0].MinQuantity" value="5" class="form-control small-input"></td>
-                            <td><input type="number" name="Tiers[0].MaxQuantity" value="20" class="form-control small-input"></td>
-                            <td><input type="number" name="Tiers[0].UnitPrice" value="185.00" class="form-control small-input"></td>
-                            <td><button type="button" class="btn-delete" onclick="this.closest('tr').remove()"><i class="fas fa-trash"></i></button></td>
-                        </tr>
+                        @if (Model.PriceTiers != null)
+                        {
+                            for (int i = 0; i < Model.PriceTiers.Count; i++)
+                            {
+                                <tr>
+                                    <td><input type="number" name="PriceTiers[@i].MinQuantity" value="@Model.PriceTiers[i].MinQuantity" class="form-control small-input"></td>
+                                    <td><input type="number" name="PriceTiers[@i].MaxQuantity" value="@Model.PriceTiers[i].MaxQuantity" class="form-control small-input"></td>
+                                    <td><input type="number" name="PriceTiers[@i].UnitPrice" value="@Model.PriceTiers[i].UnitPrice" class="form-control small-input"></td>
+                                    <td><button type="button" class="btn-delete" onclick="this.closest('tr').remove()"><i class="fas fa-trash"></i></button></td>
+                                </tr>
+                            }
+                        }
                     </tbody>
                 </table>
                 <button type="button" class="btn btn-outline" onclick="addTierRow()">+ إضافة شريحة سعر</button>
@@ -86,11 +93,15 @@
                 <hr style="margin: 30px 0; border:0; border-top:1px solid #eee;">
 
                 <div class="form-group">
-                    <label>وصف تفصيلي</label>
-                    <textarea asp-for="Description" rows="4" class="form-control"></textarea>
+                    <label>الوصف (عربي)</label>
+                    <textarea asp-for="Description" rows="3" class="form-control"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>الوصف (إنجليزي)</label>
+                    <textarea asp-for="DescriptionEn" rows="3" class="form-control"></textarea>
                 </div>
 
-                <button type="submit" class="btn primary w-100" style="padding:15px; font-size:1.1rem;">حفظ كافة التغييرات</button>
+                <button type="submit" class="btn primary w-100" style="padding:15px; font-size:1.1rem;">حفظ التغييرات</button>
             </form>
         </div>
     </div>
@@ -99,12 +110,12 @@
 <script>
     function addTierRow() {
         const tbody = document.getElementById('tiersContainer');
-        const index = tbody.children.length;
+        const index = tbody.querySelectorAll('tr').length;
         const row = `
             <tr>
-                <td><input type="number" name="Tiers[${index}].MinQuantity" class="form-control small-input"></td>
-                <td><input type="number" name="Tiers[${index}].MaxQuantity" class="form-control small-input"></td>
-                <td><input type="number" name="Tiers[${index}].UnitPrice" class="form-control small-input"></td>
+                <td><input type="number" name="PriceTiers[${index}].MinQuantity" class="form-control small-input"></td>
+                <td><input type="number" name="PriceTiers[${index}].MaxQuantity" class="form-control small-input"></td>
+                <td><input type="number" name="PriceTiers[${index}].UnitPrice" class="form-control small-input"></td>
                 <td><button type="button" class="btn-delete" onclick="this.closest('tr').remove()"><i class="fas fa-trash"></i></button></td>
             </tr>
         `;
@@ -114,7 +125,19 @@
 
 <style>
     .small-input {
-        padding: 5px;
+        padding: 8px;
         text-align: center;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        width: 100%;
+    }
+
+    .btn-delete {
+        background: #fee2e2;
+        color: red;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 5px;
+        cursor: pointer;
     }
 </style>

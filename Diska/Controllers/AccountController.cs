@@ -1,37 +1,29 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
-using Diska.Data;
-using Diska.Models; // تأكد من وجود هذا الـ Namespace إذا كنت تستخدم ViewModels مخصصة
+using Diska.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Diska.Controllers
 {
     public class AccountController : Controller
     {
-        private readonly SignInManager<IdentityUser> _signInManager;
-        private readonly UserManager<IdentityUser> _userManager;
-        private readonly ApplicationDbContext _context;
+        private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public AccountController(
-            SignInManager<IdentityUser> signInManager,
-            UserManager<IdentityUser> userManager,
-            ApplicationDbContext context)
+        public AccountController(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager)
         {
             _signInManager = signInManager;
             _userManager = userManager;
-            _context = context;
         }
 
-        // --- تسجيل الدخول ---
         [HttpGet]
         public IActionResult Login()
         {
-            if (User.Identity.IsAuthenticated)
-            {
-                return RedirectToAction("Index", "Home");
-            }
+            if (User.Identity.IsAuthenticated) return RedirectToAction("Index", "Home");
             return View();
         }
 
+        // تسجيل الدخول برقم الهاتف
         [HttpPost]
         public async Task<IActionResult> Login(string phone, string password)
         {
@@ -41,108 +33,115 @@ namespace Diska.Controllers
                 return View();
             }
 
-            // البحث عن المستخدم باستخدام رقم الهاتف (باعتباره اسم المستخدم في هذا السيناريو)
-            // ملاحظة: في Identity الافتراضي، UserName هو الأساس. 
-            // سنفترض هنا أن المستخدم سجل برقم هاتفه كـ UserName أو سنبحث عنه.
-
+            // 1. التأكد أن المستخدم موجود أصلاً برقم الهاتف
+            // نستخدم FindByNameAsync لأننا جعلنا الـ UserName هو نفسه رقم الهاتف عند التسجيل
             var user = await _userManager.FindByNameAsync(phone);
+
             if (user == null)
             {
-                // محاولة البحث بالبريد إذا لم ينجح الهاتف
-                user = await _userManager.FindByEmailAsync(phone);
-            }
-
-            if (user != null)
-            {
-                var result = await _signInManager.PasswordSignInAsync(user, password, isPersistent: true, lockoutOnFailure: false);
-                if (result.Succeeded)
-                {
-                    // التحقق من الدور (Role) للتوجيه المناسب
-                    if (await _userManager.IsInRoleAsync(user, "Admin"))
-                    {
-                        return RedirectToAction("Index", "Dashboard", new { area = "Admin" });
-                    }
-                    return RedirectToAction("Index", "Home");
-                }
-            }
-
-            ViewBag.Error = "بيانات الدخول غير صحيحة";
-            return View();
-        }
-
-        // --- إنشاء حساب جديد ---
-        [HttpGet]
-        public IActionResult Signup()
-        {
-            if (User.Identity.IsAuthenticated)
-            {
-                return RedirectToAction("Index", "Home");
-            }
-            return View();
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> Signup(string fullName, string shopName, string phone, string password, string confirmPassword)
-        {
-            if (password != confirmPassword)
-            {
-                ViewBag.Error = "كلمة المرور غير متطابقة";
+                ViewBag.Error = "هذا الرقم غير مسجل لدينا، يرجى إنشاء حساب جديد.";
                 return View();
             }
 
-            var user = new IdentityUser
+            // 2. محاولة تسجيل الدخول
+            var result = await _signInManager.PasswordSignInAsync(user, password, isPersistent: true, lockoutOnFailure: false);
+
+            if (result.Succeeded)
             {
-                UserName = phone, // استخدام رقم الهاتف كاسم مستخدم
+                if (await _userManager.IsInRoleAsync(user, "Admin"))
+                    return RedirectToAction("Index", "Dashboard", new { area = "Admin" });
+
+                return RedirectToAction("Index", "Home");
+            }
+
+            ViewBag.Error = "كلمة المرور غير صحيحة";
+            return View();
+        }
+
+        [HttpGet]
+        public IActionResult Signup() => View();
+
+        // التسجيل برقم الهاتف كاسم مستخدم
+        [HttpPost]
+        public async Task<IActionResult> Signup(string fullName, string shopName, string phone, string password)
+        {
+            // التحقق من وجود الرقم مسبقاً
+            var existingUser = await _userManager.FindByNameAsync(phone);
+            if (existingUser != null)
+            {
+                ViewBag.Error = "هذا الرقم مسجل بالفعل، يرجى تسجيل الدخول.";
+                return View();
+            }
+
+            var user = new ApplicationUser
+            {
+                // أهم خطوة: جعل اسم المستخدم هو رقم الهاتف
+                UserName = phone,
                 PhoneNumber = phone,
-                Email = $"{phone}@diska.local" // بريد افتراضي إذا لم يوفره المستخدم
+                FullName = fullName,
+                ShopName = shopName,
+                WalletBalance = 0,
+                Email = $"{phone}@diska.local" // بريد وهمي لأن Identity يطلبه
             };
 
             var result = await _userManager.CreateAsync(user, password);
 
             if (result.Succeeded)
             {
-                // تعيين الدور الافتراضي كـ "Customer"
-                await _userManager.AddToRoleAsync(user, "Customer");
-
-                // يمكن حفظ البيانات الإضافية مثل (اسم المحل) في جدول منفصل أو Claims
-                // للتسهيل هنا سنقوم بتسجيل الدخول مباشرة
-                await _signInManager.SignInAsync(user, isPersistent: false);
-
+                await _userManager.AddToRoleAsync(user, "Merchant");
+                await _signInManager.SignInAsync(user, isPersistent: true);
                 return RedirectToAction("Index", "Home");
             }
 
+            // عرض سبب فشل التسجيل بوضوح
+            string errorMsg = "";
             foreach (var error in result.Errors)
             {
-                // عرض الأخطاء القادمة من Identity (مثل: كلمة المرور ضعيفة)
-                ModelState.AddModelError(string.Empty, error.Description);
+                // ترجمة بعض الأخطاء الشائعة
+                if (error.Code.Contains("Password")) errorMsg += "كلمة المرور يجب أن تكون 6 خانات على الأقل. ";
+                else errorMsg += error.Description + " ";
             }
 
-            // تجميع الأخطاء لعرضها في الـ View
-            ViewBag.Error = string.Join(" - ", result.Errors.Select(e => e.Description));
+            ViewBag.Error = errorMsg;
             return View();
         }
 
-        // --- الملف الشخصي ---
-        public async Task<IActionResult> Profile()
-        {
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null) return RedirectToAction("Login");
-
-            // جلب بيانات حقيقية
-            ViewBag.UserName = user.UserName;
-            ViewBag.Phone = user.PhoneNumber;
-
-            var roles = await _userManager.GetRolesAsync(user);
-            ViewBag.UserType = roles.FirstOrDefault() ?? "مستخدم";
-
-            return View();
-        }
-
-        // --- تسجيل الخروج ---
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
             return RedirectToAction("Index", "Home");
+        }
+
+        // ... (باقي الدوال Profile و Settings كما هي) ...
+        [Authorize]
+        public async Task<IActionResult> Profile()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return RedirectToAction("Login");
+            return View(user);
+        }
+
+        [Authorize]
+        public async Task<IActionResult> Settings()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            return View(user);
+        }
+
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> UpdateProfile(ApplicationUser model)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user != null)
+            {
+                user.FullName = model.FullName;
+                user.ShopName = model.ShopName;
+                user.CommercialRegister = model.CommercialRegister;
+                await _userManager.UpdateAsync(user);
+                return RedirectToAction("Profile");
+            }
+            return View("Settings", model);
         }
     }
 }

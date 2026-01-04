@@ -1,0 +1,102 @@
+﻿@using System.Globalization
+@{
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    ViewData["Title"] = isAr ? "السياسات والشحن" : "Policies & Shipping";
+}
+
+<!-- إضافة الستايل هنا لضمان عمل الصفحة بشكل صحيح -->
+<style>
+    .policy-box {
+        background: #fff;
+        padding: 30px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+        border: 1px solid #eee;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.02); /* ظل خفيف للجمالية */
+    }
+
+        .policy-box h2 {
+            color: var(--primary); /* يستخدم اللون الأساسي المعرف في style.css */
+            border-bottom: 2px solid #FACC15; /* اللون الأصفر المميز */
+            display: inline-block;
+            padding-bottom: 5px;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .policy-box ul {
+            list-style: disc;
+            padding-inline-start: 25px; /* يضبط المسافة تلقائياً حسب اتجاه اللغة (يمين/يسار) */
+            color: #555;
+        }
+
+        .policy-box li {
+            margin-bottom: 12px;
+            line-height: 1.7;
+            font-size: 1rem;
+        }
+
+        .policy-box p {
+            color: #555;
+            line-height: 1.7;
+            font-size: 1rem;
+        }
+</style>
+
+<section class="section-padding">
+    <div class="container">
+
+        <!-- Breadcrumb -->
+        <div class="breadcrumb" style="margin-bottom: 30px; color: #666;">
+            <a asp-controller="Home" asp-action="Index" style="color: #0F172A; text-decoration: none; font-weight: bold;">@(isAr ? "الرئيسية" : "Home")</a> / <span>@(isAr ? "السياسات والشحن" : "Policies & Shipping")</span>
+        </div>
+
+        <div class="policy-box" id="shipping">
+            <h2>🚚 @(isAr ? "الشحن والتوصيل" : "Shipping & Delivery")</h2>
+            <ul>
+                @if (isAr)
+                {
+                    <li>يتم التوصيل خلال 24 إلى 48 ساعة داخل القاهرة والجيزة.</li>
+                    <li>المحافظات الأخرى يستغرق التوصيل من 3 إلى 5 أيام عمل.</li>
+                    <li>رسوم الشحن تحتسب تلقائياً بناءً على المنطقة والوزن.</li>
+                    <li>الشحن مجاني للطلبات التي تتجاوز 50,000 ج.م.</li>
+                }
+                else
+                {
+                    <li>Delivery within 24 to 48 hours in Cairo and Giza.</li>
+                    <li>Other governorates take 3 to 5 working days.</li>
+                    <li>Shipping fees are calculated automatically based on area and weight.</li>
+                    <li>Free shipping for orders exceeding 50,000 EGP.</li>
+                }
+            </ul>
+        </div>
+
+        <div class="policy-box" id="return">
+            <h2>🔄 @(isAr ? "سياسة الإرجاع والاستبدال" : "Return & Exchange Policy")</h2>
+            <ul>
+                @if (isAr)
+                {
+                    <li>يمكن إرجاع المنتجات التالفة أو غير المطابقة للمواصفات خلال 14 يوم.</li>
+                    <li>يجب أن تكون البضاعة في حالتها الأصلية (الكرتونة مغلقة).</li>
+                    <li>يتم استرداد المبلغ إلى المحفظة في التطبيق فور استلام المرتجع.</li>
+                }
+                else
+                {
+                    <li>Damaged or non-conforming products can be returned within 14 days.</li>
+                    <li>Goods must be in their original condition (sealed carton).</li>
+                    <li>Refunds are credited to the wallet in the app immediately upon receipt of the return.</li>
+                }
+            </ul>
+        </div>
+
+        <div class="policy-box" id="privacy">
+            <h2>🔒 @(isAr ? "سياسة الخصوصية" : "Privacy Policy")</h2>
+            <p>
+                @(isAr ?
+                                "نحن في DISKA نلتزم بحماية بياناتك الشخصية والتجارية. لا يتم مشاركة بياناتك مع أي طرف ثالث إلا شركات الشحن لغرض التوصيل فقط." :
+                                "At DISKA, we are committed to protecting your personal and commercial data. Your data is not shared with any third party except shipping companies for delivery purposes only.")
+            </p>
+        </div>
+
+    </div>
+</section>

@@ -1,88 +1,89 @@
-﻿@{
-    ViewData["Title"] = "إتمام الطلب";
+﻿@using System.Globalization
+@{
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    ViewData["Title"] = isAr ? "إتمام الطلب" : "Checkout";
 }
 
 <section class="checkout-section">
     <div class="container">
-        <h2 class="page-title">بيانات الشحن والدفع</h2>
+        <h2 class="page-title">@(isAr ? "بيانات الشحن والدفع" : "Shipping & Payment")</h2>
         <div class="checkout-grid">
 
             <div class="checkout-form">
-                <h3><i class="fas fa-map-marker-alt"></i> عنوان التوصيل</h3>
+                <h3><i class="fas fa-map-marker-alt"></i> @(isAr ? "عنوان التوصيل" : "Delivery Address")</h3>
                 <form id="checkoutForm">
                     <div class="form-group">
-                        <label>اسم المحل / التاجر</label>
-                        <input type="text" id="shopName" placeholder="مثال: سوبر ماركت الأمانة" required>
+                        <label>@(isAr ? "اسم المحل / التاجر" : "Shop / Merchant Name")</label>
+                        <input type="text" id="shopName" placeholder="@(isAr ? "مثال: سوبر ماركت الأمانة" : "Ex: Al-Amana Market")" required>
                     </div>
                     <div class="form-group">
-                        <label>رقم الموبايل</label>
+                        <label>@(isAr ? "رقم الموبايل" : "Phone Number")</label>
                         <input type="tel" id="phone" placeholder="01xxxxxxxxx" required>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label>المحافظة</label>
+                            <label>@(isAr ? "المحافظة" : "Governorate")</label>
                             <select id="govSelect" onchange="updateRegions()">
-                                <option value="" disabled selected>اختر المحافظة</option>
-                                <!-- سيتم ملؤها بواسطة JS -->
+                                <option value="" disabled selected>@(isAr ? "اختر المحافظة" : "Select Governorate")</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>المنطقة / الحي</label>
+                            <label>@(isAr ? "المنطقة / الحي" : "City / District")</label>
                             <select id="citySelect" disabled>
-                                <option value="" disabled selected>اختر المنطقة</option>
+                                <option value="" disabled selected>@(isAr ? "اختر المنطقة" : "Select Area")</option>
                             </select>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label>العنوان بالتفصيل</label>
-                        <input type="text" id="addressDetail" placeholder="اسم الشارع، رقم العمارة، علامة مميزة" required>
+                        <label>@(isAr ? "العنوان بالتفصيل" : "Detailed Address")</label>
+                        <input type="text" id="addressDetail" placeholder="@(isAr ? "اسم الشارع، رقم العمارة، علامة مميزة" : "Street name, Building no.")" required>
                     </div>
 
-                    <h3><i class="fas fa-wallet"></i> طريقة الدفع</h3>
+                    <h3><i class="fas fa-wallet"></i> @(isAr ? "طريقة الدفع" : "Payment Method")</h3>
                     <div class="payment-options">
                         <label class="payment-card selected">
                             <input type="radio" name="payment" value="Cash" checked>
                             <div class="pay-icon"><i class="fas fa-money-bill-wave"></i></div>
-                            <span>دفع عند الاستلام (كاش)</span>
+                            <span>@(isAr ? "دفع عند الاستلام (كاش)" : "Cash on Delivery")</span>
                         </label>
                         <label class="payment-card">
                             <input type="radio" name="payment" value="Wallet">
                             <div class="pay-icon"><i class="fas fa-wallet"></i></div>
-                            <span>محفظة DISKA</span>
+                            <span>@(isAr ? "محفظة DISKA" : "DISKA Wallet")</span>
                         </label>
                     </div>
                 </form>
             </div>
 
             <div class="order-summary-box new-design">
-                <h3>ملخص الفاتورة</h3>
+                <h3>@(isAr ? "ملخص الفاتورة" : "Order Summary")</h3>
 
                 <div class="checkout-items" id="checkoutItemsList">
-                    <!-- سيتم تعبئتها بواسطة JS -->
+                    <!-- Loaded via JS -->
                 </div>
 
                 <div class="summary-divider"></div>
 
                 <div class="cost-row">
-                    <span>المجموع الفرعي</span>
-                    <span id="subTotal">0.00 ج.م</span>
+                    <span>@(isAr ? "المجموع الفرعي" : "Subtotal")</span>
+                    <span id="subTotal">0.00 @(isAr ? "ج.م" : "EGP")</span>
                 </div>
                 <div class="cost-row">
-                    <span>مصاريف الشحن</span>
-                    <span id="shippingCost" style="color: var(--danger);">-- اختر المحافظة --</span>
+                    <span>@(isAr ? "مصاريف الشحن" : "Shipping Fees")</span>
+                    <span id="shippingCost" style="color: var(--danger);">@(isAr ? "-- اختر المحافظة --" : "-- Select Gov --")</span>
                 </div>
 
                 <div class="summary-divider"></div>
 
                 <div class="total-row">
-                    <span>الإجمالي الكلي</span>
-                    <span id="finalTotal">0.00 ج.م</span>
+                    <span>@(isAr ? "الإجمالي الكلي" : "Grand Total")</span>
+                    <span id="finalTotal">0.00 @(isAr ? "ج.م" : "EGP")</span>
                 </div>
 
                 <button type="button" onclick="submitOrder()" class="btn primary w-100 confirm-btn">
-                    تأكيد الطلب الآن
+                    @(isAr ? "تأكيد الطلب الآن" : "Confirm Order Now")
                 </button>
             </div>
 
@@ -93,21 +94,13 @@
 @section Scripts {
     <script src="~/checkout.js"></script>
     <script>
-        // دالة مخصصة لإرسال الطلب للسيرفر بدلاً من مجرد تنبيه
         async function submitOrder() {
             const form = document.getElementById('checkoutForm');
-            if (!form.checkValidity()) {
-                form.reportValidity();
-                return;
-            }
+            if (!form.checkValidity()) { form.reportValidity(); return; }
 
             const cart = JSON.parse(localStorage.getItem('DISKA_CART')) || [];
-            if (cart.length === 0) {
-                alert("السلة فارغة!");
-                return;
-            }
+            if (cart.length === 0) { alert('@(isAr ? "السلة فارغة!" : "Cart is empty!")'); return; }
 
-            // قراءة تكلفة الشحن من النص (مثال: "50 ج.م" -> 50)
             const shippingText = document.getElementById('shippingCost').innerText;
             const shippingFees = parseFloat(shippingText) || 0;
 
@@ -128,19 +121,17 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(orderData)
                 });
-
                 const result = await response.json();
-
                 if (result.success) {
-                    alert('تم تأكيد طلبك بنجاح رقم #' + result.orderId);
+                    alert('@(isAr ? "تم تأكيد طلبك بنجاح!" : "Order confirmed successfully!")');
                     localStorage.removeItem('DISKA_CART');
                     window.location.href = '/Order/MyOrders';
                 } else {
-                    alert('حدث خطأ: ' + result.message);
+                    alert('@(isAr ? "خطأ: " : "Error: ")' + result.message);
                 }
             } catch (error) {
                 console.error(error);
-                alert('فشل الاتصال بالسيرفر');
+                alert('@(isAr ? "فشل الاتصال" : "Connection Failed")');
             }
         }
     </script>

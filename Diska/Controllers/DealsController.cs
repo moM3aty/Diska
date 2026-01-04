@@ -2,6 +2,7 @@
 using Diska.Data;
 using Diska.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Diska.Controllers
 {
@@ -14,42 +15,37 @@ namespace Diska.Controllers
             _context = context;
         }
 
-        // عرض الصفقات النشطة
         public IActionResult Index()
         {
-            // جلب الصفقات التي لم تنته مدتها بعد
-            var activeDeals = _context.GroupDeals
+            var deals = _context.GroupDeals
                 .Include(d => d.Product)
                 .Where(d => d.IsActive && d.EndDate > DateTime.Now)
                 .OrderBy(d => d.EndDate)
                 .ToList();
 
-            // إذا لم توجد صفقات، نقوم بإنشاء صفقة وهمية للعرض (للتجربة)
-            if (!activeDeals.Any())
-            {
-                // هذا الكود للعرض فقط، في الواقع يجب أن تكون البيانات في الداتابيز
-                ViewBag.DemoMode = true;
-            }
-
-            return View(activeDeals);
+            return View(deals);
         }
 
-        // الانضمام لصفقة (حجز كمية)
+
         [HttpPost]
+        [Authorize]
         public async Task<IActionResult> JoinDeal(int dealId, int quantity)
         {
-            var deal = await _context.GroupDeals.FindAsync(dealId);
-            if (deal == null) return NotFound();
+            var deal = await _context.GroupDeals.Include(d => d.Product).FirstOrDefaultAsync(d => d.Id == dealId);
+            if (deal == null) return Json(new { success = false, message = "الصفقة غير موجودة" });
 
-            if (User.Identity.IsAuthenticated)
+            if (deal.ReservedQuantity + quantity > deal.TargetQuantity)
             {
-                deal.ReservedQuantity += quantity;
-                // هنا يمكننا إنشاء طلب مبدئي (Pre-Order)
-                await _context.SaveChangesAsync();
-                return Json(new { success = true, message = "تم حجز الكمية بنجاح! سيتم التواصل معك عند اكتمال الهدف." });
+                return Json(new { success = false, message = "الكمية المطلوبة تتجاوز المتبقي من الهدف" });
             }
 
-            return Json(new { success = false, message = "يجب تسجيل الدخول أولاً." });
+            deal.ReservedQuantity += quantity;
+
+
+
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "تم حجز الكمية بنجاح!", newProgress = (deal.ReservedQuantity / (double)deal.TargetQuantity) * 100 });
         }
     }
 }

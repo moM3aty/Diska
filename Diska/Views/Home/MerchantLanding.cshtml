@@ -1,0 +1,100 @@
+﻿@using System.Globalization
+@{
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    ViewData["Title"] = isAr ? "الإشعارات" : "Notifications";
+}
+
+<section class="section-padding" style="padding-top: 50px; min-height: 60vh;">
+    <div class="container">
+
+        <div class="notif-header">
+            <h2 style="margin-bottom: 15px;">@(isAr ? "الإشعارات والتنبيهات 🔔" : "Notifications & Alerts 🔔")</h2>
+
+            <!-- تم تعديل الزر ليكون عريض وبنفس ستايل الفرونت الأصلي -->
+            <button class="btn primary w-100" id="clearNotifBtn" style="text-align: center; text-decoration: none; border: none; margin-top: 10px; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                @(isAr ? "مسح الكل" : "Clear All")
+            </button>
+        </div>
+
+        <div class="notifications-list" id="fullNotifList" style="margin-top: 20px;">
+            <div style="text-align:center; padding:40px;">
+                <i class="fas fa-spinner fa-spin fa-2x" style="color:var(--primary);"></i>
+                <p style="margin-top:10px;">@(isAr ? "جاري تحميل الإشعارات..." : "Loading notifications...")</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            loadNotificationsPage();
+
+            document.getElementById('clearNotifBtn').addEventListener('click', async () => {
+                const msg = '@(isAr ? "هل أنت متأكد من مسح جميع الإشعارات؟" : "Are you sure you want to clear all notifications?")';
+                if(confirm(msg)) {
+                    await fetch('/Notification/ClearAll', { method: 'POST' });
+                    loadNotificationsPage();
+                    if(typeof updateNotificationBadge === 'function') updateNotificationBadge();
+                }
+            });
+        });
+
+        async function loadNotificationsPage() {
+            const container = document.getElementById('fullNotifList');
+            try {
+                const response = await fetch('/Notification/GetRecent');
+                const data = await response.json();
+
+                container.innerHTML = '';
+
+                if (data.length === 0) {
+                    const emptyMsg = '@(isAr ? "لا توجد إشعارات جديدة" : "No new notifications")';
+                    container.innerHTML = `
+                        <div style="text-align:center; padding:40px; color:#777; background:#fff; border-radius:10px; border:1px solid #eee;">
+                            <i class="fas fa-bell-slash" style="font-size:2rem; margin-bottom:10px; opacity:0.5;"></i>
+                            <p>${emptyMsg}</p>
+                        </div>`;
+                    return;
+                }
+
+                data.forEach(n => {
+                    const iconClass = n.type === 'Alert' ? 'fa-exclamation-triangle' :
+                                      n.type === 'Order' ? 'fa-box' : 'fa-info-circle';
+                    const bgClass = n.type === 'Alert' ? '#fef2f2' :
+                                    n.type === 'Order' ? '#f0f9ff' : '#fff';
+                    const iconColor = n.type === 'Alert' ? '#ef4444' :
+                                      n.type === 'Order' ? '#0ea5e9' : '#3b82f6';
+
+                    const html = `
+                        <div class="notif-card ${n.isRead ? '' : 'unread'}" style="background:${n.isRead ? '#fff' : '#f8fafc'}; border-radius:10px; padding:15px; display:flex; gap:15px; align-items:flex-start; border:1px solid #eee; margin-bottom:10px; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
+                            <div class="icon" style="background:${bgClass}; color:${iconColor}; width:40px; height:40px; display:flex; align-items:center; justify-content:center; border-radius:50%; flex-shrink:0;">
+                                <i class="fas ${iconClass}"></i>
+                            </div>
+                            <div class="content" style="flex:1;">
+                                <h4 style="font-weight:${n.isRead ? 'normal' : 'bold'}; margin:0 0 5px; font-size:1rem; color: var(--primary);">${n.title}</h4>
+                                <p style="margin:0; color:#666; font-size:0.9rem; line-height:1.5;">${n.message}</p>
+                                <span class="time" style="font-size:0.75rem; color:#999; display:block; margin-top:5px;">${n.timeAgo}</span>
+                            </div>
+                            ${!n.isRead ? `<button onclick="markAsRead(${n.id}, this)" style="background:none; border:none; color:#0284c7; cursor:pointer; padding:5px;" title="تحديد كمقروء"><i class="fas fa-check-double"></i></button>` : ''}
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', html);
+                });
+
+            } catch (error) {
+                console.error(error);
+                container.innerHTML = '<p style="text-align:center; color:red;">حدث خطأ في تحميل الإشعارات</p>';
+            }
+        }
+
+        async function markAsRead(id, btnElement) {
+            await fetch(`/Notification/MarkAsRead?id=${id}`, { method: 'POST' });
+            const card = btnElement.closest('.notif-card');
+            card.style.background = '#fff';
+            card.querySelector('h4').style.fontWeight = 'normal';
+            btnElement.remove();
+            if(typeof updateNotificationBadge === 'function') updateNotificationBadge();
+        }
+    </script>
+}

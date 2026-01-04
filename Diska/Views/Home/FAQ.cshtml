@@ -1,61 +1,169 @@
-﻿@{
-    ViewData["Title"] = "الأسئلة الشائعة";
+﻿@using System.Globalization
+@{
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    ViewData["Title"] = isAr ? "الأسئلة الشائعة" : "FAQ";
 }
+
+<!-- إضافة الستايل الخاص بالأكورديون هنا مباشرة لضمان عمله -->
+<style>
+    .faq-item {
+        background: #fff;
+        margin-bottom: 15px;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid #eee;
+        transition: box-shadow 0.3s ease;
+    }
+
+        .faq-item:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+    .faq-question {
+        padding: 20px;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: bold;
+        color: var(--primary);
+        font-size: 1.1rem;
+        user-select: none;
+    }
+
+        .faq-question:hover {
+            background: #f9f9f9;
+        }
+
+    .faq-answer {
+        padding: 0 20px;
+        max-height: 0;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        color: #666;
+        line-height: 1.6;
+        opacity: 0;
+    }
+
+    .faq-item.active .faq-answer {
+        padding: 20px;
+        padding-top: 0;
+        max-height: 300px; /* ارتفاع كافي للمحتوى */
+        opacity: 1;
+        /* border-top: 1px solid #eee; */
+    }
+
+    .faq-question i {
+        transition: transform 0.3s ease;
+    }
+
+    .faq-item.active .faq-question i {
+        transform: rotate(180deg);
+        color: var(--accent);
+    }
+</style>
 
 <section class="section-padding">
     <div class="container">
-        <h2 class="page-title" style="padding-top: 20px;">الأسئلة الشائعة</h2>
+        <!-- Breadcrumb -->
+        <div class="breadcrumb" style="margin-bottom: 30px; color: #666;">
+            <a asp-controller="Home" asp-action="Index" style="color: var(--primary); font-weight: bold; text-decoration: none;">@(isAr ? "الرئيسية" : "Home")</a>
+            / <span>@(isAr ? "الأسئلة الشائعة" : "FAQ")</span>
+        </div>
 
-        <div class="faq-list">
+        <h2 class="page-title" style="margin-bottom: 30px; text-align: center; color: var(--primary);">@(isAr ? "الأسئلة الشائعة" : "Frequently Asked Questions")</h2>
+
+        <div class="faq-list" style="max-width: 800px; margin: 0 auto;">
+
+            <!-- Question 1 -->
             <div class="faq-item">
                 <div class="faq-question">
-                    كيف يمكنني التسجيل كتاجر؟
+                    @(isAr ? "كيف يمكنني التسجيل كتاجر؟" : "How can I register as a merchant?")
                     <i class="fas fa-chevron-down"></i>
                 </div>
                 <div class="faq-answer">
-                    يمكنك الضغط على زر "حساب تاجر" في الصفحة الرئيسية، ورفع المستندات المطلوبة (السجل التجاري والبطاقة الضريبية) وسيتم تفعيل حسابك خلال 24 ساعة.
+                    @(isAr ?
+                                        "يمكنك الضغط على زر \"بيع معنا\" أو \"سجل كتاجر\" في الصفحة الرئيسية، وملء نموذج التسجيل ببياناتك وبيانات المحل (السجل التجاري والبطاقة الضريبية إن وجد)، وسيتم تفعيل حسابك فوراً للبدء في البيع." :
+                                        "You can click on 'Sell with Us' or 'Register as Merchant' on the home page, fill out the registration form with your details and shop info, and your account will be activated immediately to start selling.")
                 </div>
             </div>
 
+            <!-- Question 2 -->
             <div class="faq-item">
                 <div class="faq-question">
-                    ما هو الحد الأدنى للطلب؟
+                    @(isAr ? "ما هو الحد الأدنى للطلب؟" : "What is the minimum order amount?")
                     <i class="fas fa-chevron-down"></i>
                 </div>
                 <div class="faq-answer">
-                    يختلف الحد الأدنى حسب المورد، ولكن بشكل عام الحد الأدنى لطلبات الجملة هو 1000 جنيه مصري.
+                    @(isAr ?
+                                        "يختلف الحد الأدنى حسب سياسة كل مورد، ولكن بشكل عام نسعى لتوفير خيارات مرنة. يمكنك رؤية الحد الأدنى (مثل عدد الكراتين) في صفحة تفاصيل كل منتج." :
+                                        "The minimum order varies by supplier policy, but we generally aim to provide flexible options. You can see the minimum quantity (e.g., number of cartons) on each product's detail page.")
                 </div>
             </div>
 
+            <!-- Question 3 -->
             <div class="faq-item">
                 <div class="faq-question">
-                    هل يوجد دفع عند الاستلام؟
+                    @(isAr ? "هل يوجد دفع عند الاستلام؟" : "Is Cash on Delivery available?")
                     <i class="fas fa-chevron-down"></i>
                 </div>
                 <div class="faq-answer">
-                    نعم، نوفر خدمة الدفع عند الاستلام (كاش) لجميع المحافظات، بالإضافة للدفع الإلكتروني والمحافظ.
+                    @(isAr ?
+                                        "نعم، نوفر خدمة الدفع عند الاستلام (كاش) لجميع المحافظات لضمان راحتك وأمانك. كما يمكنك استخدام محفظة DISKA للدفع الإلكتروني." :
+                                        "Yes, we provide Cash on Delivery (COD) service for all governorates to ensure your convenience and safety. You can also use the DISKA wallet for electronic payments.")
                 </div>
             </div>
 
+            <!-- Question 4 -->
             <div class="faq-item">
                 <div class="faq-question">
-                    كيف يمكنني تتبع طلبي؟
+                    @(isAr ? "كيف يمكنني تتبع طلبي؟" : "How can I track my order?")
                     <i class="fas fa-chevron-down"></i>
                 </div>
                 <div class="faq-answer">
-                    يمكنك متابعة حالة الطلب من صفحة "طلباتي" في حسابك الشخصي، ستتغير الحالة من "قيد الانتظار" إلى "تم الشحن" فور خروج الطلب.
+                    @(isAr ?
+                                        "يمكنك متابعة حالة الطلب بسهولة من صفحة \"طلباتي\" في حسابك الشخصي. ستتغير الحالة تلقائياً من \"قيد الانتظار\" إلى \"مؤكد\" ثم \"تم الشحن\"." :
+                                        "You can easily track your order status from the 'My Orders' page in your account. The status will automatically update from 'Pending' to 'Confirmed' and then 'Shipped'.")
                 </div>
             </div>
+
+            <!-- Question 5 -->
+            <div class="faq-item">
+                <div class="faq-question">
+                    @(isAr ? "ما هي سياسة الإرجاع؟" : "What is the return policy?")
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    @(isAr ?
+                                        "يمكنك طلب إرجاع المنتجات التالفة أو غير المطابقة للمواصفات خلال 14 يوماً من تاريخ الاستلام، بشرط أن تكون في حالتها الأصلية." :
+                                        "You can request a return for damaged or non-conforming products within 14 days of receipt, provided they are in their original condition.")
+                </div>
+            </div>
+
         </div>
     </div>
 </section>
 
 @section Scripts {
     <script>
-        document.querySelectorAll('.faq-question').forEach(item => {
-            item.addEventListener('click', () => {
-                const parent = item.parentElement;
-                parent.classList.toggle('active');
+        document.addEventListener('DOMContentLoaded', () => {
+            const questions = document.querySelectorAll('.faq-question');
+
+            questions.forEach(question => {
+                question.addEventListener('click', () => {
+                    const item = question.parentElement;
+                    const isActive = item.classList.contains('active');
+
+                    // إغلاق جميع العناصر الأخرى (اختياري - لجعل التجربة أنظف)
+                    document.querySelectorAll('.faq-item').forEach(i => {
+                        i.classList.remove('active');
+                    });
+
+                    // إذا لم يكن العنصر نشطاً من قبل، قم بتنشيطه
+                    if (!isActive) {
+                        item.classList.add('active');
+                    }
+                });
             });
         });
     </script>

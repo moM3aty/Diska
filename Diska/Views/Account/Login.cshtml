@@ -1,24 +1,39 @@
-﻿@{
-    ViewData["Title"] = "تسجيل الدخول";
-    Layout = null; // لا نستخدم الـ Layout الرئيسي هنا كما في التصميم الأصلي
+﻿@using System.Globalization
+@{
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    ViewData["Title"] = isAr ? "تسجيل الدخول" : "Login";
+    Layout = null;
 }
 
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="@(isAr ? "ar" : "en")" dir="@(isAr ? "rtl" : "ltr")">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@ViewData["Title"] | DISKA</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    @if (isAr)
+    {
+        <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+        <style>
+            body {
+                font-family: 'Cairo';
+            }</style>
+ }
+    else
+    {
+        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+        <style>
+            body {
+                font-family: 'Roboto';
+            }</style>
+ }
     <link rel="stylesheet" href="~/style.css">
     <style>
         .auth-logo-img {
             height: 80px;
             width: auto;
-            margin-bottom: 15px;
+            margin: 0 auto 15px;
             display: block;
-            margin-left: auto;
-            margin-right: auto;
         }
     </style>
 </head>
@@ -27,38 +42,41 @@
     <div class="auth-container">
         <div class="auth-header">
             <img src="~/images/logo.png" alt="DISKA Logo" class="auth-logo-img" onerror="this.style.display='none'">
-            <h2>مرحباً بك في DISKA</h2>
-            <p>سجل دخولك لمتابعة طلبات الجملة</p>
+            <h2>@(isAr ? "مرحباً بك في DISKA" : "Welcome to DISKA")</h2>
+            <p>@(isAr ? "سجل دخولك برقم الموبايل" : "Log in with your phone number")</p>
         </div>
 
         <form class="auth-form" asp-action="Login" method="post">
+            @if (ViewBag.Error != null)
+            {
+                <div style="background-color: #fee2e2; color: #dc2626; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 0.9rem; border: 1px solid #fecaca;">
+                    @ViewBag.Error
+                </div>
+            }
+
             <div class="form-group">
-                <label>رقم الموبايل</label>
-                <input type="tel" name="phone" placeholder="أدخل رقم الموبايل" required>
+                <label>@(isAr ? "رقم الموبايل" : "Phone Number")</label>
+                <!-- تم التأكد أن الاسم phone ليتطابق مع الكنترولر -->
+                <input type="tel" name="phone" placeholder="@(isAr ? "أدخل رقم الموبايل" : "Enter phone number")" required>
             </div>
             <div class="form-group">
-                <label>كلمة المرور</label>
+                <label>@(isAr ? "كلمة المرور" : "Password")</label>
                 <input type="password" name="password" placeholder="********" required>
             </div>
 
-            @if (ViewBag.Error != null)
-            {
-                <p style="color:red; text-align:center;">@ViewBag.Error</p>
-            }
-
-            <button type="submit" class="btn primary w-100">تسجيل الدخول</button>
+            <button type="submit" class="btn primary w-100">@(isAr ? "تسجيل الدخول" : "Login")</button>
         </form>
 
         <div class="auth-footer">
-            <p>ليس لديك حساب؟ <a asp-action="Signup">إنشاء حساب جديد</a></p>
-            <a href="#" class="forgot-pass">نسيت كلمة المرور؟</a>
+            <p>@(isAr ? "ليس لديك حساب؟" : "Don't have an account?") <a asp-action="Signup">@(isAr ? "إنشاء حساب جديد" : "Create new account")</a></p>
+            <!-- <a href="#" class="forgot-pass">@(isAr ? "نسيت كلمة المرور؟" : "Forgot Password?")</a> -->
         </div>
 
         <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
-            <p>هل تريد بيع منتجاتك؟ <a asp-controller="Merchant" asp-action="Index" style="color: var(--accent); font-weight: bold;">سجل كتاجر الآن</a></p>
+            <p>@(isAr ? "هل تريد بيع منتجاتك؟" : "Want to sell your products?") <a asp-controller="Account" asp-action="Signup" style="color: var(--accent); font-weight: bold;">@(isAr ? "سجل كتاجر الآن" : "Register as Merchant")</a></p>
         </div>
 
-        <a asp-controller="Home" asp-action="Index" class="back-home">العودة للرئيسية</a>
+        <a asp-controller="Home" asp-action="Index" class="back-home">@(isAr ? "العودة للرئيسية" : "Back to Home")</a>
     </div>
 
 </body>

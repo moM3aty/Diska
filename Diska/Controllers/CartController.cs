@@ -1,56 +1,57 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Diska.Data;
 using Diska.Models;
-using Microsoft.AspNetCore.Identity; // Added
+using Microsoft.AspNetCore.Identity;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Claims; // Added
+using Microsoft.AspNetCore.Authorization;
 
 namespace Diska.Controllers
 {
     public class CartController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private readonly UserManager<IdentityUser> _userManager; // Added
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public CartController(ApplicationDbContext context, UserManager<IdentityUser> userManager)
+        public CartController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
             _userManager = userManager;
         }
 
-        public IActionResult Index()
-        {
-            return View();
-        }
+        public IActionResult Index() => View();
 
-        public IActionResult Checkout()
-        {
-            // إذا كان المستخدم مسجلاً، نمرر بياناته الافتراضية للصفحة لملء الحقول تلقائياً
-            if (User.Identity.IsAuthenticated)
-            {
-                // يمكن تطوير هذا الجزء لجلب العنوان من جدول العناوين لاحقاً
-            }
-            return View();
-        }
+        public IActionResult Checkout() => View();
 
         [HttpPost]
         public async Task<IActionResult> PlaceOrder([FromBody] OrderSubmissionModel model)
         {
-            if (model == null || !model.Items.Any())
+            if (model == null || !model.Items.Any()) return Json(new { success = false, message = "Cart is empty" });
+
+            ApplicationUser user = null;
+            if (User.Identity.IsAuthenticated)
             {
-                return Json(new { success = false, message = "السلة فارغة" });
+                user = await _userManager.GetUserAsync(User);
             }
 
-            // تحديد معرف المستخدم (مسجل أو زائر)
-            string userId = User.Identity.IsAuthenticated ? _userManager.GetUserId(User) : "Guest";
+            if (model.PaymentMethod == "Wallet")
+            {
+                if (user == null) return Json(new { success = false, message = "يجب تسجيل الدخول للدفع بالمحفظة" });
 
-            // في حالة الزائر، يمكننا استخدام رقم الهاتف كمعرف مؤقت أو تركها Guest
-            if (userId == null) userId = "Guest";
+                decimal orderTotal = model.Items.Sum(i => i.Price * i.Qty) + model.ShippingCost;
+
+                if (user.WalletBalance < orderTotal)
+                {
+                    return Json(new { success = false, message = "رصيد المحفظة غير كافٍ لإتمام العملية" });
+                }
+
+                user.WalletBalance -= orderTotal;
+                await _userManager.UpdateAsync(user);
+            }
 
             var order = new Order
             {
-                CustomerName = User.Identity.IsAuthenticated ? User.Identity.Name : model.ShopName,
+                CustomerName = user != null ? user.FullName : model.ShopName,
                 Phone = model.Phone,
                 Address = model.Address,
                 Governorate = model.Governorate,
@@ -59,11 +60,11 @@ namespace Diska.Controllers
                 OrderDate = DateTime.Now,
                 Status = "Pending",
                 PaymentMethod = model.PaymentMethod,
-                UserId = userId
+                UserId = user != null ? user.Id : "Guest"
             };
 
             _context.Orders.Add(order);
-            await _context.SaveChangesAsync(); // Save to get Order ID
+            await _context.SaveChangesAsync();
 
             foreach (var item in model.Items)
             {
@@ -78,7 +79,6 @@ namespace Diska.Controllers
                     };
                     _context.OrderItems.Add(orderItem);
 
-                    // تحديث المخزون
                     var product = await _context.Products.FindAsync(productId);
                     if (product != null)
                     {

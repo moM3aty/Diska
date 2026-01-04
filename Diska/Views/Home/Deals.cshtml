@@ -1,70 +1,154 @@
-﻿@{
-    ViewData["Title"] = "صفقات الجملة";
+﻿@model IEnumerable<Diska.Models.GroupDeal>
+@using System.Globalization
+@{
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    ViewData["Title"] = isAr ? "صفقات الجملة" : "Wholesale Deals";
 }
 
 <section class="section-padding">
     <div class="container">
-        <h2 class="page-title" style="padding-top: 20px;">🔥 صفقات الكميات الكبيرة</h2>
-        <p style="text-align: center; margin-bottom: 30px;">اشتري مع غيرك وحققوا التارجت عشان السعر ينزل!</p>
 
-        <div class="products-grid">
-            <!-- صفقة وهمية 1 -->
-            <div class="product-card deal-card">
-                <div class="deal-badge">صفقة نشطة</div>
-                <div class="product-img"><img src="~/images/pepsi.webp" alt="بيبسي"></div>
-                <div class="product-info">
-                    <h4>بالتة بيبسي (100 كرتونة)</h4>
-                    <div class="pricing">
-                        <span class="current-price">180.00 ج.م</span>
-                        <span class="old-price">191.99 ج.م</span>
-                    </div>
-
-                    <div class="timer-box">
-                        <div class="time-unit"><strong class="days">02</strong><span>يوم</span></div>:
-                        <div class="time-unit"><strong class="hours">14</strong><span>ساعة</span></div>:
-                        <div class="time-unit"><strong class="mins">30</strong><span>دقيقة</span></div>
-                    </div>
-
-                    <div style="font-size: 0.8rem; display: flex; justify-content: space-between;">
-                        <span>تم حجز: 750</span>
-                        <span>الهدف: 1000</span>
-                    </div>
-                    <div class="progress-container">
-                        <div class="progress-bar" style="width: 75%;"></div>
-                    </div>
-
-                    <button class="btn primary w-100">احجز كميتك الآن</button>
-                </div>
+        <!-- Header Section with Action Button -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 20px; margin-bottom: 20px;">
+            <div>
+                <h2 class="page-title" style="margin: 0; text-align: start;">@(isAr ? "🔥 صفقات الكميات الكبيرة" : "🔥 Bulk Quantity Deals")</h2>
+                <p style="color:#666; margin-top: 5px;">@(isAr ? "اشتري مع غيرك وحققوا التارجت عشان السعر ينزل!" : "Buy together to hit the target and lower the price!")</p>
             </div>
 
-            <!-- صفقة وهمية 2 -->
-            <div class="product-card deal-card">
-                <div class="deal-badge">باقي قليل</div>
-                <div class="product-img"><img src="~/images/زيت.webp" alt="زيت"></div>
-                <div class="product-info">
-                    <h4>زيت كريستال (500 كرتونة)</h4>
-                    <div class="pricing">
-                        <span class="current-price">420.00 ج.م</span>
-                        <span class="old-price">450.00 ج.م</span>
-                    </div>
+            <!-- زر إضافة صفقة (يظهر للجميع أو للتجار فقط حسب رغبتك، هنا سأظهره للجميع كما في HTML) -->
+            <button class="btn primary small" onclick="openDealRequestModal()">
+                <i class="fas fa-plus-circle"></i> @(isAr ? "عرض صفقة (للتاجر)" : "Create Deal (Merchant)")
+            </button>
+        </div>
 
-                    <div class="timer-box">
-                        <div class="time-unit"><strong class="days">00</strong><span>يوم</span></div>:
-                        <div class="time-unit"><strong class="hours">05</strong><span>ساعة</span></div>:
-                        <div class="time-unit"><strong class="mins">12</strong><span>دقيقة</span></div>
-                    </div>
+        <div class="products-grid" id="dealsGrid">
 
-                    <div style="font-size: 0.8rem; display: flex; justify-content: space-between;">
-                        <span>تم حجز: 450</span>
-                        <span>الهدف: 500</span>
-                    </div>
-                    <div class="progress-container">
-                        <div class="progress-bar" style="width: 90%;"></div>
-                    </div>
-
-                    <button class="btn primary w-100">احجز كميتك الآن</button>
+            <!-- حالة عدم وجود صفقات -->
+            @if (!Model.Any() && ViewBag.DemoMode != true)
+            {
+                <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #777;">
+                    @(isAr ? "لا توجد صفقات نشطة حالياً." : "No active deals at the moment.")
                 </div>
-            </div>
+            }
+
+            @foreach (var deal in Model)
+            {
+                // حساب النسبة المئوية
+                var percentage = deal.TargetQuantity > 0 ? (deal.ReservedQuantity / (double)deal.TargetQuantity) * 100 : 0;
+                var timeLeft = deal.EndDate - DateTime.Now;
+                if (timeLeft.TotalSeconds < 0) { timeLeft = TimeSpan.Zero; }
+
+                <div class="product-card deal-card">
+                    <div class="deal-badge">@(isAr ? "نشطة" : "Active")</div>
+
+                    <a asp-controller="Product" asp-action="Details" asp-route-id="@deal.ProductId">
+                        <div class="product-img">
+                            <img src="~/@(deal.Product?.ImageUrl ?? "images/default.png")" alt="@deal.Product?.Name">
+                        </div>
+                    </a>
+
+                    <div class="product-info">
+                        <h4>@(isAr? deal.Product?.Name : (deal.Product?.NameEn ?? deal.Product?.Name))</h4>
+
+                        <div class="pricing">
+                            <span class="current-price">@deal.DealPrice.ToString("N2") @(isAr ? "ج.م" : "EGP")</span>
+                            <span class="old-price">@deal.Product?.Price.ToString("N2") @(isAr ? "ج.م" : "EGP")</span>
+                        </div>
+
+                        <!-- العداد التنازلي -->
+                        <div class="timer-box" dir="ltr">
+                            <div class="time-unit"><strong class="days">@timeLeft.Days</strong><span>D</span></div>:
+                            <div class="time-unit"><strong class="hours">@timeLeft.Hours</strong><span>H</span></div>:
+                            <div class="time-unit"><strong class="mins">@timeLeft.Minutes</strong><span>M</span></div>
+                        </div>
+
+                        <div style="font-size: 0.8rem; display: flex; justify-content: space-between;">
+                            <span>@(isAr ? "تم حجز:" : "Reserved:") @deal.ReservedQuantity</span>
+                            <span>@(isAr ? "الهدف:" : "Target:") @deal.TargetQuantity</span>
+                        </div>
+
+                        <div class="progress-container">
+                            <div class="progress-bar" style="width: @percentage%;"></div>
+                        </div>
+
+                        <form asp-controller="Deals" asp-action="JoinDeal" method="post" data-ajax="true" onsubmit="return joinDeal(this);">
+                            <input type="hidden" name="dealId" value="@deal.Id" />
+                            <div style="display:flex; gap:10px; margin-bottom:10px;">
+                                <input type="number" name="quantity" value="1" min="1" class="form-control" style="text-align:center;" placeholder="@(isAr ? "الكمية" : "Qty")">
+                                <button type="submit" class="btn primary w-100">@(isAr ? "احجز الآن" : "Reserve Now")</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            }
         </div>
     </div>
 </section>
+
+<!-- Deal Request Modal (Same as your design) -->
+<div id="dealModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:2000; align-items:center; justify-content:center;">
+    <div style="background:#fff; padding:30px; border-radius:10px; width:90%; max-width:500px; position:relative;">
+        <span onclick="document.getElementById('dealModal').style.display='none'" style="position:absolute; top:10px; right:15px; cursor:pointer; font-size:1.5rem;">&times;</span>
+
+        <h3 style="text-align: center; margin-bottom: 20px; color: var(--primary);">@(isAr ? "طلب عرض صفقة (للأدمن)" : "Request New Deal (To Admin)")</h3>
+
+        <form id="dealForm" onsubmit="submitDealRequest(event)">
+            <input type="text" id="dealProductName" placeholder="@(isAr ? "اسم المنتج" : "Product Name")" class="form-control" style="width:100%; padding:10px; margin-bottom:10px; border: 1px solid #ccc; border-radius: 5px;" required>
+
+            <input type="number" id="dealTarget" placeholder="@(isAr ? "الكمية المستهدفة (مثلاً 5000)" : "Target Quantity (e.g 5000)")" class="form-control" style="width:100%; padding:10px; margin-bottom:10px; border: 1px solid #ccc; border-radius: 5px;" required>
+
+            <input type="number" id="dealOldPrice" placeholder="@(isAr ? "السعر قبل الخصم" : "Original Price")" class="form-control" style="width:100%; padding:10px; margin-bottom:10px; border: 1px solid #ccc; border-radius: 5px;" required>
+
+            <input type="number" id="dealNewPrice" placeholder="@(isAr ? "السعر المقترح (بعد الخصم)" : "Proposed Price")" class="form-control" style="width:100%; padding:10px; margin-bottom:10px; border: 1px solid #ccc; border-radius: 5px;" required>
+
+            <input type="text" id="dealLocation" placeholder="@(isAr ? "المكان (المحافظة / المدينة)" : "Location (City)")" class="form-control" style="width:100%; padding:10px; margin-bottom:10px; border: 1px solid #ccc; border-radius: 5px;" required>
+
+            <button class="btn primary w-100" style="padding: 10px; font-weight: bold;">@(isAr ? "إرسال للإدارة للمراجعة" : "Submit for Review")</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // فتح المودال
+        function openDealRequestModal() {
+            document.getElementById('dealModal').style.display = 'flex';
+        }
+
+        // إغلاق المودال عند النقر خارجه
+        window.onclick = function(event) {
+            const modal = document.getElementById('dealModal');
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        // إرسال طلب الصفقة (محاكاة أو ربط بـ API)
+        async function submitDealRequest(e) {
+            e.preventDefault();
+            // هنا يمكنك ربطه بـ Controller حقيقي (RequestController/Create)
+            // حالياً سنعرض رسالة نجاح كما في التصميم
+            alert('@(isAr ? "تم إرسال طلب الصفقة للإدارة! سيتم مراجعته والرد عليك." : "Deal request submitted! Admin will review it.")');
+            document.getElementById('dealModal').style.display = 'none';
+            e.target.reset();
+        }
+
+        // الانضمام لصفقة موجودة
+        async function joinDeal(form) {
+            event.preventDefault();
+            const formData = new FormData(form);
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                alert(result.message);
+                if(result.success) location.reload();
+            } catch {
+                alert('@(isAr ? "حدث خطأ، يرجى المحاولة لاحقاً" : "An error occurred, please try again")');
+            }
+            return false;
+        }
+    </script>
+}

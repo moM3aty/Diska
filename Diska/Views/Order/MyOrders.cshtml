@@ -1,31 +1,39 @@
 ﻿@model IEnumerable<Diska.Models.Order>
-
+@using System.Globalization
 @{
-    ViewData["Title"] = "طلباتي";
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    ViewData["Title"] = isAr ? "طلباتي" : "My Orders";
 }
 
 <section class="section-padding" style="padding-top: 20px;">
     <div class="container">
         <div class="orders-page-wrapper">
-            <h2 class="page-title">سجل الطلبات</h2>
+            <h2 class="page-title">@(isAr ? "سجل الطلبات" : "Order History")</h2>
 
             <div class="orders-tabs">
-                <button class="tab-btn active" data-filter="all">الكل</button>
-                <button class="tab-btn" data-filter="Pending">قيد الانتظار</button>
-                <button class="tab-btn" data-filter="Confirmed">مؤكدة</button>
+                <button class="tab-btn active" data-filter="all">@(isAr ? "الكل" : "All")</button>
+                <button class="tab-btn" data-filter="Pending">@(isAr ? "قيد الانتظار" : "Pending")</button>
+                <button class="tab-btn" data-filter="Confirmed">@(isAr ? "مؤكدة" : "Confirmed")</button>
             </div>
 
             <div id="ordersContainer" class="orders-list">
                 @if (!Model.Any())
                 {
-                    <div style="text-align:center; padding:40px; color:#777;">لا توجد طلبات سابقة.</div>
+                    <div style="text-align:center; padding:40px; color:#777;">@(isAr ? "لا توجد طلبات سابقة." : "No previous orders.")</div>
                 }
                 else
                 {
                     @foreach (var order in Model)
                     {
                         var statusClass = order.Status == "Pending" ? "pending" : (order.Status == "Confirmed" ? "confirmed" : "shipped");
-                        var statusText = order.Status == "Pending" ? "قيد الانتظار" : (order.Status == "Confirmed" ? "مؤكد" : order.Status);
+
+                        var statusText = order.Status;
+                        if (isAr)
+                        {
+                            if (order.Status == "Pending") statusText = "قيد الانتظار";
+                            else if (order.Status == "Confirmed") statusText = "مؤكد";
+                            else if (order.Status == "Shipped") statusText = "تم الشحن";
+                        }
 
                         <div class="order-card-box" data-status="@order.Status">
                             <div class="order-header">
@@ -36,22 +44,18 @@
                             <div class="order-body">
                                 <div class="order-row">
                                     <span class="shop-name">@order.CustomerName</span>
-                                    <span class="order-price">@order.TotalAmount.ToString("F2") ج.م</span>
+                                    <span class="order-price">@order.TotalAmount.ToString("F2") @(isAr ? "ج.م" : "EGP")</span>
                                 </div>
                                 <div class="order-row sub-info">
-                                    <span>عدد الأصناف: @order.OrderItems.Count</span>
-                                    <span>التاريخ: @order.OrderDate.ToShortDateString()</span>
-                                </div>
-                                <div class="items-preview" style="font-size:0.85rem; color:#666; margin-top:5px;">
-                                    @foreach (var item in order.OrderItems)
-                                    {
-                                        <div>- @(item.Product?.Name ?? "منتج") (x@(item.Quantity))</div>
-                                    }
+                                    <span>@(isAr ? "عدد الأصناف:" : "Items:") @order.OrderItems.Count</span>
+                                    <span>@order.OrderDate.ToShortDateString()</span>
                                 </div>
                             </div>
 
                             <div class="order-footer">
-                                <button class="btn-outline">عرض التفاصيل</button>
+                                <a asp-action="Details" asp-route-id="@order.Id" class="btn-outline" style="text-decoration:none; display:inline-block; text-align:center;">
+                                    @(isAr ? "التفاصيل" : "Details")
+                                </a>
                                 <span class="delivery-date">@order.PaymentMethod</span>
                             </div>
                         </div>
@@ -64,22 +68,16 @@
 
 @section Scripts {
     <script>
-        // فلترة الطلبات في الواجهة
         const tabs = document.querySelectorAll('.tab-btn');
         const cards = document.querySelectorAll('.order-card-box');
-
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
                 tabs.forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
-
                 const filter = tab.dataset.filter;
                 cards.forEach(card => {
-                    if (filter === 'all' || card.dataset.status === filter) {
-                        card.style.display = 'block';
-                    } else {
-                        card.style.display = 'none';
-                    }
+                    if (filter === 'all' || card.dataset.status === filter) card.style.display = 'block';
+                    else card.style.display = 'none';
                 });
             });
         });

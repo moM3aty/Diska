@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Diska.Services
 {
-    // خدمة يمكن حقنها في أي Controller لإرسال إشعار بسهولة
     public interface INotificationService
     {
         Task NotifyUserAsync(string userId, string title, string message, string type = "Info", string link = "#");
@@ -14,9 +13,10 @@ namespace Diska.Services
     public class NotificationService : INotificationService
     {
         private readonly ApplicationDbContext _context;
-        private readonly UserManager<IdentityUser> _userManager;
+        // التعديل هنا: استخدام ApplicationUser بدلاً من IdentityUser
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public NotificationService(ApplicationDbContext context, UserManager<IdentityUser> userManager)
+        public NotificationService(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
             _userManager = userManager;
@@ -35,7 +35,7 @@ namespace Diska.Services
                 IsRead = false
             };
 
-            _context.Add(notif); // سنحتاج لإضافة DbSet<UserNotification> في DbContext
+            _context.UserNotifications.Add(notif);
             await _context.SaveChangesAsync();
         }
 

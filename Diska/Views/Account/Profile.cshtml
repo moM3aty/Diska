@@ -1,5 +1,8 @@
-﻿@{
-    ViewData["Title"] = "حسابي";
+﻿@model Diska.Models.ApplicationUser
+@using System.Globalization
+@{
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    ViewData["Title"] = isAr ? "حسابي" : "My Profile";
 }
 
 <section class="section-padding">
@@ -9,58 +12,48 @@
             <!-- Sidebar -->
             <div class="profile-sidebar" style="background:#fff; padding:40px; border-radius:10px;">
                 <div style="text-align:center; margin-bottom:20px;">
-                    <div style="width:80px; height:80px; background:#eee; border-radius:50%; margin:0 auto 10px; display:flex; align-items:center; justify-content:center; font-size:2rem; color:#aaa;">
-                        <i class="fas fa-user"></i>
+                    <div style="width:80px; height:80px; background:#f0f9ff; border-radius:50%; margin:0 auto 10px; display:flex; align-items:center; justify-content:center; font-size:2rem; color:var(--primary);">
+                        <i class="fas fa-store"></i>
                     </div>
-                    <h4>@ViewBag.UserName</h4>
-                    <span style="color:#666;">@ViewBag.UserType</span>
+                    <h4>@Model.ShopName</h4>
+                    <span style="color:#666;">@Model.FullName</span>
+                    @if (Model.IsVerifiedMerchant)
+                    {
+                        <div style="margin-top:5px; color:green; font-size:0.8rem;"><i class="fas fa-check-circle"></i> @(isAr ? "تاجر موثق" : "Verified")</div>
+                    }
                 </div>
+
+                <!-- Wallet Box -->
+                <div style="background:linear-gradient(45deg, #0F172A, #1e293b); color:#fff; padding:15px; border-radius:10px; margin-bottom:20px; text-align:center;">
+                    <small style="opacity:0.8;">@(isAr ? "رصيد المحفظة" : "Wallet Balance")</small>
+                    <div style="font-size:1.5rem; font-weight:bold; color:#FACC15;">@Model.WalletBalance.ToString("N2") @(isAr ? "ج.م" : "EGP")</div>
+                </div>
+
                 <ul style="list-style:none; padding:0;">
                     <li style="padding:10px; border-bottom:1px solid #eee;">
-                        <a asp-controller="Order" asp-action="MyOrders" style="color:var(--primary); font-weight:bold;">📦 طلباتي</a>
+                        <a asp-controller="Order" asp-action="MyOrders" style="color:var(--primary); font-weight:bold;">📦 @(isAr ? "طلباتي" : "Orders")</a>
                     </li>
                     <li style="padding:10px; border-bottom:1px solid #eee;">
-                        <a asp-controller="Wishlist" asp-action="Index">❤️ المفضلة</a>
+                        <a asp-controller="Wishlist" asp-action="Index">❤️ @(isAr ? "المفضلة" : "Wishlist")</a>
                     </li>
                     <li style="padding:10px; border-bottom:1px solid #eee;">
-                        <a asp-controller="Home" asp-action="Contact">📍 العناوين</a>
+                        <a asp-action="Settings">⚙️ @(isAr ? "الإعدادات" : "Settings")</a>
                     </li>
                     <li style="padding:10px;">
-                        <a asp-action="Logout" style="color:red;">تسجيل خروج</a>
+                        <a asp-action="Logout" style="color:red;">🚪 @(isAr ? "خروج" : "Logout")</a>
                     </li>
                 </ul>
             </div>
 
-            <!-- Orders Content (Static Preview + Link to Full Orders) -->
-            <div class="profile-content" style="padding-top: 40px;">
+            <!-- Content Area -->
+            <div class="profile-content" style="padding-top: 20px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                    <h2>أحدث الطلبات</h2>
-                    <a asp-controller="Order" asp-action="MyOrders" class="btn primary small">عرض كل الطلبات</a>
+                    <h2 style="color:var(--primary);">@(isAr ? "أحدث النشاطات" : "Recent Activity")</h2>
+                    <a asp-controller="Order" asp-action="MyOrders" class="btn primary small">@(isAr ? "عرض كل الطلبات" : "View All Orders")</a>
                 </div>
 
-                <div id="ordersList">
-                    <!-- Static Data Example for Profile View -->
-                    <div style="background:#fff; padding:20px; border-radius:10px; margin-bottom:15px; border:1px solid #eee;">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                            <strong>طلب #10254</strong>
-                            <span style="background:#dcfce7; color:#166534; padding:2px 8px; border-radius:4px;">تم التسليم</span>
-                        </div>
-                        <p style="color:#666;">التاريخ: 20/12/2025</p>
-                        <p>الإجمالي: <strong>5,400 ج.م</strong></p>
-                    </div>
-
-                    <div style="background:#fff; padding:20px; border-radius:10px; margin-bottom:15px; border:1px solid #eee;">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                            <strong>طلب #10255</strong>
-                            <span style="background:#fff7ed; color:#9a3412; padding:2px 8px; border-radius:4px;">جاري التجهيز</span>
-                        </div>
-                        <p style="color:#666;">التاريخ: 22/12/2025</p>
-                        <p>الإجمالي: <strong>1,200 ج.م</strong></p>
-                        <div style="margin-top:10px; height:5px; background:#eee; border-radius:5px; overflow:hidden;">
-                            <div style="width:40%; height:100%; background:var(--primary);"></div>
-                        </div>
-                        <small style="color:var(--primary);">تم استلام الطلب -> جاري التجهيز</small>
-                    </div>
+                <div class="info-card" style="background:#fff; padding:20px; border-radius:10px; border:1px solid #eee;">
+                    <p style="color:#666;">@(isAr ? "مرحباً بك في لوحة تحكم التاجر. هنا يمكنك متابعة طلباتك ورصيد محفظتك." : "Welcome to your merchant dashboard. Track orders and wallet balance here.")</p>
                 </div>
             </div>
         </div>
