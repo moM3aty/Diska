@@ -57,6 +57,9 @@ namespace Diska.Models
         [ForeignKey("CategoryId")]
         public virtual Category Category { get; set; }
 
+        // إضافة حقل تفعيل/إيقاف المنتج
+        public bool IsActive { get; set; } = true;
+
         // B2B Logic: Wholesale Price Tiers
         public virtual List<PriceTier> PriceTiers { get; set; } = new List<PriceTier>();
 

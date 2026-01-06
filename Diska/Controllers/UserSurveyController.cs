@@ -23,22 +23,28 @@ namespace Diska.Controllers
         public async Task<IActionResult> GetActiveSurvey()
         {
             var user = await _userManager.GetUserAsync(User);
-            string role = user != null ? (await _userManager.GetRolesAsync(user)).FirstOrDefault() ?? "Customer" : "Guest";
+            string userId = user?.Id ?? "Guest";
+            string role = user != null ? (await _userManager.GetRolesAsync(user)).FirstOrDefault() ?? "Customer" : "Customer";
 
             // البحث عن استبيان نشط مناسب للدور ولم يقم المستخدم بالإجابة عليه
-            // var survey = await _context.Set<Survey>()
-            //    .Include(s => s.Questions)
-            //    .Where(s => s.IsActive && s.EndDate > DateTime.Now && (s.TargetAudience == "All" || s.TargetAudience == role))
-            //    .FirstOrDefaultAsync();
+            var survey = await _context.Surveys
+                .Include(s => s.Questions)
+                .Where(s => s.IsActive && s.EndDate > DateTime.Now && (s.TargetAudience == "All" || s.TargetAudience == role))
+                .OrderByDescending(s => s.StartDate)
+                .FirstOrDefaultAsync();
 
-            // if (survey != null && user != null)
-            // {
-            //    bool answered = await _context.Set<SurveyResponse>().AnyAsync(r => r.SurveyId == survey.Id && r.UserId == user.Id);
-            //    if (answered) return Content(""); 
-            // }
+            if (survey != null)
+            {
+                // التأكد من عدم الإجابة سابقاً
+                bool answered = await _context.SurveyResponses
+                    .AnyAsync(r => r.SurveyId == survey.Id && r.UserId == userId);
 
-            // return PartialView("_SurveyPopup", survey);
-            return Content(""); // Placeholder
+                if (answered) return Content("");
+
+                return PartialView("_SurveyPopup", survey);
+            }
+
+            return Content("");
         }
 
         [HttpPost]
@@ -63,8 +69,8 @@ namespace Diska.Controllers
                 SubmittedAt = DateTime.Now
             };
 
-            // _context.Set<SurveyResponse>().Add(response);
-            // await _context.SaveChangesAsync();
+            _context.SurveyResponses.Add(response);
+            await _context.SaveChangesAsync();
 
             return Json(new { success = true, message = "شكراً لمشاركتك!" });
         }

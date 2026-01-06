@@ -4,6 +4,7 @@ using Diska.Data;
 using Microsoft.EntityFrameworkCore;
 using Diska.Models;
 using Microsoft.AspNetCore.Identity;
+using Diska.Services;
 
 namespace Diska.Areas.Admin.Controllers
 {
@@ -13,16 +14,18 @@ namespace Diska.Areas.Admin.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly INotificationService _notificationService;
 
-        public DashboardController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+        public DashboardController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, INotificationService notificationService)
         {
             _context = context;
             _userManager = userManager;
+            _notificationService = notificationService;
         }
 
+        // --- الرئيسية ---
         public async Task<IActionResult> Index()
         {
-            // Bird's-eye view stats
             var today = DateTime.Today;
             ViewBag.DailySales = await _context.Orders
                 .Where(o => o.OrderDate.Date == today && o.Status != "Cancelled")
@@ -41,45 +44,42 @@ namespace Diska.Areas.Admin.Controllers
             return View(recentOrders);
         }
 
+        // --- الطلبات ---
         public async Task<IActionResult> Orders(string status = "All")
         {
             var query = _context.Orders.Include(o => o.User).AsQueryable();
+            if (status != "All") query = query.Where(o => o.Status == status);
+            return View(await query.OrderByDescending(o => o.OrderDate).ToListAsync());
+        }
 
-            if (status != "All")
-            {
-                query = query.Where(o => o.Status == status);
-            }
+        public async Task<IActionResult> OrderDetails(int id)
+        {
+            var order = await _context.Orders
+                .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Product)
+                .FirstOrDefaultAsync(o => o.Id == id);
 
-            var orders = await query.OrderByDescending(o => o.OrderDate).ToListAsync();
-            return View(orders);
+            if (order == null) return NotFound();
+            return View(order);
         }
 
         [HttpPost]
         public async Task<IActionResult> UpdateOrderStatus(int id, string status)
         {
-            var order = await _context.Orders.FindAsync(id);
+            var order = await _context.Orders.Include(o => o.User).FirstOrDefaultAsync(o => o.Id == id);
             if (order != null)
             {
                 order.Status = status;
                 await _context.SaveChangesAsync();
+
+                // إشعار المستخدم
+                string msg = $"تم تحديث حالة طلبك #{id} إلى: {status}";
+                await _notificationService.NotifyUserAsync(order.UserId, "تحديث الطلب", msg, "Order", $"/Order/Track/{id}");
             }
             return RedirectToAction(nameof(Orders));
         }
 
-        [HttpPost]
-        public async Task<IActionResult> RefundUser(string userId, decimal amount, string reason)
-        {
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user != null && amount > 0)
-            {
-                user.WalletBalance += amount;
-                await _userManager.UpdateAsync(user);
-
-                // Optional: Log transaction here
-            }
-            return RedirectToAction(nameof(Index));
-        }
-
+        // --- التجار ---
         public async Task<IActionResult> Merchants()
         {
             var merchants = await _userManager.GetUsersInRoleAsync("Merchant");
@@ -96,6 +96,64 @@ namespace Diska.Areas.Admin.Controllers
                 await _userManager.UpdateAsync(user);
             }
             return RedirectToAction(nameof(Merchants));
+        }
+
+        // --- المنتجات ---
+        public async Task<IActionResult> Products()
+        {
+            var products = await _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.Merchant)
+                .OrderByDescending(p => p.Id)
+                .ToListAsync();
+            return View(products);
+        }
+
+        // --- التصنيفات ---
+        public async Task<IActionResult> Categories()
+        {
+            return View(await _context.Categories.ToListAsync());
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateCategory(Category category)
+        {
+            if (ModelState.IsValid)
+            {
+                _context.Categories.Add(category);
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(Categories));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteCategory(int id)
+        {
+            var cat = await _context.Categories.FindAsync(id);
+            if (cat != null)
+            {
+                _context.Categories.Remove(cat);
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(Categories));
+        }
+
+        // --- الرسائل ---
+        public async Task<IActionResult> Messages()
+        {
+            return View(await _context.ContactMessages.OrderByDescending(m => m.DateSent).ToListAsync());
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteMessage(int id)
+        {
+            var msg = await _context.ContactMessages.FindAsync(id);
+            if (msg != null)
+            {
+                _context.ContactMessages.Remove(msg);
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(Messages));
         }
     }
 }

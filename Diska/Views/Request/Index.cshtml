@@ -1,8 +1,11 @@
 ﻿@model IEnumerable<Diska.Models.DealRequest>
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<Diska.Models.ApplicationUser> UserManager
 @using System.Globalization
 @{
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
     ViewData["Title"] = isAr ? "طلبات خاصة" : "Special Requests";
+    var currentUser = await UserManager.GetUserAsync(User);
 }
 
 <section class="section-padding">
@@ -10,7 +13,7 @@
         <div style="display:flex; justify-content:space-between; align-items:center; padding-top:20px; margin-bottom:20px;">
             <div>
                 <h2 class="page-title" style="margin:0;">@(isAr ? "طلبات الشراء الخاصة" : "Special Buy Requests")</h2>
-                <p style="color:#666; font-size:0.9rem;">@(isAr ? "اطلب كميات خاصة وسيقوم التجار بتقديم عروضهم لك." : "Request bulk quantities and merchants will offer you deals.")</p>
+                <p style="color:#666; font-size:0.9rem;">@(isAr ? "اطلب كميات خاصة وسيقوم التجار بتوفيرها لك." : "Request bulk quantities and merchants will fulfill them.")</p>
             </div>
 
             <button class="btn primary small" onclick="openRequestModal()">
@@ -20,11 +23,9 @@
 
         @if (TempData["Message"] != null)
         {
-            <div class="alert alert-success">@TempData["Message"]</div>
-        }
-        @if (TempData["Error"] != null)
-        {
-            <div class="alert alert-danger">@TempData["Error"]</div>
+            <div class="alert alert-success" style="background:#dcfce7; color:#166534; padding:10px; border-radius:8px; margin-bottom:20px;">
+                @TempData["Message"]
+            </div>
         }
 
         <div class="requests-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:20px;">
@@ -32,13 +33,15 @@
             {
                 <div style="grid-column: 1/-1; text-align:center; padding:40px; background:#f8fafc; border-radius:10px; color:#777;">
                     <i class="fas fa-bullhorn fa-2x" style="margin-bottom:10px; opacity:0.5;"></i>
-                    <p>@(isAr ? "لا توجد طلبات شراء نشطة حالياً." : "No active requests at the moment.")</p>
+                    <p>@(isAr ? "لا توجد طلبات شراء نشطة حالياً." : "No active requests.")</p>
                 </div>
             }
             else
             {
                 @foreach (var req in Model)
                 {
+                    bool isMyRequest = currentUser != null && req.UserId == currentUser.Id;
+
                     <div class="request-card" style="background:#fff; border:1px solid #eee; border-radius:10px; padding:20px; position:relative; overflow:hidden; box-shadow:0 2px 5px rgba(0,0,0,0.02);">
                         <div style="border-left: 4px solid var(--accent); position:absolute; top:0; left:0; bottom:0;"></div>
 
@@ -51,19 +54,43 @@
                             </div>
                             <div style="text-align:center; background:#f0f9ff; padding:5px 10px; border-radius:8px;">
                                 <span style="display:block; font-weight:bold; color:#0284c7;">@req.DealPrice.ToString("N0")</span>
-                                <small style="font-size:0.7rem; color:#64748b;">@(isAr ? "السعر المستهدف" : "Target Price")</small>
+                                <small style="font-size:0.7rem; color:#64748b;">@(isAr ? "مستهدف" : "Target")</small>
                             </div>
                         </div>
 
                         <div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:10px; border-radius:6px; font-size:0.9rem;">
                             <span>@(isAr ? "الكمية:" : "Qty:") <strong>@req.TargetQuantity</strong></span>
-                            <span style="color:#666;">@req.RequestDate.ToString("dd/MM/yyyy")</span>
+
+                            @if (isMyRequest)
+                            {
+                                if (req.Status == "Pending")
+                                {
+                                    <span class="badge" style="background:#fffbeb; color:#d97706;">قيد المراجعة</span>
+                                }
+                                else if (req.Status == "Approved")
+                                {
+                                    <span class="badge" style="background:#dcfce7; color:#166534;">نشط</span>
+                                }
+                            }
+                            else
+                            {
+                                <span style="color:#666;">@req.RequestDate.ToString("dd/MM")</span>
+                            }
                         </div>
 
-                        @if (User.IsInRole("Merchant"))
+                        @if (isMyRequest)
+                        {
+                            <form asp-action="Delete" method="post" onsubmit="return confirm('حذف هذا الطلب؟');" style="margin-top:15px;">
+                                <input type="hidden" name="id" value="@req.Id" />
+                                <button type="submit" class="btn btn-outline small w-100" style="color:#dc2626; border-color:#fee2e2;">
+                                    <i class="fas fa-trash"></i> @(isAr ? "حذف الطلب" : "Delete")
+                                </button>
+                            </form>
+                        }
+                        else if (User.IsInRole("Merchant"))
                         {
                             <button class="btn btn-outline w-100" style="margin-top:15px; border:1px solid var(--primary); color:var(--primary);">
-                                @(isAr ? "تقديم عرض (قريباً)" : "Make Offer (Soon)")
+                                @(isAr ? "توفير الطلب" : "Fulfill Request")
                             </button>
                         }
                     </div>
@@ -83,7 +110,7 @@
         <form asp-action="Create" method="post">
             <div class="form-group mb-3">
                 <label>@(isAr ? "اسم المنتج المطلوب" : "Product Name")</label>
-                <input type="text" name="ProductName" class="form-control" required placeholder="@(isAr ? "مثال: زيت خليط 700 مل" : "Ex: Mixed Oil 700ml")">
+                <input type="text" name="ProductName" class="form-control" required placeholder="@(isAr ? "مثال: زيت خليط 700 مل" : "Ex: Mixed Oil")">
             </div>
 
             <div class="row" style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:15px;">
@@ -92,17 +119,17 @@
                     <input type="number" name="TargetQuantity" class="form-control" required placeholder="100">
                 </div>
                 <div class="form-group">
-                    <label>@(isAr ? "السعر المستهدف (للقطعة)" : "Target Price")</label>
+                    <label>@(isAr ? "السعر المستهدف" : "Target Price")</label>
                     <input type="number" name="DealPrice" class="form-control" required placeholder="0.00">
                 </div>
             </div>
 
             <div class="form-group mb-4">
                 <label>@(isAr ? "مكان التوصيل (المدينة)" : "Location")</label>
-                <input type="text" name="Location" class="form-control" required placeholder="@(isAr ? "القاهرة، مدينة نصر" : "Cairo, Nasr City")">
+                <input type="text" name="Location" class="form-control" required placeholder="@(isAr ? "القاهرة، مدينة نصر" : "Cairo")">
             </div>
 
-            <button type="submit" class="btn primary w-100">@(isAr ? "نشر الطلب" : "Post Request")</button>
+            <button type="submit" class="btn primary w-100">@(isAr ? "إرسال للمراجعة" : "Submit")</button>
         </form>
     </div>
 </div>
@@ -119,7 +146,6 @@
         }
     }
 
-    // Close modal when clicking outside
     window.onclick = function(e) {
         if(e.target == document.getElementById('reqModal')) {
             document.getElementById('reqModal').style.display = 'none';

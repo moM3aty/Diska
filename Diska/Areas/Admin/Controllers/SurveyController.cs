@@ -19,15 +19,11 @@ namespace Diska.Areas.Admin.Controllers
 
         public async Task<IActionResult> Index()
         {
-            // ملاحظة: يجب إضافة DbSet<Survey> في ApplicationDbContext ليعمل هذا الكود
-            // var surveys = await _context.Surveys.Include(s => s.Responses).ToListAsync();
-            // بما أننا لم نعدل ملف Context، سنفترض وجوده أو نمرر قائمة فارغة للتجربة
-            // للتوضيح، سأكتب الكود كما لو كانت الجداول موجودة
-
-            // var surveys = await _context.Set<Survey>().Include(s => s.Responses).OrderByDescending(s => s.StartDate).ToListAsync();
-            // return View(surveys);
-
-            return View(new List<Survey>()); // Placeholder until migration
+            var surveys = await _context.Surveys
+                .Include(s => s.Responses)
+                .OrderByDescending(s => s.StartDate)
+                .ToListAsync();
+            return View(surveys);
         }
 
         [HttpGet]
@@ -42,21 +38,29 @@ namespace Diska.Areas.Admin.Controllers
         {
             if (ModelState.IsValid)
             {
-                // إضافة الأسئلة يدوياً من الفورم
-                for (int i = 0; i < QuestionsText.Count; i++)
+                // حفظ الاستبيان أولاً
+                _context.Surveys.Add(survey);
+                await _context.SaveChangesAsync(); // للحصول على ID
+
+                // حفظ الأسئلة
+                if (QuestionsText != null)
                 {
-                    if (!string.IsNullOrWhiteSpace(QuestionsText[i]))
+                    for (int i = 0; i < QuestionsText.Count; i++)
                     {
-                        survey.Questions.Add(new SurveyQuestion
+                        if (!string.IsNullOrWhiteSpace(QuestionsText[i]))
                         {
-                            QuestionText = QuestionsText[i],
-                            Type = QuestionsType[i]
-                        });
+                            var question = new SurveyQuestion
+                            {
+                                SurveyId = survey.Id,
+                                QuestionText = QuestionsText[i],
+                                Type = QuestionsType[i] ?? "Text"
+                            };
+                            _context.SurveyQuestions.Add(question);
+                        }
                     }
+                    await _context.SaveChangesAsync();
                 }
 
-                // _context.Set<Survey>().Add(survey);
-                // await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
             return View(survey);
@@ -64,17 +68,37 @@ namespace Diska.Areas.Admin.Controllers
 
         public async Task<IActionResult> Results(int id)
         {
-            // عرض النتائج
-            // var survey = await _context.Set<Survey>().Include(s => s.Responses).FirstOrDefaultAsync(s => s.Id == id);
-            // return View(survey);
-            return View(new Survey());
+            var survey = await _context.Surveys
+                .Include(s => s.Questions)
+                .Include(s => s.Responses)
+                .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (survey == null) return NotFound();
+
+            return View(survey);
         }
 
         [HttpPost]
         public async Task<IActionResult> ToggleStatus(int id)
         {
-            // var survey = await _context.Set<Survey>().FindAsync(id);
-            // if(survey != null) { survey.IsActive = !survey.IsActive; await _context.SaveChangesAsync(); }
+            var survey = await _context.Surveys.FindAsync(id);
+            if (survey != null)
+            {
+                survey.IsActive = !survey.IsActive;
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var survey = await _context.Surveys.FindAsync(id);
+            if (survey != null)
+            {
+                _context.Surveys.Remove(survey);
+                await _context.SaveChangesAsync();
+            }
             return RedirectToAction(nameof(Index));
         }
     }

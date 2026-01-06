@@ -9,10 +9,9 @@ namespace Diska.Models
         public int Id { get; set; }
         public DateTime OrderDate { get; set; } = DateTime.Now;
 
-        // العلاقة مع المستخدم
         public string UserId { get; set; }
         [ForeignKey("UserId")]
-        public virtual ApplicationUser User { get; set; } // تم إضافة هذا التعريف لحل الخطأ
+        public virtual ApplicationUser User { get; set; }
 
         public string CustomerName { get; set; }
         public string Phone { get; set; }
@@ -24,10 +23,14 @@ namespace Diska.Models
         public decimal TotalAmount { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
-        public decimal ShippingCost { get; set; } // تم إضافة مصاريف الشحن
+        public decimal ShippingCost { get; set; }
 
         public string Status { get; set; } = "Pending";
         public string PaymentMethod { get; set; }
+
+        // --- إضافات جديدة من To-Do List ---
+        public string DeliverySlot { get; set; } // صباحي / مسائي
+        public string Notes { get; set; } // ملاحظات العميل
 
         public virtual ICollection<OrderItem> OrderItems { get; set; }
     }

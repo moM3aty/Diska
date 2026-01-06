@@ -1,0 +1,117 @@
+﻿@model Diska.Models.UserAddress
+@using System.Globalization
+@{
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    ViewData["Title"] = isAr ? "إضافة عنوان" : "Add Address";
+}
+
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+<section class="section-padding">
+    <div class="container">
+        <div class="card" style="max-width:800px; margin:0 auto; padding:30px; border:1px solid #eee;">
+            <h2 style="margin-bottom:25px; color:var(--primary); text-align:center;">@(isAr ? "إضافة عنوان جديد" : "New Address")</h2>
+
+            <form asp-action="Create" method="post">
+                <div class="row" style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                    <!-- بيانات العنوان -->
+                    <div>
+                        <div class="form-group mb-3">
+                            <label>@(isAr ? "مسمى العنوان" : "Label")</label>
+                            <input asp-for="Title" class="form-control" required placeholder="@(isAr ? "المنزل، العمل..." : "Home, Work...")" />
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label>@(isAr ? "المحافظة" : "Governorate")</label>
+                            <select asp-for="Governorate" id="govSelect" class="form-control" required>
+                                <option value="">@(isAr ? "-- اختر --" : "-- Select --")</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label>@(isAr ? "المدينة / المنطقة" : "City / Area")</label>
+                            <select asp-for="City" id="citySelect" class="form-control" required disabled>
+                                <option value="">@(isAr ? "-- اختر المحافظة أولاً --" : "-- Select Gov First --")</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label>@(isAr ? "رقم الهاتف" : "Phone")</label>
+                            <input asp-for="PhoneNumber" class="form-control" required type="tel" />
+                        </div>
+                    </div>
+
+                    <!-- الخريطة -->
+                    <div>
+                        <div class="form-group mb-3">
+                            <label>@(isAr ? "حدد موقعك على الخريطة" : "Pin Location on Map")</label>
+                            <div id="map" style="height: 250px; border-radius: 8px; border: 2px solid #eee;"></div>
+                            <small class="text-muted" style="display:block; margin-top:5px; font-size:0.8rem;">
+                                @(isAr ? "اضغط على الخريطة لتحديد الموقع بدقة" : "Click on map to pin location")
+                            </small>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label>@(isAr ? "العنوان بالتفصيل" : "Detailed Address")</label>
+                            <textarea asp-for="Street" class="form-control" rows="3" required placeholder="@(isAr ? "اسم الشارع، رقم العقار، علامة مميزة" : "Street, Building...")"></textarea>
+                        </div>
+
+                        <!-- إحداثيات مخفية -->
+                        <input type="hidden" asp-for="Latitude" id="lat" />
+                        <input type="hidden" asp-for="Longitude" id="lng" />
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top:20px; display:flex; align-items:center; gap:10px;">
+                    <input asp-for="IsDefault" type="checkbox" style="width:20px; height:20px;" />
+                    <label style="margin:0; cursor:pointer;" for="IsDefault">@(isAr ? "تعيين كعنوان افتراضي" : "Set as Default")</label>
+                </div>
+
+                <button type="submit" class="btn primary w-100" style="margin-top:20px; padding:12px;">@(isAr ? "حفظ العنوان" : "Save Address")</button>
+            </form>
+        </div>
+    </div>
+</section>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="~/js/checkout-data.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 1. Initialize Map (Center on Cairo)
+        var map = L.map('map').setView([30.0444, 31.2357], 10);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        var marker;
+
+        // 2. Click Event
+        map.on('click', function(e) {
+            var lat = e.latlng.lat;
+            var lng = e.latlng.lng;
+
+            if (marker) {
+                marker.setLatLng(e.latlng);
+            } else {
+                marker = L.marker(e.latlng).addTo(map);
+            }
+
+            // Update Hidden Inputs
+            document.getElementById('lat').value = lat;
+            document.getElementById('lng').value = lng;
+        });
+
+        // 3. Try to get user location
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                var lat = position.coords.latitude;
+                var lng = position.coords.longitude;
+                map.setView([lat, lng], 13);
+            });
+        }
+    });
+</script>

@@ -1,0 +1,72 @@
+﻿@model IEnumerable<Diska.Models.UserAddress>
+@using System.Globalization
+@{
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    ViewData["Title"] = isAr ? "عناويني" : "My Addresses";
+}
+
+<section class="section-padding">
+    <div class="container">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h2 class="page-title" style="margin:0;">@(isAr ? "دفتر العناوين" : "Address Book") 📍</h2>
+            <a asp-action="Create" class="btn primary small">
+                <i class="fas fa-plus"></i> @(isAr ? "إضافة عنوان جديد" : "Add New Address")
+            </a>
+        </div>
+
+        @if (!Model.Any())
+        {
+            <div style="text-align:center; padding:40px; background:#f8fafc; border-radius:10px; border:1px solid #eee;">
+                <i class="fas fa-map-marked-alt fa-3x" style="color:#cbd5e1; margin-bottom:15px;"></i>
+                <p style="color:#666;">@(isAr ? "لم تقم بإضافة أي عناوين شحن بعد." : "No addresses found.")</p>
+            </div>
+        }
+        else
+        {
+            <div class="addresses-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:20px;">
+                @foreach (var addr in Model)
+                {
+                    <div class="address-card" style="background:#fff; border:1px solid @(addr.IsDefault ? "var(--primary)" : "#eee"); padding:20px; border-radius:10px; position:relative; box-shadow:0 2px 5px rgba(0,0,0,0.05);">
+
+                        @if (addr.IsDefault)
+                        {
+                            <span style="position:absolute; top:15px; left:15px; background:var(--primary); color:#fff; font-size:0.7rem; padding:3px 8px; border-radius:4px;">
+                                @(isAr ? "الافتراضي" : "Default")
+                            </span>
+                        }
+
+                        <h4 style="margin:0 0 10px; color:var(--primary);">@addr.Title</h4>
+
+                        <p style="margin:0 0 5px; color:#555;">
+                            <i class="fas fa-map-marker-alt" style="color:var(--accent); width:20px;"></i>
+                            @addr.Governorate - @addr.City
+                        </p>
+                        <p style="margin:0 0 5px; color:#666; font-size:0.9rem; padding-right:25px;">
+                            @addr.Street
+                        </p>
+                        <p style="margin:0; font-weight:bold; color:#333;">
+                            <i class="fas fa-phone" style="color:var(--accent); width:20px;"></i>
+                            @addr.PhoneNumber
+                        </p>
+
+                        <div class="actions" style="margin-top:20px; border-top:1px solid #eee; padding-top:15px; display:flex; gap:10px;">
+                            @if (!addr.IsDefault)
+                            {
+                                <form asp-action="SetDefault" method="post" style="flex:1;">
+                                    <input type="hidden" name="id" value="@addr.Id" />
+                                    <button type="submit" class="btn small" style="background:#e0f2fe; color:#0284c7; width:100%; border:none;">@(isAr ? "تعيين كافتراضي" : "Set Default")</button>
+                                </form>
+                            }
+                            <form asp-action="Delete" method="post" onsubmit="return confirm('@(isAr ? "هل أنت متأكد من الحذف؟" : "Confirm delete?")');">
+                                <input type="hidden" name="id" value="@addr.Id" />
+                                <button type="submit" class="btn small" style="background:#fee2e2; color:#dc2626; border:none; padding:5px 15px;">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</section>

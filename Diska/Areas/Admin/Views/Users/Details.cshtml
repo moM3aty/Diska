@@ -1,0 +1,100 @@
+﻿@model Diska.Models.ApplicationUser
+@{
+    ViewData["Title"] = "تفاصيل المستخدم";
+    Layout = "_AdminLayout";
+    var orders = ViewBag.Orders as IEnumerable<Diska.Models.Order>;
+    var transactions = ViewBag.Transactions as IEnumerable<Diska.Models.WalletTransaction>;
+}
+
+<div style="margin-bottom:20px;">
+    <a asp-action="Index" class="btn btn-outline"><i class="fas fa-arrow-right"></i> عودة للقائمة</a>
+</div>
+
+<div class="card">
+    <div style="display:flex; gap:20px; align-items:center; border-bottom:1px solid #eee; padding-bottom:20px; margin-bottom:20px;">
+        <div style="width:80px; height:80px; background:#f1f5f9; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:2rem; color:#64748b;">
+            <i class="fas fa-user"></i>
+        </div>
+        <div>
+            <h2 style="margin:0;">@Model.FullName</h2>
+            <div style="color:#666;">@Model.PhoneNumber</div>
+            <div style="margin-top:5px;">
+                <span class="badge" style="background:#e0f2fe; color:#0284c7;">@ViewBag.Role</span>
+                @if (Model.ShopName != null)
+                {
+                    <span class="badge" style="background:#fffbeb; color:#d97706;">@Model.ShopName</span>
+                }
+            </div>
+        </div>
+        <div style="margin-right:auto; text-align:center;">
+            <small>رصيد المحفظة</small>
+            <h3 style="margin:0; color:green;">@Model.WalletBalance.ToString("N2") ج.م</h3>
+        </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:30px;">
+        <!-- Orders History -->
+        <div>
+            <h4 style="color:var(--primary); margin-bottom:15px;">آخر الطلبات</h4>
+            @if (orders != null && orders.Any())
+            {
+                <table style="width:100%; font-size:0.9rem;">
+                    <thead>
+                        <tr style="background:#f8fafc;">
+                            <th>رقم الطلب</th>
+                            <th>التاريخ</th>
+                            <th>المبلغ</th>
+                            <th>الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var order in orders.Take(5))
+                        {
+                            <tr>
+                                <td>#@order.Id</td>
+                                <td>@order.OrderDate.ToString("yyyy/MM/dd")</td>
+                                <td>@order.TotalAmount.ToString("N0")</td>
+                                <td>@order.Status</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <p style="color:#999;">لا توجد طلبات.</p>
+            }
+        </div>
+
+        <!-- Wallet History -->
+        <div>
+            <h4 style="color:var(--primary); margin-bottom:15px;">سجل المحفظة</h4>
+            @if (transactions != null && transactions.Any())
+            {
+                <table style="width:100%; font-size:0.9rem;">
+                    <thead>
+                        <tr style="background:#f8fafc;">
+                            <th>العملية</th>
+                            <th>المبلغ</th>
+                            <th>التاريخ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var t in transactions.Take(5))
+                        {
+                            <tr>
+                                <td>@t.Type</td>
+                                <td style="color:@(t.Amount > 0 ? "green" : "red"); font-weight:bold;">@t.Amount.ToString("N0")</td>
+                                <td>@t.TransactionDate.ToString("yyyy/MM/dd")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <p style="color:#999;">لا توجد معاملات.</p>
+            }
+        </div>
+    </div>
+</div>

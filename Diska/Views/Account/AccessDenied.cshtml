@@ -1,0 +1,26 @@
+﻿@{
+    ViewData["Title"] = "غير مصرح";
+}
+
+<section class="section-padding">
+    <div class="container" style="text-align: center; padding: 100px 20px;">
+        <div style="max-width: 600px; margin: 0 auto; background:#fff; padding:40px; border-radius:15px; border:1px solid #eee;">
+            <i class="fas fa-user-lock fa-4x" style="color: #f59e0b; margin-bottom: 20px;"></i>
+
+            <h1 style="font-size: 2rem; margin-bottom: 15px; color: #333;">عفواً، لا تملك صلاحية الدخول</h1>
+            <p style="color: #666; font-size: 1.1rem; line-height: 1.6;">
+                هذه الصفحة مخصصة لصلاحيات مختلفة (مثل الأدمن أو التاجر).
+                يرجى التأكد من تسجيل الدخول بالحساب الصحيح.
+            </p>
+
+            <div style="margin-top: 40px; display: flex; gap: 15px; justify-content: center;">
+                <a asp-controller="Home" asp-action="Index" class="btn primary" style="text-decoration: none;">
+                    <i class="fas fa-home"></i> الرئيسية
+                </a>
+                <a asp-controller="Account" asp-action="Logout" class="btn btn-outline" style="border: 1px solid #ccc; color: #333; text-decoration: none; padding: 10px 20px; border-radius: 8px;">
+                    <i class="fas fa-sign-in-alt"></i> تسجيل دخول بحساب آخر
+                </a>
+            </div>
+        </div>
+    </div>
+</section>

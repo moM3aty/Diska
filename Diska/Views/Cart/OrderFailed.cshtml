@@ -1,0 +1,31 @@
+﻿@using System.Globalization
+@{
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    ViewData["Title"] = isAr ? "فشل الدفع" : "Payment Failed";
+}
+
+<section class="section-padding" style="min-height: 70vh; display: flex; align-items: center;">
+    <div class="container text-center">
+        <div class="failed-card" style="background: #fff; padding: 50px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); max-width: 600px; margin: 0 auto; border: 1px solid #fee2e2;">
+
+            <div style="width: 80px; height: 80px; background: #fee2e2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                <i class="fas fa-times fa-3x" style="color: #dc2626;"></i>
+            </div>
+
+            <h2 style="color: #dc2626; margin-bottom: 10px;">@(isAr ? "عفواً، فشلت عملية الدفع" : "Payment Failed")</h2>
+            <p style="color: #666; font-size: 1.1rem; margin-bottom: 30px;">
+                @(isAr ? "لم نتمكن من إتمام عملية الدفع. يرجى المحاولة مرة أخرى أو اختيار طريقة دفع مختلفة." : "We couldn't process your payment. Please try again or choose another method.")
+            </p>
+
+            <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                <a asp-action="Checkout" class="btn primary">
+                    <i class="fas fa-redo"></i> @(isAr ? "محاولة مرة أخرى" : "Try Again")
+                </a>
+                <a asp-controller="Home" asp-action="Contact" class="btn btn-outline" style="border: 1px solid #ccc;">
+                    <i class="fas fa-headset"></i> @(isAr ? "تواصل معنا" : "Contact Support")
+                </a>
+            </div>
+
+        </div>
+    </div>
+</section>

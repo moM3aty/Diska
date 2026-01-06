@@ -1,17 +1,16 @@
 ﻿@model IEnumerable<Diska.Models.Product>
 @{
-    ViewData["Title"] = "إدارة المنتجات";
+    ViewData["Title"] = "المنتجات";
     Layout = "_AdminLayout";
 }
 
 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
     <h2 style="margin:0;">إدارة المنتجات والمخزون</h2>
-    <!-- يمكن إضافة زر تصدير أو طباعة هنا -->
-    <span class="badge" style="background:#e0f2fe; color:#0284c7; font-size:0.9rem;">إجمالي: @Model.Count()</span>
+    <span class="badge" style="background:#e0f2fe; color:#0284c7; font-size:1rem;">العدد: @Model.Count()</span>
 </div>
 
 <div class="card">
-    <table>
+    <table style="width:100%;">
         <thead>
             <tr>
                 <th>صورة</th>
@@ -20,19 +19,21 @@
                 <th>القسم</th>
                 <th>السعر</th>
                 <th>المخزون</th>
-                <th>إجراءات</th>
+                <th>الحالة</th>
             </tr>
         </thead>
         <tbody>
             @foreach (var item in Model)
             {
                 <tr>
-                    <td><img src="~/@item.ImageUrl" style="width:40px; height:40px; object-fit:contain; border-radius:5px;"></td>
+                    <td>
+                        <img src="~/@item.ImageUrl" style="width:50px; height:50px; object-fit:contain; border-radius:5px; border:1px solid #eee;">
+                    </td>
                     <td>
                         <strong>@item.Name</strong>
                         @if (item.IsExpired)
                         {
-                            <span class="badge" style="background:red; color:white;">منتهي</span>
+                            <span class="badge" style="background:red; color:white; font-size:0.7rem;">منتهي</span>
                         }
                     </td>
                     <td>@(item.Merchant?.ShopName ?? "غير معروف")</td>
@@ -41,11 +42,11 @@
                     <td>
                         @if (item.StockQuantity == 0)
                         {
-                            <span style="color:red; font-weight:bold;">0</span>
+                            <span style="color:red; font-weight:bold;">نفذت</span>
                         }
                         else if (item.StockQuantity < 10)
                         {
-                            <span style="color:orange; font-weight:bold;">@item.StockQuantity</span>
+                            <span style="color:#d97706; font-weight:bold;">@item.StockQuantity (منخفض)</span>
                         }
                         else
                         {
@@ -53,15 +54,14 @@
                         }
                     </td>
                     <td>
-                        <!-- في لوحة الأدمن، الحذف يكون نهائي أو إخفاء -->
-                        <!-- سنفترض وجود أكشن للحذف في الكنترولر -->
-                        <form asp-controller="Merchant" asp-action="Delete" method="post" onsubmit="return confirm('حذف هذا المنتج نهائياً؟');">
-                            <input type="hidden" name="id" value="@item.Id" />
-                            <input type="hidden" name="returnUrl" value="/Admin/Dashboard/Products" />
-                            <button type="submit" class="btn" style="background:#fee2e2; color:red; padding:5px 10px; font-size:0.8rem;">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </form>
+                        @if (item.IsActive)
+                        {
+                            <span class="badge" style="background:#dcfce7; color:#166534;">نشط</span>
+                        }
+                        else
+                        {
+                            <span class="badge" style="background:#fee2e2; color:#b91c1c;">مخفي</span>
+                        }
                     </td>
                 </tr>
             }

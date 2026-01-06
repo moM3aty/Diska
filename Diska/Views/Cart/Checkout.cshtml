@@ -48,6 +48,22 @@
                         <input type="text" id="address" class="form-control" required placeholder="@(isAr ? "اسم الشارع - رقم العقار - علامة مميزة" : "Street - Building - Landmark")">
                     </div>
 
+                    <!-- وقت التوصيل (جديد) -->
+                    <div class="form-group mb-3">
+                        <label><i class="fas fa-clock"></i> @(isAr ? "وقت التوصيل المفضل" : "Preferred Delivery Time")</label>
+                        <select id="deliverySlot" class="form-control">
+                            <option value="Anytime">@(isAr ? "أي وقت (خلال اليوم)" : "Anytime (During Day)")</option>
+                            <option value="Morning">@(isAr ? "صباحاً (10ص - 4م)" : "Morning (10AM - 4PM)")</option>
+                            <option value="Evening">@(isAr ? "مساءً (4م - 10م)" : "Evening (4PM - 10PM)")</option>
+                        </select>
+                    </div>
+
+                    <!-- ملاحظات (جديد) -->
+                    <div class="form-group mb-4">
+                        <label><i class="fas fa-sticky-note"></i> @(isAr ? "ملاحظات إضافية" : "Order Notes")</label>
+                        <textarea id="orderNotes" class="form-control" rows="2" placeholder="@(isAr ? "مثال: يرجى الاتصال قبل الوصول" : "Ex: Call before arrival")"></textarea>
+                    </div>
+
                     <h3 style="margin-bottom:20px; font-size:1.2rem; color:var(--primary);">
                         <i class="fas fa-wallet"></i> @(isAr ? "طريقة الدفع" : "Payment Method")
                     </h3>
@@ -108,5 +124,57 @@
             renderCheckoutPreview();
             updateShippingCost();
         });
+
+        // تم تحديث دالة submitOrder في cart.js لتقرأ الحقول الجديدة
+        // ولكن سأعيد كتابتها هنا لتأكيد التغيير (أو يمكنك تحديث cart.js)
+        async function submitOrder() {
+            const form = document.getElementById('checkoutForm');
+            if (!form.checkValidity()) { form.reportValidity(); return; }
+
+            const cart = JSON.parse(localStorage.getItem('DISKA_CART')) || [];
+            if (cart.length === 0) { alert("السلة فارغة!"); return; }
+
+            const shippingText = document.getElementById('shippingDisplay').innerText;
+
+            const orderData = {
+                shopName: document.getElementById('shopName').value,
+                phone: document.getElementById('phone').value,
+                governorate: document.getElementById('govSelect').value,
+                city: document.getElementById('city').value,
+                address: document.getElementById('address').value,
+                deliverySlot: document.getElementById('deliverySlot').value, // جديد
+                notes: document.getElementById('orderNotes').value, // جديد
+                paymentMethod: document.querySelector('input[name="payment"]:checked').value,
+                shippingCost: parseFloat(shippingText) || 0,
+                items: cart.map(i => ({ id: i.id, qty: i.qty, price: i.price }))
+            };
+
+            try {
+                const btn = document.querySelector('button[onclick="submitOrder()"]');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التنفيذ...';
+
+                const response = await fetch('/Cart/PlaceOrder', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(orderData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    localStorage.removeItem('DISKA_CART');
+                    alert("تم إرسال الطلب بنجاح! رقم الطلب: #" + result.orderId);
+                    window.location.href = '/Order/MyOrders';
+                } else {
+                    alert("خطأ: " + result.message);
+                    btn.disabled = false;
+                    btn.innerHTML = 'تأكيد الطلب';
+                }
+            } catch (e) {
+                console.error(e);
+                alert("فشل الاتصال بالخادم");
+            }
+        }
     </script>
 }

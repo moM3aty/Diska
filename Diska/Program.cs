@@ -1,5 +1,5 @@
 ﻿using Diska.Data;
-using Diska.Services;
+using Diska.Services; // إضافة الـ Namespace الجديد
 using Diska.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
@@ -16,10 +16,13 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-// 2. Register Services
+// 2. Register Services (تم التحديث)
 builder.Services.AddScoped<INotificationService, NotificationService>();
+// تسجيل خدمات الدفع والشحن الجديدة
+builder.Services.AddScoped<IShippingService, ShippingService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
 
-// 3. Identity Setup (Relaxed Password Policy for Dev/B2B Simplicity)
+// 3. Identity Setup
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
     options.SignIn.RequireConfirmedAccount = false;
@@ -50,15 +53,15 @@ builder.Services.AddSession(options =>
 
 var app = builder.Build();
 
-// 6. Data Seeding (Auto-Migration & Admin Creation)
+// 6. Data Seeding
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
-        context.Database.Migrate(); // Create DB if not exists
-        await DbSeeder.SeedRolesAndAdminAsync(services); // Create Admin
+        context.Database.Migrate();
+        await DbSeeder.SeedRolesAndAdminAsync(services);
     }
     catch (Exception ex)
     {
@@ -76,7 +79,6 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
-// Localization Middleware
 var supportedCultures = new[] { new CultureInfo("ar-EG"), new CultureInfo("en-US") };
 app.UseRequestLocalization(new RequestLocalizationOptions
 {

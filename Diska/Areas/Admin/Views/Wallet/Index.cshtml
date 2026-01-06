@@ -1,0 +1,64 @@
+﻿@model IEnumerable<Diska.Models.WalletTransaction>
+@{
+    ViewData["Title"] = "التقرير المالي";
+    Layout = "_AdminLayout";
+}
+
+<h2 style="margin-bottom:20px;">سجل المعاملات المالية (المحفظة)</h2>
+
+<div class="stats-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-bottom:30px;">
+    <div class="card" style="border-right:4px solid green; padding:20px;">
+        <p style="margin:0 0 5px; color:#666;">إجمالي الإيداعات والاسترداد</p>
+        <h2 style="margin:0; color:green;">@(((decimal)ViewBag.TotalDeposits).ToString("N0")) <small>ج.م</small></h2>
+    </div>
+    <div class="card" style="border-right:4px solid #dc2626; padding:20px;">
+        <p style="margin:0 0 5px; color:#666;">إجمالي المبيعات (خصم من المحفظة)</p>
+        <h2 style="margin:0; color:#dc2626;">@(((decimal)ViewBag.TotalSales).ToString("N0")) <small>ج.م</small></h2>
+    </div>
+</div>
+
+<div class="card">
+    <table style="width:100%;">
+        <thead>
+            <tr>
+                <th>المستخدم</th>
+                <th>العملية</th>
+                <th>المبلغ</th>
+                <th>الوصف</th>
+                <th>التاريخ</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var t in Model)
+            {
+                <tr>
+                    <td>
+                        <strong>@t.User?.FullName</strong><br>
+                        <small style="color:#666;">@t.User?.PhoneNumber</small>
+                    </td>
+                    <td>
+                        @if (t.Type == "Deposit")
+                        {
+                            <span class="badge" style="background:#dcfce7; color:green;">إيداع</span>
+                        }
+                        else if (t.Type == "Refund")
+                        {
+
+                            <span class="badge" style="background:#e0f2fe; color:#0284c7;">استرداد</span>
+                        }
+                        else
+                        {
+
+                            <span class="badge" style="background:#fef2f2; color:#dc2626;">شراء</span>
+                        }
+                    </td>
+                    <td style="font-weight:bold; color:@(t.Type == "Purchase" ? "red" : "green");">
+                        @t.Amount.ToString("N2")
+                    </td>
+                    <td>@t.Description</td>
+                    <td style="font-size:0.9rem; color:#666;">@t.TransactionDate.ToString("yyyy/MM/dd HH:mm")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

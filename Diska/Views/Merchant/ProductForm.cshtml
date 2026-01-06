@@ -1,6 +1,6 @@
 ﻿@model Diska.Models.Product
 @{
-    ViewData["Title"] = Model.Id == 0 ? "إضافة منتج" : "تعديل منتج";
+    ViewData["Title"] = Model.Id == 0 ? "إضافة منتج" : "تعديل المنتج";
     var isAr = System.Globalization.CultureInfo.CurrentCulture.Name.StartsWith("ar");
 }
 
@@ -8,24 +8,13 @@
     <div class="container">
         <div class="merchant-form-box" style="max-width: 900px; margin: 0 auto;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                <h2 style="color: var(--primary);">@(Model.Id == 0 ? "إضافة منتج جديد" : "تعديل المنتج: " + Model.Name)</h2>
-                <a asp-action="Index" class="btn btn-outline" style="border:1px solid #ccc;">إلغاء</a>
+                <h2 style="color: var(--primary);">@(Model.Id == 0 ? "إضافة منتج جديد" : "تعديل: " + Model.Name)</h2>
+                <a asp-action="Index" class="btn btn-outline">إلغاء</a>
             </div>
 
             <form asp-action="SaveProduct" method="post" enctype="multipart/form-data">
                 <input type="hidden" asp-for="Id" />
-
-                @if (!ViewData.ModelState.IsValid)
-                {
-                    <div class="alert alert-danger" style="background:#fee2e2; color:#b91c1c; padding:10px; border-radius:5px; margin-bottom:15px;">
-                        <ul style="margin:0; padding-right:20px;">
-                            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
-                            {
-                                <li>@error.ErrorMessage</li>
-                            }
-                        </ul>
-                    </div>
-                }
+                <input type="hidden" asp-for="MerchantId" />
 
                 <div class="form-row" style="display:grid; grid-template-columns: 1fr 2fr; gap:30px;">
                     <!-- Image Upload -->
@@ -37,45 +26,49 @@
                             </label>
                             <input type="file" name="imageFile" id="imageFile" accept="image/*" style="display:none;" onchange="previewImage(this)">
                         </div>
+
+                        <!-- Toggle Active Status -->
+                        <div style="background:#f8fafc; padding:15px; border-radius:10px; border:1px solid #eee; text-align:center;">
+                            <label style="display:flex; align-items:center; justify-content:center; gap:10px; cursor:pointer;">
+                                <input asp-for="IsActive" type="checkbox" style="width:20px; height:20px;">
+                                <span style="font-weight:bold;">@(isAr ? "المنتج متاح للبيع (نشط)" : "Active for Sale")</span>
+                            </label>
+                        </div>
                     </div>
 
-                    <!-- Basic Info -->
+                    <!-- Info -->
                     <div>
                         <div class="form-group">
-                            <label asp-for="Name"></label>
-                            <input asp-for="Name" class="form-control" placeholder="اسم المنتج بالعربي" />
+                            <label>اسم المنتج (عربي)</label>
+                            <input asp-for="Name" class="form-control" required />
                             <span asp-validation-for="Name" class="text-danger"></span>
                         </div>
                         <div class="form-group">
-                            <label asp-for="NameEn"></label>
-                            <input asp-for="NameEn" class="form-control" placeholder="English Name (Optional)" />
+                            <label>اسم المنتج (إنجليزي)</label>
+                            <input asp-for="NameEn" class="form-control" />
                         </div>
 
                         <div class="form-row" style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
                             <div class="form-group">
                                 <label>القسم</label>
                                 <select asp-for="CategoryId" class="form-control" asp-items="ViewBag.Categories">
-                                    <option value="">-- اختر القسم --</option>
+                                    <option value="">-- اختر --</option>
                                 </select>
-                                <span asp-validation-for="CategoryId" class="text-danger"></span>
                             </div>
                             <div class="form-group">
-                                <label asp-for="UnitsPerCarton"></label>
-                                <input asp-for="UnitsPerCarton" class="form-control" />
-                                <span asp-validation-for="UnitsPerCarton" class="text-danger"></span>
+                                <label>وحدات الكرتونة</label>
+                                <input asp-for="UnitsPerCarton" class="form-control" required />
                             </div>
                         </div>
 
                         <div class="form-row" style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
                             <div class="form-group">
-                                <label asp-for="ProductionDate">تاريخ الإنتاج</label>
-                                <input asp-for="ProductionDate" type="date" class="form-control" />
-                                <span asp-validation-for="ProductionDate" class="text-danger"></span>
+                                <label>تاريخ الإنتاج</label>
+                                <input asp-for="ProductionDate" type="date" class="form-control" required />
                             </div>
                             <div class="form-group">
-                                <label asp-for="ExpiryDate">تاريخ الانتهاء</label>
-                                <input asp-for="ExpiryDate" type="date" class="form-control" />
-                                <span asp-validation-for="ExpiryDate" class="text-danger"></span>
+                                <label>تاريخ الانتهاء</label>
+                                <input asp-for="ExpiryDate" type="date" class="form-control" required />
                             </div>
                         </div>
                     </div>
@@ -83,24 +76,21 @@
 
                 <div class="form-row" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:15px; margin-top:20px;">
                     <div class="form-group">
-                        <label asp-for="Price">سعر القطعة (الأساسي)</label>
-                        <input asp-for="Price" type="number" step="0.01" class="form-control" />
-                        <span asp-validation-for="Price" class="text-danger"></span>
+                        <label>السعر (قطعة)</label>
+                        <input asp-for="Price" type="number" step="0.01" class="form-control" required />
                     </div>
                     <div class="form-group">
-                        <label asp-for="OldPrice"></label>
+                        <label>السعر قبل الخصم</label>
                         <input asp-for="OldPrice" type="number" step="0.01" class="form-control" />
                     </div>
                     <div class="form-group">
-                        <label asp-for="StockQuantity">الكمية المتاحة (بالقطعة)</label>
-                        <input asp-for="StockQuantity" type="number" class="form-control" />
-                        <span asp-validation-for="StockQuantity" class="text-danger"></span>
+                        <label>المخزون (قطعة)</label>
+                        <input asp-for="StockQuantity" type="number" class="form-control" required />
                     </div>
                 </div>
 
                 <hr style="margin: 30px 0; border:0; border-top:1px solid #eee;">
 
-                <!-- Wholesale Tiers -->
                 <h3 style="margin-bottom:15px; font-size:1.2rem; color:var(--primary);">شرائح أسعار الجملة (B2B)</h3>
                 <div class="table-responsive">
                     <table class="table" style="width:100%; text-align:center; border:1px solid #eee; margin-bottom:15px;">
@@ -130,7 +120,7 @@
                 <hr style="margin: 30px 0; border:0; border-top:1px solid #eee;">
 
                 <div class="form-group">
-                    <label asp-for="Description"></label>
+                    <label>الوصف وتفاصيل المنتج</label>
                     <textarea asp-for="Description" rows="4" class="form-control"></textarea>
                 </div>
 
@@ -140,54 +130,6 @@
     </div>
 </section>
 
-<script>
-    function previewImage(input) {
-        if (input.files && input.files[0]) {
-            var reader = new FileReader();
-            reader.onload = function (e) {
-                document.getElementById('previewImg').src = e.target.result;
-            };
-            reader.readAsDataURL(input.files[0]);
-        }
-    }
-
-    function addTierRow() {
-        const tbody = document.getElementById('tiersContainer');
-        const index = tbody.querySelectorAll('tr').length;
-        const row = `
-            <tr>
-                <td><input type="number" name="PriceTiers[${index}].MinQuantity" class="form-control small-input" placeholder="مثال: 10"></td>
-                <td><input type="number" name="PriceTiers[${index}].MaxQuantity" class="form-control small-input" placeholder="مثال: 50"></td>
-                <td><input type="number" name="PriceTiers[${index}].UnitPrice" class="form-control small-input" placeholder="سعر مخفض"></td>
-                <td><button type="button" class="btn-delete" onclick="this.closest('tr').remove()"><i class="fas fa-trash"></i></button></td>
-            </tr>
-        `;
-        tbody.insertAdjacentHTML('beforeend', row);
-    }
-</script>
-
-<style>
-    .small-input {
-        padding: 8px;
-        text-align: center;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        width: 100%;
-    }
-
-    .btn-delete {
-        background: #fee2e2;
-        color: red;
-        border: none;
-        padding: 5px 10px;
-        border-radius: 5px;
-        cursor: pointer;
-    }
-
-    .text-danger {
-        color: #dc2626;
-        font-size: 0.85rem;
-        margin-top: 5px;
-        display: block;
-    }
-</style>
+@section Scripts {
+    <script src="~/js/merchant.js"></script>
+}

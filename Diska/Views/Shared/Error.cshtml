@@ -1,18 +1,30 @@
-﻿@model ErrorViewModel
+﻿@model Diska.Models.ErrorViewModel
 @{
-    ViewData["Title"] = "خطأ";
+    ViewData["Title"] = "حدث خطأ";
 }
 
-<div class="container" style="text-align: center; padding: 100px 20px;">
-    <h1 class="text-danger" style="font-size: 3rem; margin-bottom: 20px;">عذراً!</h1>
-    <h2 class="text-danger">حدث خطأ أثناء معالجة طلبك.</h2>
+<section class="section-padding">
+    <div class="container" style="text-align: center; padding: 100px 20px;">
+        <div style="max-width: 600px; margin: 0 auto; background:#fff; padding:40px; border-radius:15px; border:1px solid #eee;">
+            <i class="fas fa-exclamation-triangle fa-4x" style="color: #ef4444; margin-bottom: 20px;"></i>
 
-    @if (Model.ShowRequestId)
-    {
-        <p style="color: #777; margin-top: 20px;">
-            <strong>معرف الطلب:</strong> <code>@Model.RequestId</code>
-        </p>
-    }
+            <h1 style="font-size: 2rem; margin-bottom: 15px; color: #333;">عذراً، حدث خطأ ما!</h1>
+            <p style="color: #666; font-size: 1.1rem; line-height: 1.6;">
+                واجهنا مشكلة غير متوقعة أثناء معالجة طلبك. لقد تم تسجيل الخطأ وسيقوم فريق الدعم بمراجعته.
+            </p>
 
-    <a href="/" class="btn primary" style="margin-top: 30px; display: inline-block;">العودة للصفحة الرئيسية</a>
-</div>
+            @if (Model != null && Model.ShowRequestId)
+            {
+                <div style="margin-top: 20px; background: #f8fafc; padding: 10px; border-radius: 8px; display: inline-block;">
+                    <code style="color: #d63384;">Error ID: @Model.RequestId</code>
+                </div>
+            }
+
+            <div style="margin-top: 40px;">
+                <a href="/" class="btn primary" style="text-decoration: none; padding: 12px 30px;">
+                    <i class="fas fa-home"></i> العودة للصفحة الرئيسية
+                </a>
+            </div>
+        </div>
+    </div>
+</section>

@@ -43,36 +43,17 @@
                             @(Model.StockQuantity > 0 ? Model.StockQuantity.ToString() : (isAr ? "نفذت الكمية" : "Out of Stock"))
                         </span>
                     </p>
+                    <!-- عرض التقييم -->
+                    <p class="rating-display" style="color:#f59e0b;">
+                        @for (int i = 1; i <= 5; i++)
+                        {
+                            <i class="@(i <= ViewBag.AverageRating ? "fas" : "far") fa-star"></i>
+                        }
+                        <span style="color:#666; font-size:0.8rem;">(@ViewBag.ReviewCount @(isAr ? "تقييم" : "Reviews"))</span>
+                    </p>
                 </div>
 
-                <!-- B2B Tiered Pricing Table -->
-                @if (Model.PriceTiers != null && Model.PriceTiers.Any())
-                {
-                    <div class="wholesale-table">
-                        <h4>@(isAr ? "خصومات الكميات (الجملة)" : "Bulk Discounts")</h4>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>@(isAr ? "الكمية" : "Quantity")</th>
-                                    <th>@(isAr ? "السعر للقطعة" : "Unit Price")</th>
-                                    <th>@(isAr ? "التوفير" : "Savings")</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var tier in Model.PriceTiers)
-                                {
-                                    var saving = Model.Price - tier.UnitPrice;
-                                    <tr class="highlight">
-                                        <td>@tier.MinQuantity - @tier.MaxQuantity</td>
-                                        <td>@tier.UnitPrice.ToString("N2")</td>
-                                        <td style="color:green;">@saving.ToString("N2") @(isAr ? "ج.م" : "EGP")</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                }
-
+                <!-- ... existing code (Wholesale Table) ... -->
                 <!-- Actions -->
                 @if (Model.StockQuantity > 0)
                 {
@@ -89,12 +70,65 @@
                 }
                 else
                 {
-                    <button class="btn" disabled style="background:#ccc; width:100%;">@(isAr ? "غير متوفر حالياً" : "Currently Unavailable")</button>
+                    <!-- زر تنبيه التوفر -->
+                    <div class="out-of-stock-box" style="background:#fff7ed; padding:15px; border:1px solid #ffedd5; border-radius:8px; margin-top:20px;">
+                        <p style="color:#c2410c; margin-bottom:10px; font-weight:bold;">@(isAr ? "المنتج غير متوفر حالياً" : "Currently Out of Stock")</p>
+                        <form asp-action="SubscribeRestock" method="post" style="display:flex; gap:10px;">
+                            <input type="hidden" name="productId" value="@Model.Id" />
+                            <input type="email" name="email" placeholder="@(isAr ? "أدخل بريدك للإشعار" : "Enter email to notify")" required class="form-control" style="font-size:0.9rem;">
+                            <button type="submit" class="btn primary small">@(isAr ? "تنبيهي" : "Notify Me")</button>
+                        </form>
+                    </div>
                 }
 
                 <div class="description" style="margin-top:20px;">
                     <h3>@(isAr ? "تفاصيل المنتج" : "Description")</h3>
                     <p>@(isAr? Model.Description: (Model.DescriptionEn ?? Model.Description))</p>
+                </div>
+
+                <hr style="margin:30px 0; border-top:1px solid #eee;">
+
+                <!-- قسم المراجعات -->
+                <div class="reviews-section">
+                    <h3>@(isAr ? "تقييمات العملاء" : "Customer Reviews")</h3>
+
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        <form asp-action="AddReview" method="post" style="background:#f8fafc; padding:15px; border-radius:10px; margin-bottom:20px;">
+                            <input type="hidden" name="productId" value="@Model.Id" />
+                            <div style="margin-bottom:10px;">
+                                <label>@(isAr ? "تقييمك:" : "Your Rating:")</label>
+                                <select name="rating" style="padding:5px; border-radius:5px;">
+                                    <option value="5">⭐⭐⭐⭐⭐ (5)</option>
+                                    <option value="4">⭐⭐⭐⭐ (4)</option>
+                                    <option value="3">⭐⭐⭐ (3)</option>
+                                    <option value="2">⭐⭐ (2)</option>
+                                    <option value="1">⭐ (1)</option>
+                                </select>
+                            </div>
+                            <textarea name="comment" rows="2" class="form-control" placeholder="@(isAr ? "اكتب تعليقك هنا..." : "Write your comment...")" required></textarea>
+                            <button type="submit" class="btn primary small" style="margin-top:10px;">@(isAr ? "نشر التقييم" : "Post Review")</button>
+                        </form>
+                    }
+
+                    <div class="reviews-list">
+                        @foreach (var review in ViewBag.Reviews)
+                        {
+                            <div class="review-item" style="border-bottom:1px solid #eee; padding:10px 0;">
+                                <div style="display:flex; justify-content:space-between;">
+                                    <strong>@review.User?.FullName</strong>
+                                    <small style="color:#999;">@review.CreatedAt.ToString("dd/MM/yyyy")</small>
+                                </div>
+                                <div style="color:#f59e0b; font-size:0.8rem; margin:5px 0;">
+                                    @for (int i = 0; i < review.Rating; i++)
+                                    {
+                                        <i class="fas fa-star"></i>
+                                    }
+                                </div>
+                                <p style="margin:0; color:#555;">@review.Comment</p>
+                            </div>
+                        }
+                    </div>
                 </div>
             </div>
         </div>

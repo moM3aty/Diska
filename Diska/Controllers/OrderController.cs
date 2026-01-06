@@ -19,12 +19,9 @@ namespace Diska.Controllers
             _userManager = userManager;
         }
 
-        // GET: /Order/MyOrders
         public async Task<IActionResult> MyOrders()
         {
             var user = await _userManager.GetUserAsync(User);
-            if (user == null) return RedirectToAction("Login", "Account");
-
             var orders = await _context.Orders
                 .Where(o => o.UserId == user.Id)
                 .Include(o => o.OrderItems)
@@ -35,7 +32,6 @@ namespace Diska.Controllers
             return View(orders);
         }
 
-        // GET: /Order/Details/5
         public async Task<IActionResult> Details(int id)
         {
             var user = await _userManager.GetUserAsync(User);
@@ -49,7 +45,18 @@ namespace Diska.Controllers
             return View(order);
         }
 
-        // POST: /Order/Cancel/5
+        // صفحة تتبع الطلب الجديدة
+        public async Task<IActionResult> Track(int id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var order = await _context.Orders
+                .FirstOrDefaultAsync(o => o.Id == id && o.UserId == user.Id);
+
+            if (order == null) return NotFound();
+
+            return View(order);
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Cancel(int id)
@@ -63,7 +70,7 @@ namespace Diska.Controllers
 
             if (order.Status == "Pending")
             {
-                // Restore Stock
+                // إرجاع المخزون
                 foreach (var item in order.OrderItems)
                 {
                     var product = await _context.Products.FindAsync(item.ProductId);
@@ -73,10 +80,20 @@ namespace Diska.Controllers
                     }
                 }
 
-                // Refund Wallet if applicable
+                // استرداد للمحفظة إذا كان الدفع بالمحفظة
                 if (order.PaymentMethod == "Wallet")
                 {
                     user.WalletBalance += order.TotalAmount;
+
+                    _context.WalletTransactions.Add(new WalletTransaction
+                    {
+                        UserId = user.Id,
+                        Amount = order.TotalAmount,
+                        Type = "Refund",
+                        Description = $"إلغاء الطلب #{order.Id}",
+                        TransactionDate = DateTime.Now
+                    });
+
                     await _userManager.UpdateAsync(user);
                 }
 
@@ -86,7 +103,7 @@ namespace Diska.Controllers
             }
             else
             {
-                TempData["Error"] = "لا يمكن إلغاء الطلب في هذه المرحلة";
+                TempData["Error"] = "عفواً، لا يمكن إلغاء الطلب في هذه المرحلة (قد تم تأكيده أو شحنه).";
             }
 
             return RedirectToAction(nameof(MyOrders));

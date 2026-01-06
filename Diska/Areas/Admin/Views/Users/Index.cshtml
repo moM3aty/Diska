@@ -1,0 +1,131 @@
+﻿@model IEnumerable<Diska.Areas.Admin.Controllers.UserViewModel>
+@{
+    ViewData["Title"] = "إدارة المستخدمين";
+    Layout = "_AdminLayout";
+}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+    <h2 style="margin:0;">المستخدمين والتجار</h2>
+    <div>
+        <a asp-action="Index" asp-route-role="All" class="btn btn-primary" style="background:#e2e8f0; color:#333;">الكل</a>
+        <a asp-action="Index" asp-route-role="Merchant" class="btn btn-primary" style="background:#7c3aed;">التجار</a>
+        <a asp-action="Index" asp-route-role="Customer" class="btn btn-primary">العملاء</a>
+    </div>
+</div>
+
+<div class="card">
+    <table style="width:100%;">
+        <thead>
+            <tr>
+                <th>الاسم / المحل</th>
+                <th>الهاتف</th>
+                <th>الصلاحية</th>
+                <th>الرصيد</th>
+                <th>الحالة</th>
+                <th>إجراءات</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Model)
+            {
+                <tr>
+                    <td>
+                        <strong>@user.FullName</strong>
+                        @if (!string.IsNullOrEmpty(user.ShopName))
+                        {
+                            <div style="font-size:0.8rem; color:#666;">@user.ShopName</div>
+                        }
+                    </td>
+                    <td>@user.PhoneNumber</td>
+                    <td>
+                        @if (user.Role == "Admin")
+                        {
+                            <span class="badge" style="background:#000; color:#fff;">Admin</span>
+                        }
+                        else if (user.Role == "Merchant")
+                        {
+
+                            <span class="badge" style="background:#7c3aed; color:#fff;">تاجر</span>
+                        }
+                        else
+                        {
+
+                            <span class="badge" style="background:#e2e8f0; color:#333;">عميل</span>
+                        }
+                    </td>
+                    <td style="color:green; font-weight:bold;">@user.WalletBalance.ToString("N2")</td>
+                    <td>
+                        @if (user.IsVerified)
+                        {
+                            <span class="badge" style="background:#dcfce7; color:#166534;">موثق</span>
+                        }
+                        else if (user.Role == "Merchant")
+                        {
+
+                            <span class="badge" style="background:#fffbeb; color:#d97706;">غير موثق</span>
+                        }
+                        else
+                        {
+
+                            <span>-</span>
+                        }
+                    </td>
+                    <td>
+                        <div style="display:flex; gap:5px;">
+                            @if (user.Role == "Merchant")
+                            {
+                                <form asp-action="ToggleVerification" method="post" style="display:inline;">
+                                    <input type="hidden" name="id" value="@user.Id" />
+                                    <button type="submit" class="btn" style="padding:5px 10px; font-size:0.8rem; background:#f1f5f9;">
+                                        @(user.IsVerified ? "إلغاء التوثيق" : "توثيق")
+                                    </button>
+                                </form>
+                            }
+                            <button onclick="addBalance('@user.Id', '@user.FullName')" class="btn" style="padding:5px 10px; font-size:0.8rem; background:#e0f2fe; color:#0284c7;">
+                                <i class="fas fa-wallet"></i>
+                            </button>
+                            <form asp-action="Delete" method="post" onsubmit="return confirm('حذف نهائي؟');" style="display:inline;">
+                                <input type="hidden" name="id" value="@user.Id" />
+                                <button type="submit" class="btn btn-danger" style="padding:5px 10px; font-size:0.8rem;"><i class="fas fa-trash"></i></button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<script>
+    function addBalance(id, name) {
+        let amount = prompt("أدخل المبلغ (استخدم السالب للخصم) للمستخدم: " + name);
+        if (amount) {
+            let reason = prompt("سبب العملية:");
+
+            let form = document.createElement('form');
+            form.method = 'post';
+            form.action = '/Admin/Users/AddBalance';
+
+            let idField = document.createElement('input');
+            idField.type = 'hidden';
+            idField.name = 'id';
+            idField.value = id;
+
+            let amountField = document.createElement('input');
+            amountField.type = 'hidden';
+            amountField.name = 'amount';
+            amountField.value = amount;
+
+            let reasonField = document.createElement('input');
+            reasonField.type = 'hidden';
+            reasonField.name = 'reason';
+            reasonField.value = reason;
+
+            form.appendChild(idField);
+            form.appendChild(amountField);
+            form.appendChild(reasonField);
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+</script>

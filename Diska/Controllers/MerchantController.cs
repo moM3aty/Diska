@@ -22,7 +22,7 @@ namespace Diska.Controllers
             _userManager = userManager;
         }
 
-        // Dashboard: Stats & Product List
+        // --- المنتجات ---
         public async Task<IActionResult> Index()
         {
             var user = await _userManager.GetUserAsync(User);
@@ -32,7 +32,7 @@ namespace Diska.Controllers
                 .OrderByDescending(p => p.Id)
                 .ToListAsync();
 
-            // Merchant Stats
+            // إحصائيات سريعة
             ViewBag.TotalProducts = products.Count;
             ViewBag.LowStock = products.Count(p => p.StockQuantity < 10);
             ViewBag.TotalValue = products.Sum(p => p.Price * p.StockQuantity);
@@ -40,39 +40,43 @@ namespace Diska.Controllers
             return View(products);
         }
 
-        // GET: Add/Edit Product
+        [HttpPost]
+        public async Task<IActionResult> ToggleStatus(int id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == id && p.MerchantId == user.Id);
+
+            if (product != null)
+            {
+                product.IsActive = !product.IsActive;
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
         [HttpGet]
         public async Task<IActionResult> ProductForm(int? id)
         {
             var user = await _userManager.GetUserAsync(User);
             ViewBag.Categories = new SelectList(_context.Categories, "Id", "Name");
 
-            if (id == null)
-            {
-                return View(new Product { ProductionDate = DateTime.Today, ExpiryDate = DateTime.Today.AddMonths(6) });
-            }
+            if (id == null) return View(new Product { ProductionDate = DateTime.Today, ExpiryDate = DateTime.Today.AddMonths(6) });
 
             var product = await _context.Products
                 .Include(p => p.PriceTiers)
                 .FirstOrDefaultAsync(p => p.Id == id && p.MerchantId == user.Id);
 
             if (product == null) return NotFound();
-
             return View(product);
         }
 
-        // POST: Save Product (Add or Edit)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SaveProduct(Product model, IFormFile imageFile)
         {
             var user = await _userManager.GetUserAsync(User);
 
-            // Validation: Production < Expiry
-            if (model.ExpiryDate <= model.ProductionDate)
-            {
-                ModelState.AddModelError("ExpiryDate", "تاريخ الانتهاء يجب أن يكون بعد تاريخ الإنتاج.");
-            }
+            if (model.ExpiryDate <= model.ProductionDate) ModelState.AddModelError("ExpiryDate", "تاريخ الانتهاء يجب أن يكون بعد تاريخ الإنتاج.");
 
             if (!ModelState.IsValid)
             {
@@ -81,24 +85,18 @@ namespace Diska.Controllers
             }
 
             Product product;
-
             if (model.Id == 0)
             {
-                // New Product
                 product = new Product { MerchantId = user.Id };
                 _context.Products.Add(product);
             }
             else
             {
-                // Edit Existing
-                product = await _context.Products
-                    .Include(p => p.PriceTiers)
-                    .FirstOrDefaultAsync(p => p.Id == model.Id && p.MerchantId == user.Id);
-
+                product = await _context.Products.Include(p => p.PriceTiers).FirstOrDefaultAsync(p => p.Id == model.Id && p.MerchantId == user.Id);
                 if (product == null) return NotFound();
             }
 
-            // Update Fields
+            // تحديث البيانات
             product.Name = model.Name;
             product.NameEn = model.NameEn;
             product.Price = model.Price;
@@ -110,15 +108,15 @@ namespace Diska.Controllers
             product.CategoryId = model.CategoryId;
             product.ProductionDate = model.ProductionDate;
             product.ExpiryDate = model.ExpiryDate;
+            product.IsActive = model.IsActive;
 
-            // Handle Image
+            // الصورة
             if (imageFile != null)
             {
                 string folder = "images/products/";
                 string fileName = Guid.NewGuid().ToString() + Path.GetExtension(imageFile.FileName);
                 string serverPath = Path.Combine(_webHostEnvironment.WebRootPath, folder + fileName);
 
-                // Ensure directory exists
                 string dirPath = Path.GetDirectoryName(serverPath);
                 if (!Directory.Exists(dirPath)) Directory.CreateDirectory(dirPath);
 
@@ -133,16 +131,15 @@ namespace Diska.Controllers
                 product.ImageUrl = "images/default-product.png";
             }
 
-            // Handle Price Tiers (Clear old, Add new)
+            // الشرائح
             if (product.PriceTiers != null) _context.PriceTiers.RemoveRange(product.PriceTiers);
-
             if (model.PriceTiers != null && model.PriceTiers.Any())
             {
                 foreach (var tier in model.PriceTiers)
                 {
                     if (tier.MinQuantity > 0 && tier.UnitPrice > 0)
                     {
-                        tier.Id = 0; // Reset ID for new insert
+                        tier.Id = 0;
                         tier.ProductId = product.Id;
                         _context.PriceTiers.Add(tier);
                     }
@@ -158,13 +155,46 @@ namespace Diska.Controllers
         {
             var user = await _userManager.GetUserAsync(User);
             var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == id && p.MerchantId == user.Id);
+            if (product != null) { _context.Products.Remove(product); await _context.SaveChangesAsync(); }
+            return RedirectToAction(nameof(Index));
+        }
 
-            if (product != null)
+        // --- عروض التاجر (My Offers) ---
+        public async Task<IActionResult> MyOffers()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var offers = await _context.MerchantOffers
+                .Include(o => o.DealRequest)
+                .Where(o => o.MerchantId == user.Id)
+                .OrderByDescending(o => o.CreatedAt)
+                .ToListAsync();
+
+            return View(offers);
+        }
+
+        public async Task<IActionResult> RestockRequests()
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            var requests = await _context.RestockSubscriptions
+                .Include(r => r.Product)
+                .Where(r => r.Product.MerchantId == user.Id && !r.IsNotified)
+                .OrderByDescending(r => r.RequestDate)
+                .ToListAsync();
+
+            return View(requests);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> MarkRestocked(int id)
+        {
+            var req = await _context.RestockSubscriptions.FindAsync(id);
+            if (req != null)
             {
-                _context.Products.Remove(product);
+                req.IsNotified = true;
                 await _context.SaveChangesAsync();
             }
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(RestockRequests));
         }
     }
 }

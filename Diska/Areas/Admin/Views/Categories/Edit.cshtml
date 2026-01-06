@@ -1,0 +1,39 @@
+﻿@model Diska.Models.Category
+@{
+    ViewData["Title"] = "تعديل القسم";
+    Layout = "_AdminLayout";
+}
+
+<div class="card" style="max-width:600px; margin:0 auto;">
+    <h2 style="margin-bottom:20px;">تعديل القسم</h2>
+
+    <form asp-action="Edit" method="post">
+        <input type="hidden" asp-for="Id" />
+
+        <div class="form-group" style="margin-bottom:15px;">
+            <label>الاسم (عربي)</label>
+            <input asp-for="Name" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;" required />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+
+        <div class="form-group" style="margin-bottom:15px;">
+            <label>الاسم (إنجليزي)</label>
+            <input asp-for="NameEn" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;" />
+        </div>
+
+        <div class="form-group" style="margin-bottom:20px;">
+            <label>أيقونة (FontAwesome Class)</label>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <input asp-for="IconClass" class="form-control" style="flex:1; padding:10px; border:1px solid #ddd; border-radius:5px;" placeholder="fas fa-box" oninput="document.getElementById('iconPreview').className = this.value" />
+                <div style="width:40px; height:40px; background:#f1f5f9; border-radius:5px; display:flex; align-items:center; justify-content:center;">
+                    <i id="iconPreview" class="@Model.IconClass"></i>
+                </div>
+            </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between;">
+            <button type="submit" class="btn btn-primary" style="padding:10px 20px;">حفظ التعديلات</button>
+            <a asp-action="Index" class="btn" style="color:#666;">إلغاء</a>
+        </div>
+    </form>
+</div>

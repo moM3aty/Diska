@@ -78,8 +78,8 @@ namespace Diska.Controllers
                 FullName = fullName,
                 ShopName = type == "Merchant" ? shopName : null,
                 CommercialRegister = type == "Merchant" ? commercialReg : null,
-                Email = $"{phone}@diska.local", // Fake email as Identity requires it
-                IsVerifiedMerchant = false // Pending admin approval
+                Email = $"{phone}@diska.local",
+                IsVerifiedMerchant = false
             };
 
             var result = await _userManager.CreateAsync(user, password);
@@ -87,12 +87,9 @@ namespace Diska.Controllers
             {
                 string role = type == "Merchant" ? "Merchant" : "Customer";
                 await _userManager.AddToRoleAsync(user, role);
-
                 await _signInManager.SignInAsync(user, isPersistent: true);
 
-                if (role == "Merchant")
-                    return RedirectToAction("Index", "Merchant");
-
+                if (role == "Merchant") return RedirectToAction("Index", "Merchant");
                 return RedirectToAction("Index", "Home");
             }
 
@@ -100,15 +97,66 @@ namespace Diska.Controllers
             return View();
         }
 
+        [Authorize]
+        public async Task<IActionResult> Profile()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            // إحصائيات وهمية للتجربة
+            ViewBag.OrdersCount = 12;
+            ViewBag.PendingCount = 2;
+            ViewBag.WishlistCount = 5;
+            return View(user);
+        }
+
+        [Authorize]
+        public async Task<IActionResult> Settings()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            return View(user);
+        }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> UpdateProfile(string FullName, string ShopName, string CommercialRegister)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return NotFound();
+
+            user.FullName = FullName;
+            if (User.IsInRole("Merchant"))
+            {
+                user.ShopName = ShopName;
+                user.CommercialRegister = CommercialRegister;
+            }
+
+            await _userManager.UpdateAsync(user);
+            TempData["Success"] = "تم تحديث البيانات بنجاح";
+            return RedirectToAction(nameof(Settings));
+        }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> ChangePassword(string CurrentPassword, string NewPassword)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return NotFound();
+
+            var result = await _userManager.ChangePasswordAsync(user, CurrentPassword, NewPassword);
+            if (result.Succeeded)
+            {
+                TempData["Success"] = "تم تغيير كلمة المرور بنجاح";
+            }
+            else
+            {
+                TempData["Error"] = "كلمة المرور الحالية غير صحيحة أو الجديدة لا تطابق الشروط";
+            }
+            return RedirectToAction(nameof(Settings));
+        }
+
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
             return RedirectToAction("Index", "Home");
-        }
-
-        public IActionResult AccessDenied()
-        {
-            return View();
         }
     }
 }

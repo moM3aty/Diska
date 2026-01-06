@@ -6,6 +6,9 @@ using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Authorization;
+using Diska.Services;
+using System;
+using System.Threading.Tasks;
 
 namespace Diska.Controllers
 {
@@ -13,15 +16,40 @@ namespace Diska.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IShippingService _shippingService;
+        private readonly IPaymentService _paymentService;
 
-        public CartController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+        public CartController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, IShippingService shippingService, IPaymentService paymentService)
         {
             _context = context;
             _userManager = userManager;
+            _shippingService = shippingService;
+            _paymentService = paymentService;
         }
 
         public IActionResult Index() => View();
         public IActionResult Checkout() => View();
+
+        // عرض صفحة نجاح الطلب
+        public IActionResult OrderSuccess(int id)
+        {
+            ViewBag.OrderId = id;
+            return View();
+        }
+
+        // عرض صفحة فشل الدفع
+        public IActionResult OrderFailed(int id)
+        {
+            ViewBag.OrderId = id;
+            return View();
+        }
+
+        [HttpGet]
+        public IActionResult GetShippingCost(string gov, string city)
+        {
+            decimal cost = _shippingService.CalculateCost(gov, city);
+            return Json(new { cost = cost });
+        }
 
         [HttpPost]
         public async Task<IActionResult> PlaceOrder([FromBody] OrderSubmissionModel model)
@@ -35,13 +63,13 @@ namespace Diska.Controllers
                 user = await _userManager.GetUserAsync(User);
             }
 
-            // 1. Inventory Check & Locking
             using var transaction = _context.Database.BeginTransaction();
             try
             {
                 decimal calculatedTotal = 0;
                 var orderItems = new List<OrderItem>();
 
+                // 1. التحقق من المخزون وحساب الأسعار
                 foreach (var item in model.Items)
                 {
                     if (int.TryParse(item.Id, out int productId))
@@ -49,25 +77,15 @@ namespace Diska.Controllers
                         var product = await _context.Products.FindAsync(productId);
                         if (product == null) throw new Exception($"المنتج رقم {item.Id} غير موجود");
 
-                        // Check Stock
                         if (product.StockQuantity < item.Qty)
                         {
                             return Json(new { success = false, message = $"الكمية المتاحة من {product.Name} هي {product.StockQuantity} فقط." });
                         }
 
-                        // Check Expiry
-                        if (product.ExpiryDate.HasValue && product.ExpiryDate.Value < DateTime.Now)
-                        {
-                            return Json(new { success = false, message = $"عفواً، المنتج {product.Name} منتهي الصلاحية ولا يمكن بيعه." });
-                        }
-
-                        // Determine Price (Tiered or Base)
                         decimal finalPrice = product.Price;
-                        // Logic for tiers could be added here if dynamic
-
                         calculatedTotal += finalPrice * item.Qty;
 
-                        // Deduct Stock
+                        // خصم المخزون
                         product.StockQuantity -= item.Qty;
                         _context.Update(product);
 
@@ -80,25 +98,69 @@ namespace Diska.Controllers
                     }
                 }
 
-                // 2. Shipping Calculation
-                decimal shippingCost = CalculateShipping(model.Governorate);
+                // 2. حساب الشحن والإجمالي
+                decimal shippingCost = _shippingService.CalculateCost(model.Governorate, model.City);
                 decimal grandTotal = calculatedTotal + shippingCost;
 
-                // 3. Wallet Payment Logic
-                if (model.PaymentMethod == "Wallet")
+                // 3. معالجة الدفع
+                string orderStatus = "Pending";
+
+                if (model.PaymentMethod == "Online")
+                {
+                    // حفظ الطلب مبدئياً كـ "بانتظار الدفع"
+                    var onlineOrder = new Order
+                    {
+                        UserId = user?.Id ?? "Guest",
+                        CustomerName = model.ShopName,
+                        Phone = model.Phone,
+                        Address = model.Address,
+                        Governorate = model.Governorate,
+                        City = model.City,
+                        TotalAmount = grandTotal,
+                        ShippingCost = shippingCost,
+                        OrderDate = DateTime.Now,
+                        Status = "Pending Payment", // حالة مؤقتة
+                        PaymentMethod = "Online",
+                        DeliverySlot = model.DeliverySlot,
+                        Notes = model.Notes,
+                        OrderItems = orderItems
+                    };
+
+                    _context.Orders.Add(onlineOrder);
+                    await _context.SaveChangesAsync();
+
+                    // استدعاء خدمة الدفع للحصول على الرابط
+                    // نمرر رقم الطلب لربط المعاملة لاحقاً
+                    var paymentUrl = await _paymentService.InitiatePaymentAsync(grandTotal, "EGP", new { OrderId = onlineOrder.Id });
+
+                    await transaction.CommitAsync();
+
+                    return Json(new { success = true, redirectUrl = paymentUrl });
+                }
+                else if (model.PaymentMethod == "Wallet")
                 {
                     if (user == null) return Json(new { success = false, message = "يجب تسجيل الدخول للدفع بالمحفظة" });
                     if (user.WalletBalance < grandTotal) return Json(new { success = false, message = "رصيد المحفظة غير كافٍ" });
 
                     user.WalletBalance -= grandTotal;
+
+                    _context.WalletTransactions.Add(new WalletTransaction
+                    {
+                        UserId = user.Id,
+                        Amount = grandTotal,
+                        Type = "Purchase",
+                        Description = "شراء منتجات (دفع بالمحفظة)",
+                        TransactionDate = DateTime.Now
+                    });
+
                     await _userManager.UpdateAsync(user);
                 }
 
-                // 4. Create Order
+                // 4. حفظ الطلب النهائي (للكاش والمحفظة)
                 var order = new Order
                 {
                     UserId = user?.Id ?? "Guest",
-                    CustomerName = model.ShopName, // Or User FullName
+                    CustomerName = model.ShopName,
                     Phone = model.Phone,
                     Address = model.Address,
                     Governorate = model.Governorate,
@@ -106,8 +168,10 @@ namespace Diska.Controllers
                     TotalAmount = grandTotal,
                     ShippingCost = shippingCost,
                     OrderDate = DateTime.Now,
-                    Status = "Pending",
+                    Status = orderStatus,
                     PaymentMethod = model.PaymentMethod,
+                    DeliverySlot = model.DeliverySlot,
+                    Notes = model.Notes,
                     OrderItems = orderItems
                 };
 
@@ -121,15 +185,8 @@ namespace Diska.Controllers
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                return Json(new { success = false, message = "حدث خطأ أثناء معالجة الطلب: " + ex.Message });
+                return Json(new { success = false, message = "حدث خطأ: " + ex.Message });
             }
-        }
-
-        private decimal CalculateShipping(string gov)
-        {
-            if (gov == "القاهرة" || gov == "الجيزة") return 50;
-            if (gov == "الإسكندرية") return 75;
-            return 100;
         }
     }
 
@@ -141,6 +198,9 @@ namespace Diska.Controllers
         public string City { get; set; }
         public string Address { get; set; }
         public string PaymentMethod { get; set; }
+        public string DeliverySlot { get; set; }
+        public string Notes { get; set; }
+        public decimal ShippingCost { get; set; }
         public List<CartItemDto> Items { get; set; }
     }
 
@@ -148,5 +208,6 @@ namespace Diska.Controllers
     {
         public string Id { get; set; }
         public int Qty { get; set; }
+        public decimal Price { get; set; }
     }
 }

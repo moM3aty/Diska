@@ -2,58 +2,85 @@
 @using System.Globalization
 @{
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
-    var category = ViewBag.CurrentCategory as Diska.Models.Category;
-    var catName = category != null ? (isAr ? category.Name : (category.NameEn ?? category.Name)) : (isAr ? "المنتجات" : "Products");
-    ViewData["Title"] = catName;
+    ViewData["Title"] = ViewBag.CategoryName;
+    var brands = ViewBag.AvailableBrands as List<string>;
 }
 
 <section class="category-section section-padding">
     <div class="container">
 
         <div class="breadcrumb">
-            <a asp-controller="Home" asp-action="Index">@(isAr ? "الرئيسية" : "Home")</a> / <span>@catName</span>
+            <a asp-controller="Home" asp-action="Index">@(isAr ? "الرئيسية" : "Home")</a> / <span>@ViewBag.CategoryName</span>
         </div>
 
         <div class="category-layout">
 
-            <!-- Sidebar Filters -->
+            <!-- Sidebar Filter -->
             <aside class="sidebar">
-                <div class="filter-group">
-                    <h3>@(isAr ? "نطاق السعر" : "Price Range")</h3>
-                    <form asp-action="Category" method="get">
-                        <input type="hidden" name="id" value="@(category?.Id)" />
+                <form method="get" asp-action="Category">
+                    <input type="hidden" name="id" value="@ViewBag.CategoryId" />
+
+                    <div class="filter-group">
+                        <h3>@(isAr ? "نطاق السعر" : "Price Range")</h3>
                         <div class="price-range">
                             <input type="number" name="minPrice" placeholder="@(isAr ? "من" : "Min")" value="@Context.Request.Query["minPrice"]">
                             <input type="number" name="maxPrice" placeholder="@(isAr ? "إلى" : "Max")" value="@Context.Request.Query["maxPrice"]">
                         </div>
-                        <button type="submit" class="btn primary w-100" style="margin-top:10px;">@(isAr ? "تصفية" : "Filter")</button>
-                    </form>
-                </div>
+                    </div>
 
-                <div class="filter-group">
-                    <h3>@(isAr ? "الماركات" : "Brands")</h3>
-                    <label><input type="checkbox"> @(isAr ? "بيبسي" : "Pepsi")</label>
-                    <label><input type="checkbox"> @(isAr ? "جهينة" : "Juhayna")</label>
-                    <label><input type="checkbox"> @(isAr ? "شيبسي" : "Chipsy")</label>
-                </div>
+                    <div class="filter-group">
+                        <h3>@(isAr ? "الماركات / التجار" : "Brands / Merchants")</h3>
+                        @if (brands != null && brands.Any())
+                        {
+                            foreach (var brand in brands)
+                            {
+                                if (!string.IsNullOrEmpty(brand))
+                                {
+                                    <label>
+                                        <input type="checkbox" name="brands" value="@brand" @(Context.Request.Query["brands"].Contains(brand) ? "checked" : "")>
+                                        @brand
+                                    </label>
+                                }
+                            }
+                        }
+                        else
+                        {
+                            <p style="color:#999; font-size:0.8rem;">@(isAr ? "لا توجد ماركات" : "No brands")</p>
+                        }
+                    </div>
+
+                    <button type="submit" class="btn primary w-100">@(isAr ? "تطبيق الفلتر" : "Apply Filter")</button>
+                </form>
             </aside>
 
-            <!-- Products Grid -->
+            <!-- Products -->
             <main class="category-products">
                 <div class="products-header">
-                    <h2>@catName <small style="color:#666; font-size:0.9rem;">(@Model.Count() @(isAr ? "منتج" : "Items"))</small></h2>
-                    <select onchange="location = this.value;" style="padding: 8px; border: 1px solid #ccc; border-radius: 5px;">
-                        <option>@(isAr ? "ترتيب حسب" : "Sort By")</option>
-                        <option value="?id=@(category?.Id)&sort=price_asc">@(isAr ? "السعر: الأقل للأعلى" : "Price: Low to High")</option>
-                        <option value="?id=@(category?.Id)&sort=price_desc">@(isAr ? "السعر: الأعلى للأقل" : "Price: High to Low")</option>
-                    </select>
+                    <h2>@ViewBag.CategoryName <small style="color:#666; font-size:0.9rem;">(@Model.Count() @(isAr ? "منتج" : "Items"))</small></h2>
+
+                    <form method="get" id="sortForm" style="margin:0;">
+                        <input type="hidden" name="id" value="@ViewBag.CategoryId" />
+                        <!-- Preserve filters when sorting -->
+                        @foreach (var key in Context.Request.Query.Keys)
+                        {
+                            if (key != "sort" && key != "id")
+                            {
+                                <input type="hidden" name="@key" value="@Context.Request.Query[key]" />
+                            }
+                        }
+
+                        <select name="sort" onchange="document.getElementById('sortForm').submit()" style="padding: 8px; border: 1px solid #ccc; border-radius: 5px;">
+                            <option value="">@(isAr ? "الترتيب الافتراضي" : "Default Sorting")</option>
+                            <option value="price_asc" selected="@(ViewBag.CurrentSort == "price_asc")">@(isAr ? "السعر: الأقل للأعلى" : "Price: Low to High")</option>
+                            <option value="price_desc" selected="@(ViewBag.CurrentSort == "price_desc")">@(isAr ? "السعر: الأعلى للأقل" : "Price: High to Low")</option>
+                        </select>
+                    </form>
                 </div>
 
                 @if (!Model.Any())
                 {
                     <div style="text-align:center; padding:50px; background:#fff; border-radius:10px; border:1px solid #eee;">
-                        <i class="fas fa-box-open" style="font-size:3rem; color:#eee; margin-bottom:10px;"></i>
-                        <p>@(isAr ? "لا توجد منتجات في هذا القسم حالياً." : "No products found in this category.")</p>
+                        <p>@(isAr ? "لا توجد منتجات تطابق اختيارك." : "No products found.")</p>
                     </div>
                 }
                 else
@@ -61,40 +88,23 @@
                     <div class="products-grid">
                         @foreach (var item in Model)
                         {
-                            <div class="product-card merchant-product" data-id="@item.Id" data-stock="@item.StockQuantity">
-                                <button class="fav-btn"><i class="fas fa-heart"></i></button>
+                            <div class="product-card" data-id="@item.Id" data-stock="@item.StockQuantity">
+                                <button class="fav-btn" onclick="toggleWishlist(@item.Id, this)"><i class="far fa-heart"></i></button>
 
-                                <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id" style="text-decoration:none;">
+                                <a asp-action="Details" asp-route-id="@item.Id" style="text-decoration:none;">
                                     <div class="product-img"><img src="~/@item.ImageUrl" alt="@item.Name"></div>
                                 </a>
 
                                 <div class="product-info">
-                                    <div class="in-cart-indicator"></div>
-
-                                    <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id" style="text-decoration:none; color:inherit;">
+                                    <a asp-action="Details" asp-route-id="@item.Id" style="text-decoration:none; color:inherit;">
                                         <h4>@(isAr? item.Name: (item.NameEn ?? item.Name))</h4>
                                     </a>
-
-                                    <div class="product-meta">
-                                        <span><i class="fas fa-box-open"></i> @item.UnitsPerCarton / @(isAr ? "كرتونة" : "Carton")</span>
-                                    </div>
-
                                     <div class="pricing">
-                                        <span class="current-price">@item.Price.ToString("F2") @(isAr ? "ج.م" : "EGP")</span>
-                                        @if (item.OldPrice > item.Price)
-                                        {
-                                            <span class="old-price">@item.OldPrice @(isAr ? "ج.م" : "EGP")</span>
-                                        }
+                                        <span class="current-price">@item.Price.ToString("N2") @(isAr ? "ج.م" : "EGP")</span>
                                     </div>
-
-                                    <div class="card-actions" style="display:flex; gap:10px; margin-top:10px;">
-                                        <div class="qty-control-card" style="display:flex; border:1px solid #ddd; border-radius:5px;">
-                                            <button class="card-minus" style="border:none; background:#eee; width:30px;">-</button>
-                                            <input type="number" class="manual-qty" value="1" min="1" max="@item.StockQuantity" style="width:50px; text-align:center; border:none; font-weight:bold;">
-                                            <button class="card-plus" style="border:none; background:#eee; width:30px;">+</button>
-                                        </div>
-                                        <button class="add-btn" style="flex:1; border:none; background:var(--primary); color:#fff; border-radius:5px;">
-                                            @(isAr ? "أضف" : "Add") <i class="fas fa-cart-plus"></i>
+                                    <div class="add-to-cart">
+                                        <button class="add-btn btn primary w-100" onclick="addToCart(this)">
+                                            @(isAr ? "إضافة" : "Add") <i class="fas fa-cart-plus"></i>
                                         </button>
                                     </div>
                                 </div>

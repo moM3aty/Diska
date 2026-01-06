@@ -1,4 +1,4 @@
-﻿// DISKA B2B Cart Logic - LocalStorage & API Sync
+﻿// DISKA B2B Cart Logic - Updated for API Integration
 
 const CART_KEY = 'DISKA_CART';
 
@@ -20,13 +20,11 @@ function addToCart(btnElement) {
     const id = card.dataset.id;
     const stock = parseInt(card.dataset.stock || 9999);
 
-    // Attempt to get name/price/image from DOM structure
-    let name = card.querySelector('h4, h1')?.innerText || "Unknown Product";
+    let name = card.querySelector('h4, h1')?.innerText || "منتج";
     let priceText = card.querySelector('.current-price')?.innerText || "0";
     let price = parseFloat(priceText.replace(/[^0-9.]/g, ''));
     let image = card.querySelector('img')?.src || "/images/default.png";
 
-    // Check for qty input (details page or merchant card)
     let qtyInput = card.querySelector('.manual-qty');
     let qtyToAdd = qtyInput ? parseInt(qtyInput.value) : 1;
 
@@ -49,7 +47,6 @@ function addToCart(btnElement) {
 
     saveCart(cart);
 
-    // Visual Feedback
     const originalText = btnElement.innerHTML;
     btnElement.innerHTML = '<i class="fas fa-check"></i> تم';
     btnElement.classList.add('success-anim');
@@ -82,6 +79,9 @@ function renderCartPage() {
         list.innerHTML = `<div style="text-align:center; padding:40px;">السلة فارغة</div>`;
         if (subtotalEl) subtotalEl.innerText = "0.00";
         if (totalEl) totalEl.innerText = "0.00";
+        // Disable checkout button if cart is empty
+        const checkoutBtn = document.querySelector('.cart-summary .btn.primary');
+        if (checkoutBtn) checkoutBtn.classList.add('disabled-btn');
         return;
     }
 
@@ -108,27 +108,24 @@ function renderCartPage() {
     });
 
     if (subtotalEl) subtotalEl.innerText = subtotal.toFixed(2);
-    if (totalEl) totalEl.innerText = subtotal.toFixed(2) + " ج.م";
+    if (totalEl) totalEl.innerText = (subtotal * 1.14).toFixed(2) + " ج.م"; // Example tax logic
 }
 
 function updateCartItem(index, change) {
     let cart = getCart();
     let item = cart[index];
-
     let newQty = item.qty + change;
 
     if (newQty > item.stock) {
         alert("الكمية تجاوزت المخزون المتاح");
         return;
     }
-
     if (newQty > 0) {
         item.qty = newQty;
     }
-
     saveCart(cart);
     renderCartPage();
-    renderCheckoutPreview(); // If on checkout page
+    renderCheckoutPreview();
 }
 
 function removeCartItem(index) {
@@ -145,7 +142,6 @@ function renderCheckoutPreview() {
     const container = document.getElementById('checkoutItems');
     const subTotalEl = document.getElementById('subTotalDisplay');
     const grandTotalEl = document.getElementById('grandTotalDisplay');
-    const shippingEl = document.getElementById('shippingDisplay');
 
     if (!container) return;
 
@@ -165,34 +161,61 @@ function renderCheckoutPreview() {
 
     if (subTotalEl) subTotalEl.innerText = subtotal.toFixed(2);
 
-    let shipping = parseFloat(shippingEl ? shippingEl.innerText : 50);
-    if (grandTotalEl) grandTotalEl.innerText = (subtotal + shipping).toFixed(2) + " ج.م";
+    // Shipping is handled by updateShippingCost now
+    updateTotalWithShipping(subtotal);
 }
 
-function updateShippingCost() {
-    const gov = document.getElementById('govSelect').value;
+// دالة محدثة لجلب سعر الشحن من السيرفر
+async function updateShippingCost() {
+    const govSelect = document.getElementById('govSelect');
+    const citySelect = document.getElementById('citySelect');
     const shippingEl = document.getElementById('shippingDisplay');
-    let cost = 100;
 
-    if (gov === 'القاهرة' || gov === 'الجيزة') cost = 50;
-    else if (gov === 'الإسكندرية') cost = 75;
+    if (!govSelect || !shippingEl) return;
 
-    if (shippingEl) shippingEl.innerText = cost.toFixed(2);
-    renderCheckoutPreview();
+    const gov = govSelect.value;
+    const city = citySelect ? citySelect.value : "";
+
+    if (!gov) {
+        shippingEl.innerText = "0.00";
+        updateTotalWithShipping();
+        return;
+    }
+
+    try {
+        // الاتصال بالـ API الجديد
+        const response = await fetch(`/Cart/GetShippingCost?gov=${encodeURIComponent(gov)}&city=${encodeURIComponent(city)}`);
+        if (response.ok) {
+            const data = await response.json();
+            shippingEl.innerText = data.cost.toFixed(2);
+            updateTotalWithShipping();
+        }
+    } catch (e) {
+        console.error("Failed to calculate shipping", e);
+    }
+}
+
+function updateTotalWithShipping(subtotalOverride) {
+    const subTotalEl = document.getElementById('subTotalDisplay');
+    const shippingEl = document.getElementById('shippingDisplay');
+    const grandTotalEl = document.getElementById('grandTotalDisplay');
+
+    if (!subTotalEl || !shippingEl || !grandTotalEl) return;
+
+    const subtotal = subtotalOverride !== undefined ? subtotalOverride : parseFloat(subTotalEl.innerText);
+    const shipping = parseFloat(shippingEl.innerText) || 0;
+
+    grandTotalEl.innerText = (subtotal + shipping).toFixed(2) + " ج.م";
 }
 
 async function submitOrder() {
     const form = document.getElementById('checkoutForm');
-    if (!form.checkValidity()) {
-        form.reportValidity();
-        return;
-    }
+    if (!form.checkValidity()) { form.reportValidity(); return; }
 
     const cart = getCart();
-    if (cart.length === 0) {
-        alert("السلة فارغة!");
-        return;
-    }
+    if (cart.length === 0) { alert("السلة فارغة!"); return; }
+
+    const shippingText = document.getElementById('shippingDisplay').innerText;
 
     const orderData = {
         shopName: document.getElementById('shopName').value,
@@ -200,14 +223,18 @@ async function submitOrder() {
         governorate: document.getElementById('govSelect').value,
         city: document.getElementById('city').value,
         address: document.getElementById('address').value,
+        deliverySlot: document.getElementById('deliverySlot')?.value || "Anytime",
+        notes: document.getElementById('orderNotes')?.value || "",
         paymentMethod: document.querySelector('input[name="payment"]:checked').value,
-        items: cart.map(i => ({ id: i.id, qty: i.qty }))
+        shippingCost: parseFloat(shippingText) || 0,
+        items: cart.map(i => ({ id: i.id, qty: i.qty, price: i.price }))
     };
 
+    const btn = document.querySelector('button[onclick="submitOrder()"]');
+
     try {
-        const btn = document.querySelector('button[onclick="submitOrder()"]');
         btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التنفيذ...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري المعالجة...';
 
         const response = await fetch('/Cart/PlaceOrder', {
             method: 'POST',
@@ -219,8 +246,15 @@ async function submitOrder() {
 
         if (result.success) {
             localStorage.removeItem(CART_KEY);
-            alert("تم إرسال الطلب بنجاح! رقم الطلب: #" + result.orderId);
-            window.location.href = '/Order/MyOrders';
+
+            // التوجيه بناءً على نوع الدفع
+            if (result.redirectUrl) {
+                // دفع أونلاين
+                window.location.href = result.redirectUrl;
+            } else {
+                // كاش أو محفظة
+                window.location.href = `/Cart/OrderSuccess?id=${result.orderId}`;
+            }
         } else {
             alert("خطأ: " + result.message);
             btn.disabled = false;
@@ -229,6 +263,8 @@ async function submitOrder() {
     } catch (e) {
         console.error(e);
         alert("فشل الاتصال بالخادم");
+        btn.disabled = false;
+        btn.innerHTML = 'تأكيد الطلب';
     }
 }
 

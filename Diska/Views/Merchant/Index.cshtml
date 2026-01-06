@@ -85,7 +85,16 @@
                                             }
                                         </td>
                                         <td>
+                                            <!-- زر تفعيل/إيقاف المنتج -->
+                                            <form asp-action="ToggleStatus" method="post" style="display:inline;">
+                                                <input type="hidden" name="id" value="@item.Id" />
+                                                <button type="submit" class="btn small" style="background:@(item.IsActive ? "#dcfce7" : "#fee2e2"); color:@(item.IsActive ? "#166534" : "#b91c1c"); border:none; padding:5px 10px; border-radius:5px;" title="@(item.IsActive ? "إخفاء المنتج" : "إظهار المنتج")">
+                                                    <i class="fas @(item.IsActive ? "fa-eye" : "fa-eye-slash")"></i>
+                                                </button>
+                                            </form>
+
                                             <a asp-action="ProductForm" asp-route-id="@item.Id" class="btn-edit" title="تعديل"><i class="fas fa-edit"></i></a>
+
                                             <form asp-action="Delete" method="post" style="display:inline;" onsubmit="return confirm('هل أنت متأكد من حذف هذا المنتج؟');">
                                                 <input type="hidden" name="id" value="@item.Id" />
                                                 <button type="submit" class="btn-delete" title="حذف"><i class="fas fa-trash"></i></button>

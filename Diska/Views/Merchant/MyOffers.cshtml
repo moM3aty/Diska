@@ -1,0 +1,66 @@
+﻿@model IEnumerable<Diska.Models.MerchantOffer>
+@using System.Globalization
+@{
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    ViewData["Title"] = isAr ? "عروضي المقدمة" : "My Offers";
+}
+
+<section class="section-padding">
+    <div class="container">
+        <h2 class="page-title">@(isAr ? "عروض الأسعار المقدمة" : "Submitted Offers")</h2>
+
+        @if (!Model.Any())
+        {
+            <div style="text-align:center; padding:50px; background:#fff; border-radius:10px; border:1px solid #eee;">
+                <p style="color:#777;">@(isAr ? "لم تقم بتقديم أي عروض أسعار بعد." : "No offers submitted yet.")</p>
+                <a asp-controller="Request" asp-action="Index" class="btn primary small">@(isAr ? "تصفح الطلبات" : "Browse Requests")</a>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table" style="width:100%; border-collapse:collapse; background:#fff; border-radius:10px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
+                    <thead style="background:#f8fafc; color:#334155;">
+                        <tr>
+                            <th style="padding:15px;">@(isAr ? "المنتج المطلوب" : "Requested Product")</th>
+                            <th style="padding:15px;">@(isAr ? "السعر المقدم" : "Offered Price")</th>
+                            <th style="padding:15px;">@(isAr ? "الحالة" : "Status")</th>
+                            <th style="padding:15px;">@(isAr ? "تاريخ العرض" : "Date")</th>
+                            <th style="padding:15px;">@(isAr ? "الإجراء" : "Action")</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr style="border-bottom:1px solid #eee;">
+                                <td style="padding:15px;">
+                                    <strong>@item.DealRequest?.ProductName</strong>
+                                    <div style="font-size:0.8rem; color:#666;">@item.DealRequest?.Location</div>
+                                </td>
+                                <td style="padding:15px; font-weight:bold; color:#0284c7;">@item.OfferPrice.ToString("N0") ج.م</td>
+                                <td style="padding:15px;">
+                                    @if (item.IsAccepted)
+                                    {
+                                        <span class="badge" style="background:#dcfce7; color:#166534;">@(isAr ? "مقبول 🎉" : "Accepted")</span>
+                                    }
+                                    else if (item.DealRequest?.Status == "Completed")
+                                    {
+                                        <span class="badge" style="background:#fee2e2; color:#b91c1c;">@(isAr ? "مغلق" : "Closed")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge" style="background:#fffbeb; color:#d97706;">@(isAr ? "قيد الانتظار" : "Pending")</span>
+                                    }
+                                </td>
+                                <td style="padding:15px; color:#666; font-size:0.9rem;">@item.CreatedAt.ToString("dd/MM/yyyy")</td>
+                                <td style="padding:15px;">
+                                    <a asp-controller="Request" asp-action="Details" asp-route-id="@item.DealRequestId" class="btn btn-outline small">@(isAr ? "عرض الطلب" : "View Request")</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</section>

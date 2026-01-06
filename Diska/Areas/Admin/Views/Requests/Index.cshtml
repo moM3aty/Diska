@@ -1,0 +1,75 @@
+﻿@model IEnumerable<Diska.Models.DealRequest>
+@{
+    ViewData["Title"] = "طلبات العملاء";
+    Layout = "_AdminLayout";
+}
+
+<h2 style="margin-bottom:20px;">طلبات الشراء الخاصة (من العملاء)</h2>
+
+<div class="card">
+    @if (!Model.Any())
+    {
+        <div style="text-align:center; padding:30px; color:#666;">لا توجد طلبات جديدة.</div>
+    }
+    else
+    {
+        <table style="width:100%;">
+            <thead>
+                <tr>
+                    <th>المنتج</th>
+                    <th>الكمية</th>
+                    <th>السعر المستهدف</th>
+                    <th>المكان</th>
+                    <th>التاريخ</th>
+                    <th>الحالة</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var req in Model)
+                {
+                    <tr>
+                        <td><strong>@req.ProductName</strong></td>
+                        <td>@req.TargetQuantity</td>
+                        <td>@req.DealPrice.ToString("N0")</td>
+                        <td>@req.Location</td>
+                        <td>@req.RequestDate.ToString("yyyy/MM/dd")</td>
+                        <td>
+                            @if (req.Status == "Pending")
+                            {
+                                <span class="badge" style="background:#fffbeb; color:#d97706;">قيد المراجعة</span>
+                            }
+                            else if (req.Status == "Approved")
+                            {
+
+                                <span class="badge" style="background:#dcfce7; color:green;">مقبول</span>
+                            }
+                            else
+                            {
+
+                                <span class="badge" style="background:#fee2e2; color:red;">مرفوض</span>
+                            }
+                        </td>
+                        <td>
+                            @if (req.Status == "Pending")
+                            {
+                                <form asp-action="Approve" method="post" style="display:inline;">
+                                    <input type="hidden" name="id" value="@req.Id" />
+                                    <button type="submit" class="btn" style="background:#dcfce7; color:green; padding:5px 10px; font-size:0.8rem;">موافقة</button>
+                                </form>
+                                <form asp-action="Reject" method="post" style="display:inline;">
+                                    <input type="hidden" name="id" value="@req.Id" />
+                                    <button type="submit" class="btn" style="background:#fee2e2; color:red; padding:5px 10px; font-size:0.8rem;">رفض</button>
+                                </form>
+                            }
+                            <form asp-action="Delete" method="post" style="display:inline;" onsubmit="return confirm('حذف الطلب؟');">
+                                <input type="hidden" name="id" value="@req.Id" />
+                                <button type="submit" class="btn" style="color:#666; background:none; padding:0 5px;"><i class="fas fa-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

@@ -1,0 +1,32 @@
+﻿@using System.Globalization
+@{
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    ViewData["Title"] = isAr ? "نجاح الطلب" : "Order Success";
+    int orderId = Context.Request.Query["id"].Count > 0 ? int.Parse(Context.Request.Query["id"]) : 0;
+}
+
+<section class="section-padding" style="min-height: 70vh; display: flex; align-items: center;">
+    <div class="container text-center">
+        <div class="success-card" style="background: #fff; padding: 50px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0;">
+
+            <div style="width: 80px; height: 80px; background: #dcfce7; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                <i class="fas fa-check fa-3x" style="color: #16a34a;"></i>
+            </div>
+
+            <h2 style="color: var(--primary); margin-bottom: 10px;">@(isAr ? "تم استلام طلبك بنجاح!" : "Order Placed Successfully!")</h2>
+            <p style="color: #666; font-size: 1.1rem; margin-bottom: 30px;">
+                @(isAr ? $"شكراً لك. رقم طلبك هو #{orderId}. سيتم التواصل معك قريباً لتأكيد الشحن." : $"Thank you. Your order ID is #{orderId}. We will contact you shortly.")
+            </p>
+
+            <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                <a asp-controller="Order" asp-action="MyOrders" class="btn primary">
+                    <i class="fas fa-box"></i> @(isAr ? "تتبع الطلب" : "Track Order")
+                </a>
+                <a asp-controller="Home" asp-action="Index" class="btn btn-outline" style="border: 1px solid #ccc;">
+                    <i class="fas fa-home"></i> @(isAr ? "العودة للرئيسية" : "Back Home")
+                </a>
+            </div>
+
+        </div>
+    </div>
+</section>

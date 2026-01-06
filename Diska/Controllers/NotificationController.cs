@@ -44,7 +44,7 @@ namespace Diska.Controllers
             var notifications = await _context.UserNotifications
                 .Where(n => n.UserId == user.Id)
                 .OrderByDescending(n => n.CreatedAt)
-                .Take(10)
+                .Take(20)
                 .Select(n => new {
                     id = n.Id,
                     title = n.Title,
@@ -86,11 +86,10 @@ namespace Diska.Controllers
             return Json(new { success = true });
         }
 
-        // Render the full notifications page
         [HttpGet("Index")]
         public IActionResult Index()
         {
-            return View(); // This View handles fetching data via AJAX (already provided in batch 4 as 'Notifications.cshtml')
+            return View(); // يعرض صفحة Views/Notification/Index.cshtml التي تعتمد على JS
         }
     }
 }

@@ -1,0 +1,54 @@
+﻿@model Diska.Models.Product
+@{
+    ViewData["Title"] = "تعديل منتج (إدارة)";
+    Layout = "_AdminLayout";
+}
+
+<div class="card" style="max-width:800px; margin:0 auto;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <h2 style="margin:0;">تعديل المنتج: @Model.Name</h2>
+        <a asp-action="Index" class="btn btn-outline">إلغاء</a>
+    </div>
+
+    <form asp-action="Edit" method="post" enctype="multipart/form-data">
+        <input type="hidden" asp-for="Id" />
+
+        <div class="form-row" style="display:grid; grid-template-columns: 1fr 2fr; gap:20px;">
+            <div>
+                <img src="~/@Model.ImageUrl" style="width:100%; border-radius:10px; border:1px solid #eee; margin-bottom:10px;">
+                <label>تغيير الصورة</label>
+                <input type="file" name="imageFile" class="form-control" accept="image/*">
+            </div>
+
+            <div>
+                <div class="form-group" style="margin-bottom:15px;">
+                    <label>اسم المنتج</label>
+                    <input asp-for="Name" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;" />
+                </div>
+                <div class="form-group" style="margin-bottom:15px;">
+                    <label>القسم</label>
+                    <select asp-for="CategoryId" class="form-control" asp-items="ViewBag.Categories" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;"></select>
+                </div>
+                <div class="form-row" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
+                    <div>
+                        <label>السعر</label>
+                        <input asp-for="Price" type="number" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;" />
+                    </div>
+                    <div>
+                        <label>المخزون</label>
+                        <input asp-for="StockQuantity" type="number" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;" />
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom:15px;">
+                    <label>حالة العرض</label>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <input asp-for="IsActive" type="checkbox" style="width:20px; height:20px;">
+                        <span>نشط (يظهر للعملاء)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width:100%; padding:12px; font-weight:bold;">حفظ التغييرات</button>
+    </form>
+</div>

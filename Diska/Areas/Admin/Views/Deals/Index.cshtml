@@ -1,0 +1,72 @@
+﻿@model IEnumerable<Diska.Models.GroupDeal>
+@{
+    ViewData["Title"] = "إدارة الصفقات";
+    Layout = "_AdminLayout";
+}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+    <h2 style="margin:0;">إدارة صفقات الجملة</h2>
+    <a asp-action="Create" class="btn btn-primary"><i class="fas fa-plus"></i> إنشاء صفقة جديدة</a>
+</div>
+
+<div class="card">
+    @if (!Model.Any())
+    {
+        <div style="text-align:center; padding:30px; color:#666;">
+            <p>لا توجد صفقات نشطة.</p>
+        </div>
+    }
+    else
+    {
+        <table style="width:100%;">
+            <thead>
+                <tr>
+                    <th>المنتج</th>
+                    <th>سعر الصفقة</th>
+                    <th>الهدف</th>
+                    <th>المحجوز</th>
+                    <th>تاريخ الانتهاء</th>
+                    <th>الحالة</th>
+                    <th>حذف</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    double progress = item.TargetQuantity > 0 ? (double)item.ReservedQuantity / item.TargetQuantity * 100 : 0;
+                    <tr>
+                        <td>
+                            <strong>@(item.Product?.Name ?? "منتج محذوف")</strong>
+                        </td>
+                        <td style="color:#d97706; font-weight:bold;">@item.DealPrice.ToString("N0")</td>
+                        <td>@item.TargetQuantity</td>
+                        <td>
+                            @item.ReservedQuantity
+                            <div style="width:50px; height:4px; background:#eee; display:inline-block; vertical-align:middle; margin-right:5px;">
+                                <div style="width:@Math.Min(progress, 100)%; height:100%; background:green;"></div>
+                            </div>
+                        </td>
+                        <td>@item.EndDate.ToString("yyyy/MM/dd")</td>
+                        <td>
+                            @if (item.IsActive)
+                            {
+                                <span class="badge" style="background:#dcfce7; color:green;">نشط</span>
+                            }
+                            else
+                            {
+
+                                <span class="badge" style="background:#fee2e2; color:red;">منتهي</span>
+                            }
+                        </td>
+                        <td>
+                            <form asp-action="Delete" method="post" onsubmit="return confirm('حذف هذه الصفقة؟');">
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <button type="submit" class="btn" style="color:red; background:none;"><i class="fas fa-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
