@@ -5,16 +5,148 @@
     ViewData["Title"] = isAr ? "المفضلة" : "Wishlist";
 }
 
+<!-- Use styles defined in Category/Index or define locally if needed, but best to reuse.
+     Assuming global styles or reusing the block from Category page.
+     We will inline critical styles for the card to ensure it matches exactly. -->
+<style>
+    .products-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 25px;
+    }
+
+    /* Modern Card Styles (Copied from Category to ensure consistency) */
+    .pro-card-v2 {
+        background: #fff;
+        border-radius: 16px;
+        position: relative;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid #f1f5f9;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+        .pro-card-v2:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px -5px rgba(0,0,0,0.1);
+            border-color: transparent;
+        }
+
+    .pro-img-box {
+        position: relative;
+        height: 240px;
+        background: #f8fafc;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+        .pro-img-box img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            transition: transform 0.5s ease;
+            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.05));
+        }
+
+    .pro-card-v2:hover .pro-img-box img {
+        transform: scale(1.08);
+    }
+
+    .btn-remove-wishlist {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid #fee2e2;
+        color: #ef4444;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        z-index: 3;
+    }
+
+    html[dir="ltr"] .btn-remove-wishlist {
+        right: auto;
+        left: 15px;
+    }
+
+    .btn-remove-wishlist:hover {
+        background: #ef4444;
+        color: #fff;
+        transform: scale(1.1);
+    }
+
+    .pro-details {
+        padding: 18px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .pro-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0 0 10px;
+        height: 42px;
+        overflow: hidden;
+    }
+
+    .pro-price-box {
+        margin-top: auto;
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        margin-bottom: 15px;
+    }
+
+    .price-current {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: #2563eb;
+    }
+
+    .btn-add-cart {
+        width: 100%;
+        background: #1e293b;
+        color: #fff;
+        border: none;
+        padding: 12px;
+        border-radius: 10px;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.2s;
+    }
+
+        .btn-add-cart:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+</style>
+
 <section class="section-padding">
     <div class="container">
         <h2 class="page-title">@(isAr ? "المنتجات المفضلة ❤️" : "My Wishlist ❤️")</h2>
 
         @if (!Model.Any())
         {
-            <div style="text-align:center; padding:50px; background:#f8fafc; border-radius:10px;">
-                <i class="fas fa-heart-broken fa-3x" style="color:#cbd5e1; margin-bottom:15px;"></i>
-                <p style="color:#64748b;">@(isAr ? "قائمة المفضلة فارغة." : "Your wishlist is empty.")</p>
-                <a asp-controller="Home" asp-action="Index" class="btn primary small">@(isAr ? "تصفح المنتجات" : "Browse Products")</a>
+            <div style="text-align:center; padding:80px; background:#f8fafc; border-radius:16px;">
+                <i class="fas fa-heart-broken fa-4x" style="color:#cbd5e1; margin-bottom:20px;"></i>
+                <h3 style="color:#64748b;">@(isAr ? "قائمة المفضلة فارغة." : "Your wishlist is empty.")</h3>
+                <a asp-controller="Home" asp-action="Index" class="btn primary small" style="margin-top:15px;">@(isAr ? "تصفح المنتجات" : "Browse Products")</a>
             </div>
         }
         else
@@ -22,33 +154,33 @@
             <div class="products-grid">
                 @foreach (var item in Model)
                 {
-                    <div class="product-card" data-id="@item.Product.Id" data-stock="@item.Product.StockQuantity">
-                        <div class="product-img">
-                            <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Product.Id">
-                                <img src="~/@item.Product.ImageUrl" alt="@item.Product.Name">
-                            </a>
-                        </div>
+                    <div class="pro-card-v2 product-card" data-id="@item.Product.Id" data-stock="@item.Product.StockQuantity">
 
-                        <div class="product-info">
-                            <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Product.Id" style="color:inherit; text-decoration:none;">
-                                <h4>@(isAr? item.Product.Name : (item.Product.NameEn ?? item.Product.Name))</h4>
+                        <!-- Remove Button -->
+                        <form asp-action="Remove" method="post" style="display:contents;">
+                            <input type="hidden" name="id" value="@item.Id" />
+                            <button type="submit" class="btn-remove-wishlist" title="@(isAr ? "إزالة" : "Remove")">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </form>
+
+                        <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Product.Id" class="pro-img-box">
+                            <img src="~/@item.Product.ImageUrl" alt="@item.Product.Name" onerror="this.src='https://placehold.co/300x300/png?text=Product'">
+                        </a>
+
+                        <div class="pro-details">
+                            <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Product.Id" style="text-decoration:none; color:inherit;">
+                                <h4 class="pro-title">@(isAr? item.Product.Name : (item.Product.NameEn ?? item.Product.Name))</h4>
                             </a>
 
-                            <div class="pricing">
-                                <span class="current-price">@item.Product.Price.ToString("N2") @(isAr ? "ج.م" : "EGP")</span>
+                            <div class="pro-price-box">
+                                <span class="price-current">@item.Product.Price.ToString("N2") @(isAr ? "ج.م" : "EGP")</span>
                             </div>
 
-                            <div style="display:flex; gap:10px; margin-top:10px;">
-                                <button class="btn primary w-100 add-btn" onclick="addToCart(this)">
-                                    @(isAr ? "إضافة للسلة" : "Add to Cart")
-                                </button>
-                                <form asp-action="Remove" method="post" style="width: 40px;">
-                                    <input type="hidden" name="id" value="@item.Id" />
-                                    <button type="submit" class="btn btn-delete" style="width:100%; height:100%; background:#fee2e2; color:red; border:none; border-radius:5px;">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
-                            </div>
+                            <button class="btn-add-cart" onclick="addToCart(this)">
+                                <span>@(isAr ? "إضافة للسلة" : "Add to Cart")</span>
+                                <i class="fas fa-cart-plus"></i>
+                            </button>
                         </div>
                     </div>
                 }

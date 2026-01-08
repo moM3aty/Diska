@@ -18,16 +18,7 @@ namespace Diska.Models
         public bool IsVerifiedMerchant { get; set; } = false; // هل تم تفعيل حساب التاجر؟
     }
 
-    // 2. التصنيفات
-    public class Category
-    {
-        public int Id { get; set; }
-        [Required(ErrorMessage = "اسم القسم مطلوب")]
-        public string Name { get; set; }
-        public string NameEn { get; set; }
-        public string IconClass { get; set; }
-        public virtual ICollection<Product> Products { get; set; }
-    }
+  
 
     
 

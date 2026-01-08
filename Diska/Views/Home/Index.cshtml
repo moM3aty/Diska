@@ -1,36 +1,290 @@
 ﻿@model IEnumerable<Diska.Models.Product>
 @using System.Globalization
+@using Diska.Data
+@using Microsoft.AspNetCore.Identity
+@inject ApplicationDbContext _context
+@inject UserManager<Diska.Models.ApplicationUser> UserManager
+
 @{
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
     ViewData["Title"] = isAr ? "الرئيسية" : "Home";
 
-    // الأقسام من قاعدة البيانات
     var categories = ViewBag.Categories as IEnumerable<Diska.Models.Category>;
+    var banners = ViewBag.Banners as IEnumerable<Diska.Models.Banner>;
 
-    // ألوان للأيقونات (تجميلي)
-    string[] iconColors = { "#e0f2fe", "#fef3c7", "#dcfce7", "#fee2e2", "#f3e8ff", "#ffedd5" };
-    string[] textColors = { "#0284c7", "#d97706", "#16a34a", "#dc2626", "#9333ea", "#ea580c" };
+    // ألوان الأقسام
+    string[] catColors = { "#e0f2fe", "#fef3c7", "#dcfce7", "#fee2e2", "#f3e8ff", "#ffedd5" };
+    string[] iconColors = { "#0284c7", "#d97706", "#16a34a", "#dc2626", "#9333ea", "#ea580c" };
+
+    // جلب قائمة المفضلة للمستخدم الحالي لتلوين القلب
+    var user = await UserManager.GetUserAsync(User);
+    var wishlistIds = user != null
+        ? _context.WishlistItems.Where(w => w.UserId == user.Id).Select(w => w.ProductId).ToList()
+        : new List<int>();
 }
+
+<!-- Modern Card Styles (مطابق لصفحة الأقسام) -->
+<style>
+    :root {
+        --card-radius: 16px;
+        --card-bg: #ffffff;
+        --primary-color: #2563eb;
+        --text-main: #1e293b;
+        --text-sub: #64748b;
+        --accent-color: #FACC15;
+    }
+
+    .products-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 25px;
+    }
+
+    /* Card Container */
+    .pro-card-v2 {
+        background: var(--card-bg);
+        border-radius: var(--card-radius);
+        position: relative;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid #f1f5f9;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+        .pro-card-v2:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px -5px rgba(0,0,0,0.1);
+            border-color: transparent;
+        }
+
+    /* Image Area */
+    .pro-img-box {
+        position: relative;
+        height: 240px;
+        background: #f8fafc;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+        .pro-img-box img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            transition: transform 0.5s ease;
+            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.05));
+        }
+
+    .pro-card-v2:hover .pro-img-box img {
+        transform: scale(1.08);
+    }
+
+    /* Badges Container */
+    .badge-container {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    html[dir="ltr"] .badge-container {
+        left: 15px;
+        right: auto;
+    }
+
+    .badge-discount {
+        background: #ef4444;
+        color: white;
+        font-weight: 800;
+        font-size: 0.7rem;
+        padding: 4px 10px;
+        border-radius: 20px;
+        box-shadow: 0 2px 5px rgba(239, 68, 68, 0.3);
+    }
+
+    .badge-bestseller {
+        background: linear-gradient(135deg, #FFD700, #FDB931);
+        color: #fff;
+        font-weight: 800;
+        font-size: 0.7rem;
+        padding: 4px 10px;
+        border-radius: 20px;
+        box-shadow: 0 2px 5px rgba(253, 185, 49, 0.4);
+        text-shadow: 0 1px 1px rgba(0,0,0,0.1);
+    }
+
+    /* Wishlist Button */
+    .btn-wishlist {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(5px);
+        border: 1px solid #e2e8f0;
+        color: #94a3b8;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        z-index: 3;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+
+    html[dir="ltr"] .btn-wishlist {
+        right: 15px;
+        left: auto;
+    }
+
+    .btn-wishlist:hover {
+        background: #fff;
+        transform: scale(1.1);
+        color: #ef4444;
+        box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+    }
+
+    /* حالة القلب الأحمر */
+    .btn-wishlist.active {
+        color: #ef4444;
+        border-color: #fee2e2;
+        background: #fff;
+    }
+
+        .btn-wishlist.active i {
+            font-weight: 900; /* Solid icon */
+        }
+
+    /* Content Area */
+    .pro-details {
+        padding: 18px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .pro-cat {
+        font-size: 0.75rem;
+        color: var(--text-sub);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        margin-bottom: 6px;
+    }
+
+    .pro-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--text-main);
+        margin: 0 0 10px;
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        height: 42px;
+    }
+
+    .pro-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.8rem;
+        color: var(--text-sub);
+        background: #f1f5f9;
+        padding: 5px 10px;
+        border-radius: 6px;
+        width: fit-content;
+        margin-bottom: 12px;
+    }
+
+    .pro-price-box {
+        margin-top: auto;
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        margin-bottom: 15px;
+    }
+
+    .price-current {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: var(--primary-color);
+    }
+
+    .price-old {
+        font-size: 0.85rem;
+        text-decoration: line-through;
+        color: #cbd5e1;
+        font-weight: 500;
+    }
+
+    /* Add Button */
+    .btn-add-cart {
+        width: 100%;
+        background: var(--text-main);
+        color: #fff;
+        border: none;
+        padding: 12px;
+        border-radius: 10px;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.2s;
+    }
+
+        .btn-add-cart:hover {
+            background: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25);
+        }
+</style>
 
 <!-- 1. Hero Section -->
 <section class="hero-section">
     <div class="container">
-        <div class="banner-card">
-            <div class="banner-content">
-                <div class="tag-box">
-                    <span class="tag">@(isAr ? "عروض متتفوتش 🔥" : "Hot Deals 🔥")</span>
+        @if (banners != null && banners.Any())
+        {
+            var banner = banners.First();
+            <div class="banner-card">
+                <div class="banner-content">
+                    <div class="tag-box">
+                        <span class="tag">@(isAr ? "عروض حصرية 🔥" : "Hot Deals 🔥")</span>
+                    </div>
+                    <h2 class="main-headline">@banner.Title</h2>
+                    <p class="slogan-desc">@banner.Subtitle</p>
+                    <a href="@banner.LinkUrl" class="btn primary">@banner.ButtonText</a>
                 </div>
-                <h2 class="main-headline">@(isAr ? "خصومات حصرية على جميع المنتجات" : "Exclusive Discounts on All Products")</h2>
-                <p class="slogan-desc">
-                    @(isAr ? "Diska — التجارة بقت هنا. أسهل طريقة لطلب بضاعة محلك من المصنع مباشرة." : "Diska — Trade is here. The easiest way to order stock directly from factories.")
-                </p>
-                <a asp-action="Deals" class="btn primary">@(isAr ? "تصفح العروض" : "Shop Deals")</a>
+                <div class="banner-image">
+                    <img src="~/@banner.ImageUrl" alt="@banner.Title" onerror="this.src='https://placehold.co/400x300/png?text=Offers'">
+                </div>
             </div>
-            <div class="banner-image">
-                <!-- صورة البنر -->
-                <img src="~/images/banner-img.png" alt="Groceries" onerror="this.src='https://placehold.co/400x300?text=Offers'">
+        }
+        else
+        {
+            <div class="banner-card">
+                <div class="banner-content">
+                    <div class="tag-box"><span class="tag">@(isAr ? "جديد" : "New")</span></div>
+                    <h2 class="main-headline">@(isAr ? "منصتك الأولى للجملة" : "Your #1 Wholesale Platform")</h2>
+                    <p class="slogan-desc">@(isAr ? "اطلب كل بضاعة محلك من مكان واحد." : "Order all your shop stock from one place.")</p>
+                    <a href="#products" class="btn primary">@(isAr ? "تسوق الآن" : "Shop Now")</a>
+                </div>
+                <div class="banner-image">
+                    <img src="~/images/banner-img.png" alt="Offers" onerror="this.src='https://placehold.co/400x300/png?text=DISKA'">
+                </div>
             </div>
-        </div>
+        }
     </div>
 </section>
 
@@ -48,31 +302,27 @@
                 }
                 @foreach (var cat in categories)
                 {
-                    var bg = iconColors[i % iconColors.Length];
-                    var color = textColors[i % textColors.Length];
-                    i++;
-
                     <a asp-controller="Product" asp-action="Category" asp-route-id="@cat.Id" class="cat-item">
-                        <div class="icon" style="background-color: @bg; color: @color;">
+                        <div class="icon" style="background-color: @catColors[i % 6]; color: @iconColors[i % 6]; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
                             <i class="@cat.IconClass"></i>
                         </div>
                         <span>@(isAr? cat.Name: (cat.NameEn ?? cat.Name))</span>
                     </a>
+                    i++;
                 }
-                <!-- رابط الصفقات -->
                 <a asp-controller="Home" asp-action="Deals" class="cat-item">
                     <div class="icon" style="background-color: #ffedd5; color: #ea580c;">
                         <i class="fas fa-fire"></i>
                     </div>
-                    <span>@(isAr ? "صفقات" : "Deals")</span>
+                    <span>@(isAr ? "عروض خاصة" : "Special Offers")</span>
                 </a>
             </div>
         </div>
     </section>
 }
 
-<!-- 3. Featured Products -->
-<section id="products" class="products-section">
+<!-- 3. Featured Products (New Design) -->
+<section id="products" class="products-section bg-light">
     <div class="container">
         <div class="section-header">
             <h3>@(isAr ? "أحدث المنتجات" : "New Arrivals")</h3>
@@ -84,54 +334,68 @@
             {
                 foreach (var item in Model)
                 {
-                    <div class="product-card" data-id="@item.Id" data-stock="@item.StockQuantity">
+                    bool isBestSeller = item.Id % 2 == 0; // شرط وهمي
+                    bool isLiked = wishlistIds.Contains(item.Id); // هل المنتج في المفضلة؟
 
-                        <!-- خصم -->
-                        @if (item.OldPrice.HasValue && item.OldPrice > item.Price)
-                        {
-                            <span class="flash-badge"><i class="fas fa-bolt"></i> @(isAr ? "خصم" : "Sale")</span>
-                        }
+                    <div class="pro-card-v2 product-card" data-id="@item.Id" data-stock="@item.StockQuantity">
 
-                        <!-- زر المفضلة -->
-                        <button class="fav-btn" onclick="toggleWishlist(@item.Id, this)"><i class="far fa-heart"></i></button>
-
-                        <div class="product-img">
-                            <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id">
-                                <img src="~/@item.ImageUrl" alt="@item.Name" onerror="this.src='https://placehold.co/200x200?text=Product'">
-                            </a>
+                        <div class="badge-container">
+                            @if (isBestSeller)
+                            {
+                                <span class="badge-bestseller">
+                                    <i class="fas fa-crown"></i> @(isAr ? "الأكثر مبيعاً" : "Best Seller")
+                                </span>
+                            }
+                            @if (item.OldPrice.HasValue && item.OldPrice > item.Price)
+                            {
+                                var discount = (int)((1 - (item.Price / item.OldPrice.Value)) * 100);
+                                if (discount > 0)
+                                {
+                                    <span class="badge-discount">@(isAr ? $"خصم {discount}%" : $"{discount}% OFF")</span>
+                                }
+                            }
                         </div>
 
-                        <div class="product-info">
-                            <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id" style="text-decoration:none; color:inherit;">
-                                <h4>@(isAr? item.Name: (item.NameEn ?? item.Name))</h4>
+                        <!-- زر المفضلة مع تفعيل اللون الأحمر إذا كان مفضلاً -->
+                        <button class="btn-wishlist @(isLiked ? "active" : "")" onclick="toggleWishlist(@item.Id, this)" title="@(isAr ? "المفضلة" : "Wishlist")">
+                            <i class="@(isLiked ? "fas" : "far") fa-heart"></i>
+                        </button>
+
+                        <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id" class="pro-img-box">
+                            <img src="~/@item.ImageUrl" alt="@item.Name" onerror="this.src='https://placehold.co/300x300/png?text=Product'">
+                        </a>
+
+                        <div class="pro-details">
+                            <span class="pro-cat">@(isAr? item.Category?.Name : (item.Category?.NameEn ?? item.Category?.Name))</span>
+
+                            <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id" style="text-decoration:none;">
+                                <h4 class="pro-title">@(isAr? item.Name: (item.NameEn ?? item.Name))</h4>
                             </a>
 
-                            <div class="pricing">
-                                <span class="current-price">@item.Price.ToString("N2") @(isAr ? "ج.م" : "EGP")</span>
-                                @if (item.OldPrice.HasValue)
+                            <div class="pro-meta">
+                                <i class="fas fa-box"></i> @(isAr ? $"الكرتونة: {item.UnitsPerCarton} قطعة" : $"Carton: {item.UnitsPerCarton} pcs")
+                            </div>
+
+                            <div class="pro-price-box">
+                                <span class="price-current">@item.Price.ToString("N0") <small style="font-size:0.75rem; font-weight:normal;">@(isAr ? "ج.م" : "EGP")</small></span>
+                                @if (item.OldPrice.HasValue && item.OldPrice > item.Price)
                                 {
-                                    <span class="old-price">@item.OldPrice.Value.ToString("N2")</span>
+                                    <span class="price-old">@item.OldPrice.Value.ToString("N0")</span>
                                 }
-                                <span class="unit">/ @(isAr ? "قطعة" : "Unit")</span>
                             </div>
 
-                            <div class="wholesale-info">
-                                <i class="fas fa-box"></i> @(isAr ? $"كرتونة: {item.UnitsPerCarton} قطعة" : $"Carton: {item.UnitsPerCarton}")
-                            </div>
-
-                            <div class="add-to-cart">
-                                <button class="add-btn btn primary w-100" onclick="addToCart(this)">
-                                    @(isAr ? "إضافة للسلة" : "Add to Cart") <i class="fas fa-cart-plus"></i>
-                                </button>
-                            </div>
+                            <button class="btn-add-cart" onclick="addToCart(this)">
+                                <span>@(isAr ? "إضافة للسلة" : "Add to Cart")</span>
+                                <i class="fas fa-cart-plus"></i>
+                            </button>
                         </div>
                     </div>
                 }
             }
             else
             {
-                <div style="grid-column:1/-1; text-align:center; padding:40px; color:#777;">
-                    <i class="fas fa-box-open fa-3x" style="margin-bottom:10px; opacity:0.5;"></i>
+                <div style="grid-column:1/-1; text-align:center; padding:60px; color:#777;">
+                    <i class="fas fa-box-open fa-3x" style="margin-bottom:15px; opacity:0.5;"></i>
                     <p>@(isAr ? "لا توجد منتجات متاحة حالياً." : "No products available.")</p>
                 </div>
             }
@@ -139,25 +403,64 @@
     </div>
 </section>
 
-<!-- 4. Features/Trust Section -->
-<section class="section-padding bg-light">
+<!-- 4. Features Section -->
+<section class="section-padding">
     <div class="container">
-        <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
-            <div class="stat-box" style="text-align:center;">
-                <i class="fas fa-truck fa-2x" style="color:var(--primary); margin-bottom:15px;"></i>
-                <h4>@(isAr ? "شحن لجميع المحافظات" : "Nationwide Shipping")</h4>
-                <p style="font-size:0.9rem; color:#666;">@(isAr ? "توصيل سريع وآمن لباب محلك" : "Fast and secure delivery to your shop")</p>
+        <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:20px;">
+            <div class="stat-box" style="text-align:center; padding:30px; border-radius:16px; background:#fff; border:1px solid #f1f5f9; box-shadow:0 4px 10px rgba(0,0,0,0.02);">
+                <i class="fas fa-shipping-fast fa-3x" style="color:var(--primary); margin-bottom:15px; opacity:0.8;"></i>
+                <h4 style="margin-bottom:10px;">@(isAr ? "شحن سريع" : "Fast Shipping")</h4>
+                <p style="font-size:0.9rem; color:#666;">@(isAr ? "توصيل لجميع المحافظات خلال 48 ساعة" : "Nationwide delivery within 48 hours")</p>
             </div>
-            <div class="stat-box" style="text-align:center;">
-                <i class="fas fa-wallet fa-2x" style="color:var(--primary); margin-bottom:15px;"></i>
-                <h4>@(isAr ? "دفع عند الاستلام" : "Cash on Delivery")</h4>
-                <p style="font-size:0.9rem; color:#666;">@(isAr ? "افحص بضاعتك قبل ما تدفع" : "Inspect your goods before paying")</p>
+            <div class="stat-box" style="text-align:center; padding:30px; border-radius:16px; background:#fff; border:1px solid #f1f5f9; box-shadow:0 4px 10px rgba(0,0,0,0.02);">
+                <i class="fas fa-shield-alt fa-3x" style="color:var(--primary); margin-bottom:15px; opacity:0.8;"></i>
+                <h4 style="margin-bottom:10px;">@(isAr ? "دفع آمن" : "Secure Payment")</h4>
+                <p style="font-size:0.9rem; color:#666;">@(isAr ? "دفع عند الاستلام أو بالمحفظة الإلكترونية" : "Cash on delivery or secure wallet payment")</p>
             </div>
-            <div class="stat-box" style="text-align:center;">
-                <i class="fas fa-headset fa-2x" style="color:var(--primary); margin-bottom:15px;"></i>
-                <h4>@(isAr ? "دعم فني 24/7" : "24/7 Support")</h4>
-                <p style="font-size:0.9rem; color:#666;">@(isAr ? "فريق كامل لخدمتك في أي وقت" : "Full team ready to help you")</p>
+            <div class="stat-box" style="text-align:center; padding:30px; border-radius:16px; background:#fff; border:1px solid #f1f5f9; box-shadow:0 4px 10px rgba(0,0,0,0.02);">
+                <i class="fas fa-headset fa-3x" style="color:var(--primary); margin-bottom:15px; opacity:0.8;"></i>
+                <h4 style="margin-bottom:10px;">@(isAr ? "دعم فني" : "Support")</h4>
+                <p style="font-size:0.9rem; color:#666;">@(isAr ? "فريق كامل لخدمتك في أي وقت" : "24/7 Dedicated support team")</p>
             </div>
         </div>
     </div>
 </section>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        async function toggleWishlist(productId, btn) {
+            try {
+                const icon = btn.querySelector('i');
+                const response = await fetch('/Wishlist/Toggle', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `productId=${productId}`
+                });
+
+                if (response.status === 401) {
+                    Swal.fire({
+                        title: '@(isAr ? "تنبيه" : "Alert")',
+                        text: '@(isAr ? "يجب عليك تسجيل الدخول أولاً." : "Please login first.")',
+                        icon: 'warning',
+                        confirmButtonText: '@(isAr ? "دخول" : "Login")'
+                    }).then((r) => { if(r.isConfirmed) window.location.href='/Account/Login'; });
+                    return;
+                }
+
+                const result = await response.json();
+                if (result.success) {
+                    if (result.status === 'added') {
+                        icon.classList.replace('far', 'fas');
+                        btn.classList.add('active');
+                        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: '@(isAr ? "تمت الإضافة للمفضلة" : "Added to Wishlist")', showConfirmButton: false, timer: 1500 });
+                    } else {
+                        icon.classList.replace('fas', 'far');
+                        btn.classList.remove('active');
+                        Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: '@(isAr ? "تم الحذف من المفضلة" : "Removed from Wishlist")', showConfirmButton: false, timer: 1500 });
+                    }
+                }
+            } catch (error) { console.error(error); }
+        }
+    </script>
+}

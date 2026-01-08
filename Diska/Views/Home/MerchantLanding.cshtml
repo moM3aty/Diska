@@ -1,49 +1,156 @@
 ﻿@using System.Globalization
 @{
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
-    ViewData["Title"] = isAr ? "بع معنا" : "Sell with Us";
+    ViewData["Title"] = isAr ? "انضم كتاجر" : "Become a Merchant";
 }
 
-<section class="hero-section" style="background: linear-gradient(rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.9)), url('/images/merchant-bg.jpg'); background-size: cover; background-position: center; color: #fff; padding: 80px 0; text-align: center;">
-    <div class="container">
-        <h1 style="font-size: 3rem; margin-bottom: 20px; color: #FACC15;">@(isAr ? "زود مبيعاتك مع ديسكا" : "Boost Your Sales with Diska")</h1>
-        <p style="font-size: 1.2rem; max-width: 700px; margin: 0 auto 40px;">
-            @(isAr ? "انضم لأكبر شبكة تجار جملة في مصر. وصل منتجاتك لآلاف المحلات والسوبر ماركت بضغطة زر." : "Join Egypt's largest wholesale network. Reach thousands of shops and supermarkets with a click.")
+<!-- Hero Section: Dark Professional Look -->
+<section style="background: var(--primary); padding: 80px 0; position: relative; overflow: hidden; color: #fff;">
+    <div class="container" style="position: relative; z-index: 2; text-align: center;">
+        <span style="background: rgba(250, 204, 21, 0.2); color: var(--accent); padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; display: inline-block; margin-bottom: 20px;">
+            @(isAr ? "🚀 الشريك الأول لتجار الجملة" : "🚀 #1 B2B Partner")
+        </span>
+        <h1 style="font-size: 3.5rem; font-weight: 900; margin-bottom: 20px; line-height: 1.2;">
+            @(isAr ? "وسع تجارتك مع" : "Scale Your Business with") <span style="color: var(--accent);">DISKA</span>
+        </h1>
+        <p style="font-size: 1.2rem; color: #cbd5e1; max-width: 700px; margin: 0 auto 40px; line-height: 1.8;">
+            @(isAr ?
+                        "المنصة الرقمية التي تربطك مباشرة بآلاف محلات التجزئة والسوبر ماركت في جميع أنحاء مصر. تخلص من مشاكل التحصيل والتوزيع، وركز في اللي بتفهم فيه.. التجارة."
+                        :
+                        "The digital platform connecting you directly to thousands of retailers across Egypt. Forget distribution hassles, focus on what you do best: Trading.")
         </p>
-        <a asp-controller="Account" asp-action="Signup" class="btn primary big" style="padding: 15px 40px; font-size: 1.2rem;">@(isAr ? "سجل كتاجر الآن" : "Register as Merchant")</a>
+        <div style="display: flex; gap: 15px; justify-content: center;">
+            <a asp-controller="Account" asp-action="Signup" class="btn primary big" style="padding: 15px 40px; font-size: 1.1rem; box-shadow: 0 10px 20px rgba(250, 204, 21, 0.3);">
+                @(isAr ? "سجل كتاجر الآن مجاناً" : "Join as Merchant - Free")
+            </a>
+            <a href="#features" class="btn btn-outline" style="border-color: #fff; color: #fff; padding: 15px 30px;">
+                @(isAr ? "اكتشف المميزات" : "Explore Features")
+            </a>
+        </div>
+    </div>
+
+    <!-- Decorative Background Circles -->
+    <div style="position: absolute; top: -100px; left: -100px; width: 300px; height: 300px; background: rgba(255,255,255,0.03); border-radius: 50%;"></div>
+    <div style="position: absolute; bottom: -50px; right: -50px; width: 200px; height: 200px; background: rgba(250, 204, 21, 0.05); border-radius: 50%;"></div>
+</section>
+
+<!-- Stats Strip -->
+<div style="background: #1e293b; padding: 30px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+    <div class="container">
+        <div style="display: flex; justify-content: space-around; flex-wrap: wrap; text-align: center; gap: 20px;">
+            <div>
+                <h3 style="color: #fff; font-size: 2rem; margin: 0; font-weight: bold;">+5,000</h3>
+                <small style="color: #94a3b8;">@(isAr ? "تاجر تجزئة نشط" : "Active Retailers")</small>
+            </div>
+            <div>
+                <h3 style="color: #fff; font-size: 2rem; margin: 0; font-weight: bold;">+50,000</h3>
+                <small style="color: #94a3b8;">@(isAr ? "طلب شهرياً" : "Monthly Orders")</small>
+            </div>
+            <div>
+                <h3 style="color: #fff; font-size: 2rem; margin: 0; font-weight: bold;">24/7</h3>
+                <small style="color: #94a3b8;">@(isAr ? "دعم فني وتجار" : "Merchant Support")</small>
+            </div>
+            <div>
+                <h3 style="color: #fff; font-size: 2rem; margin: 0; font-weight: bold;">0%</h3>
+                <small style="color: #94a3b8;">@(isAr ? "مصاريف خفية" : "Hidden Fees")</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Why Join Us (Features) -->
+<section id="features" class="section-padding" style="background: #fff;">
+    <div class="container">
+        <div style="text-align: center; margin-bottom: 50px;">
+            <h2 style="color: var(--primary); font-size: 2.2rem; font-weight: 800; margin-bottom: 10px;">
+                @(isAr ? "لماذا يختار كبار التجار ديسكا؟" : "Why Top Merchants Choose Diska?")
+            </h2>
+            <p style="color: #666; font-size: 1.1rem;">@(isAr ? "نقدم لك حلول تقنية ولوجستية لتنمية تجارتك" : "Tech and logistic solutions to grow your trade")</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
+            <!-- Feature 1 -->
+            <div class="merchant-form-box" style="padding: 40px; text-align: center; transition: transform 0.3s;">
+                <div style="width: 70px; height: 70px; background: #e0f2fe; color: #0284c7; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 25px;">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3 style="margin-bottom: 15px; color: var(--primary);">@(isAr ? "وصول مباشر للعملاء" : "Direct Access")</h3>
+                <p style="color: #666; line-height: 1.7;">
+                    @(isAr ? "اعرض منتجاتك أمام آلاف المحلات في وقت واحد. لا حاجة لتوظيف مندوبين مبيعات أو صرف مبالغ طائلة على التسويق." : "Showcase products to thousands of shops instantly. No need for sales reps or huge marketing budgets.")
+                </p>
+            </div>
+
+            <!-- Feature 2 -->
+            <div class="merchant-form-box" style="padding: 40px; text-align: center; transition: transform 0.3s; border-color: var(--accent);">
+                <div style="width: 70px; height: 70px; background: #fffbeb; color: #d97706; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 25px;">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <h3 style="margin-bottom: 15px; color: var(--primary);">@(isAr ? "سيولة نقدية أسرع" : "Faster Cash Flow")</h3>
+                <p style="color: #666; line-height: 1.7;">
+                    @(isAr ? "نظام تحصيل متطور يضمن وصول أموالك لمحفظتك فور تسليم الطلب، مع إمكانية سحب الأرباح أسبوعياً." : "Advanced collection system ensures funds hit your wallet upon delivery, with weekly withdrawals.")
+                </p>
+            </div>
+
+            <!-- Feature 3 -->
+            <div class="merchant-form-box" style="padding: 40px; text-align: center; transition: transform 0.3s;">
+                <div style="width: 70px; height: 70px; background: #dcfce7; color: #16a34a; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 25px;">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+                <h3 style="margin-bottom: 15px; color: var(--primary);">@(isAr ? "تحليلات وتقارير" : "Analytics & Reports")</h3>
+                <p style="color: #666; line-height: 1.7;">
+                    @(isAr ? "لوحة تحكم خاصة تعطيك رؤية كاملة عن المنتجات الأكثر مبيعاً، المخزون، وأداء مبيعاتك لاتخاذ قرارات أذكى." : "Dashboard giving you full insights on best-sellers, inventory, and sales performance.")
+                </p>
+            </div>
+        </div>
     </div>
 </section>
 
-<section class="section-padding">
+<!-- How it Works (Steps) -->
+<section class="section-padding bg-light">
     <div class="container">
-        <div class="features-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
+        <div style="text-align: center; margin-bottom: 50px;">
+            <h2 style="color: var(--primary); font-size: 2.2rem; font-weight: 800;">@(isAr ? "كيف تبدأ البيع؟" : "How to Start Selling?")</h2>
+        </div>
 
-            <div class="feature-card" style="text-align: center; padding: 30px; background: #fff; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.05);">
-                <i class="fas fa-users fa-3x" style="color: var(--primary); margin-bottom: 20px;"></i>
-                <h3>@(isAr ? "قاعدة عملاء ضخمة" : "Huge Customer Base")</h3>
-                <p style="color: #666;">@(isAr ? "وصل لآلاف تجار التجزئة في مكان واحد بدون مصاريف تسويق." : "Reach thousands of retailers in one place without marketing costs.")</p>
+        <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 40px; text-align: center;">
+
+            <div style="flex: 1; min-width: 250px;">
+                <div style="width: 50px; height: 50px; background: var(--primary); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: bold; margin: 0 auto 20px;">1</div>
+                <h4 style="margin-bottom: 10px;">@(isAr ? "سجل حسابك" : "Register")</h4>
+                <p style="color: #666; font-size: 0.9rem;">@(isAr ? "أنشئ حساب تاجر وارفع السجل التجاري للتوثيق." : "Create account and upload documents.")</p>
             </div>
 
-            <div class="feature-card" style="text-align: center; padding: 30px; background: #fff; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.05);">
-                <i class="fas fa-chart-line fa-3x" style="color: var(--primary); margin-bottom: 20px;"></i>
-                <h3>@(isAr ? "لوحة تحكم ذكية" : "Smart Dashboard")</h3>
-                <p style="color: #666;">@(isAr ? "تابع مبيعاتك، مخزونك، وأرباحك لحظة بلحظة من خلال لوحة تحكم متطورة." : "Track sales, inventory, and profits in real-time via advanced dashboard.")</p>
+            <div style="display: flex; align-items: center; justify-content: center;">
+                <i class="fas @(isAr ? "fa-arrow-left" : "fa-arrow-right")" style="color: #ccc; font-size: 1.5rem;"></i>
             </div>
 
-            <div class="feature-card" style="text-align: center; padding: 30px; background: #fff; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.05);">
-                <i class="fas fa-truck-loading fa-3x" style="color: var(--primary); margin-bottom: 20px;"></i>
-                <h3>@(isAr ? "لوجستيات متكاملة" : "Integrated Logistics")</h3>
-                <p style="color: #666;">@(isAr ? "ركز في تجارتك وسيب التوصيل والتحصيل علينا." : "Focus on trading and leave delivery and collection to us.")</p>
+            <div style="flex: 1; min-width: 250px;">
+                <div style="width: 50px; height: 50px; background: var(--primary); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: bold; margin: 0 auto 20px;">2</div>
+                <h4 style="margin-bottom: 10px;">@(isAr ? "ارفع منتجاتك" : "Upload Products")</h4>
+                <p style="color: #666; font-size: 0.9rem;">@(isAr ? "أضف الصور والأسعار والكميات المتاحة من لوحة التحكم." : "Add photos, prices, and stock via dashboard.")</p>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: center;">
+                <i class="fas @(isAr ? "fa-arrow-left" : "fa-arrow-right")" style="color: #ccc; font-size: 1.5rem;"></i>
+            </div>
+
+            <div style="flex: 1; min-width: 250px;">
+                <div style="width: 50px; height: 50px; background: var(--accent); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: bold; margin: 0 auto 20px;">3</div>
+                <h4 style="margin-bottom: 10px;">@(isAr ? "استقبل الطلبات" : "Receive Orders")</h4>
+                <p style="color: #666; font-size: 0.9rem;">@(isAr ? "ابدأ في استقبال الطلبات فوراً وحقق الأرباح." : "Start receiving orders instantly and earn.")</p>
             </div>
 
         </div>
     </div>
 </section>
 
-<section class="cta-section" style="background: #f8fafc; padding: 60px 0; text-align: center;">
+<!-- Final CTA -->
+<section style="padding: 80px 0; background: var(--primary); text-align: center; color: #fff;">
     <div class="container">
-        <h2>@(isAr ? "جاهز تبدأ؟" : "Ready to Start?")</h2>
-        <p style="margin-bottom: 30px;">@(isAr ? "التسجيل مجاني ولا يأخذ أكثر من دقيقتين." : "Registration is free and takes less than 2 minutes.")</p>
-        <a asp-controller="Account" asp-action="Signup" class="btn primary">@(isAr ? "ابدأ رحلة البيع" : "Start Selling")</a>
+        <h2 style="font-size: 2.5rem; margin-bottom: 20px; color: #fff;">@(isAr ? "جاهز للانطلاق؟" : "Ready to Launch?")</h2>
+        <p style="font-size: 1.2rem; color: #cbd5e1; margin-bottom: 40px;">@(isAr ? "انضم لأكثر من 1000 تاجر يثقون في ديسكا." : "Join over 1000 merchants trusting Diska.")</p>
+        <a asp-controller="Account" asp-action="Signup" class="btn" style="background: var(--accent); color: var(--primary); padding: 15px 50px; font-size: 1.2rem; font-weight: bold; border-radius: 50px;">
+            @(isAr ? "ابدأ البيع الآن" : "Start Selling Now")
+        </a>
     </div>
 </section>

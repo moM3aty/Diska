@@ -1,0 +1,227 @@
+﻿@model Diska.Models.Product
+@using System.Globalization
+@{
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    ViewData["Title"] = "إضافة منتج";
+    Layout = "_AdminLayout";
+}
+
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<style>
+    .pro-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        border: 1px solid #f1f5f9;
+        margin-bottom: 25px;
+    }
+
+    .form-label {
+        font-weight: 700;
+        color: #334155;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .upload-zone {
+        border: 2px dashed #cbd5e1;
+        border-radius: 12px;
+        padding: 30px;
+        text-align: center;
+        cursor: pointer;
+        transition: 0.3s;
+        background: #f8fafc;
+    }
+
+        .upload-zone:hover {
+            border-color: var(--primary);
+            background: #eff6ff;
+        }
+
+    /* ستايل قسم الألوان */
+    .color-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+        align-items: center;
+    }
+
+    .color-input {
+        width: 40px;
+        height: 40px;
+        border: none;
+        background: none;
+        cursor: pointer;
+        padding: 0;
+    }
+
+    .btn-remove-color {
+        background: #fee2e2;
+        color: #dc2626;
+        border: none;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+</style>
+
+<div style="max-width: 1200px; margin: 0 auto;">
+    <form asp-action="Create" method="post" enctype="multipart/form-data" id="productForm">
+
+        <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+            <h2 style="color:var(--primary); margin:0;">إضافة منتج جديد</h2>
+            <button type="submit" class="btn btn-primary px-4" onclick="prepareDescription()">حفظ ونشر</button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 25px;">
+
+            <!-- Left Column -->
+            <div>
+                <div class="pro-card">
+                    <h4 style="margin-top:0; margin-bottom:20px; color:#64748b;">البيانات الأساسية</h4>
+                    <div class="row" style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-bottom:15px;">
+                        <div>
+                            <label class="form-label">الاسم (عربي) *</label>
+                            <input asp-for="Name" class="form-control" required />
+                        </div>
+                        <div>
+                            <label class="form-label">الاسم (إنجليزي) *</label>
+                            <input asp-for="NameEn" class="form-control" required />
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom:20px;">
+                        <label class="form-label">وصف المنتج (عربي)</label>
+                        <div id="editor-ar" style="height:150px; background:#fff;"></div>
+                        <input type="hidden" asp-for="Description" id="DescriptionHidden" />
+                    </div>
+
+                    <div>
+                        <label class="form-label">وصف المنتج (إنجليزي)</label>
+                        <div id="editor-en" style="height:100px; background:#fff;"></div>
+                        <input type="hidden" asp-for="DescriptionEn" id="DescriptionEnHidden" />
+                    </div>
+                </div>
+
+                <div class="pro-card">
+                    <h4 style="margin-top:0; margin-bottom:20px; color:#64748b;">الصور والوسائط</h4>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                        <div>
+                            <label class="form-label">الصورة الرئيسية *</label>
+                            <div class="upload-zone" onclick="document.getElementById('mainImage').click()">
+                                <input type="file" name="mainImage" id="mainImage" accept="image/*" style="display:none;" onchange="previewSingle(this)">
+                                <img id="mainPreview" src="~/images/default-product.png" style="max-height:100px;">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="form-label">معرض الصور (متعدد)</label>
+                            <div class="upload-zone" onclick="document.getElementById('galleryImages').click()">
+                                <input type="file" name="galleryImages" id="galleryImages" accept="image/*" multiple style="display:none;">
+                                <i class="fas fa-images fa-2x" style="color:#cbd5e1;"></i>
+                                <p style="margin:5px 0; font-size:0.8rem; color:#666;">اضغط لاختيار صور إضافية</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- قسم الألوان الجديد -->
+                <div class="pro-card">
+                    <h4 style="margin-top:0; margin-bottom:20px; color:#64748b;">خيارات الألوان (اختياري)</h4>
+                    <p style="font-size:0.85rem; color:#666; margin-bottom:15px;">يمكنك إضافة ألوان متعددة للمنتج أو تركها فارغة.</p>
+
+                    <div id="colorsContainer">
+                        <!-- سيتم إضافة الألوان هنا -->
+                    </div>
+
+                    <button type="button" class="btn btn-outline small" onclick="addColorInput()">
+                        <i class="fas fa-plus"></i> إضافة لون
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div>
+                <div class="pro-card">
+                    <h4 style="margin-top:0; margin-bottom:20px; color:#64748b;">الإعدادات</h4>
+                    <div class="form-group mb-3">
+                        <label class="form-label">التاجر *</label>
+                        <select asp-for="MerchantId" class="form-control" asp-items="ViewBag.Merchants" required></select>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">القسم *</label>
+                        <select asp-for="CategoryId" class="form-control" asp-items="ViewBag.Categories" required></select>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">السعر (ج.م) *</label>
+                        <input asp-for="Price" type="number" step="0.01" class="form-control" style="font-weight:bold;" required />
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">السعر القديم</label>
+                        <input asp-for="OldPrice" type="number" step="0.01" class="form-control" placeholder="اختياري" />
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">المخزون *</label>
+                        <input asp-for="StockQuantity" type="number" class="form-control" required />
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">وحدات الكرتونة *</label>
+                        <input asp-for="UnitsPerCarton" type="number" class="form-control" required />
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">تاريخ الإنتاج</label>
+                        <input asp-for="ProductionDate" type="date" class="form-control" />
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">تاريخ الانتهاء</label>
+                        <input asp-for="ExpiryDate" type="date" class="form-control" />
+                    </div>
+
+                    <div style="margin-top:15px; border-top:1px solid #f1f5f9; padding-top:10px;">
+                        <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+                            <input asp-for="IsActive" type="checkbox" style="width:20px; height:20px;">
+                            <span>نشط (يظهر للعملاء)</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </form>
+</div>
+
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+<script>
+    // Quill Init
+    var toolbarOptions = [['bold', 'italic', 'underline'], [{ 'list': 'ordered'}, { 'list': 'bullet' }], [{ 'header': [1, 2, 3, false] }], ['clean']];
+    var quillAr = new Quill('#editor-ar', { theme: 'snow', modules: { toolbar: toolbarOptions } });
+    var quillEn = new Quill('#editor-en', { theme: 'snow', modules: { toolbar: toolbarOptions } });
+
+    function prepareDescription() {
+        document.getElementById('DescriptionHidden').value = quillAr.root.innerHTML;
+        document.getElementById('DescriptionEnHidden').value = quillEn.root.innerHTML;
+    }
+
+    function previewSingle(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function (e) { document.getElementById('mainPreview').src = e.target.result; }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function addColorInput() {
+        const div = document.createElement('div');
+        div.className = 'color-row';
+        div.innerHTML = `
+            <input type="color" name="productColorsHex" class="color-input" value="#000000">
+            <input type="text" name="productColorsName" class="form-control" placeholder="اسم اللون (مثال: أحمر)" style="flex:1;">
+            <button type="button" class="btn-remove-color" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>
+        `;
+        document.getElementById('colorsContainer').appendChild(div);
+    }
+</script>

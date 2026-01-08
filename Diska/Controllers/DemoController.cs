@@ -16,11 +16,10 @@ namespace Diska.Controllers
             _userManager = userManager;
         }
 
-        // تسجيل دخول سريع كعميل (للتجربة)
         public async Task<IActionResult> LoginAsGuest()
         {
-            // البحث عن حساب ديمو أو إنشاؤه
             var guestUser = await _userManager.FindByNameAsync("01099999999");
+
             if (guestUser == null)
             {
                 guestUser = new ApplicationUser
@@ -29,14 +28,23 @@ namespace Diska.Controllers
                     PhoneNumber = "01099999999",
                     FullName = "زائر تجريبي",
                     Email = "guest@diska.local",
-                    WalletBalance = 5000 // رصيد وهمي للتجربة
+                    ShopName = "متجر الزوار",
+                    WalletBalance = 5000,
+                    IsVerifiedMerchant = false,
+                    CommercialRegister = "00000",
+                    TaxCard = "00000"
                 };
-                await _userManager.CreateAsync(guestUser, "Guest@123");
-                await _userManager.AddToRoleAsync(guestUser, "Customer");
+
+                var result = await _userManager.CreateAsync(guestUser, "Guest@123");
+                if (result.Succeeded)
+                {
+                    await _userManager.AddToRoleAsync(guestUser, "Customer");
+                }
             }
 
             await _signInManager.SignInAsync(guestUser, isPersistent: false);
-            return RedirectToAction("Index", "Home");
+
+            return View("Welcome");
         }
     }
 }

@@ -1,0 +1,155 @@
+﻿@model Diska.Models.Category
+@{
+    ViewData["Title"] = "إضافة قسم";
+    Layout = "_AdminLayout";
+}
+
+<style>
+    .icon-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+        gap: 10px;
+        max-height: 250px;
+        overflow-y: auto;
+        padding: 10px;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        background: #f8fafc;
+    }
+
+    .icon-option {
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1.2rem;
+        color: #64748b;
+        transition: 0.2s;
+    }
+
+        .icon-option:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .icon-option.selected {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);
+        }
+</style>
+
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <h2 style="margin-bottom: 25px; color: var(--primary);">إضافة تصنيف جديد</h2>
+
+    <form asp-action="Create" method="post">
+        <div class="form-group">
+            <label>الاسم (عربي)</label>
+            <input asp-for="Name" class="form-control" required placeholder="مثال: أدوات كهربائية" />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+
+        <div class="form-group" style="margin-top:15px;">
+            <label>الاسم (إنجليزي)</label>
+            <input asp-for="NameEn" class="form-control" placeholder="Ex: Electronics" required />
+            <span asp-validation-for="NameEn" class="text-danger"></span>
+        </div>
+
+        <div class="form-group" style="margin-top:20px;">
+            <label>اختر الأيقونة المناسبة</label>
+            <input type="hidden" asp-for="IconClass" id="selectedIcon" required />
+
+            <div class="icon-grid" id="iconPicker">
+                <!-- سيتم ملؤها بالجافاسكريبت -->
+            </div>
+            <div style="margin-top: 10px; font-size: 0.9rem; color: #666;">
+                الأيقونة المختارة: <i id="previewIcon" class="fas fa-question-circle" style="margin-right: 5px; color: var(--primary); font-size: 1.2rem;"></i>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width:100%; margin-top:20px;">إضافة التصنيف</button>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // مكتبة أيقونات شاملة لكافة الأقسام المحتملة (B2B & Retail)
+        const icons = [
+            // أساسيات
+            'fas fa-box', 'fas fa-boxes', 'fas fa-tags', 'fas fa-layer-group', 'fas fa-shopping-cart', 'fas fa-shopping-basket', 'fas fa-shopping-bag',
+            'fas fa-gift', 'fas fa-percent', 'fas fa-star', 'fas fa-heart', 'fas fa-globe', 'fas fa-home', 'fas fa-search', 'fas fa-filter',
+            'fas fa-store', 'fas fa-store-alt', 'fas fa-warehouse', 'fas fa-dolly', 'fas fa-truck-loading', 'fas fa-shipping-fast',
+
+            // أطعمة ومشروبات وبقالة
+            'fas fa-utensils', 'fas fa-hamburger', 'fas fa-pizza-slice', 'fas fa-drumstick-bite', 'fas fa-fish', 'fas fa-bread-slice',
+            'fas fa-cheese', 'fas fa-egg', 'fas fa-bacon', 'fas fa-pepper-hot', 'fas fa-carrot', 'fas fa-apple-alt', 'fas fa-lemon',
+            'fas fa-leaf', 'fas fa-seedling', 'fas fa-ice-cream', 'fas fa-cookie', 'fas fa-cookie-bite', 'fas fa-candy-cane',
+            'fas fa-mug-hot', 'fas fa-coffee', 'fas fa-wine-bottle', 'fas fa-wine-glass', 'fas fa-glass-martini-alt', 'fas fa-beer',
+            'fas fa-blender', 'fas fa-glass-whiskey', 'fas fa-tint',
+
+            // إلكترونيات وتكنولوجيا
+            'fas fa-mobile-alt', 'fas fa-tablet-alt', 'fas fa-laptop', 'fas fa-desktop', 'fas fa-tv', 'fas fa-camera', 'fas fa-video',
+            'fas fa-headphones', 'fas fa-headset', 'fas fa-microphone', 'fas fa-battery-full', 'fas fa-plug', 'fas fa-wifi',
+            'fas fa-sim-card', 'fas fa-microchip', 'fas fa-print', 'fas fa-hdd', 'fas fa-server', 'fas fa-keyboard', 'fas fa-mouse',
+            'fas fa-gamepad', 'fas fa-robot',
+
+            // ملابس وموضة
+            'fas fa-tshirt', 'fas fa-socks', 'fas fa-hat-cowboy', 'fas fa-hat-wizard', 'fas fa-user-tie', 'fas fa-shoe-prints',
+            'fas fa-glasses', 'fas fa-stopwatch', 'fas fa-ring', 'fas fa-gem', 'fas fa-crown', 'fas fa-cut', 'fas fa-vest',
+
+            // منزل، أثاث ومنظفات
+            'fas fa-couch', 'fas fa-chair', 'fas fa-bed', 'fas fa-door-open', 'fas fa-shower', 'fas fa-bath',
+            'fas fa-toilet', 'fas fa-soap', 'fas fa-pump-soap', 'fas fa-key', 'fas fa-lock', 'fas fa-lightbulb', 'fas fa-fan',
+            'fas fa-snowflake', 'fas fa-broom', 'fas fa-trash', 'fas fa-spray-can', 'fas fa-hands-wash', 'fas fa-sink',
+
+            // مكتبية وقرطاسية
+            'fas fa-pen', 'fas fa-pen-nib', 'fas fa-pen-alt', 'fas fa-marker', 'fas fa-pencil-alt', 'fas fa-ruler', 'fas fa-ruler-combined',
+            'fas fa-paperclip', 'fas fa-folder', 'fas fa-folder-open', 'fas fa-file-alt', 'fas fa-book', 'fas fa-book-open',
+            'fas fa-calculator', 'fas fa-briefcase', 'fas fa-paste', 'fas fa-copy', 'fas fa-cut',
+
+            // صحة، جمال وعناية
+            'fas fa-medkit', 'fas fa-first-aid', 'fas fa-stethoscope', 'fas fa-heartbeat', 'fas fa-pills', 'fas fa-syringe',
+            'fas fa-thermometer-half', 'fas fa-user-md', 'fas fa-spa', 'fas fa-tooth', 'fas fa-eye', 'fas fa-hand-sparkles',
+            'fas fa-baby', 'fas fa-baby-carriage',
+
+            // رياضة ولياقة
+            'fas fa-futbol', 'fas fa-basketball-ball', 'fas fa-football-ball', 'fas fa-baseball-ball', 'fas fa-volleyball-ball',
+            'fas fa-table-tennis', 'fas fa-bowling-ball', 'fas fa-dumbbell', 'fas fa-running', 'fas fa-swimmer', 'fas fa-bicycle',
+            'fas fa-medal', 'fas fa-trophy', 'fas fa-hiking',
+
+            // سيارات ومعدات
+            'fas fa-car', 'fas fa-truck', 'fas fa-motorcycle', 'fas fa-bus', 'fas fa-taxi', 'fas fa-gas-pump', 'fas fa-oil-can',
+            'fas fa-wrench', 'fas fa-tools', 'fas fa-cog', 'fas fa-cogs', 'fas fa-shipping-fast', 'fas fa-plane', 'fas fa-ship',
+            'fas fa-hard-hat', 'fas fa-hammer', 'fas fa-screwdriver', 'fas fa-paint-roller', 'fas fa-brush', 'fas fa-palette',
+            'fas fa-cube', 'fas fa-cubes', 'fas fa-industry',
+
+            // حيوانات أليفة
+            'fas fa-paw', 'fas fa-cat', 'fas fa-dog', 'fas fa-dove', 'fas fa-crow', 'fas fa-feather', 'fas fa-horse', 'fas fa-frog'
+        ];
+
+        const picker = document.getElementById('iconPicker');
+        const input = document.getElementById('selectedIcon');
+        const preview = document.getElementById('previewIcon');
+
+        icons.forEach(iconClass => {
+            const div = document.createElement('div');
+            div.className = 'icon-option';
+            div.innerHTML = `<i class="${iconClass}"></i>`;
+            div.onclick = function() {
+                document.querySelectorAll('.icon-option').forEach(el => el.classList.remove('selected'));
+                div.classList.add('selected');
+                input.value = iconClass;
+                preview.className = iconClass;
+            };
+            picker.appendChild(div);
+        });
+
+        // تحديد أول أيقونة افتراضياً إذا لم يتم الاختيار
+        if(picker.firstChild) picker.firstChild.click();
+    });
+</script>

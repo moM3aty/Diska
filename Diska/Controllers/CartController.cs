@@ -12,6 +12,8 @@ using System.Threading.Tasks;
 
 namespace Diska.Controllers
 {
+    // تم إضافة [Authorize] لإجبار تسجيل الدخول قبل الوصول للسلة أو الدفع
+    [Authorize]
     public class CartController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -28,16 +30,37 @@ namespace Diska.Controllers
         }
 
         public IActionResult Index() => View();
-        public IActionResult Checkout() => View();
 
-        // عرض صفحة نجاح الطلب
+        public async Task<IActionResult> Checkout()
+        {
+            // تحسين: جلب بيانات المستخدم المسجل لتعبئة الحقول تلقائياً
+            var user = await _userManager.GetUserAsync(User);
+            if (user != null)
+            {
+                ViewBag.FullName = user.FullName;
+                ViewBag.Phone = user.PhoneNumber;
+                ViewBag.ShopName = user.ShopName;
+
+                // محاولة جلب العنوان الافتراضي
+                var defaultAddress = await _context.UserAddresses
+                    .FirstOrDefaultAsync(a => a.UserId == user.Id && a.IsDefault);
+
+                if (defaultAddress != null)
+                {
+                    ViewBag.Address = defaultAddress.Street;
+                    ViewBag.Governorate = defaultAddress.Governorate;
+                    ViewBag.City = defaultAddress.City;
+                }
+            }
+            return View();
+        }
+
         public IActionResult OrderSuccess(int id)
         {
             ViewBag.OrderId = id;
             return View();
         }
 
-        // عرض صفحة فشل الدفع
         public IActionResult OrderFailed(int id)
         {
             ViewBag.OrderId = id;
@@ -57,11 +80,7 @@ namespace Diska.Controllers
             if (model == null || !model.Items.Any())
                 return Json(new { success = false, message = "السلة فارغة" });
 
-            ApplicationUser user = null;
-            if (User.Identity.IsAuthenticated)
-            {
-                user = await _userManager.GetUserAsync(User);
-            }
+            var user = await _userManager.GetUserAsync(User); // المستخدم مضمون بسبب Authorize
 
             using var transaction = _context.Database.BeginTransaction();
             try
@@ -69,7 +88,7 @@ namespace Diska.Controllers
                 decimal calculatedTotal = 0;
                 var orderItems = new List<OrderItem>();
 
-                // 1. التحقق من المخزون وحساب الأسعار
+                // 1. التحقق من المخزون
                 foreach (var item in model.Items)
                 {
                     if (int.TryParse(item.Id, out int productId))
@@ -98,19 +117,18 @@ namespace Diska.Controllers
                     }
                 }
 
-                // 2. حساب الشحن والإجمالي
+                // 2. حساب الشحن
                 decimal shippingCost = _shippingService.CalculateCost(model.Governorate, model.City);
                 decimal grandTotal = calculatedTotal + shippingCost;
 
-                // 3. معالجة الدفع
                 string orderStatus = "Pending";
 
+                // 3. معالجة الدفع
                 if (model.PaymentMethod == "Online")
                 {
-                    // حفظ الطلب مبدئياً كـ "بانتظار الدفع"
                     var onlineOrder = new Order
                     {
-                        UserId = user?.Id ?? "Guest",
+                        UserId = user.Id,
                         CustomerName = model.ShopName,
                         Phone = model.Phone,
                         Address = model.Address,
@@ -119,7 +137,7 @@ namespace Diska.Controllers
                         TotalAmount = grandTotal,
                         ShippingCost = shippingCost,
                         OrderDate = DateTime.Now,
-                        Status = "Pending Payment", // حالة مؤقتة
+                        Status = "Pending Payment",
                         PaymentMethod = "Online",
                         DeliverySlot = model.DeliverySlot,
                         Notes = model.Notes,
@@ -129,17 +147,13 @@ namespace Diska.Controllers
                     _context.Orders.Add(onlineOrder);
                     await _context.SaveChangesAsync();
 
-                    // استدعاء خدمة الدفع للحصول على الرابط
-                    // نمرر رقم الطلب لربط المعاملة لاحقاً
                     var paymentUrl = await _paymentService.InitiatePaymentAsync(grandTotal, "EGP", new { OrderId = onlineOrder.Id });
-
                     await transaction.CommitAsync();
 
                     return Json(new { success = true, redirectUrl = paymentUrl });
                 }
                 else if (model.PaymentMethod == "Wallet")
                 {
-                    if (user == null) return Json(new { success = false, message = "يجب تسجيل الدخول للدفع بالمحفظة" });
                     if (user.WalletBalance < grandTotal) return Json(new { success = false, message = "رصيد المحفظة غير كافٍ" });
 
                     user.WalletBalance -= grandTotal;
@@ -156,10 +170,10 @@ namespace Diska.Controllers
                     await _userManager.UpdateAsync(user);
                 }
 
-                // 4. حفظ الطلب النهائي (للكاش والمحفظة)
+                // 4. حفظ الطلب (كاش أو محفظة)
                 var order = new Order
                 {
-                    UserId = user?.Id ?? "Guest",
+                    UserId = user.Id,
                     CustomerName = model.ShopName,
                     Phone = model.Phone,
                     Address = model.Address,

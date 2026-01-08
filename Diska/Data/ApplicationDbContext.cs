@@ -10,7 +10,8 @@ namespace Diska.Data
             : base(options)
         {
         }
-
+        public DbSet<ProductColor> ProductColors { get; set; }
+        public DbSet<ProductImage> ProductImages { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<PriceTier> PriceTiers { get; set; }
@@ -42,7 +43,6 @@ namespace Diska.Data
                 property.SetColumnType("decimal(18,2)");
             }
 
-            // --- إصلاح مشاكل العلاقات والحذف ---
 
             builder.Entity<Order>()
                 .HasOne(o => o.User)
@@ -50,29 +50,25 @@ namespace Diska.Data
                 .HasForeignKey(o => o.UserId)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            // حل مشكلة ProductReviews
             builder.Entity<ProductReview>()
                 .HasOne(r => r.User)
                 .WithMany()
                 .HasForeignKey(r => r.UserId)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            // حل مشكلة MerchantOffers
             builder.Entity<MerchantOffer>()
                 .HasOne(m => m.Merchant)
                 .WithMany()
                 .HasForeignKey(m => m.MerchantId)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            // حل مشكلة DealRequests
             builder.Entity<DealRequest>()
                .HasOne<ApplicationUser>()
                .WithMany()
                .HasForeignKey(r => r.UserId)
                .OnDelete(DeleteBehavior.NoAction);
 
-            // حل مشكلة RestockSubscriptions (التي سببت الخطأ الأخير)
-            // تغيير الحذف إلى NoAction لمنع الدورة مع حذف المنتج
+
             builder.Entity<RestockSubscription>()
                .HasOne<ApplicationUser>()
                .WithMany()

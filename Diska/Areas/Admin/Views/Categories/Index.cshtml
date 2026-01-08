@@ -1,0 +1,98 @@
+﻿@model IEnumerable<Diska.Models.Category>
+@{
+    ViewData["Title"] = "إدارة التصنيفات";
+    Layout = "_AdminLayout";
+}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
+    <div>
+        <h2 style="margin:0; color:var(--primary);">إدارة أقسام المتجر</h2>
+        <p style="color:#64748b; margin-top:5px;">عرض وتعديل التصنيفات الرئيسية للمنتجات</p>
+    </div>
+
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="fas fa-plus"></i> إضافة قسم جديد
+    </a>
+</div>
+
+<div class="card">
+    @if (!Model.Any())
+    {
+        <div style="text-align:center; padding:50px; color:#64748b;">
+            <i class="fas fa-tags fa-3x" style="margin-bottom:15px; color:#cbd5e1;"></i>
+            <p>لا توجد تصنيفات مسجلة حالياً.</p>
+        </div>
+    }
+    else
+    {
+        <table style="width:100%;">
+            <thead>
+                <tr>
+                    <th>الأيقونة</th>
+                    <th>الاسم (عربي)</th>
+                    <th>الاسم (إنجليزي)</th>
+                    <th>عدد المنتجات</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            <div style="width:40px; height:40px; background:#f8fafc; border-radius:8px; display:flex; align-items:center; justify-content:center; border:1px solid #e2e8f0;">
+                                <i class="@item.IconClass fa-lg" style="color:var(--primary);"></i>
+                            </div>
+                        </td>
+                        <td><strong>@item.Name</strong></td>
+                        <td>@item.NameEn</td>
+                        <td>
+                            <span class="badge" style="background:#e0f2fe; color:#0284c7;">
+                                @(item.Products?.Count ?? 0) منتج
+                            </span>
+                        </td>
+                        <td>
+                            <div style="display:flex; gap:5px;">
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline" style="padding:6px 10px;" title="تعديل">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+
+                                <!-- زر الحذف المتصل بـ SweetAlert -->
+                                <button type="button" onclick="confirmDeleteCategory(@item.Id, '@item.Name')" class="btn btn-danger" style="padding:6px 10px; background:#fee2e2; color:#dc2626; border:none;" title="حذف">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+
+                                <!-- فورم الحذف المخفي -->
+                                <form id="deleteForm-@item.Id" asp-action="Delete" method="post" style="display:none;">
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+<!-- سكريبت SweetAlert الخاص بالحذف -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function confirmDeleteCategory(id, name) {
+        Swal.fire({
+            title: 'هل أنت متأكد؟',
+            text: "سيتم حذف القسم '" + name + "' وكافة المنتجات التابعة له! لا يمكن التراجع عن هذا الإجراء.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'نعم، احذفه!',
+            cancelButtonText: 'إلغاء'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // إرسال الفورم المخفي
+                document.getElementById('deleteForm-' + id).submit();
+            }
+        });
+    }
+</script>

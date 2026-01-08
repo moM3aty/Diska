@@ -12,7 +12,7 @@ namespace Diska.Data
             var roleManager = service.GetService<RoleManager<IdentityRole>>();
             var context = service.GetService<ApplicationDbContext>();
 
-            // 1. Roles
+            // 1. الأدوار
             string[] roles = { "Admin", "Merchant", "Customer" };
             foreach (var role in roles)
             {
@@ -22,7 +22,7 @@ namespace Diska.Data
                 }
             }
 
-            // 2. Admin
+            // 2. الأدمن (موجود سابقاً)
             var adminPhone = "01000000000";
             var adminUser = await userManager.FindByNameAsync(adminPhone);
             if (adminUser == null)
@@ -43,18 +43,41 @@ namespace Diska.Data
                 if (result.Succeeded) await userManager.AddToRoleAsync(newAdmin, "Admin");
             }
 
-            // 3. Updated Categories (تحديث المسميات والأيقونات حسب الطلب)
+            // 3. (جديد) إضافة تاجر للتجربة
+            var merchantPhone = "01000000001"; // رقم التاجر
+            var merchantUser = await userManager.FindByNameAsync(merchantPhone);
+            if (merchantUser == null)
+            {
+                var newMerchant = new ApplicationUser
+                {
+                    UserName = merchantPhone,
+                    PhoneNumber = merchantPhone,
+                    Email = "merchant@diska.com",
+                    EmailConfirmed = true,
+                    FullName = "تاجر تجريبي",
+                    ShopName = "مخازن الأمانة",
+                    WalletBalance = 5000,
+                    IsVerifiedMerchant = true, // مفعل جاهز
+                    CommercialRegister = "123456",
+                    TaxCard = "987-654-321"
+                };
+                // كلمة المرور: Merchant@123
+                var result = await userManager.CreateAsync(newMerchant, "Merchant@123");
+                if (result.Succeeded) await userManager.AddToRoleAsync(newMerchant, "Merchant");
+            }
+
+            // 4. الأقسام
             if (!context.Categories.Any())
             {
                 context.Categories.AddRange(new List<Category>
                 {
-                    new Category { Name = "أدوات مكتبية وخردوات", NameEn = "Stationery & Hardware", IconClass = "fas fa-pen-ruler" },
+                    new Category { Name = "أدوات مكتبية", NameEn = "Stationery", IconClass = "fas fa-pen-ruler" },
+                    new Category { Name = "بقالة", NameEn = "Grocery", IconClass = "fas fa-utensils" },
                     new Category { Name = "أدوات منزلية", NameEn = "Home Appliances", IconClass = "fas fa-blender" },
                     new Category { Name = "عناية شخصية", NameEn = "Personal Care", IconClass = "fas fa-pump-soap" },
-                    new Category { Name = "منتجات حيوانات أليفة", NameEn = "Pet Supplies", IconClass = "fas fa-paw" },
-                    new Category { Name = "بقالة ومواد غذائية", NameEn = "Grocery & Food", IconClass = "fas fa-utensils" },
                     new Category { Name = "منظفات", NameEn = "Detergents", IconClass = "fas fa-spray-can" },
-                    new Category { Name = "مشروبات وعصائر", NameEn = "Beverages", IconClass = "fas fa-wine-bottle" }
+                    new Category { Name = "حيوانات أليفة", NameEn = "Pet Supplies", IconClass = "fas fa-paw" },
+                    new Category { Name = "مشروبات", NameEn = "Beverages", IconClass = "fas fa-wine-bottle" }
                 });
                 await context.SaveChangesAsync();
             }

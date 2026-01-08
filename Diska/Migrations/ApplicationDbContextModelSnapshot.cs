@@ -453,6 +453,10 @@ namespace Diska.Migrations
                     b.Property<int>("CategoryId")
                         .HasColumnType("int");
 
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -462,7 +466,6 @@ namespace Diska.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("ExpiryDate")
-                        .IsRequired()
                         .HasColumnType("datetime2");
 
                     b.Property<string>("ImageUrl")
@@ -491,7 +494,6 @@ namespace Diska.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime?>("ProductionDate")
-                        .IsRequired()
                         .HasColumnType("datetime2");
 
                     b.Property<int>("StockQuantity")
@@ -507,6 +509,54 @@ namespace Diska.Migrations
                     b.HasIndex("MerchantId");
 
                     b.ToTable("Products");
+                });
+
+            modelBuilder.Entity("Diska.Models.ProductColor", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ColorHex")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ColorName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("ProductColors");
+                });
+
+            modelBuilder.Entity("Diska.Models.ProductImage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("ProductImages");
                 });
 
             modelBuilder.Entity("Diska.Models.ProductReview", b =>
@@ -1039,6 +1089,28 @@ namespace Diska.Migrations
                     b.Navigation("Merchant");
                 });
 
+            modelBuilder.Entity("Diska.Models.ProductColor", b =>
+                {
+                    b.HasOne("Diska.Models.Product", "Product")
+                        .WithMany("ProductColors")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("Diska.Models.ProductImage", b =>
+                {
+                    b.HasOne("Diska.Models.Product", "Product")
+                        .WithMany("Images")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+                });
+
             modelBuilder.Entity("Diska.Models.ProductReview", b =>
                 {
                     b.HasOne("Diska.Models.Product", "Product")
@@ -1193,7 +1265,11 @@ namespace Diska.Migrations
 
             modelBuilder.Entity("Diska.Models.Product", b =>
                 {
+                    b.Navigation("Images");
+
                     b.Navigation("PriceTiers");
+
+                    b.Navigation("ProductColors");
                 });
 
             modelBuilder.Entity("Diska.Models.Survey", b =>

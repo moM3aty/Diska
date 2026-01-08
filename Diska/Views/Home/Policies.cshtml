@@ -1,67 +1,100 @@
 ﻿@using System.Globalization
 @{
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
-    ViewData["Title"] = isAr ? "الشحن والإرجاع" : "Shipping & Returns";
+    ViewData["Title"] = isAr ? "السياسات والشحن" : "Policies & Shipping";
 }
+
+<!-- يمكن إضافة هذا الستايل هنا أو في ملف CSS العام لضمان ظهوره كما طلبت -->
+<style>
+    .policy-box {
+        background: #fff;
+        padding: 30px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+        border: 1px solid #eee;
+    }
+
+        .policy-box h2 {
+            color: var(--primary);
+            border-bottom: 2px solid var(--accent);
+            display: inline-block;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+        }
+
+        .policy-box ul {
+            list-style: disc;
+            padding-right: 20px; /* للغة العربية */
+            padding-left: 20px; /* للغة الانجليزية سيتم ضبطها عبر التوجيه */
+            color: #555;
+        }
+
+    html[dir="ltr"] .policy-box ul {
+        padding-right: 0;
+        padding-left: 20px;
+    }
+
+    .policy-box li {
+        margin-bottom: 10px;
+    }
+</style>
 
 <section class="section-padding">
     <div class="container">
-        <div class="policy-box" style="background:#fff; padding:40px; border-radius:10px; border:1px solid #eee;">
-            <h1 style="color:var(--primary); margin-bottom:30px; border-bottom:3px solid #FACC15; display:inline-block; padding-bottom:10px;">
-                @(isAr ? "سياسات الشحن والإرجاع" : "Shipping & Return Policies")
-            </h1>
 
-            <div class="content-area" style="line-height:1.8; color:#333;">
-
-                <div class="policy-section" style="margin-bottom:40px;">
-                    <h3 style="color:#0284c7; display:flex; align-items:center; gap:10px;">
-                        <i class="fas fa-truck"></i> @(isAr ? "الشحن والتوصيل" : "Shipping & Delivery")
-                    </h3>
-                    <ul>
-                        @if (isAr)
-                        {
-                            <li>يتم تجهيز الطلبات خلال 24 ساعة من التأكيد.</li>
-                            <li>التوصيل داخل القاهرة والجيزة يستغرق 1-2 يوم عمل.</li>
-                            <li>التوصيل لباقي المحافظات يستغرق 3-5 أيام عمل.</li>
-                            <li>رسوم الشحن ثابتة للمناطق المركزية (50 ج.م) وتختلف للمناطق النائية.</li>
-                            <li>الشحن مجاني للطلبات التي تتجاوز قيمتها 50,000 ج.م.</li>
-                        }
-                        else
-                        {
-                            <li>Orders are processed within 24 hours of confirmation.</li>
-                            <li>Delivery in Cairo & Giza takes 1-2 business days.</li>
-                            <li>Other governorates take 3-5 business days.</li>
-                            <li>Fixed shipping rate for central areas (50 EGP).</li>
-                            <li>Free shipping for orders over 50,000 EGP.</li>
-                        }
-                    </ul>
-                </div>
-
-                <div class="policy-section">
-                    <h3 style="color:#0284c7; display:flex; align-items:center; gap:10px;">
-                        <i class="fas fa-undo-alt"></i> @(isAr ? "سياسة الإرجاع" : "Return Policy")
-                    </h3>
-                    <ul>
-                        @if (isAr)
-                        {
-                            <li>يحق للعميل إرجاع المنتج خلال 14 يوماً من تاريخ الاستلام في حالة وجود عيب صناعة.</li>
-                            <li>يجب أن يكون المنتج في حالته الأصلية ولم يتم فتح العبوة (للمنتجات الغذائية).</li>
-                            <li>في حالة المنتجات التالفة أثناء الشحن، يجب الإبلاغ خلال 24 ساعة من الاستلام.</li>
-                            <li>يتم استرداد المبلغ إلى المحفظة الإلكترونية فور استلام المرتجع وفحصه.</li>
-                            <li>لا يتم قبول إرجاع المنتجات سريعة التلف (مثل الألبان) إلا في وقت الاستلام مباشرة.</li>
-                        }
-                        else
-                        {
-                            <li>Returns accepted within 14 days for manufacturing defects.</li>
-                            <li>Products must be in original condition/packaging.</li>
-                            <li>Damaged goods must be reported within 24 hours of receipt.</li>
-                            <li>Refunds are credited to the App Wallet after inspection.</li>
-                            <li>Perishable goods (e.g. Dairy) are only returnable upon delivery.</li>
-                        }
-                    </ul>
-                </div>
-
-            </div>
+        <div class="breadcrumb">
+            <a asp-controller="Home" asp-action="Index">@(isAr ? "الرئيسية" : "Home")</a> / <span>@(isAr ? "السياسات والشحن" : "Policies")</span>
         </div>
+
+        <!-- قسم الشحن -->
+        <div class="policy-box" id="shipping">
+            <h2>@(isAr ? "🚚 الشحن والتوصيل" : "🚚 Shipping & Delivery")</h2>
+            <ul>
+                @if (isAr)
+                {
+                    <li>يتم التوصيل خلال 24 إلى 48 ساعة داخل القاهرة والجيزة.</li>
+                    <li>المحافظات الأخرى يستغرق التوصيل من 3 إلى 5 أيام عمل.</li>
+                    <li>رسوم الشحن تحتسب تلقائياً بناءً على المنطقة والوزن.</li>
+                    <li>الشحن مجاني للطلبات التي تتجاوز 50,000 ج.م.</li>
+                }
+                else
+                {
+                    <li>Delivery within 24 to 48 hours in Cairo and Giza.</li>
+                    <li>Other governorates take 3 to 5 business days.</li>
+                    <li>Shipping fees are calculated automatically based on location and weight.</li>
+                    <li>Free shipping for orders exceeding 50,000 EGP.</li>
+                }
+            </ul>
+        </div>
+
+        <!-- قسم الإرجاع -->
+        <div class="policy-box" id="return">
+            <h2>@(isAr ? "🔄 سياسة الإرجاع والاستبدال" : "🔄 Return Policy")</h2>
+            <ul>
+                @if (isAr)
+                {
+                    <li>يمكن إرجاع المنتجات التالفة أو غير المطابقة للمواصفات خلال 14 يوم.</li>
+                    <li>يجب أن تكون البضاعة في حالتها الأصلية (الكرتونة مغلقة).</li>
+                    <li>يتم استرداد المبلغ إلى المحفظة في التطبيق فور استلام المرتجع.</li>
+                }
+                else
+                {
+                    <li>Damaged or non-conforming products can be returned within 14 days.</li>
+                    <li>Goods must be in their original condition (sealed carton).</li>
+                    <li>Refunds are credited to the in-app wallet immediately upon receipt.</li>
+                }
+            </ul>
+        </div>
+
+        <!-- قسم الخصوصية -->
+        <div class="policy-box" id="privacy">
+            <h2>@(isAr ? "🔒 سياسة الخصوصية" : "🔒 Privacy Policy")</h2>
+            <p style="color: #555; line-height: 1.6;">
+                @(isAr ?
+                                "نحن في DISKA نلتزم بحماية بياناتك الشخصية والتجارية. لا يتم مشاركة بياناتك مع أي طرف ثالث إلا شركات الشحن لغرض التوصيل فقط." :
+                                "At DISKA, we are committed to protecting your personal and commercial data. We do not share your data with any third party except shipping companies for delivery purposes only.")
+            </p>
+        </div>
+
     </div>
 </section>

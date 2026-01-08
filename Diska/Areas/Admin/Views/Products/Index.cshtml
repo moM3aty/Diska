@@ -1,0 +1,177 @@
+﻿@model IEnumerable<Diska.Models.Product>
+@{
+    ViewData["Title"] = "إدارة المنتجات";
+    Layout = "_AdminLayout";
+}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
+    <div>
+        <h2 style="margin:0; color:var(--primary);">إدارة المنتجات والمخزون</h2>
+        <p style="color:#64748b; margin-top:5px;">عرض ومراقبة جميع منتجات التجار والمنصة</p>
+    </div>
+
+    <div style="display:flex; gap:10px;">
+        <span class="badge" style="background:#e0f2fe; color:#0284c7; font-size:0.9rem; padding:10px 15px; display:flex; align-items:center;">
+            <i class="fas fa-box" style="margin-left:8px;"></i> إجمالي: @Model.Count()
+        </span>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="fas fa-plus"></i> إضافة منتج جديد
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    @if (!Model.Any())
+    {
+        <div style="text-align:center; padding:50px; color:#64748b;">
+            <i class="fas fa-box-open fa-3x" style="margin-bottom:15px; color:#cbd5e1;"></i>
+            <p>لا توجد منتجات مسجلة في قاعدة البيانات.</p>
+        </div>
+    }
+    else
+    {
+        <table style="width:100%;">
+            <thead>
+                <tr>
+                    <th style="width: 80px;">الصورة</th>
+                    <th>بيانات المنتج</th>
+                    <th>التاجر</th>
+                    <th>القسم</th>
+                    <th>السعر</th>
+                    <th>المخزون</th>
+                    <th>الحالة</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            <img src="~/@item.ImageUrl" style="width:60px; height:60px; object-fit:contain; border-radius:8px; border:1px solid #f1f5f9; padding:2px;">
+                        </td>
+                        <td>
+                            <strong style="display:block; font-size:0.95rem; color:var(--primary);">@item.Name</strong>
+                            @if (!string.IsNullOrEmpty(item.NameEn))
+                            {
+                                <small style="color:#94a3b8;">@item.NameEn</small>
+                            }
+                            @if (item.IsExpired)
+                            {
+                                <br>
+                    
+                                <span class="badge" style="background:#fee2e2; color:#dc2626; margin-top:5px;">منتهي الصلاحية</span>
+                            }
+                        </td>
+                        <td>
+                            <div style="display:flex; align-items:center; gap:5px;">
+                                <i class="fas fa-store" style="color:#cbd5e1;"></i>
+                                <span>@(item.Merchant?.ShopName ?? "الإدارة")</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge" style="background:#f8fafc; color:#475569; border:1px solid #e2e8f0;">
+                                @item.Category?.Name
+                            </span>
+                        </td>
+                        <td style="font-weight:700;">@item.Price.ToString("N0") <small>ج.م</small></td>
+                        <td>
+                            @if (item.StockQuantity == 0)
+                            {
+                                <span style="color:#dc2626; font-weight:bold;">نفذت (0)</span>
+                            }
+                            else if (item.StockQuantity < 10)
+                            {
+                                <span style="color:#d97706; font-weight:bold;">@item.StockQuantity (منخفض)</span>
+                            }
+                            else
+                            {
+                                <span style="color:#16a34a; font-weight:bold;">@item.StockQuantity</span>
+                            }
+                        </td>
+                        <td>
+                            @if (item.IsActive)
+                            {
+                                <span class="badge" style="background:#dcfce7; color:#166534;">نشط</span>
+                            }
+                            else
+                            {
+                                <span class="badge" style="background:#fee2e2; color:#991b1b;">مخفي</span>
+                            }
+                        </td>
+                        <td>
+                            <div style="display:flex; gap:5px;">
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline" style="padding:6px 10px;" title="تعديل">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+
+                                <!-- زر الحذف المتصل بـ SweetAlert -->
+                                <button type="button" onclick="confirmDeleteProduct(@item.Id, '@item.Name')" class="btn btn-danger" style="padding:6px 10px; background:#fee2e2; color:#dc2626; border:none;" title="حذف">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+
+                                <!-- فورم الحذف المخفي -->
+                                <form id="deleteForm-@item.Id" asp-action="Delete" method="post" style="display:none;">
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+<!-- سكريبت SweetAlert -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // التأكد من تحميل الصفحة بالكامل لتشغيل التنبيهات
+    document.addEventListener('DOMContentLoaded', function() {
+        // رسالة النجاح (تظهر بعد الحفظ أو التعديل)
+        @if (TempData["Success"] != null)
+        {
+                <text>
+                Swal.fire({
+                    icon: 'success',
+                    title: 'تم بنجاح!',
+                    text: '@Html.Raw(TempData["Success"])', // استخدام Html.Raw لمنع تكسير الكود بالنصوص العربية
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+                </text>
+        }
+
+        // رسالة الخطأ (إن وجدت)
+        @if (TempData["Error"] != null)
+        {
+                <text>
+                Swal.fire({
+                    icon: 'error',
+                    title: 'خطأ!',
+                    text: '@Html.Raw(TempData["Error"])',
+                    confirmButtonText: 'حسناً'
+                });
+                </text>
+        }
+    });
+
+    // دالة تأكيد الحذف
+    function confirmDeleteProduct(id, name) {
+        Swal.fire({
+            title: 'هل أنت متأكد؟',
+            text: "سيتم حذف المنتج '" + name + "' نهائياً! لا يمكن التراجع عن هذا الإجراء.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'نعم، احذفه!',
+            cancelButtonText: 'إلغاء'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // إرسال الفورم المخفي
+                document.getElementById('deleteForm-' + id).submit();
+            }
+        });
+    }
+</script>

@@ -1,42 +1,100 @@
-﻿@model Diska.Models.ApplicationUser
+﻿@model Diska.Areas.Admin.Controllers.UserDetailsViewModel
 @{
-    ViewData["Title"] = "تفاصيل المستخدم";
+    ViewData["Title"] = "ملف المستخدم";
     Layout = "_AdminLayout";
-    var orders = ViewBag.Orders as IEnumerable<Diska.Models.Order>;
-    var transactions = ViewBag.Transactions as IEnumerable<Diska.Models.WalletTransaction>;
+    var role = ViewBag.UserRole as string;
 }
 
 <div style="margin-bottom:20px;">
-    <a asp-action="Index" class="btn btn-outline"><i class="fas fa-arrow-right"></i> عودة للقائمة</a>
+    <a asp-action="Index" style="text-decoration:none; color:#64748b; font-weight:bold;">
+        <i class="fas fa-arrow-right"></i> العودة لقائمة المستخدمين
+    </a>
 </div>
 
-<div class="card">
-    <div style="display:flex; gap:20px; align-items:center; border-bottom:1px solid #eee; padding-bottom:20px; margin-bottom:20px;">
-        <div style="width:80px; height:80px; background:#f1f5f9; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:2rem; color:#64748b;">
-            <i class="fas fa-user"></i>
-        </div>
-        <div>
-            <h2 style="margin:0;">@Model.FullName</h2>
-            <div style="color:#666;">@Model.PhoneNumber</div>
-            <div style="margin-top:5px;">
-                <span class="badge" style="background:#e0f2fe; color:#0284c7;">@ViewBag.Role</span>
-                @if (Model.ShopName != null)
-                {
-                    <span class="badge" style="background:#fffbeb; color:#d97706;">@Model.ShopName</span>
-                }
+<div style="display:grid; grid-template-columns: 1fr 2fr; gap:25px;">
+
+    <!-- Info Card -->
+    <div>
+        <div class="card" style="text-align:center;">
+            <div style="width:100px; height:100px; background:#f1f5f9; border-radius:50%; margin:0 auto 15px; display:flex; align-items:center; justify-content:center; font-size:2.5rem; color:var(--primary);">
+                <i class="fas fa-user"></i>
             </div>
+            <h3 style="margin:0; color:var(--primary);">@Model.User.FullName</h3>
+            <p style="color:#64748b; margin:5px 0;">@Model.User.PhoneNumber</p>
+
+            <div style="margin:15px 0; padding:10px; background:#f8fafc; border-radius:10px; border:1px solid #e2e8f0;">
+                <span style="display:block; font-size:0.8rem; color:#64748b;">الصلاحية الحالية</span>
+                <strong style="color:var(--text-dark);">@role</strong>
+            </div>
+
+            @if (role == "Merchant")
+            {
+                <div style="margin-bottom:15px; text-align:right;">
+                    <p style="margin:5px 0;"><strong>المحل:</strong> @Model.User.ShopName</p>
+                    <p style="margin:5px 0;"><strong>السجل التجاري:</strong> @Model.User.CommercialRegister</p>
+                    <p style="margin:5px 0;"><strong>البطاقة الضريبية:</strong> @Model.User.TaxCard</p>
+                    <hr style="margin:10px 0; border-top:1px solid #eee;">
+                    <form asp-action="ToggleVerification" method="post">
+                        <input type="hidden" name="id" value="@Model.User.Id" />
+                        @if (Model.User.IsVerifiedMerchant)
+                        {
+                            <button class="btn btn-danger w-100" style="background:#fee2e2; color:#dc2626; border:none;">إيقاف التوثيق</button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-primary w-100" style="background:#dcfce7; color:#166534; border:none;">توثيق الحساب</button>
+                        }
+                    </form>
+                </div>
+            }
+
+            <hr style="margin:20px 0; border-top:1px solid #eee;">
+
+            <!-- Change Role -->
+            <form asp-action="ChangeRole" method="post">
+                <input type="hidden" name="id" value="@Model.User.Id" />
+                <label style="text-align:right; font-size:0.9rem;">تغيير الصلاحية:</label>
+                <div style="display:flex; gap:5px; margin-top:5px;">
+                    <select name="newRole" class="form-control" style="padding:8px;">
+                        <option value="Customer" selected="@(role == "Customer")">عميل</option>
+                        <option value="Merchant" selected="@(role == "Merchant")">تاجر</option>
+                        <option value="Admin" selected="@(role == "Admin")">أدمن</option>
+                    </select>
+                    <button class="btn btn-primary" style="padding:8px 15px;">حفظ</button>
+                </div>
+            </form>
         </div>
-        <div style="margin-right:auto; text-align:center;">
-            <small>رصيد المحفظة</small>
-            <h3 style="margin:0; color:green;">@Model.WalletBalance.ToString("N2") ج.م</h3>
+
+        <!-- Wallet Management -->
+        <div class="card">
+            <h4 style="margin-top:0; color:var(--primary);"><i class="fas fa-wallet"></i> إدارة المحفظة</h4>
+            <div style="text-align:center; margin:20px 0;">
+                <span style="font-size:2rem; font-weight:bold; color:green;">@Model.User.WalletBalance.ToString("N2")</span> <small>ج.م</small>
+            </div>
+
+            <button onclick="document.getElementById('balanceForm').style.display='block'" class="btn btn-outline w-100">تعديل الرصيد (إضافة/خصم)</button>
+
+            <form id="balanceForm" asp-action="ManageBalance" method="post" style="display:none; margin-top:15px; background:#f8fafc; padding:15px; border-radius:10px;">
+                <input type="hidden" name="id" value="@Model.User.Id" />
+                <div style="margin-bottom:10px;">
+                    <label style="font-size:0.8rem;">المبلغ (سالب للخصم)</label>
+                    <input type="number" name="amount" class="form-control" placeholder="مثال: 100 أو -50" required />
+                </div>
+                <div style="margin-bottom:10px;">
+                    <label style="font-size:0.8rem;">السبب</label>
+                    <input type="text" name="reason" class="form-control" placeholder="سبب العملية" required />
+                </div>
+                <button class="btn btn-primary w-100">تنفيذ</button>
+            </form>
         </div>
     </div>
 
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:30px;">
-        <!-- Orders History -->
-        <div>
-            <h4 style="color:var(--primary); margin-bottom:15px;">آخر الطلبات</h4>
-            @if (orders != null && orders.Any())
+    <!-- Right Side: Activity -->
+    <div>
+        <div class="card">
+            <h4 style="margin-top:0; margin-bottom:20px; color:#475569;">آخر الطلبات (@ViewBag.OrdersCount)</h4>
+
+            @if (Model.Orders.Any())
             {
                 <table style="width:100%; font-size:0.9rem;">
                     <thead>
@@ -45,16 +103,26 @@
                             <th>التاريخ</th>
                             <th>المبلغ</th>
                             <th>الحالة</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var order in orders.Take(5))
+                        @foreach (var order in Model.Orders)
                         {
                             <tr>
                                 <td>#@order.Id</td>
                                 <td>@order.OrderDate.ToString("yyyy/MM/dd")</td>
                                 <td>@order.TotalAmount.ToString("N0")</td>
-                                <td>@order.Status</td>
+                                <td>
+                                    @{
+                                        var bg = order.Status == "Pending" ? "#fffbeb" : "#dcfce7";
+                                        var clr = order.Status == "Pending" ? "#d97706" : "#166534";
+                                    }
+                                    <span class="badge" style="background:@bg; color:@clr;">@order.Status</span>
+                                </td>
+                                <td>
+                                    <a asp-controller="Dashboard" asp-action="OrderDetails" asp-route-id="@order.Id" class="btn btn-outline" style="padding:4px 8px; font-size:0.75rem;">عرض</a>
+                                </td>
                             </tr>
                         }
                     </tbody>
@@ -62,30 +130,34 @@
             }
             else
             {
-                <p style="color:#999;">لا توجد طلبات.</p>
+                <p style="color:#999; text-align:center;">لا توجد طلبات سابقة.</p>
             }
         </div>
 
-        <!-- Wallet History -->
-        <div>
-            <h4 style="color:var(--primary); margin-bottom:15px;">سجل المحفظة</h4>
-            @if (transactions != null && transactions.Any())
+        <div class="card">
+            <h4 style="margin-top:0; margin-bottom:20px; color:#475569;">سجل المعاملات المالية</h4>
+
+            @if (Model.Transactions.Any())
             {
                 <table style="width:100%; font-size:0.9rem;">
                     <thead>
                         <tr style="background:#f8fafc;">
                             <th>العملية</th>
                             <th>المبلغ</th>
+                            <th>الوصف</th>
                             <th>التاريخ</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var t in transactions.Take(5))
+                        @foreach (var trans in Model.Transactions)
                         {
                             <tr>
-                                <td>@t.Type</td>
-                                <td style="color:@(t.Amount > 0 ? "green" : "red"); font-weight:bold;">@t.Amount.ToString("N0")</td>
-                                <td>@t.TransactionDate.ToString("yyyy/MM/dd")</td>
+                                <td>@trans.Type</td>
+                                <td style="font-weight:bold; color:@(trans.Amount > 0 ? "green" : "red")">
+                                    @(trans.Amount > 0 ? "+" : "")@trans.Amount.ToString("N0")
+                                </td>
+                                <td style="font-size:0.85rem; color:#666;">@trans.Description</td>
+                                <td style="font-size:0.85rem; color:#999;">@trans.TransactionDate.ToString("yyyy/MM/dd")</td>
                             </tr>
                         }
                     </tbody>
@@ -93,7 +165,7 @@
             }
             else
             {
-                <p style="color:#999;">لا توجد معاملات.</p>
+                <p style="color:#999; text-align:center;">لا توجد معاملات مالية.</p>
             }
         </div>
     </div>

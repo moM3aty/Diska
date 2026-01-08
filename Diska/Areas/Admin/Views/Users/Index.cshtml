@@ -4,12 +4,16 @@
     Layout = "_AdminLayout";
 }
 
-<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-    <h2 style="margin:0;">المستخدمين والتجار</h2>
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
     <div>
-        <a asp-action="Index" asp-route-role="All" class="btn btn-primary" style="background:#e2e8f0; color:#333;">الكل</a>
-        <a asp-action="Index" asp-route-role="Merchant" class="btn btn-primary" style="background:#7c3aed;">التجار</a>
-        <a asp-action="Index" asp-route-role="Customer" class="btn btn-primary">العملاء</a>
+        <h2 style="margin:0; color:var(--primary);">المستخدمين والصلاحيات</h2>
+        <p style="color:#64748b; margin-top:5px;">إدارة العملاء، التجار، وفريق العمل</p>
+    </div>
+
+    <div class="btn-group">
+        <a asp-action="Index" asp-route-role="All" class="btn btn-outline @(ViewBag.CurrentRole == "All" ? "active" : "")" style="border-radius:0 6px 6px 0;">الكل</a>
+        <a asp-action="Index" asp-route-role="Merchant" class="btn btn-outline @(ViewBag.CurrentRole == "Merchant" ? "active" : "")" style="border-radius:0;">التجار</a>
+        <a asp-action="Index" asp-route-role="Customer" class="btn btn-outline @(ViewBag.CurrentRole == "Customer" ? "active" : "")" style="border-radius:6px 0 0 6px;">العملاء</a>
     </div>
 </div>
 
@@ -17,11 +21,10 @@
     <table style="width:100%;">
         <thead>
             <tr>
-                <th>الاسم / المحل</th>
-                <th>الهاتف</th>
+                <th>البيانات</th>
                 <th>الصلاحية</th>
-                <th>الرصيد</th>
-                <th>الحالة</th>
+                <th>المحفظة</th>
+                <th>الحالة (للتجار)</th>
                 <th>إجراءات</th>
             </tr>
         </thead>
@@ -30,17 +33,26 @@
             {
                 <tr>
                     <td>
-                        <strong>@user.FullName</strong>
-                        @if (!string.IsNullOrEmpty(user.ShopName))
-                        {
-                            <div style="font-size:0.8rem; color:#666;">@user.ShopName</div>
-                        }
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <div style="width:40px; height:40px; background:#f1f5f9; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#64748b; font-weight:bold;">
+                                @user.FullName?.FirstOrDefault()
+                            </div>
+                            <div>
+                                <strong style="display:block; color:var(--text-dark);">@user.FullName</strong>
+                                <small style="color:#64748b;">@user.PhoneNumber</small>
+                                @if (!string.IsNullOrEmpty(user.ShopName))
+                                {
+                                    <br>
+                            
+                                    <small style="color:var(--primary);"><i class="fas fa-store"></i> @user.ShopName</small>
+                                }
+                            </div>
+                        </div>
                     </td>
-                    <td>@user.PhoneNumber</td>
                     <td>
                         @if (user.Role == "Admin")
                         {
-                            <span class="badge" style="background:#000; color:#fff;">Admin</span>
+                            <span class="badge" style="background:#0f172a; color:#fff;">مسؤول (Admin)</span>
                         }
                         else if (user.Role == "Merchant")
                         {
@@ -50,43 +62,53 @@
                         else
                         {
 
-                            <span class="badge" style="background:#e2e8f0; color:#333;">عميل</span>
+                            <span class="badge" style="background:#e2e8f0; color:#334155;">عميل</span>
                         }
                     </td>
-                    <td style="color:green; font-weight:bold;">@user.WalletBalance.ToString("N2")</td>
                     <td>
-                        @if (user.IsVerified)
+                        <span style="font-weight:bold; color:@(user.WalletBalance > 0 ? "#16a34a" : "#334155")">
+                            @user.WalletBalance.ToString("N0") <small>ج.م</small>
+                        </span>
+                    </td>
+                    <td>
+                        @if (user.Role == "Merchant")
                         {
-                            <span class="badge" style="background:#dcfce7; color:#166534;">موثق</span>
-                        }
-                        else if (user.Role == "Merchant")
-                        {
+                            if (user.IsVerified)
+                            {
+                                <span class="badge" style="background:#dcfce7; color:#166534;"><i class="fas fa-check-circle"></i> موثق</span>
+                            }
+                            else
+                            {
 
-                            <span class="badge" style="background:#fffbeb; color:#d97706;">غير موثق</span>
+                                <span class="badge" style="background:#fffbeb; color:#d97706;"><i class="fas fa-clock"></i> قيد المراجعة</span>
+                            }
                         }
                         else
                         {
-
-                            <span>-</span>
+                            <span style="color:#ccc;">-</span>
                         }
                     </td>
                     <td>
                         <div style="display:flex; gap:5px;">
+                            <a asp-action="Details" asp-route-id="@user.Id" class="btn btn-primary" style="padding:6px 12px; font-size:0.8rem;">
+                                التفاصيل
+                            </a>
+
                             @if (user.Role == "Merchant")
                             {
                                 <form asp-action="ToggleVerification" method="post" style="display:inline;">
                                     <input type="hidden" name="id" value="@user.Id" />
-                                    <button type="submit" class="btn" style="padding:5px 10px; font-size:0.8rem; background:#f1f5f9;">
-                                        @(user.IsVerified ? "إلغاء التوثيق" : "توثيق")
+                                    <button type="submit" class="btn btn-outline" style="padding:6px 12px; font-size:0.8rem;" title="@(user.IsVerified ? "إلغاء التوثيق" : "توثيق")">
+                                        <i class="fas @(user.IsVerified ? "fa-ban" : "fa-check")"></i>
                                     </button>
                                 </form>
                             }
-                            <button onclick="addBalance('@user.Id', '@user.FullName')" class="btn" style="padding:5px 10px; font-size:0.8rem; background:#e0f2fe; color:#0284c7;">
-                                <i class="fas fa-wallet"></i>
-                            </button>
-                            <form asp-action="Delete" method="post" onsubmit="return confirm('حذف نهائي؟');" style="display:inline;">
+
+                            <form asp-action="Delete" method="post" style="display:inline;" data-confirm="هل أنت متأكد من حذف المستخدم @user.FullName نهائياً؟">
                                 <input type="hidden" name="id" value="@user.Id" />
-                                <button type="submit" class="btn btn-danger" style="padding:5px 10px; font-size:0.8rem;"><i class="fas fa-trash"></i></button>
+                                <button type="submit" class="btn btn-danger" style="padding:6px 12px; font-size:0.8rem; background:#fee2e2; color:#dc2626; border:none;">
+                                    <i class="fas fa-trash"></i>
+                                </button>
                             </form>
                         </div>
                     </td>
@@ -95,37 +117,3 @@
         </tbody>
     </table>
 </div>
-
-<script>
-    function addBalance(id, name) {
-        let amount = prompt("أدخل المبلغ (استخدم السالب للخصم) للمستخدم: " + name);
-        if (amount) {
-            let reason = prompt("سبب العملية:");
-
-            let form = document.createElement('form');
-            form.method = 'post';
-            form.action = '/Admin/Users/AddBalance';
-
-            let idField = document.createElement('input');
-            idField.type = 'hidden';
-            idField.name = 'id';
-            idField.value = id;
-
-            let amountField = document.createElement('input');
-            amountField.type = 'hidden';
-            amountField.name = 'amount';
-            amountField.value = amount;
-
-            let reasonField = document.createElement('input');
-            reasonField.type = 'hidden';
-            reasonField.name = 'reason';
-            reasonField.value = reason;
-
-            form.appendChild(idField);
-            form.appendChild(amountField);
-            form.appendChild(reasonField);
-            document.body.appendChild(form);
-            form.submit();
-        }
-    }
-</script>

@@ -11,12 +11,22 @@
     <title>لوحة التحكم - DISKA</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SweetAlert2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
 
     <style>
+        /* --- Reset & Variables --- */
         :root {
-            --admin-bg: #f1f5f9;
+            --admin-bg: #f8fafc;
             --sidebar-bg: #1e293b;
             --primary: #2563eb;
+            --accent: #FACC15;
+            --text-dark: #0f172a;
+        }
+
+        * {
+            box-sizing: border-box;
+            outline: none;
         }
 
         body {
@@ -26,8 +36,21 @@
             display: flex;
             height: 100vh;
             overflow: hidden;
+            color: var(--text-dark);
         }
 
+        a {
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        /* --- Sidebar --- */
         .sidebar {
             width: 260px;
             background-color: var(--sidebar-bg);
@@ -35,27 +58,28 @@
             display: flex;
             flex-direction: column;
             flex-shrink: 0;
+            transition: 0.3s;
+            z-index: 100;
         }
 
         .sidebar-header {
-            padding: 20px;
+            padding: 25px;
             text-align: center;
-            border-bottom: 1px solid #334155;
-            background: #0f172a;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.2);
         }
 
             .sidebar-header h2 {
                 margin: 0;
-                color: #FACC15;
+                color: var(--accent);
                 font-weight: 800;
+                font-size: 1.5rem;
             }
 
         .sidebar-menu {
-            list-style: none;
-            padding: 15px;
-            margin: 0;
             flex: 1;
             overflow-y: auto;
+            padding: 15px;
         }
 
             .sidebar-menu li {
@@ -68,23 +92,31 @@
                 gap: 12px;
                 padding: 12px 15px;
                 color: #cbd5e1;
-                text-decoration: none;
                 border-radius: 8px;
-                transition: 0.2s;
                 font-size: 0.95rem;
+                font-weight: 600;
             }
 
                 .sidebar-menu a:hover, .sidebar-menu a.active {
                     background-color: var(--primary);
                     color: #fff;
                     transform: translateX(-5px);
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
                 }
 
+            .sidebar-menu i {
+                width: 25px;
+                text-align: center;
+                font-size: 1.1rem;
+            }
+
+        /* --- Content Area --- */
         .main-content {
             flex: 1;
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            position: relative;
         }
 
         .top-bar {
@@ -93,7 +125,9 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            z-index: 10;
+            height: 70px;
         }
 
         .content-area {
@@ -102,51 +136,163 @@
             padding: 30px;
         }
 
+        /* --- Form Elements (إصلاح التداخل) --- */
         .card {
             background: #fff;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            margin-bottom: 25px;
+            border: 1px solid #f1f5f9;
+        }
+
+        .form-group {
             margin-bottom: 20px;
-            border: 1px solid #e2e8f0;
+        }
+        /* مسافة بين الحقول */
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 700;
+            color: #334155;
+            font-size: 0.95rem;
         }
 
-        table {
+        .form-control, select, textarea {
             width: 100%;
-            border-collapse: collapse;
+            padding: 12px 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 1rem;
+            color: #0f172a;
+            transition: all 0.3s ease;
+            background-color: #fff;
+            height: auto; /* لضمان عدم ثبات الارتفاع */
         }
 
-        th, td {
-            padding: 12px;
-            text-align: right;
-            border-bottom: 1px solid #eee;
+            .form-control:focus, select:focus, textarea:focus {
+                border-color: var(--primary);
+                box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            }
+
+        /* Utilities */
+        .mb-3 {
+            margin-bottom: 15px !important;
         }
 
+        .mb-4 {
+            margin-bottom: 25px !important;
+        }
+
+        .text-danger {
+            color: #ef4444;
+            font-size: 0.85rem;
+            margin-top: 5px;
+            display: block;
+        }
+
+        /* Buttons */
         .btn {
-            padding: 8px 16px;
-            border-radius: 6px;
+            padding: 10px 24px;
+            border-radius: 10px;
             border: none;
             cursor: pointer;
             text-decoration: none;
-            display: inline-block;
-            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-weight: 700;
+            transition: 0.3s;
+            font-size: 0.95rem;
         }
 
         .btn-primary {
             background: var(--primary);
             color: #fff;
+            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
         }
 
+            .btn-primary:hover {
+                background: #1d4ed8;
+                transform: translateY(-2px);
+            }
+
+        .btn-outline {
+            background: #fff;
+            border: 1px solid #cbd5e1;
+            color: #475569;
+        }
+
+            .btn-outline:hover {
+                background: #f8fafc;
+                border-color: #94a3b8;
+            }
+
         .btn-danger {
-            background: #ef4444;
-            color: #fff;
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+            .btn-danger:hover {
+                background: #fecaca;
+            }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        th {
+            background: #f8fafc;
+            color: #475569;
+            padding: 15px;
+            text-align: right;
+            font-weight: 700;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+            vertical-align: middle;
+        }
+
+        tr:hover td {
+            background-color: #f8fafc;
         }
 
         .badge {
-            padding: 4px 10px;
-            border-radius: 20px;
+            padding: 6px 12px;
+            border-radius: 50px;
             font-size: 0.75rem;
-            font-weight: bold;
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        /* Responsive */
+        @@media (max-width: 768px) {
+            .sidebar
+
+        {
+            position: fixed;
+            right: -260px;
+            height: 100%;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+        }
+
+        .sidebar.active {
+            right: 0;
+        }
+
+        .main-content {
+            width: 100%;
+        }
+
         }
     </style>
 </head>
@@ -154,36 +300,29 @@
 
     <aside class="sidebar">
         <div class="sidebar-header">
-            <h2>DISKA <small style="font-size:0.5em; color:#fff;">Admin</small></h2>
+            <h2>DISKA <span style="font-size:0.6em; color:#fff; font-weight:400;">Control</span></h2>
         </div>
         <ul class="sidebar-menu">
-            <!-- الرئيسية -->
-            <li><a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="@(ViewContext.RouteData.Values["Controller"].ToString() == "Dashboard" ? "active" : "")"><i class="fas fa-home"></i> لوحة القيادة</a></li>
-            <li><a asp-area="Admin" asp-controller="Reports" asp-action="Index" class="@(ViewContext.RouteData.Values["Controller"].ToString() == "Reports" ? "active" : "")"><i class="fas fa-chart-pie"></i> التقارير</a></li>
+            <li><a asp-area="Admin" asp-controller="Dashboard" asp-action="Index"><i class="fas fa-chart-pie"></i> لوحة القيادة</a></li>
 
-            <li style="margin: 10px 0; border-top: 1px solid #334155;"></li>
+            <li style="margin: 15px 0; border-top: 1px solid rgba(255,255,255,0.1); opacity: 0.5;"></li>
+            <li style="padding: 0 15px; margin-bottom: 10px; font-size: 0.8rem; color: #94a3b8;">إدارة المتجر</li>
 
-            <!-- العمليات -->
-            <li><a asp-area="Admin" asp-controller="Dashboard" asp-action="Orders" class="@(ViewContext.RouteData.Values["Action"].ToString() == "Orders" ? "active" : "")"><i class="fas fa-shopping-bag"></i> الطلبات</a></li>
-            <li><a asp-area="Admin" asp-controller="Deals" asp-action="Index" class="@(ViewContext.RouteData.Values["Controller"].ToString() == "Deals" ? "active" : "")"><i class="fas fa-handshake"></i> الصفقات (Deals)</a></li>
-            <li><a asp-area="Admin" asp-controller="Requests" asp-action="Index" class="@(ViewContext.RouteData.Values["Controller"].ToString() == "Requests" ? "active" : "")"><i class="fas fa-bullhorn"></i> طلبات الشراء</a></li>
+            <li><a asp-area="Admin" asp-controller="Dashboard" asp-action="Orders"><i class="fas fa-shopping-bag"></i> الطلبات</a></li>
+            <li><a asp-area="Admin" asp-controller="Products" asp-action="Index"><i class="fas fa-box"></i> المنتجات</a></li>
+            <li><a asp-area="Admin" asp-controller="Products" asp-action="Create" style="color: var(--accent);"><i class="fas fa-plus-circle"></i> إضافة منتج (للتاجر)</a></li>
+            <li><a asp-area="Admin" asp-controller="Categories" asp-action="Index"><i class="fas fa-tags"></i> التصنيفات</a></li>
+            <li><a asp-area="Admin" asp-controller="Users" asp-action="Index"><i class="fas fa-users"></i> المستخدمين</a></li>
 
-            <li style="margin: 10px 0; border-top: 1px solid #334155;"></li>
+            <li style="margin: 15px 0; border-top: 1px solid rgba(255,255,255,0.1); opacity: 0.5;"></li>
+            <li style="padding: 0 15px; margin-bottom: 10px; font-size: 0.8rem; color: #94a3b8;">التسويق</li>
 
-            <!-- الإدارة -->
-            <li><a asp-area="Admin" asp-controller="Users" asp-action="Index" class="@(ViewContext.RouteData.Values["Controller"].ToString() == "Users" ? "active" : "")"><i class="fas fa-users"></i> المستخدمين</a></li>
-            <li><a asp-area="Admin" asp-controller="Dashboard" asp-action="Products" class="@(ViewContext.RouteData.Values["Action"].ToString() == "Products" ? "active" : "")"><i class="fas fa-box"></i> المنتجات</a></li>
-            <li><a asp-area="Admin" asp-controller="Dashboard" asp-action="Categories" class="@(ViewContext.RouteData.Values["Action"].ToString() == "Categories" ? "active" : "")"><i class="fas fa-tags"></i> التصنيفات</a></li>
-
-            <li style="margin: 10px 0; border-top: 1px solid #334155;"></li>
-
-            <!-- المحتوى والتسويق -->
-            <li><a asp-area="Admin" asp-controller="Banners" asp-action="Index" class="@(ViewContext.RouteData.Values["Controller"].ToString() == "Banners" ? "active" : "")"><i class="fas fa-images"></i> البنرات</a></li>
-            <li><a asp-area="Admin" asp-controller="Survey" asp-action="Index" class="@(ViewContext.RouteData.Values["Controller"].ToString() == "Survey" ? "active" : "")"><i class="fas fa-poll"></i> الاستبيانات</a></li>
-            <li><a asp-area="Admin" asp-controller="Dashboard" asp-action="Messages" class="@(ViewContext.RouteData.Values["Action"].ToString() == "Messages" ? "active" : "")"><i class="fas fa-envelope"></i> الرسائل</a></li>
+            <li><a asp-area="Admin" asp-controller="Deals" asp-action="Index"><i class="fas fa-handshake"></i> الصفقات</a></li>
+            <li><a asp-area="Admin" asp-controller="Banners" asp-action="Index"><i class="fas fa-images"></i> البنرات</a></li>
+            <li><a asp-area="Admin" asp-controller="Survey" asp-action="Index"><i class="fas fa-poll"></i> الاستبيانات</a></li>
         </ul>
-        <div style="padding: 20px; border-top: 1px solid #334155;">
-            <a asp-controller="Home" asp-action="Index" target="_blank" style="color:#cbd5e1; text-decoration:none; display:flex; gap:10px; align-items:center;">
+        <div style="padding: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+            <a asp-area="" asp-controller="Home" asp-action="Index" target="_blank" style="color:#cbd5e1; text-decoration:none; display:flex; gap:10px; align-items:center;">
                 <i class="fas fa-external-link-alt"></i> الموقع
             </a>
         </div>
@@ -191,10 +330,21 @@
 
     <div class="main-content">
         <div class="top-bar">
-            <h4 style="margin:0;">أهلاً، @(user?.FullName ?? "Admin")</h4>
-            <a asp-controller="Account" asp-action="Logout" style="color:#ef4444; text-decoration:none; font-weight:bold;">
-                <i class="fas fa-sign-out-alt"></i> خروج
-            </a>
+            <!-- Mobile Toggle -->
+            <button class="btn btn-outline mobile-toggle d-md-none" style="padding:5px 10px; margin-left:10px; display:none;" onclick="document.querySelector('.sidebar').classList.toggle('active')">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <h4 style="margin:0; font-weight:700;">👋 أهلاً، @(user?.FullName ?? "Admin")</h4>
+
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <a asp-area="" asp-controller="Home" asp-action="Index" target="_blank" class="btn btn-outline" style="padding: 8px 15px; font-size: 0.9rem;">
+                    <i class="fas fa-external-link-alt"></i> الموقع
+                </a>
+                <a asp-area="" asp-controller="Account" asp-action="Logout" style="color:#ef4444; text-decoration:none; font-weight:bold; display: flex; align-items: center; gap: 5px;">
+                    <i class="fas fa-sign-out-alt"></i> خروج
+                </a>
+            </div>
         </div>
 
         <div class="content-area">
@@ -202,5 +352,66 @@
         </div>
     </div>
 
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // Media Query for Mobile Toggle
+        if (window.innerWidth < 768) {
+            document.querySelector('.mobile-toggle').style.display = 'block';
+        }
+
+        // Global SweetAlert
+        document.addEventListener('click', function(e) {
+            let form = e.target.closest('form');
+            if (form && form.getAttribute('onsubmit') && form.getAttribute('onsubmit').includes('confirm')) {
+                e.preventDefault();
+                let msg = form.getAttribute('onsubmit').match(/'([^']+)'/)[1];
+
+                Swal.fire({
+                    title: 'تأكيد الإجراء',
+                    text: msg,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#2563eb',
+                    cancelButtonColor: '#ef4444',
+                    confirmButtonText: 'نعم، نفذ',
+                    cancelButtonText: 'إلغاء'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.removeAttribute('onsubmit');
+                        form.submit();
+                    }
+                });
+            }
+        });
+
+        // Toast Messages
+        @if (TempData["Success"] != null)
+        {
+                <text>
+                Swal.fire({
+                    icon: 'success',
+                    title: 'تم بنجاح!',
+                        text: 'تم  حفظ العمليه بنجاح',
+                    timer: 3000,
+                    showConfirmButton: false,
+                    toast: true,
+                    position: 'top-end'
+                });
+                </text>
+        }
+        @if (TempData["Error"] != null)
+        {
+                <text>
+                Swal.fire({
+                    icon: 'error',
+                    title: 'خطأ!',
+                    text: 'خطأ في انهاء العمليه',
+                    toast: true,
+                    position: 'top-end'
+                });
+                </text>
+        }
+    </script>
 </body>
 </html>

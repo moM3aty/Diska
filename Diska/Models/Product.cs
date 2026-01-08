@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Diska.Models
@@ -13,60 +11,55 @@ namespace Diska.Models
         [Display(Name = "اسم المنتج (عربي)")]
         public string Name { get; set; }
 
+        [Required(ErrorMessage = "اسم المنتج (إنجليزي) مطلوب")]
         [Display(Name = "اسم المنتج (إنجليزي)")]
         public string NameEn { get; set; }
 
-        [Required(ErrorMessage = "السعر الأساسي مطلوب")]
         [Column(TypeName = "decimal(18,2)")]
-        [Range(0.01, double.MaxValue, ErrorMessage = "السعر يجب أن يكون أكبر من 0")]
+        [Required(ErrorMessage = "السعر مطلوب")]
         public decimal Price { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
-        [Display(Name = "السعر قبل الخصم")]
         public decimal? OldPrice { get; set; }
 
         [Required(ErrorMessage = "الكمية المتاحة مطلوبة")]
-        [Range(0, int.MaxValue, ErrorMessage = "الكمية لا يمكن أن تكون سالبة")]
         public int StockQuantity { get; set; }
 
-        [Required(ErrorMessage = "عدد العبوات داخل الكرتونة مطلوب")]
-        [Range(1, int.MaxValue, ErrorMessage = "يجب أن يكون 1 على الأقل")]
+        [Required(ErrorMessage = "وحدات الكرتونة مطلوبة")]
         public int UnitsPerCarton { get; set; }
 
-        [DataType(DataType.MultilineText)]
         public string Description { get; set; }
+
+        [Required(ErrorMessage = "الوصف (إنجليزي) مطلوب")]
         public string DescriptionEn { get; set; }
 
         public string ImageUrl { get; set; }
 
-        [DataType(DataType.Date)]
-        [Required(ErrorMessage = "تاريخ الإنتاج مطلوب")]
-        public DateTime? ProductionDate { get; set; }
+        public virtual List<ProductImage> Images { get; set; } = new List<ProductImage>();
+
+
+        public virtual List<ProductColor> ProductColors { get; set; } = new List<ProductColor>();
+
+        public string Color { get; set; }
 
         [DataType(DataType.Date)]
-        [Required(ErrorMessage = "تاريخ الانتهاء مطلوب")]
+        public DateTime? ProductionDate { get; set; }
+        [DataType(DataType.Date)]
         public DateTime? ExpiryDate { get; set; }
 
-        // Foreign Keys
         public string MerchantId { get; set; }
         [ForeignKey("MerchantId")]
         public virtual ApplicationUser Merchant { get; set; }
 
-        [Required(ErrorMessage = "اختيار القسم مطلوب")]
+        [Required(ErrorMessage = "القسم مطلوب")]
         public int CategoryId { get; set; }
         [ForeignKey("CategoryId")]
         public virtual Category Category { get; set; }
 
-        // إضافة حقل تفعيل/إيقاف المنتج
         public bool IsActive { get; set; } = true;
-
-        // B2B Logic: Wholesale Price Tiers
         public virtual List<PriceTier> PriceTiers { get; set; } = new List<PriceTier>();
 
         [NotMapped]
         public bool IsExpired => ExpiryDate.HasValue && ExpiryDate.Value < DateTime.Now;
-
-        [NotMapped]
-        public bool IsOutOfStock => StockQuantity <= 0;
     }
 }

@@ -2,6 +2,13 @@
 @{
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
     ViewData["Title"] = isAr ? "إتمام الطلب" : "Checkout";
+
+    // قيم افتراضية من الكنترولر (للتعبئة التلقائية)
+    string defaultName = ViewBag.ShopName ?? ViewBag.FullName;
+    string defaultPhone = ViewBag.Phone;
+    string defaultGov = ViewBag.Governorate;
+    string defaultCity = ViewBag.City;
+    string defaultAddress = ViewBag.Address;
 }
 
 <section class="section-padding">
@@ -19,36 +26,39 @@
 
                     <div class="form-group mb-3">
                         <label>@(isAr ? "الاسم / اسم المحل" : "Name / Shop Name")</label>
-                        <input type="text" id="shopName" class="form-control" required placeholder="@(isAr ? "اسم المستلم" : "Receiver Name")">
+                        <input type="text" id="shopName" class="form-control" required placeholder="@(isAr ? "اسم المستلم" : "Receiver Name")" value="@defaultName">
                     </div>
 
                     <div class="form-group mb-3">
                         <label>@(isAr ? "رقم الموبايل" : "Phone Number")</label>
-                        <input type="tel" id="phone" class="form-control" required placeholder="01xxxxxxxxx">
+                        <input type="tel" id="phone" class="form-control" required placeholder="01xxxxxxxxx" value="@defaultPhone">
                     </div>
 
                     <div class="row" style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:15px;">
                         <div class="form-group">
                             <label>@(isAr ? "المحافظة" : "Governorate")</label>
-                            <select id="govSelect" class="form-control" onchange="updateShippingCost()">
-                                <option value="القاهرة">@(isAr ? "القاهرة" : "Cairo")</option>
-                                <option value="الجيزة">@(isAr ? "الجيزة" : "Giza")</option>
-                                <option value="الإسكندرية">@(isAr ? "الإسكندرية" : "Alexandria")</option>
-                                <option value="أخرى">@(isAr ? "أخرى" : "Other")</option>
+                            <select id="govSelect" class="form-control" onchange="updateShippingCost()" required>
+                                <option value="" disabled selected>@(isAr ? "-- اختر المحافظة --" : "-- Select Governorate --")</option>
+                                <!-- يتم تعبئتها بواسطة JS -->
                             </select>
+                            <!-- حقل مخفي لحفظ القيمة الافتراضية للـ JS -->
+                            <input type="hidden" id="savedGov" value="@defaultGov" />
                         </div>
                         <div class="form-group">
                             <label>@(isAr ? "المدينة / المنطقة" : "City / Area")</label>
-                            <input type="text" id="city" class="form-control" required>
+                            <select id="citySelect" class="form-control" required disabled>
+                                <option value="" disabled selected>@(isAr ? "-- اختر المنطقة --" : "-- Select Area --")</option>
+                            </select>
+                            <input type="hidden" id="savedCity" value="@defaultCity" />
                         </div>
                     </div>
 
                     <div class="form-group mb-4">
                         <label>@(isAr ? "العنوان بالتفصيل" : "Detailed Address")</label>
-                        <input type="text" id="address" class="form-control" required placeholder="@(isAr ? "اسم الشارع - رقم العقار - علامة مميزة" : "Street - Building - Landmark")">
+                        <input type="text" id="address" class="form-control" required placeholder="@(isAr ? "اسم الشارع - رقم العقار - علامة مميزة" : "Street - Building - Landmark")" value="@defaultAddress">
                     </div>
 
-                    <!-- وقت التوصيل (جديد) -->
+                    <!-- وقت التوصيل -->
                     <div class="form-group mb-3">
                         <label><i class="fas fa-clock"></i> @(isAr ? "وقت التوصيل المفضل" : "Preferred Delivery Time")</label>
                         <select id="deliverySlot" class="form-control">
@@ -58,7 +68,7 @@
                         </select>
                     </div>
 
-                    <!-- ملاحظات (جديد) -->
+                    <!-- ملاحظات -->
                     <div class="form-group mb-4">
                         <label><i class="fas fa-sticky-note"></i> @(isAr ? "ملاحظات إضافية" : "Order Notes")</label>
                         <textarea id="orderNotes" class="form-control" rows="2" placeholder="@(isAr ? "مثال: يرجى الاتصال قبل الوصول" : "Ex: Call before arrival")"></textarea>
@@ -75,14 +85,12 @@
                             <span>@(isAr ? "دفع عند الاستلام (كاش)" : "Cash on Delivery")</span>
                         </label>
 
-                        @if (User.Identity.IsAuthenticated)
-                        {
-                            <label class="payment-card" style="display:flex; align-items:center; gap:10px; padding:15px; border:1px solid #ddd; border-radius:8px; cursor:pointer;">
-                                <input type="radio" name="payment" value="Wallet">
-                                <i class="fas fa-wallet" style="color:#3b82f6;"></i>
-                                <span>@(isAr ? "المحفظة الإلكترونية" : "Wallet Balance")</span>
-                            </label>
-                        }
+                        <!-- تم إزالة الشرط لأنه زائد، المستخدم مسجل دخول بالفعل -->
+                        <label class="payment-card" style="display:flex; align-items:center; gap:10px; padding:15px; border:1px solid #ddd; border-radius:8px; cursor:pointer;">
+                            <input type="radio" name="payment" value="Wallet">
+                            <i class="fas fa-wallet" style="color:#3b82f6;"></i>
+                            <span>@(isAr ? "المحفظة الإلكترونية" : "Wallet Balance")</span>
+                        </label>
                     </div>
                 </form>
             </div>
@@ -118,15 +126,39 @@
 </section>
 
 @section Scripts {
+    <script src="~/js/checkout-data.js"></script> <!-- بيانات المحافظات -->
     <script src="~/js/cart.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             renderCheckoutPreview();
-            updateShippingCost();
+
+            // محاولة تحديد المحافظة المحفوظة تلقائياً
+            setTimeout(() => {
+                const savedGov = document.getElementById('savedGov').value;
+                const savedCity = document.getElementById('savedCity').value;
+                const govSelect = document.getElementById('govSelect');
+                const citySelect = document.getElementById('citySelect');
+
+                if (savedGov && govSelect) {
+                    govSelect.value = savedGov;
+                    // تفعيل حدث التغيير لملء المدن
+                    const event = new Event('change');
+                    govSelect.dispatchEvent(event);
+
+                    // تحديد المدينة بعد ملء القائمة
+                    if (savedCity) {
+                        citySelect.value = savedCity;
+                    }
+
+                    // تحديث الشحن
+                    updateShippingCost();
+                } else {
+                    // حساب مبدئي (القاهرة افتراضياً إذا لم يوجد عنوان)
+                    updateShippingCost();
+                }
+            }, 500); // تأخير بسيط لضمان تحميل البيانات
         });
 
-        // تم تحديث دالة submitOrder في cart.js لتقرأ الحقول الجديدة
-        // ولكن سأعيد كتابتها هنا لتأكيد التغيير (أو يمكنك تحديث cart.js)
         async function submitOrder() {
             const form = document.getElementById('checkoutForm');
             if (!form.checkValidity()) { form.reportValidity(); return; }
@@ -140,10 +172,10 @@
                 shopName: document.getElementById('shopName').value,
                 phone: document.getElementById('phone').value,
                 governorate: document.getElementById('govSelect').value,
-                city: document.getElementById('city').value,
+                city: document.getElementById('citySelect').value,
                 address: document.getElementById('address').value,
-                deliverySlot: document.getElementById('deliverySlot').value, // جديد
-                notes: document.getElementById('orderNotes').value, // جديد
+                deliverySlot: document.getElementById('deliverySlot')?.value || "Anytime",
+                notes: document.getElementById('orderNotes')?.value || "",
                 paymentMethod: document.querySelector('input[name="payment"]:checked').value,
                 shippingCost: parseFloat(shippingText) || 0,
                 items: cart.map(i => ({ id: i.id, qty: i.qty, price: i.price }))
@@ -164,8 +196,11 @@
 
                 if (result.success) {
                     localStorage.removeItem('DISKA_CART');
-                    alert("تم إرسال الطلب بنجاح! رقم الطلب: #" + result.orderId);
-                    window.location.href = '/Order/MyOrders';
+                    if(result.redirectUrl) {
+                        window.location.href = result.redirectUrl;
+                    } else {
+                        window.location.href = `/Cart/OrderSuccess?id=${result.orderId}`;
+                    }
                 } else {
                     alert("خطأ: " + result.message);
                     btn.disabled = false;
@@ -174,6 +209,8 @@
             } catch (e) {
                 console.error(e);
                 alert("فشل الاتصال بالخادم");
+                btn.disabled = false;
+                btn.innerHTML = 'تأكيد الطلب';
             }
         }
     </script>

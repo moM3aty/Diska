@@ -32,6 +32,8 @@ namespace Diska.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Category category)
         {
+            ModelState.Remove("Products");
+
             if (ModelState.IsValid)
             {
                 _context.Categories.Add(category);
@@ -54,7 +56,7 @@ namespace Diska.Areas.Admin.Controllers
         public async Task<IActionResult> Edit(int id, Category category)
         {
             if (id != category.Id) return NotFound();
-
+            ModelState.Remove("Products");
             if (ModelState.IsValid)
             {
                 try

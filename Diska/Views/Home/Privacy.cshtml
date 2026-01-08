@@ -4,62 +4,131 @@
     ViewData["Title"] = isAr ? "سياسة الخصوصية" : "Privacy Policy";
 }
 
+<style>
+    .policy-box {
+        background: #fff;
+        padding: 30px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+        border: 1px solid #eee;
+    }
+
+        .policy-box h2, .policy-box h3 {
+            color: var(--primary);
+            border-bottom: 2px solid var(--accent);
+            display: inline-block;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+        }
+
+        .policy-box ul {
+            list-style: disc;
+            padding-right: 20px; /* للغة العربية */
+            padding-left: 20px; /* للغة الانجليزية سيتم ضبطها عبر التوجيه */
+            color: #555;
+            margin-bottom: 20px;
+        }
+
+    html[dir="ltr"] .policy-box ul {
+        padding-right: 0;
+        padding-left: 20px;
+    }
+
+    .policy-box li {
+        margin-bottom: 10px;
+        line-height: 1.6;
+    }
+
+    .policy-box p {
+        color: #555;
+        line-height: 1.8;
+        margin-bottom: 15px;
+    }
+
+    .policy-box strong {
+        color: var(--text-dark);
+    }
+</style>
+
 <section class="section-padding">
     <div class="container">
-        <div class="policy-box" style="background:#fff; padding:40px; border-radius:10px; border:1px solid #eee;">
-            <h1 style="color:var(--primary); margin-bottom:30px; border-bottom:3px solid #FACC15; display:inline-block; padding-bottom:10px;">
-                @(isAr ? "سياسة الخصوصية" : "Privacy Policy")
-            </h1>
 
-            <div class="privacy-content" style="line-height:1.8; color:#333;">
-                @if (isAr)
-                {
-                    <p>نحن في <strong>DISKA</strong> نأخذ خصوصيتك على محمل الجد. توضح هذه السياسة كيف نجمع ونستخدم ونحمي بياناتك الشخصية.</p>
-
-                    <h3 style="margin-top:20px; color:#0284c7;">1. البيانات التي نجمعها</h3>
-                    <p>نقوم بجمع البيانات التالية لتقديم خدماتنا:</p>
-                    <ul>
-                        <li><strong>بيانات الهوية:</strong> الاسم، رقم الهاتف، اسم المحل.</li>
-                        <li><strong>بيانات التوصيل:</strong> العنوان الجغرافي، المحافظة، المدينة.</li>
-                        <li><strong>بيانات المعاملات:</strong> سجل الطلبات، المدفوعات، ورصيد المحفظة.</li>
-                    </ul>
-
-                    <h3 style="margin-top:20px; color:#0284c7;">2. كيف نستخدم بياناتك</h3>
-                    <ul>
-                        <li>لمعالجة وتوصيل طلباتك بدقة.</li>
-                        <li>للتواصل معك بخصوص حالة الطلب أو العروض الخاصة.</li>
-                        <li>لتحسين تجربة المستخدم وتطوير التطبيق.</li>
-                    </ul>
-
-                    <h3 style="margin-top:20px; color:#0284c7;">3. مشاركة البيانات</h3>
-                    <p>لا نقوم ببيع بياناتك لأطراف ثالثة. قد نشارك بيانات التوصيل (الاسم، العنوان، الهاتف) فقط مع <strong>شركات الشحن</strong> الشريكة لغرض توصيل الطلب.</p>
-
-                    <h3 style="margin-top:20px; color:#0284c7;">4. أمان البيانات</h3>
-                    <p>نستخدم تقنيات تشفير ومعايير أمان عالية لحماية بياناتك من الوصول غير المصرح به.</p>
-                }
-                else
-                {
-                    <p>At <strong>DISKA</strong>, we take your privacy seriously. This policy explains how we collect, use, and protect your personal data.</p>
-
-                    <h3 style="margin-top:20px; color:#0284c7;">1. Information We Collect</h3>
-                    <p>We collect the following data to provide our services:</p>
-                    <ul>
-                        <li><strong>Identity Data:</strong> Name, phone number, shop name.</li>
-                        <li><strong>Delivery Data:</strong> Address, governorate, city.</li>
-                        <li><strong>Transaction Data:</strong> Order history, payments, wallet balance.</li>
-                    </ul>
-
-                    <h3 style="margin-top:20px; color:#0284c7;">2. How We Use Your Data</h3>
-                    <ul>
-                        <li>To process and deliver your orders accurately.</li>
-                        <li>To communicate with you regarding order status or offers.</li>
-                        <li>To improve user experience and app development.</li>
-                    </ul>
-
-                    <h3 style="margin-top:20px; color:#0284c7;">3. Data Sharing</h3>
-                    <p>We do not sell your data to third parties. We may share delivery details (Name, Address, Phone) only with partner <strong>Shipping Companies</strong> for delivery purposes.</p>
-                }
-            </div>
+        <div class="breadcrumb">
+            <a asp-controller="Home" asp-action="Index">@(isAr ? "الرئيسية" : "Home")</a> / <span>@(isAr ? "سياسة الخصوصية" : "Privacy Policy")</span>
         </div>
+
+        <div class="policy-box">
+            <h2 style="font-size: 1.8rem; margin-bottom: 30px;">@(isAr ? "سياسة الخصوصية" : "Privacy Policy")</h2>
+
+            @if (isAr)
+            {
+                <p>نحن في <strong>DISKA</strong> نأخذ خصوصيتك على محمل الجد. توضح هذه السياسة كيف نجمع ونستخدم ونحمي بياناتك الشخصية عند استخدامك للموقع أو التطبيق.</p>
+
+                <h3>1. البيانات التي نجمعها</h3>
+                <p>نقوم بجمع البيانات التالية لتقديم خدماتنا بأفضل شكل ممكن:</p>
+                <ul>
+                    <li><strong>بيانات الهوية:</strong> الاسم الكامل، رقم الهاتف، واسم النشاط التجاري (المحل).</li>
+                    <li><strong>بيانات التوصيل:</strong> العنوان الجغرافي بالتفصيل، المحافظة، والمدينة.</li>
+                    <li><strong>بيانات المعاملات:</strong> سجل الطلبات السابقة، طرق الدفع المستخدمة، ورصيد المحفظة.</li>
+                    <li><strong>بيانات الجهاز:</strong> معلومات تقنية مثل نوع الجهاز ونظام التشغيل لتحسين الأداء.</li>
+                </ul>
+
+                <h3>2. كيف نستخدم بياناتك</h3>
+                <ul>
+                    <li>لمعالجة وتوصيل طلباتك بدقة وفي الوقت المحدد.</li>
+                    <li>للتواصل معك بخصوص حالة الطلب أو العروض الخاصة التي قد تهمك.</li>
+                    <li>لتحسين تجربة المستخدم وتطوير التطبيق بناءً على الملاحظات.</li>
+                    <li>لمنع الاحتيال وضمان أمان المنصة لجميع المستخدمين.</li>
+                </ul>
+
+                <h3>3. مشاركة البيانات</h3>
+                <p>لا نقوم ببيع بياناتك لأي أطراف ثالثة. قد نشارك بعض البيانات الضرورية فقط في الحالات التالية:</p>
+                <ul>
+                    <li><strong>شركات الشحن:</strong> مشاركة الاسم، العنوان، ورقم الهاتف لغرض توصيل الطلب فقط.</li>
+                    <li><strong>الجهات القانونية:</strong> إذا طلب منا ذلك بموجب القانون أو لحماية حقوقنا.</li>
+                </ul>
+
+                <h3>4. أمان البيانات</h3>
+                <p>نستخدم تقنيات تشفير متطورة ومعايير أمان عالية لحماية بياناتك من الوصول غير المصرح به أو التغيير أو الإفشاء.</p>
+
+                <h3>5. حقوقك</h3>
+                <p>لديك الحق في الوصول إلى بياناتك الشخصية، تصحيحها، أو طلب حذفها في أي وقت عن طريق التواصل مع خدمة العملاء.</p>
+            }
+            else
+            {
+                <p>At <strong>DISKA</strong>, we take your privacy seriously. This policy explains how we collect, use, and protect your personal data when you use our website or app.</p>
+
+                <h3>1. Information We Collect</h3>
+                <p>We collect the following data to provide our services effectively:</p>
+                <ul>
+                    <li><strong>Identity Data:</strong> Full name, phone number, and shop/business name.</li>
+                    <li><strong>Delivery Data:</strong> Detailed address, governorate, and city.</li>
+                    <li><strong>Transaction Data:</strong> Order history, payment methods, and wallet balance.</li>
+                    <li><strong>Device Data:</strong> Technical info like device type and OS to improve performance.</li>
+                </ul>
+
+                <h3>2. How We Use Your Data</h3>
+                <ul>
+                    <li>To process and deliver your orders accurately and on time.</li>
+                    <li>To communicate with you regarding order status or relevant offers.</li>
+                    <li>To improve user experience and app development based on feedback.</li>
+                    <li>To prevent fraud and ensure platform security for all users.</li>
+                </ul>
+
+                <h3>3. Data Sharing</h3>
+                <p>We do not sell your data to third parties. We may share necessary data only in the following cases:</p>
+                <ul>
+                    <li><strong>Shipping Companies:</strong> Sharing name, address, and phone number for delivery purposes only.</li>
+                    <li><strong>Legal Authorities:</strong> If required by law or to protect our rights.</li>
+                </ul>
+
+                <h3>4. Data Security</h3>
+                <p>We use advanced encryption technologies and high security standards to protect your data from unauthorized access, alteration, or disclosure.</p>
+
+                <h3>5. Your Rights</h3>
+                <p>You have the right to access, correct, or request the deletion of your personal data at any time by contacting customer support.</p>
+            }
+        </div>
+
     </div>
 </section>

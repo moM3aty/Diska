@@ -20,6 +20,14 @@ namespace Diska.Controllers
             _userManager = userManager;
         }
 
+        // تم التعديل: السماح بالوصول لـ /Notification و /Notification/Index
+        [HttpGet("")]
+        [HttpGet("Index")]
+        public IActionResult Index()
+        {
+            return View();
+        }
+
         // Returns count of unread notifications for the badge
         [HttpGet("GetUnreadCount")]
         public async Task<IActionResult> GetUnreadCount()
@@ -84,12 +92,6 @@ namespace Diska.Controllers
             await _context.SaveChangesAsync();
 
             return Json(new { success = true });
-        }
-
-        [HttpGet("Index")]
-        public IActionResult Index()
-        {
-            return View(); // يعرض صفحة Views/Notification/Index.cshtml التي تعتمد على JS
         }
     }
 }

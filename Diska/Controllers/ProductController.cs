@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Diska.Data;
 using Microsoft.EntityFrameworkCore;
-using Diska.Models; // Ensure model namespace is included
+using Diska.Models;
 
 namespace Diska.Controllers
 {
@@ -19,6 +19,8 @@ namespace Diska.Controllers
         {
             var product = await _context.Products
                 .Include(p => p.Category)
+                .Include(p => p.Images) // التأكد من جلب الصور
+                .Include(p => p.ProductColors) // تم الإصلاح: جلب الألوان
                 .Include(p => p.PriceTiers.OrderBy(t => t.MinQuantity))
                 .FirstOrDefaultAsync(p => p.Id == id);
 
@@ -44,7 +46,7 @@ namespace Diska.Controllers
             return View(product);
         }
 
-        // عرض القسم مع الفلتر (تم التحديث لتفعيل فلتر الماركة)
+        // عرض القسم مع الفلتر
         public async Task<IActionResult> Category(int id, decimal? minPrice, decimal? maxPrice, string sort, List<string> brands)
         {
             var category = await _context.Categories.FindAsync(id);
@@ -55,17 +57,17 @@ namespace Diska.Controllers
             ViewBag.CategoryId = id;
 
             var query = _context.Products
-                .Include(p => p.Merchant) // لتصفية الماركات (اسم المحل)
+                .Include(p => p.Merchant)
+                .Include(p => p.ProductColors) // إضافة الألوان هنا أيضاً لصفحة القسم
                 .Where(p => p.CategoryId == id && p.IsActive && p.StockQuantity > 0);
 
             // تصفية بالسعر
             if (minPrice.HasValue) query = query.Where(p => p.Price >= minPrice.Value);
             if (maxPrice.HasValue) query = query.Where(p => p.Price <= maxPrice.Value);
 
-            // تصفية بالماركة (اسم التاجر أو براند في الاسم)
+            // تصفية بالماركة
             if (brands != null && brands.Any())
             {
-                // بحث بسيط: هل اسم المنتج أو اسم التاجر يحتوي على الكلمة
                 query = query.Where(p => brands.Contains(p.Merchant.ShopName) || brands.Any(b => p.Name.Contains(b)));
             }
 
@@ -87,6 +89,46 @@ namespace Diska.Controllers
                 .ToListAsync();
 
             return View(products);
+        }
+
+        // إضافة مراجعة
+        [HttpPost]
+        [Microsoft.AspNetCore.Authorization.Authorize]
+        public async Task<IActionResult> AddReview(int productId, int rating, string comment)
+        {
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            var review = new ProductReview
+            {
+                ProductId = productId,
+                UserId = userId,
+                Rating = rating,
+                Comment = comment,
+                CreatedAt = DateTime.Now
+            };
+
+            _context.ProductReviews.Add(review);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("Details", new { id = productId });
+        }
+
+        // اشتراك في توفر المنتج
+        [HttpPost]
+        public async Task<IActionResult> SubscribeRestock(int productId, string email)
+        {
+            var sub = new RestockSubscription
+            {
+                ProductId = productId,
+                Email = email,
+                UserId = User.Identity.IsAuthenticated ? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value : null
+            };
+
+            _context.RestockSubscriptions.Add(sub);
+            await _context.SaveChangesAsync();
+
+            TempData["Message"] = "تم تسجيل طلبك، سيتم إشعارك عند التوفر.";
+            return RedirectToAction("Details", new { id = productId });
         }
     }
 }

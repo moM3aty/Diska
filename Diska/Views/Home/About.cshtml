@@ -6,32 +6,37 @@
 
 <section class="section-padding">
     <div class="container">
-        <div style="text-align:center; max-width:800px; margin:0 auto;">
-            <div style="width:80px; height:80px; background:#FACC15; color:#0F172A; border-radius:20px; display:flex; align-items:center; justify-content:center; font-size:2.5rem; margin:0 auto 20px; font-weight:bold;">
+        <!-- التصميم الأصلي مع التنسيقات المضمنة لضمان الشكل -->
+        <div class="about-content" style="background: #fff; padding: 40px; border-radius: 15px; text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.05); max-width: 900px; margin: 0 auto;">
+
+            <!-- أيقونة النسبة المئوية المميزة -->
+            <div class="logo-icon" style="margin: 0 auto 20px; width: 80px; height: 80px; font-size: 2.5rem; background: var(--accent); color: var(--primary); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-weight: bold;">
                 %
             </div>
 
-            <h1 style="color:var(--primary); font-weight:800; margin-bottom:20px;">@(isAr ? "عن منصة DISKA" : "About DISKA")</h1>
+            <h1 style="color: var(--primary); margin-bottom: 20px; font-weight: 800;">
+                @(isAr ? "عن منصة DISKA" : "About DISKA")
+            </h1>
 
-            <p style="font-size:1.1rem; line-height:1.8; color:#555;">
+            <p style="color: #666; margin-bottom: 40px; font-size: 1.1rem; line-height: 1.8;">
                 @(isAr ?
                                 "ديسكا هي المنصة الرقمية الأولى في مصر المتخصصة في سوق الجملة (B2B). هدفنا هو تمكين أصحاب المحلات وتجار التجزئة من الوصول إلى آلاف المنتجات بأسعار المصنع مباشرة، بدون وسطاء."
                                 :
-                                "DISKA is Egypt's first digital B2B wholesale platform. Our goal is to empower shop owners and retailers to access thousands of products directly at factory prices, without intermediaries.")
+                                "DISKA is Egypt's leading B2B wholesale platform. We aim to empower merchants and shop owners to access the best prices directly from factories and suppliers without intermediaries.")
             </p>
 
-            <div class="stats-grid" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:20px; margin-top:50px;">
-                <div class="stat-box" style="background:#f8fafc; padding:30px; border-radius:10px; border:1px solid #eee;">
-                    <h2 style="color:var(--primary); font-size:2.5rem; margin:0;">+5K</h2>
-                    <span style="color:#666;">@(isAr ? "منتج متنوع" : "Products")</span>
+            <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                <div class="stat-box" style="background: #f8fafc; padding: 20px; border-radius: 10px; border: 1px solid #eee; transition: 0.3s;">
+                    <h2 style="color: var(--accent); font-size: 2.5rem; margin: 0; font-weight: 900;">+5000</h2>
+                    <span style="font-weight: bold; color: var(--primary);">@(isAr ? "منتج متنوع" : "Products")</span>
                 </div>
-                <div class="stat-box" style="background:#f8fafc; padding:30px; border-radius:10px; border:1px solid #eee;">
-                    <h2 style="color:var(--primary); font-size:2.5rem; margin:0;">+1K</h2>
-                    <span style="color:#666;">@(isAr ? "تاجر ومورد" : "Merchants")</span>
+                <div class="stat-box" style="background: #f8fafc; padding: 20px; border-radius: 10px; border: 1px solid #eee; transition: 0.3s;">
+                    <h2 style="color: var(--accent); font-size: 2.5rem; margin: 0; font-weight: 900;">+1000</h2>
+                    <span style="font-weight: bold; color: var(--primary);">@(isAr ? "تاجر ومورد" : "Merchants")</span>
                 </div>
-                <div class="stat-box" style="background:#f8fafc; padding:30px; border-radius:10px; border:1px solid #eee;">
-                    <h2 style="color:var(--primary); font-size:2.5rem; margin:0;">24/7</h2>
-                    <span style="color:#666;">@(isAr ? "دعم فني" : "Support")</span>
+                <div class="stat-box" style="background: #f8fafc; padding: 20px; border-radius: 10px; border: 1px solid #eee; transition: 0.3s;">
+                    <h2 style="color: var(--accent); font-size: 2.5rem; margin: 0; font-weight: 900;">24/7</h2>
+                    <span style="font-weight: bold; color: var(--primary);">@(isAr ? "دعم فني" : "Support")</span>
                 </div>
             </div>
         </div>
