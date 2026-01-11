@@ -1,0 +1,53 @@
+﻿@using System.Globalization
+@{
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    ViewData["Title"] = isAr ? "شحن الرصيد" : "Top Up Wallet";
+}
+
+<section class="section-padding" style="min-height: 70vh; display: flex; align-items: center;">
+    <div class="container">
+
+        <div style="max-width: 500px; margin: 0 auto;">
+            <div style="margin-bottom: 20px;">
+                <a asp-action="Index" style="text-decoration: none; color: #666;">
+                    <i class="fas @(isAr ? "fa-arrow-right" : "fa-arrow-left")"></i> @(isAr ? "العودة للمحفظة" : "Back to Wallet")
+                </a>
+            </div>
+
+            <div class="card" style="background: #fff; padding: 40px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <div style="width: 70px; height: 70px; background: #fffbeb; color: #d97706; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; font-size: 1.8rem;">
+                        <i class="fas fa-plus"></i>
+                    </div>
+                    <h2 style="color: var(--primary); margin: 0;">@(isAr ? "شحن الرصيد" : "Top Up Balance")</h2>
+                    <p style="color: #666; margin-top: 5px;">@(isAr ? "أضف رصيداً لمحفظتك لاستخدامه في الشراء." : "Add funds to your wallet for purchases.")</p>
+                </div>
+
+                @if (TempData["Error"] != null)
+                {
+                    <div style="background: #fee2e2; color: #dc2626; padding: 12px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #fecaca; text-align: center;">
+                        @TempData["Error"]
+                    </div>
+                }
+
+                <form asp-action="TopUp" method="post">
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: bold; color: #334155;">@(isAr ? "المبلغ المراد شحنه (ج.م)" : "Amount (EGP)")</label>
+                        <input type="number" name="amount" class="form-control" required min="1" placeholder="0.00"
+                               style="width: 100%; padding: 15px; font-size: 1.2rem; border: 1px solid #cbd5e1; border-radius: 10px; font-weight: bold; text-align: center;">
+                    </div>
+
+                    <button type="submit" class="btn primary add-btn" style="width: 100%; padding: 15px; font-size: 1.1rem; border-radius: 10px;">
+                        @(isAr ? "تأكيد الشحن" : "Confirm Top Up")
+                    </button>
+                </form>
+
+                <div style="margin-top: 20px; text-align: center; font-size: 0.9rem; color: #999;">
+                    <i class="fas fa-lock"></i> @(isAr ? "عملية دفع آمنة 100%" : "100% Secure Payment")
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>

@@ -1,296 +1,349 @@
 ﻿@using Microsoft.AspNetCore.Identity
+@using System.Globalization
 @inject UserManager<Diska.Models.ApplicationUser> UserManager
 @{
     var user = await UserManager.GetUserAsync(User);
+    var roles = user != null ? await UserManager.GetRolesAsync(user) : null;
+    var userRole = roles?.FirstOrDefault() ?? "Admin";
+
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    string dir = isAr ? "rtl" : "ltr";
+    string lang = isAr ? "ar" : "en";
+
+    // قراءة الثيم المفضل من الكوكيز لتطبيقه فوراً عند التحميل
+    string currentTheme = Context.Request.Cookies["theme"] ?? "light";
 }
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="@lang" dir="@dir" data-bs-theme="@currentTheme">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة التحكم - DISKA</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>@ViewData["Title"] - DISKA Admin</title>
+
+    <!-- Bootstrap 5 -->
+    @if (isAr)
+    {
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
+    }
+    else
+    {
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    }
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- SweetAlert2 CSS -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
 
     <style>
-        /* --- Reset & Variables --- */
+        /* =========================================
+                   DISKA Admin Panel - Embedded Elite Styles
+                   ========================================= */
         :root {
-            --admin-bg: #f8fafc;
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            /* Sidebar */
+            --sidebar-width: 280px;
             --sidebar-bg: #1e293b;
-            --primary: #2563eb;
+            --sidebar-text: #94a3b8;
+            --sidebar-active-bg: linear-gradient(90deg, rgba(79, 70, 229, 0.15) 0%, rgba(79, 70, 229, 0.05) 100%);
+            --sidebar-active-text: #ffffff;
+            --sidebar-hover-bg: rgba(255, 255, 255, 0.03);
+            /* Brand Colors */
+            --primary: #4f46e5;
+            --primary-rgb: 79, 70, 229;
+            --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+            --primary-light: #e0e7ff;
             --accent: #FACC15;
-            --text-dark: #0f172a;
+            /* Shadows & Radius */
+            --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+            --radius: 16px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        * {
-            box-sizing: border-box;
-            outline: none;
+        [data-bs-theme="dark"] {
+            --bg-body: #020617;
+            --bg-card: #0f172a;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #1e293b;
+            --glass-bg: rgba(15, 23, 42, 0.85);
+            --sidebar-bg: #020617;
+            --sidebar-active-bg: linear-gradient(90deg, rgba(99, 102, 241, 0.2) 0%, rgba(99, 102, 241, 0.05) 100%);
+            --primary: #6366f1;
+            --primary-rgb: 99, 102, 241;
+            --primary-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            --primary-light: rgba(99, 102, 241, 0.15);
         }
 
         body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
             font-family: 'Cairo', sans-serif;
-            background-color: var(--admin-bg);
-            margin: 0;
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-            color: var(--text-dark);
+            overflow-x: hidden;
+            transition: var(--transition);
         }
 
         a {
             text-decoration: none;
-            transition: 0.3s;
+            transition: var(--transition);
         }
 
-        ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        /* --- Sidebar --- */
-        .sidebar {
-            width: 260px;
-            background-color: var(--sidebar-bg);
-            color: #fff;
+        /* --- Layout --- */
+        .app-container {
             display: flex;
-            flex-direction: column;
-            flex-shrink: 0;
-            transition: 0.3s;
-            z-index: 100;
+            min-height: 100vh;
+            width: 100%;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--sidebar-bg);
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            overflow-y: auto;
+            border-inline-end: 1px solid rgba(255,255,255,0.05);
+            box-shadow: 4px 0 24px rgba(0,0,0,0.15);
+            transition: var(--transition);
         }
 
         .sidebar-header {
-            padding: 25px;
+            padding: 30px 20px;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.02), transparent);
             text-align: center;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            background: rgba(0,0,0,0.2);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
         }
 
-            .sidebar-header h2 {
-                margin: 0;
-                color: var(--accent);
+            .sidebar-header h3 {
+                color: #fff;
                 font-weight: 800;
-                font-size: 1.5rem;
+                margin: 0;
             }
 
         .sidebar-menu {
-            flex: 1;
-            overflow-y: auto;
-            padding: 15px;
+            padding: 15px 12px;
         }
 
-            .sidebar-menu li {
-                margin-bottom: 5px;
+        .menu-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            padding: 20px 12px 8px;
+            font-weight: 800;
+            opacity: 0.6;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            color: var(--sidebar-text);
+            border-radius: 12px;
+            margin-bottom: 6px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+            .sidebar-link:hover {
+                background-color: var(--sidebar-hover-bg);
+                color: #fff;
+                transform: translateX(4px);
             }
 
-            .sidebar-menu a {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                padding: 12px 15px;
-                color: #cbd5e1;
-                border-radius: 8px;
-                font-size: 0.95rem;
-                font-weight: 600;
+        html[dir="rtl"] .sidebar-link:hover {
+            transform: translateX(-4px);
+        }
+
+        .sidebar-link.active {
+            background: var(--sidebar-active-bg);
+            color: var(--sidebar-active-text);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+            .sidebar-link.active::before {
+                content: '';
+                position: absolute;
+                left: 0;
+                top: 15%;
+                bottom: 15%;
+                width: 4px;
+                background: var(--accent);
+                border-radius: 0 4px 4px 0;
+                box-shadow: 0 0 10px var(--accent);
             }
 
-                .sidebar-menu a:hover, .sidebar-menu a.active {
-                    background-color: var(--primary);
-                    color: #fff;
-                    transform: translateX(-5px);
-                    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                }
+        html[dir="rtl"] .sidebar-link.active::before {
+            left: auto;
+            right: 0;
+            border-radius: 4px 0 0 4px;
+        }
 
-            .sidebar-menu i {
-                width: 25px;
-                text-align: center;
-                font-size: 1.1rem;
-            }
+        .sidebar-link i {
+            width: 22px;
+            text-align: center;
+            font-size: 1.1rem;
+            opacity: 0.8;
+            transition: 0.2s;
+        }
 
-        /* --- Content Area --- */
+        .sidebar-link:hover i, .sidebar-link.active i {
+            opacity: 1;
+            transform: scale(1.1);
+            color: var(--accent);
+        }
+
+        /* Main Content */
         .main-content {
-            flex: 1;
+            flex-grow: 1;
+            min-width: 0;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
-            position: relative;
+            background-color: var(--bg-body);
+            transition: var(--transition);
         }
 
-        .top-bar {
-            background: #fff;
-            padding: 15px 30px;
+        .top-navbar {
+            background-color: var(--glass-bg);
+            border-bottom: 1px solid var(--border-color);
+            height: 76px;
+            padding: 0 35px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            z-index: 10;
-            height: 70px;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 900;
+            backdrop-filter: blur(16px);
         }
 
-        .content-area {
-            flex: 1;
-            overflow-y: auto;
-            padding: 30px;
+        /* Search */
+        .header-search {
+            position: relative;
+            width: 300px;
         }
 
-        /* --- Form Elements (إصلاح التداخل) --- */
-        .card {
-            background: #fff;
-            border-radius: 16px;
-            padding: 30px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-            margin-bottom: 25px;
-            border: 1px solid #f1f5f9;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-        /* مسافة بين الحقول */
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 700;
-            color: #334155;
-            font-size: 0.95rem;
-        }
-
-        .form-control, select, textarea {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            font-family: inherit;
-            font-size: 1rem;
-            color: #0f172a;
-            transition: all 0.3s ease;
-            background-color: #fff;
-            height: auto; /* لضمان عدم ثبات الارتفاع */
-        }
-
-            .form-control:focus, select:focus, textarea:focus {
-                border-color: var(--primary);
-                box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            .header-search input {
+                width: 100%;
+                background: var(--bg-body);
+                border: 1px solid var(--border-color);
+                padding: 0.6rem 1rem 0.6rem 2.8rem;
+                border-radius: 20px;
+                color: var(--text-main);
             }
 
-        /* Utilities */
-        .mb-3 {
-            margin-bottom: 15px !important;
+        html[dir="rtl"] .header-search input {
+            padding: 0.6rem 2.8rem 0.6rem 1rem;
         }
 
-        .mb-4 {
-            margin-bottom: 25px !important;
+        .header-search i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
         }
 
-        .text-danger {
-            color: #ef4444;
-            font-size: 0.85rem;
-            margin-top: 5px;
-            display: block;
+        html[dir="rtl"] .header-search i {
+            left: auto;
+            right: 1rem;
         }
 
-        /* Buttons */
-        .btn {
-            padding: 10px 24px;
-            border-radius: 10px;
-            border: none;
+        /* Profile & Buttons */
+        .btn-icon {
+            color: var(--text-muted);
+            font-size: 1.2rem;
+        }
+
+            .btn-icon:hover {
+                color: var(--primary);
+            }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
             cursor: pointer;
-            text-decoration: none;
-            display: inline-flex;
+            padding: 5px;
+            border-radius: 30px;
+            transition: 0.2s;
+        }
+
+            .user-profile:hover {
+                background: var(--border-color);
+            }
+
+        .avatar-circle {
+            width: 40px;
+            height: 40px;
+            background: var(--primary-gradient);
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
             font-weight: 700;
-            transition: 0.3s;
-            font-size: 0.95rem;
         }
 
-        .btn-primary {
-            background: var(--primary);
-            color: #fff;
-            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
+        .content-body {
+            padding: 30px;
+            animation: fadeInUp 0.5s ease-out;
+        }
+        @@keyframes fadeInUp {
+            from
+
+        {
+            opacity: 0;
+            transform: translateY(20px);
         }
 
-            .btn-primary:hover {
-                background: #1d4ed8;
-                transform: translateY(-2px);
-            }
-
-        .btn-outline {
-            background: #fff;
-            border: 1px solid #cbd5e1;
-            color: #475569;
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
 
-            .btn-outline:hover {
-                background: #f8fafc;
-                border-color: #94a3b8;
-            }
-
-        .btn-danger {
-            background: #fee2e2;
-            color: #dc2626;
         }
 
-            .btn-danger:hover {
-                background: #fecaca;
-            }
-
-        /* Table Styles */
-        table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
+        /* Cards */
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
         }
 
-        th {
-            background: #f8fafc;
-            color: #475569;
-            padding: 15px;
-            text-align: right;
-            font-weight: 700;
-            border-bottom: 2px solid #e2e8f0;
-        }
-
-        td {
-            padding: 15px;
-            border-bottom: 1px solid #f1f5f9;
-            color: #334155;
-            vertical-align: middle;
-        }
-
-        tr:hover td {
-            background-color: #f8fafc;
-        }
-
-        .badge {
-            padding: 6px 12px;
-            border-radius: 50px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            display: inline-block;
-        }
-
-        /* Responsive */
-        @@media (max-width: 768px) {
+        /* Mobile */
+        @@media (max-width: 992px) {
             .sidebar
 
         {
             position: fixed;
-            right: -260px;
-            height: 100%;
-            box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+            left: 0;
+            top: 0;
+            bottom: 0;
+            transform: translateX(100%);
+        }
+        /* RTL Hidden */
+        html[dir="ltr"] .sidebar {
+            transform: translateX(-100%);
         }
 
-        .sidebar.active {
-            right: 0;
+        .sidebar.show {
+            transform: translateX(0);
         }
 
-        .main-content {
-            width: 100%;
+        .top-navbar {
+            padding: 0 20px;
         }
 
         }
@@ -298,120 +351,169 @@
 </head>
 <body>
 
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <h2>DISKA <span style="font-size:0.6em; color:#fff; font-weight:400;">Control</span></h2>
-        </div>
-        <ul class="sidebar-menu">
-            <li><a asp-area="Admin" asp-controller="Dashboard" asp-action="Index"><i class="fas fa-chart-pie"></i> لوحة القيادة</a></li>
+    <!-- Main Wrapper -->
+    <div class="app-container">
 
-            <li style="margin: 15px 0; border-top: 1px solid rgba(255,255,255,0.1); opacity: 0.5;"></li>
-            <li style="padding: 0 15px; margin-bottom: 10px; font-size: 0.8rem; color: #94a3b8;">إدارة المتجر</li>
+        <!-- Sidebar -->
+        <nav class="sidebar flex-shrink-0" id="sidebar">
+            <div class="sidebar-header">
+                <h3>DISKA <span style="color:var(--accent); font-size:0.5em; vertical-align:middle;">PRO</span></h3>
+            </div>
 
-            <li><a asp-area="Admin" asp-controller="Dashboard" asp-action="Orders"><i class="fas fa-shopping-bag"></i> الطلبات</a></li>
-            <li><a asp-area="Admin" asp-controller="Products" asp-action="Index"><i class="fas fa-box"></i> المنتجات</a></li>
-            <li><a asp-area="Admin" asp-controller="Products" asp-action="Create" style="color: var(--accent);"><i class="fas fa-plus-circle"></i> إضافة منتج (للتاجر)</a></li>
-            <li><a asp-area="Admin" asp-controller="Categories" asp-action="Index"><i class="fas fa-tags"></i> التصنيفات</a></li>
-            <li><a asp-area="Admin" asp-controller="Users" asp-action="Index"><i class="fas fa-users"></i> المستخدمين</a></li>
+            <div class="sidebar-menu">
+                <div class="menu-label">@(isAr ? "الرئيسية" : "Main")</div>
 
-            <li style="margin: 15px 0; border-top: 1px solid rgba(255,255,255,0.1); opacity: 0.5;"></li>
-            <li style="padding: 0 15px; margin-bottom: 10px; font-size: 0.8rem; color: #94a3b8;">التسويق</li>
-
-            <li><a asp-area="Admin" asp-controller="Deals" asp-action="Index"><i class="fas fa-handshake"></i> الصفقات</a></li>
-            <li><a asp-area="Admin" asp-controller="Banners" asp-action="Index"><i class="fas fa-images"></i> البنرات</a></li>
-            <li><a asp-area="Admin" asp-controller="Survey" asp-action="Index"><i class="fas fa-poll"></i> الاستبيانات</a></li>
-        </ul>
-        <div style="padding: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
-            <a asp-area="" asp-controller="Home" asp-action="Index" target="_blank" style="color:#cbd5e1; text-decoration:none; display:flex; gap:10px; align-items:center;">
-                <i class="fas fa-external-link-alt"></i> الموقع
-            </a>
-        </div>
-    </aside>
-
-    <div class="main-content">
-        <div class="top-bar">
-            <!-- Mobile Toggle -->
-            <button class="btn btn-outline mobile-toggle d-md-none" style="padding:5px 10px; margin-left:10px; display:none;" onclick="document.querySelector('.sidebar').classList.toggle('active')">
-                <i class="fas fa-bars"></i>
-            </button>
-
-            <h4 style="margin:0; font-weight:700;">👋 أهلاً، @(user?.FullName ?? "Admin")</h4>
-
-            <div style="display: flex; gap: 15px; align-items: center;">
-                <a asp-area="" asp-controller="Home" asp-action="Index" target="_blank" class="btn btn-outline" style="padding: 8px 15px; font-size: 0.9rem;">
-                    <i class="fas fa-external-link-alt"></i> الموقع
+                <a href="/Admin/Dashboard" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Dashboard" ? "active" : "")">
+                    <i class="fas fa-th-large"></i> <span>@(isAr ? "لوحة القيادة" : "Dashboard")</span>
                 </a>
-                <a asp-area="" asp-controller="Account" asp-action="Logout" style="color:#ef4444; text-decoration:none; font-weight:bold; display: flex; align-items: center; gap: 5px;">
-                    <i class="fas fa-sign-out-alt"></i> خروج
+
+                <a href="/Admin/Approvals" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Approvals" ? "active" : "")">
+                    <i class="fas fa-check-circle"></i> <span>@(isAr ? "الموافقات" : "Approvals")</span>
+                </a>
+
+                <div class="menu-label">@(isAr ? "إدارة المتجر" : "Shop Management")</div>
+
+                <a href="/Admin/Products" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Products" ? "active" : "")">
+                    <i class="fas fa-box"></i> <span>@(isAr ? "المنتجات" : "Products")</span>
+                </a>
+                <a href="/Admin/Dashboard/Orders" class="sidebar-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Orders" ? "active" : "")">
+                    <i class="fas fa-shopping-bag"></i> <span>@(isAr ? "الطلبات" : "Orders")</span>
+                </a>
+                <a href="/Admin/Categories" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Categories" ? "active" : "")">
+                    <i class="fas fa-layer-group"></i> <span>@(isAr ? "الأقسام" : "Categories")</span>
+                </a>
+                <a href="/Admin/Deals" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Deals" ? "active" : "")">
+                    <i class="fas fa-tags"></i> <span>@(isAr ? "العروض" : "Deals")</span>
+                </a>
+
+                <div class="menu-label">@(isAr ? "المستخدمين والمالية" : "Users & Finance")</div>
+
+                <a href="/Admin/Users" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Users" ? "active" : "")">
+                    <i class="fas fa-users"></i> <span>@(isAr ? "المستخدمين" : "Users")</span>
+                </a>
+                <a href="/Admin/Dashboard/Merchants" class="sidebar-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Merchants" ? "active" : "")">
+                    <i class="fas fa-store"></i> <span>@(isAr ? "التجار" : "Merchants")</span>
+                </a>
+                <a href="/Admin/Wallet" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Wallet" ? "active" : "")">
+                    <i class="fas fa-wallet"></i> <span>@(isAr ? "المحفظة" : "Wallet")</span>
+                </a>
+                <a href="/Admin/Requests" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Requests" ? "active" : "")">
+                    <i class="fas fa-bullhorn"></i> <span>@(isAr ? "طلبات خاصة" : "Special Requests")</span>
+                </a>
+
+                <div class="menu-label">@(isAr ? "النظام" : "System")</div>
+
+                <a href="/Admin/Reports" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Reports" ? "active" : "")">
+                    <i class="fas fa-chart-pie"></i> <span>@(isAr ? "التقارير" : "Reports")</span>
+                </a>
+                <a href="/Admin/Audit" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Audit" ? "active" : "")">
+                    <i class="fas fa-fingerprint"></i> <span>@(isAr ? "سجل التدقيق" : "Audit Logs")</span>
+                </a>
+                <a href="/Admin/Dashboard/Messages" class="sidebar-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Messages" ? "active" : "")">
+                    <i class="fas fa-envelope"></i> <span>@(isAr ? "الرسائل" : "Messages")</span>
+                </a>
+                <a href="/Admin/Settings" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Settings" ? "active" : "")">
+                    <i class="fas fa-cog"></i> <span>@(isAr ? "الإعدادات" : "Settings")</span>
                 </a>
             </div>
-        </div>
+        </nav>
 
-        <div class="content-area">
-            @RenderBody()
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Top Navbar -->
+            <header class="top-navbar">
+                <div class="d-flex align-items-center gap-3">
+                    <button class="btn btn-icon btn-outline d-lg-none" onclick="document.getElementById('sidebar').classList.toggle('show')">
+                        <i class="fas fa-bars"></i>
+                    </button>
+
+                    <form action="/Admin/Search" method="get" class="header-search d-none d-md-block">
+                        <i class="fas fa-search"></i>
+                        <input type="text" name="q" placeholder="@(isAr ? "بحث شامل..." : "Global Search...")">
+                    </form>
+                </div>
+
+                <div class="d-flex align-items-center gap-3">
+                    <!-- Notifications -->
+                    <div class="dropdown">
+                        <button class="btn btn-icon btn-outline position-relative border-0 bg-transparent" data-bs-toggle="dropdown">
+                            <i class="far fa-bell"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-2" style="width: 280px;">
+                            <li><h6 class="dropdown-header">الإشعارات</h6></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-center small text-muted" href="#">لا توجد إشعارات جديدة</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Theme Toggle -->
+                    <button class="btn btn-icon btn-outline border-0 bg-transparent" id="themeToggle" title="Theme">
+                        <i class="fas @(currentTheme == "dark" ? "fa-sun" : "fa-moon")"></i>
+                    </button>
+
+                    <!-- Profile -->
+                    <div class="dropdown">
+                        <div class="user-profile" data-bs-toggle="dropdown">
+                            <div class="avatar-circle">@user?.FullName?.FirstOrDefault()</div>
+                            <div class="user-info d-none d-md-block">
+                                <span class="d-block fw-bold" style="font-size:0.9rem">@user?.FullName?.Split(' ')[0]</span>
+                                <span class="d-block text-muted" style="font-size:0.75rem">@userRole</span>
+                            </div>
+                            <i class="fas fa-chevron-down small text-muted ms-2"></i>
+                        </div>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
+                            <li><a class="dropdown-item py-2" href="/Profile/Index"><i class="far fa-user me-2"></i> الملف الشخصي</a></li>
+                            <li><a class="dropdown-item py-2" href="/"><i class="fas fa-globe me-2"></i> عرض الموقع</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item py-2 text-danger" href="/Account/Logout"><i class="fas fa-sign-out-alt me-2"></i> خروج</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Body -->
+            <div class="content-body">
+                <!-- Alerts -->
+                @if (TempData["Success"] != null)
+                {
+                    <div class="alert alert-success fade show" role="alert">
+                        <i class="fas fa-check-circle fs-5 text-success"></i>
+                        <span class="ms-2 fw-bold text-success">@TempData["Success"]</span>
+                        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+                    </div>
+                }
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger fade show" role="alert">
+                        <i class="fas fa-exclamation-circle fs-5 text-danger"></i>
+                        <span class="ms-2 fw-bold text-danger">@TempData["Error"]</span>
+                        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+                    </div>
+                }
+
+                @RenderBody()
+            </div>
         </div>
     </div>
 
     <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        // Media Query for Mobile Toggle
-        if (window.innerWidth < 768) {
-            document.querySelector('.mobile-toggle').style.display = 'block';
-        }
+        // Dark Mode Logic
+        const toggleBtn = document.getElementById('themeToggle');
+        const html = document.documentElement;
 
-        // Global SweetAlert
-        document.addEventListener('click', function(e) {
-            let form = e.target.closest('form');
-            if (form && form.getAttribute('onsubmit') && form.getAttribute('onsubmit').includes('confirm')) {
-                e.preventDefault();
-                let msg = form.getAttribute('onsubmit').match(/'([^']+)'/)[1];
+        toggleBtn.addEventListener('click', () => {
+            const currentTheme = html.getAttribute('data-bs-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
 
-                Swal.fire({
-                    title: 'تأكيد الإجراء',
-                    text: msg,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#2563eb',
-                    cancelButtonColor: '#ef4444',
-                    confirmButtonText: 'نعم، نفذ',
-                    cancelButtonText: 'إلغاء'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        form.removeAttribute('onsubmit');
-                        form.submit();
-                    }
-                });
-            }
+            html.setAttribute('data-bs-theme', newTheme);
+            toggleBtn.innerHTML = newTheme === 'dark' ? '<i class="fas fa-sun text-warning"></i>' : '<i class="far fa-moon"></i>';
+            document.cookie = `theme=${newTheme}; path=/; max-age=31536000`;
         });
-
-        // Toast Messages
-        @if (TempData["Success"] != null)
-        {
-                <text>
-                Swal.fire({
-                    icon: 'success',
-                    title: 'تم بنجاح!',
-                        text: 'تم  حفظ العمليه بنجاح',
-                    timer: 3000,
-                    showConfirmButton: false,
-                    toast: true,
-                    position: 'top-end'
-                });
-                </text>
-        }
-        @if (TempData["Error"] != null)
-        {
-                <text>
-                Swal.fire({
-                    icon: 'error',
-                    title: 'خطأ!',
-                    text: 'خطأ في انهاء العمليه',
-                    toast: true,
-                    position: 'top-end'
-                });
-                </text>
-        }
     </script>
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

@@ -4,206 +4,117 @@
     Layout = "_AdminLayout";
 }
 
-<style>
-    .icon-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-        gap: 10px;
-        max-height: 250px;
-        overflow-y: auto;
-        padding: 10px;
-        border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        background: #f8fafc;
-    }
-
-    .icon-option {
-        height: 50px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #fff;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        cursor: pointer;
-        font-size: 1.2rem;
-        color: #64748b;
-        transition: 0.2s;
-    }
-
-        .icon-option:hover {
-            border-color: var(--primary);
-            color: var(--primary);
-        }
-
-        .icon-option.selected {
-            background: var(--primary);
-            color: #fff;
-            border-color: var(--primary);
-            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);
-        }
-
-    .required-star {
-        color: red;
-        margin-left: 3px;
-    }
-</style>
-
-<div class="card" style="max-width: 600px; margin: 0 auto;">
-    <h2 style="margin-bottom: 25px; color: var(--primary);">تعديل القسم</h2>
-
-    <!-- فورم التعديل -->
-    <form asp-action="Edit" method="post" id="editCategoryForm">
-        <input type="hidden" asp-for="Id" />
-
-        <div class="form-group">
-            <label>الاسم (عربي) <span class="required-star">*</span></label>
-            <input asp-for="Name" class="form-control" required placeholder="مثال: أدوات كهربائية" />
-            <span asp-validation-for="Name" class="text-danger"></span>
-        </div>
-
-        <div class="form-group" style="margin-top:15px;">
-            <label>الاسم (إنجليزي) <span class="required-star">*</span></label>
-            <input asp-for="NameEn" class="form-control" required placeholder="Ex: Electronics" />
-            <span asp-validation-for="NameEn" class="text-danger"></span>
-        </div>
-
-        <div class="form-group" style="margin-top:20px;">
-            <label>تعديل الأيقونة</label>
-            <input type="hidden" asp-for="IconClass" id="selectedIcon" required />
-
-            <div class="icon-grid" id="iconPicker">
-                <!-- سيتم ملؤها بالجافاسكريبت -->
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-primary">تعديل: @Model.Name</h5>
+                <a asp-action="Index" class="btn btn-sm btn-outline-secondary">إلغاء</a>
             </div>
-            <div style="margin-top: 10px; font-size: 0.9rem; color: #666;">
-                الأيقونة المختارة: <i id="previewIcon" class="@Model.IconClass" style="margin-right: 5px; color: var(--primary); font-size: 1.2rem;"></i>
+            <div class="card-body p-4">
+                <form asp-action="Edit" enctype="multipart/form-data">
+                    <input type="hidden" asp-for="Id" />
+
+                    <ul class="nav nav-tabs mb-4" id="catTab" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#general" type="button">بيانات أساسية</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#seo" type="button">SEO</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#media" type="button">الصور</button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="myTabContent">
+
+                        <!-- General -->
+                        <div class="tab-pane fade show active" id="general">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label asp-for="Name" class="form-label">الاسم (عربي)</label>
+                                    <input asp-for="Name" class="form-control" required />
+                                </div>
+                                <div class="col-md-6">
+                                    <label asp-for="NameEn" class="form-label">الاسم (إنجليزي)</label>
+                                    <input asp-for="NameEn" class="form-control" required />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">القسم الرئيسي</label>
+                                    <select asp-for="ParentId" class="form-select" asp-items="ViewBag.Parents">
+                                        <option value="">-- قسم رئيسي --</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label asp-for="DisplayOrder" class="form-label">الترتيب</label>
+                                    <input asp-for="DisplayOrder" type="number" class="form-control" />
+                                </div>
+                                <div class="col-md-3 pt-4">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" asp-for="IsActive">
+                                        <label class="form-check-label">تفعيل</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SEO -->
+                        <div class="tab-pane fade" id="seo">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label asp-for="Slug" class="form-label">Slug</label>
+                                    <input asp-for="Slug" class="form-control" />
+                                </div>
+                                <div class="col-12">
+                                    <label asp-for="MetaTitle" class="form-label">Meta Title</label>
+                                    <input asp-for="MetaTitle" class="form-control" />
+                                </div>
+                                <div class="col-12">
+                                    <label asp-for="MetaDescription" class="form-label">Meta Description</label>
+                                    <textarea asp-for="MetaDescription" class="form-control" rows="3"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Media -->
+                        <div class="tab-pane fade" id="media">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">صورة القسم</label>
+                                    <input type="file" name="imageFile" class="form-control" accept="image/*">
+                                    @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                                    {
+                                        <div class="mt-2">
+                                            <img src="~/@Model.ImageUrl" class="rounded border p-1" style="height: 80px;">
+                                        </div>
+                                    }
+                                </div>
+                                <div class="col-md-6">
+                                    <label asp-for="IconClass" class="form-label">رمز الأيقونة</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i id="iconPreview" class="@(Model.IconClass ?? "fas fa-cube")"></i></span>
+                                        <input asp-for="IconClass" class="form-control" oninput="updateIcon(this.value)">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="mt-4 pt-3 border-top text-end">
+                        <button type="submit" class="btn btn-primary px-4 fw-bold">حفظ التعديلات</button>
+                    </div>
+                </form>
             </div>
         </div>
-
-        <div style="display:flex; justify-content:space-between; margin-top:30px; border-top: 1px solid #eee; padding-top: 20px;">
-            <div>
-                <button type="button" onclick="confirmEdit()" class="btn btn-primary" style="padding:10px 25px;">
-                    <i class="fas fa-save"></i> حفظ التعديلات
-                </button>
-                <a asp-action="Index" class="btn btn-outline" style="color:#666; margin-right: 10px;">إلغاء</a>
-            </div>
-
-            <!-- زر الحذف -->
-            <button type="button" onclick="confirmDelete()" class="btn" style="background:#fee2e2; color:#dc2626; padding:10px 20px; border:none;">
-                <i class="fas fa-trash"></i> حذف القسم
-            </button>
-        </div>
-    </form>
-
-    <!-- فورم الحذف المخفي -->
-    <form id="deleteCategoryForm" asp-action="Delete" method="post" style="display:none;">
-        <input type="hidden" name="id" value="@Model.Id" />
-    </form>
+    </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-    // رسالة تأكيد التعديل
-    function confirmEdit() {
-        Swal.fire({
-            title: 'تأكيد الحفظ',
-            text: "هل أنت متأكد من حفظ التعديلات؟",
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#2563eb',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'نعم، حفظ',
-            cancelButtonText: 'إلغاء'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                document.getElementById('editCategoryForm').submit();
-            }
-        });
-    }
-
-    // رسالة تأكيد الحذف
-    function confirmDelete() {
-        Swal.fire({
-            title: 'هل أنت متأكد؟',
-            text: "سيتم حذف هذا القسم وجميع المنتجات المرتبطة به نهائياً!",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'نعم، احذف',
-            cancelButtonText: 'تراجع'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                document.getElementById('deleteCategoryForm').submit();
-            }
-        });
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        // نفس قائمة الأيقونات الشاملة الموجودة في صفحة الإضافة
-        const icons = [
-            'fas fa-box', 'fas fa-boxes', 'fas fa-tags', 'fas fa-layer-group', 'fas fa-shopping-cart', 'fas fa-shopping-basket', 'fas fa-shopping-bag',
-            'fas fa-gift', 'fas fa-percent', 'fas fa-star', 'fas fa-heart', 'fas fa-globe', 'fas fa-home', 'fas fa-search', 'fas fa-filter',
-            'fas fa-store', 'fas fa-store-alt', 'fas fa-warehouse', 'fas fa-dolly', 'fas fa-truck-loading', 'fas fa-shipping-fast',
-            'fas fa-utensils', 'fas fa-hamburger', 'fas fa-pizza-slice', 'fas fa-drumstick-bite', 'fas fa-fish', 'fas fa-bread-slice',
-            'fas fa-cheese', 'fas fa-egg', 'fas fa-bacon', 'fas fa-pepper-hot', 'fas fa-carrot', 'fas fa-apple-alt', 'fas fa-lemon',
-            'fas fa-leaf', 'fas fa-seedling', 'fas fa-ice-cream', 'fas fa-cookie', 'fas fa-cookie-bite', 'fas fa-candy-cane',
-            'fas fa-mug-hot', 'fas fa-coffee', 'fas fa-wine-bottle', 'fas fa-wine-glass', 'fas fa-glass-martini-alt', 'fas fa-beer',
-            'fas fa-blender', 'fas fa-glass-whiskey', 'fas fa-tint',
-            'fas fa-mobile-alt', 'fas fa-tablet-alt', 'fas fa-laptop', 'fas fa-desktop', 'fas fa-tv', 'fas fa-camera', 'fas fa-video',
-            'fas fa-headphones', 'fas fa-headset', 'fas fa-microphone', 'fas fa-battery-full', 'fas fa-plug', 'fas fa-wifi',
-            'fas fa-sim-card', 'fas fa-microchip', 'fas fa-print', 'fas fa-hdd', 'fas fa-server', 'fas fa-keyboard', 'fas fa-mouse',
-            'fas fa-gamepad', 'fas fa-robot',
-            'fas fa-tshirt', 'fas fa-socks', 'fas fa-hat-cowboy', 'fas fa-hat-wizard', 'fas fa-user-tie', 'fas fa-shoe-prints',
-            'fas fa-glasses', 'fas fa-stopwatch', 'fas fa-ring', 'fas fa-gem', 'fas fa-crown', 'fas fa-cut', 'fas fa-vest',
-            'fas fa-couch', 'fas fa-chair', 'fas fa-bed', 'fas fa-dungeon', 'fas fa-door-open', 'fas fa-shower', 'fas fa-bath',
-            'fas fa-toilet', 'fas fa-soap', 'fas fa-pump-soap', 'fas fa-key', 'fas fa-lock', 'fas fa-lightbulb', 'fas fa-fan',
-            'fas fa-snowflake', 'fas fa-broom', 'fas fa-trash', 'fas fa-spray-can', 'fas fa-hands-wash', 'fas fa-sink',
-            'fas fa-pen', 'fas fa-pen-nib', 'fas fa-pen-alt', 'fas fa-marker', 'fas fa-pencil-alt', 'fas fa-ruler', 'fas fa-ruler-combined',
-            'fas fa-paperclip', 'fas fa-folder', 'fas fa-folder-open', 'fas fa-file-alt', 'fas fa-book', 'fas fa-book-open',
-            'fas fa-calculator', 'fas fa-briefcase', 'fas fa-paste', 'fas fa-copy', 'fas fa-cut',
-            'fas fa-medkit', 'fas fa-first-aid', 'fas fa-stethoscope', 'fas fa-heartbeat', 'fas fa-pills', 'fas fa-syringe',
-            'fas fa-thermometer-half', 'fas fa-user-md', 'fas fa-spa', 'fas fa-tooth', 'fas fa-eye', 'fas fa-hand-sparkles',
-            'fas fa-baby', 'fas fa-baby-carriage',
-            'fas fa-futbol', 'fas fa-basketball-ball', 'fas fa-football-ball', 'fas fa-baseball-ball', 'fas fa-volleyball-ball',
-            'fas fa-table-tennis', 'fas fa-bowling-ball', 'fas fa-dumbbell', 'fas fa-running', 'fas fa-swimmer', 'fas fa-bicycle',
-            'fas fa-medal', 'fas fa-trophy', 'fas fa-hiking',
-            'fas fa-car', 'fas fa-truck', 'fas fa-motorcycle', 'fas fa-bus', 'fas fa-taxi', 'fas fa-gas-pump', 'fas fa-oil-can',
-            'fas fa-wrench', 'fas fa-tools', 'fas fa-cog', 'fas fa-cogs', 'fas fa-shipping-fast', 'fas fa-plane', 'fas fa-ship',
-            'fas fa-hard-hat', 'fas fa-hammer', 'fas fa-screwdriver', 'fas fa-paint-roller', 'fas fa-brush', 'fas fa-palette',
-            'fas fa-cube', 'fas fa-cubes', 'fas fa-industry',
-            'fas fa-paw', 'fas fa-cat', 'fas fa-dog', 'fas fa-dove', 'fas fa-crow', 'fas fa-feather', 'fas fa-horse', 'fas fa-frog'
-        ];
-
-        const picker = document.getElementById('iconPicker');
-        const input = document.getElementById('selectedIcon');
-        const preview = document.getElementById('previewIcon');
-        const currentIcon = "@Model.IconClass";
-
-        icons.forEach(iconClass => {
-            const div = document.createElement('div');
-            // تمييز الأيقونة الحالية
-            const isSelected = iconClass === currentIcon;
-            div.className = 'icon-option' + (isSelected ? ' selected' : '');
-            div.innerHTML = `<i class="${iconClass}"></i>`;
-
-            div.onclick = function() {
-                // إزالة التحديد من الكل
-                document.querySelectorAll('.icon-option').forEach(el => el.classList.remove('selected'));
-                // تحديد العنصر الجديد
-                div.classList.add('selected');
-                // تحديث القيمة
-                input.value = iconClass;
-                preview.className = iconClass;
-            };
-            picker.appendChild(div);
-
-            // التمرير التلقائي للأيقونة المحددة
-            if(isSelected) {
-                setTimeout(() => {
-                    picker.scrollTop = div.offsetTop - picker.offsetTop - 10;
-                }, 100);
-            }
-        });
-    });
-</script>
+@section Scripts {
+    <script>
+        function updateIcon(val) {
+            document.getElementById('iconPreview').className = val;
+        }
+    </script>
+}

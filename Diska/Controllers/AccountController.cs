@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
 using Diska.Models;
+using System.Threading.Tasks;
+using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 
 namespace Diska.Controllers
@@ -16,11 +18,16 @@ namespace Diska.Controllers
             _userManager = userManager;
         }
 
+        // --- 1. Login ---
         [HttpGet]
         public IActionResult Login(string returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
-            return User.Identity.IsAuthenticated ? RedirectToAction("Index", "Home") : View();
+            if (User.Identity.IsAuthenticated)
+            {
+                return RedirectToRoleDashboard();
+            }
+            return View();
         }
 
         [HttpPost]
@@ -28,35 +35,53 @@ namespace Diska.Controllers
         public async Task<IActionResult> Login(string phone, string password, bool rememberMe, string returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
+
             if (string.IsNullOrEmpty(phone) || string.IsNullOrEmpty(password))
             {
-                ViewBag.Error = "من فضلك أدخل رقم الهاتف وكلمة المرور";
+                ViewBag.Error = "من فضلك أدخل البيانات كاملة";
                 return View();
             }
 
-            var user = await _userManager.FindByNameAsync(phone);
+            // البحث عن المستخدم (الاسم المستخدم هو رقم الهاتف)
+            var user = await _userManager.FindByNameAsync(phone) ?? _userManager.Users.FirstOrDefault(u => u.PhoneNumber == phone);
+
             if (user != null)
             {
-                var result = await _signInManager.PasswordSignInAsync(user, password, rememberMe, false);
+                // التحقق من الحظر
+                if (await _userManager.IsLockedOutAsync(user))
+                {
+                    ViewBag.Error = "هذا الحساب محظور مؤقتاً. يرجى التواصل مع الدعم.";
+                    return View();
+                }
+
+                // محاولة الدخول
+                var result = await _signInManager.PasswordSignInAsync(user, password, rememberMe, lockoutOnFailure: true);
+
                 if (result.Succeeded)
                 {
-                    if (await _userManager.IsInRoleAsync(user, "Admin"))
+                    // التحقق الخاص بالتجار (Approval Check)
+                    if (await _userManager.IsInRoleAsync(user, "Merchant"))
                     {
-                        return RedirectToAction("Index", "Dashboard", new { area = "Admin" });
+                        if (!user.IsVerifiedMerchant)
+                        {
+                            await _signInManager.SignOutAsync();
+                            ViewBag.Error = "حساب التاجر الخاص بك قيد المراجعة ولم يتم تفعيله بعد.";
+                            return View();
+                        }
                     }
 
                     if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-                    {
                         return Redirect(returnUrl);
-                    }
-                    return RedirectToAction("Index", "Home");
+
+                    return RedirectToRoleDashboard();
                 }
             }
 
-            ViewBag.Error = "بيانات الدخول غير صحيحة";
+            ViewBag.Error = "بيانات الدخول غير صحيحة.";
             return View();
         }
 
+        // --- 2. Register (Signup) ---
         [HttpGet]
         public IActionResult Signup() => View();
 
@@ -64,32 +89,46 @@ namespace Diska.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Signup(string fullName, string shopName, string phone, string password, string type, string commercialReg)
         {
+            // تنظيف المدخلات
+            phone = phone?.Trim();
+
             var existingUser = await _userManager.FindByNameAsync(phone);
             if (existingUser != null)
             {
-                ViewBag.Error = "رقم الهاتف مسجل مسبقاً";
+                ViewBag.Error = "رقم الهاتف مسجل مسبقاً، حاول تسجيل الدخول.";
                 return View();
             }
+
+            // تحديد القيم الافتراضية بناءً على النوع
+            string role = type == "Merchant" ? "Merchant" : "Customer";
+            string finalShopName = role == "Merchant" ? shopName : "عميل";
+            string finalCommReg = role == "Merchant" ? commercialReg : null;
 
             var user = new ApplicationUser
             {
                 UserName = phone,
                 PhoneNumber = phone,
                 FullName = fullName,
-                ShopName = type == "Merchant" ? shopName : null,
-                CommercialRegister = type == "Merchant" ? commercialReg : null,
-                Email = $"{phone}@diska.local",
-                IsVerifiedMerchant = false
+                ShopName = finalShopName,
+                CommercialRegister = finalCommReg,
+                IsVerifiedMerchant = false, // التجار الجدد دائماً غير مفعلين
+                Email = $"{phone}@diska.local", // بريد وهمي للنظام
+                WalletBalance = 0
             };
 
             var result = await _userManager.CreateAsync(user, password);
             if (result.Succeeded)
             {
-                string role = type == "Merchant" ? "Merchant" : "Customer";
                 await _userManager.AddToRoleAsync(user, role);
-                await _signInManager.SignInAsync(user, isPersistent: true);
 
-                if (role == "Merchant") return RedirectToAction("Index", "Merchant");
+                if (role == "Merchant")
+                {
+                    // التاجر لا يدخل مباشرة، يذهب لصفحة انتظار
+                    return RedirectToAction("MerchantLanding", "Home"); // أو صفحة "تم التسجيل بنجاح، بانتظار التفعيل"
+                }
+
+                // العميل يدخل مباشرة
+                await _signInManager.SignInAsync(user, isPersistent: true);
                 return RedirectToAction("Index", "Home");
             }
 
@@ -97,66 +136,115 @@ namespace Diska.Controllers
             return View();
         }
 
-        [Authorize]
-        public async Task<IActionResult> Profile()
-        {
-            var user = await _userManager.GetUserAsync(User);
-            // إحصائيات وهمية للتجربة
-            ViewBag.OrdersCount = 12;
-            ViewBag.PendingCount = 2;
-            ViewBag.WishlistCount = 5;
-            return View(user);
-        }
-
-        [Authorize]
-        public async Task<IActionResult> Settings()
-        {
-            var user = await _userManager.GetUserAsync(User);
-            return View(user);
-        }
-
-        [Authorize]
-        [HttpPost]
-        public async Task<IActionResult> UpdateProfile(string FullName, string ShopName, string CommercialRegister)
-        {
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null) return NotFound();
-
-            user.FullName = FullName;
-            if (User.IsInRole("Merchant"))
-            {
-                user.ShopName = ShopName;
-                user.CommercialRegister = CommercialRegister;
-            }
-
-            await _userManager.UpdateAsync(user);
-            TempData["Success"] = "تم تحديث البيانات بنجاح";
-            return RedirectToAction(nameof(Settings));
-        }
-
-        [Authorize]
-        [HttpPost]
-        public async Task<IActionResult> ChangePassword(string CurrentPassword, string NewPassword)
-        {
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null) return NotFound();
-
-            var result = await _userManager.ChangePasswordAsync(user, CurrentPassword, NewPassword);
-            if (result.Succeeded)
-            {
-                TempData["Success"] = "تم تغيير كلمة المرور بنجاح";
-            }
-            else
-            {
-                TempData["Error"] = "كلمة المرور الحالية غير صحيحة أو الجديدة لا تطابق الشروط";
-            }
-            return RedirectToAction(nameof(Settings));
-        }
-
+        // --- 3. Logout ---
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
             return RedirectToAction("Index", "Home");
         }
+
+        // --- 4. Forgot Password ---
+        [HttpGet]
+        public IActionResult ForgotPassword()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ForgotPassword(string phone)
+        {
+            if (string.IsNullOrEmpty(phone)) return View();
+
+            var user = await _userManager.FindByNameAsync(phone);
+            if (user == null)
+            {
+                // لا تكشف أن المستخدم غير موجود للأمان
+                return View("ForgotPasswordConfirmation");
+            }
+
+            // هنا يجب إرسال رمز التحقق SMS أو رابط للإيميل
+            // للتبسيط حالياً سنقوم بتوليد التوكن وتوجيهه (محاكاة)
+            var code = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+            // في الواقع: SendSMS(user.PhoneNumber, code);
+            // للمحاكاة: سنمرر الكود للصفحة التالية مباشرة
+            return RedirectToAction("ResetPassword", new { code = code, phone = phone });
+        }
+
+        // --- 5. Reset Password ---
+        [HttpGet]
+        public IActionResult ResetPassword(string code = null, string phone = null)
+        {
+            if (code == null) return BadRequest("A code must be supplied for password reset.");
+            var model = new ResetPasswordViewModel { Code = code, Phone = phone };
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+        {
+            if (!ModelState.IsValid) return View(model);
+
+            var user = await _userManager.FindByNameAsync(model.Phone);
+            if (user == null)
+            {
+                // لا تكشف أن المستخدم غير موجود
+                return RedirectToAction("ResetPasswordConfirmation");
+            }
+
+            var result = await _userManager.ResetPasswordAsync(user, model.Code, model.Password);
+            if (result.Succeeded)
+            {
+                return RedirectToAction("ResetPasswordConfirmation");
+            }
+
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error.Description);
+            }
+            return View(model);
+        }
+
+        [HttpGet]
+        public IActionResult ResetPasswordConfirmation()
+        {
+            return View();
+        }
+
+        [HttpGet]
+        public IActionResult ForgotPasswordConfirmation()
+        {
+            return View();
+        }
+
+        // --- Helpers ---
+        private IActionResult RedirectToRoleDashboard()
+        {
+            if (User.IsInRole("Admin"))
+                return RedirectToAction("Index", "Dashboard", new { area = "Admin" });
+
+            if (User.IsInRole("Merchant"))
+                return RedirectToAction("Index", "Dashboard", new { area = "Merchant" });
+
+            // العميل يذهب للوحة العميل (Client Area) بدلاً من الرئيسية
+            return RedirectToAction("Index", "Dashboard", new { area = "Client" });
+        }
+    }
+
+    // View Models for Password Reset
+    public class ResetPasswordViewModel
+    {
+        public string Phone { get; set; }
+        public string Code { get; set; }
+
+        [System.ComponentModel.DataAnnotations.Required]
+        [System.ComponentModel.DataAnnotations.DataType(System.ComponentModel.DataAnnotations.DataType.Password)]
+        public string Password { get; set; }
+
+        [System.ComponentModel.DataAnnotations.DataType(System.ComponentModel.DataAnnotations.DataType.Password)]
+        [System.ComponentModel.DataAnnotations.Compare("Password", ErrorMessage = "كلمة المرور غير متطابقة")]
+        public string ConfirmPassword { get; set; }
     }
 }

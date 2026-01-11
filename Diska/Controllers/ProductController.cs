@@ -14,121 +14,118 @@ namespace Diska.Controllers
             _context = context;
         }
 
-        // تفاصيل المنتج
-        public async Task<IActionResult> Details(int id)
+        // 1. صفحة عرض المنتجات (الكتالوج / البحث / الفلترة)
+        public async Task<IActionResult> Index(
+            string query,           // للبحث
+            int? categoryId,        // فلترة بالقسم
+            decimal? minPrice,      // أقل سعر
+            decimal? maxPrice,      // أعلى سعر
+            List<string> merchants, // فلترة بالتجار
+            string sort)            // الترتيب
         {
-            var product = await _context.Products
+            var productsQuery = _context.Products
                 .Include(p => p.Category)
-                .Include(p => p.Images) // التأكد من جلب الصور
-                .Include(p => p.ProductColors) // تم الإصلاح: جلب الألوان
-                .Include(p => p.PriceTiers.OrderBy(t => t.MinQuantity))
-                .FirstOrDefaultAsync(p => p.Id == id);
-
-            if (product == null) return NotFound();
-
-            // جلب التقييمات
-            ViewBag.Reviews = await _context.ProductReviews
-                .Where(r => r.ProductId == id)
-                .Include(r => r.User)
-                .OrderByDescending(r => r.CreatedAt)
-                .ToListAsync();
-
-            // حساب المتوسط
-            var ratings = await _context.ProductReviews.Where(r => r.ProductId == id).Select(r => r.Rating).ToListAsync();
-            ViewBag.AverageRating = ratings.Any() ? ratings.Average() : 0;
-            ViewBag.ReviewCount = ratings.Count;
-
-            ViewBag.RelatedProducts = await _context.Products
-                .Where(p => p.CategoryId == product.CategoryId && p.Id != product.Id)
-                .Take(4)
-                .ToListAsync();
-
-            return View(product);
-        }
-
-        // عرض القسم مع الفلتر
-        public async Task<IActionResult> Category(int id, decimal? minPrice, decimal? maxPrice, string sort, List<string> brands)
-        {
-            var category = await _context.Categories.FindAsync(id);
-            if (category == null) return NotFound();
-
-            ViewBag.CategoryName = System.Globalization.CultureInfo.CurrentCulture.Name.StartsWith("ar") ? category.Name : (category.NameEn ?? category.Name);
-            ViewBag.CurrentSort = sort;
-            ViewBag.CategoryId = id;
-
-            var query = _context.Products
                 .Include(p => p.Merchant)
-                .Include(p => p.ProductColors) // إضافة الألوان هنا أيضاً لصفحة القسم
-                .Where(p => p.CategoryId == id && p.IsActive && p.StockQuantity > 0);
+                .Where(p => p.Status == "Active");
 
-            // تصفية بالسعر
-            if (minPrice.HasValue) query = query.Where(p => p.Price >= minPrice.Value);
-            if (maxPrice.HasValue) query = query.Where(p => p.Price <= maxPrice.Value);
+            // --- الفلاتر ---
 
-            // تصفية بالماركة
-            if (brands != null && brands.Any())
+            // 1. البحث
+            if (!string.IsNullOrEmpty(query))
             {
-                query = query.Where(p => brands.Contains(p.Merchant.ShopName) || brands.Any(b => p.Name.Contains(b)));
+                productsQuery = productsQuery.Where(p =>
+                    p.Name.Contains(query) ||
+                    p.NameEn.Contains(query) ||
+                    p.Description.Contains(query) ||
+                    p.SKU.Contains(query));
+                ViewBag.SearchQuery = query;
             }
 
-            // الترتيب
-            query = sort switch
+            // 2. القسم
+            if (categoryId.HasValue)
             {
-                "price_asc" => query.OrderBy(p => p.Price),
-                "price_desc" => query.OrderByDescending(p => p.Price),
-                _ => query.OrderByDescending(p => p.Id)
+                productsQuery = productsQuery.Where(p => p.CategoryId == categoryId);
+                var category = await _context.Categories.FindAsync(categoryId);
+                ViewBag.CategoryName = Thread.CurrentThread.CurrentCulture.Name.StartsWith("ar") ? category?.Name : category?.NameEn;
+                ViewBag.CategoryId = categoryId;
+            }
+
+            // 3. السعر
+            if (minPrice.HasValue) productsQuery = productsQuery.Where(p => p.Price >= minPrice.Value);
+            if (maxPrice.HasValue) productsQuery = productsQuery.Where(p => p.Price <= maxPrice.Value);
+
+            // 4. التجار
+            if (merchants != null && merchants.Any())
+            {
+                productsQuery = productsQuery.Where(p => merchants.Contains(p.Merchant.ShopName));
+            }
+
+            // --- الترتيب ---
+            productsQuery = sort switch
+            {
+                "price_asc" => productsQuery.OrderBy(p => p.Price),
+                "price_desc" => productsQuery.OrderByDescending(p => p.Price),
+                "newest" => productsQuery.OrderByDescending(p => p.Id), // أو CreatedAt
+                _ => productsQuery.OrderByDescending(p => p.Id) // الافتراضي
             };
 
-            var products = await query.ToListAsync();
+            var products = await productsQuery.ToListAsync();
 
-            // جلب قائمة الماركات المتاحة في هذا القسم للفلتر
-            ViewBag.AvailableBrands = await _context.Products
-                .Where(p => p.CategoryId == id)
+            // --- تجهيز البيانات للواجهة (Dropdowns & Filters) ---
+
+            // قائمة الأقسام للسايدبار
+            ViewBag.Categories = await _context.Categories
+                .Where(c => c.IsActive && c.ParentId == null)
+                .ToListAsync();
+
+            // قائمة التجار المتاحين في النتائج الحالية (للفلترة الذكية)
+            ViewBag.AvailableMerchants = products
                 .Select(p => p.Merchant.ShopName)
                 .Distinct()
-                .ToListAsync();
+                .ToList();
+
+            ViewBag.CurrentSort = sort;
 
             return View(products);
         }
 
-        // إضافة مراجعة
-        [HttpPost]
-        [Microsoft.AspNetCore.Authorization.Authorize]
-        public async Task<IActionResult> AddReview(int productId, int rating, string comment)
+        // 2. أكشن البحث المباشر (يوجه للـ Index)
+        public IActionResult Search(string query)
         {
-            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-
-            var review = new ProductReview
-            {
-                ProductId = productId,
-                UserId = userId,
-                Rating = rating,
-                Comment = comment,
-                CreatedAt = DateTime.Now
-            };
-
-            _context.ProductReviews.Add(review);
-            await _context.SaveChangesAsync();
-
-            return RedirectToAction("Details", new { id = productId });
+            return RedirectToAction(nameof(Index), new { query = query });
         }
 
-        // اشتراك في توفر المنتج
-        [HttpPost]
-        public async Task<IActionResult> SubscribeRestock(int productId, string email)
+        // 3. تفاصيل المنتج
+        public async Task<IActionResult> Details(int id)
         {
-            var sub = new RestockSubscription
-            {
-                ProductId = productId,
-                Email = email,
-                UserId = User.Identity.IsAuthenticated ? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value : null
-            };
+            var product = await _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.Merchant)
+                .Include(p => p.Images)
+                .Include(p => p.ProductColors)
+                .Include(p => p.PriceTiers.OrderBy(t => t.MinQuantity))
+                .FirstOrDefaultAsync(p => p.Id == id && p.Status == "Active");
 
-            _context.RestockSubscriptions.Add(sub);
-            await _context.SaveChangesAsync();
+            if (product == null) return NotFound();
 
-            TempData["Message"] = "تم تسجيل طلبك، سيتم إشعارك عند التوفر.";
-            return RedirectToAction("Details", new { id = productId });
+            // منتجات ذات صلة (نفس القسم)
+            ViewBag.RelatedProducts = await _context.Products
+                .Where(p => p.CategoryId == product.CategoryId && p.Id != product.Id && p.Status == "Active")
+                .Take(4)
+                .ToListAsync();
+
+            // جلب التقييمات
+            var reviews = await _context.ProductReviews
+                .Include(r => r.User)
+                .Where(r => r.ProductId == id && r.IsVisible)
+                .OrderByDescending(r => r.CreatedAt)
+                .ToListAsync();
+
+            ViewBag.Reviews = reviews;
+            ViewBag.ReviewCount = reviews.Count;
+            ViewBag.AverageRating = reviews.Any() ? reviews.Average(r => r.Rating) : 0;
+
+            return View(product);
         }
     }
 }

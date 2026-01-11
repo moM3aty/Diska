@@ -4,6 +4,9 @@ using Diska.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Diska.Services; // إضافة الـ Namespace للخدمات
+using Microsoft.AspNetCore.Identity;
+using System.Text; // هام للمستخدم
 
 namespace Diska.Areas.Admin.Controllers
 {
@@ -13,15 +16,20 @@ namespace Diska.Areas.Admin.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IWebHostEnvironment _webHostEnvironment;
-        private readonly Microsoft.AspNetCore.Identity.UserManager<ApplicationUser> _userManager;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IAuditService _auditService; // حقن خدمة التدقيق
 
-        public ProductsController(ApplicationDbContext context, IWebHostEnvironment webHostEnvironment, Microsoft.AspNetCore.Identity.UserManager<ApplicationUser> userManager)
+        public ProductsController(
+            ApplicationDbContext context,
+            IWebHostEnvironment webHostEnvironment,
+            UserManager<ApplicationUser> userManager,
+            IAuditService auditService) // الحقن هنا
         {
             _context = context;
             _webHostEnvironment = webHostEnvironment;
             _userManager = userManager;
+            _auditService = auditService;
         }
-
         public async Task<IActionResult> Index()
         {
             var products = await _context.Products
@@ -35,69 +43,51 @@ namespace Diska.Areas.Admin.Controllers
         [HttpGet]
         public async Task<IActionResult> Create()
         {
-            var merchants = await _userManager.GetUsersInRoleAsync("Merchant");
-            ViewBag.Merchants = new SelectList(merchants, "Id", "ShopName");
-            ViewBag.Categories = new SelectList(_context.Categories, "Id", "Name");
-            return View(new Product { ProductionDate = DateTime.Today, ExpiryDate = DateTime.Today.AddMonths(6), UnitsPerCarton = 1 });
+            await PrepareDropdowns();
+            return View(new Product
+            {
+                Status = "Draft",
+                ProductionDate = DateTime.Today,
+                ExpiryDate = DateTime.Today.AddMonths(6),
+                UnitsPerCarton = 1
+            });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Product model, IFormFile mainImage, List<IFormFile> galleryImages, string[] productColorsHex, string[] productColorsName)
         {
-            // تجاهل التحقق من الحقول التي لا تأتي من الفورم مباشرة
+            // تنظيف التحقق للحقول الاختيارية أو التي تدار يدوياً
             ModelState.Remove("Merchant");
             ModelState.Remove("Category");
             ModelState.Remove("ImageUrl");
+            foreach (var key in ModelState.Keys.Where(k => k.StartsWith("PriceTiers") || k.StartsWith("ProductColors"))) ModelState.Remove(key);
 
             if (!ModelState.IsValid)
             {
-                var merchants = await _userManager.GetUsersInRoleAsync("Merchant");
-                ViewBag.Merchants = new SelectList(merchants, "Id", "ShopName");
-                ViewBag.Categories = new SelectList(_context.Categories, "Id", "Name");
+                await PrepareDropdowns();
                 return View(model);
             }
 
-            // 1. الصورة الرئيسية
+            // معالجة الـ Slug و SEO
+            if (string.IsNullOrEmpty(model.Slug)) model.Slug = model.NameEn.ToLower().Replace(" ", "-");
+            if (string.IsNullOrEmpty(model.MetaTitle)) model.MetaTitle = model.Name;
+
+            // حفظ الصورة
             if (mainImage != null) model.ImageUrl = await SaveFile(mainImage);
             else model.ImageUrl = "images/default-product.png";
 
-            model.IsActive = true;
             _context.Products.Add(model);
             await _context.SaveChangesAsync();
 
-            // 2. صور المعرض
-            if (galleryImages != null && galleryImages.Any())
-            {
-                foreach (var file in galleryImages)
-                {
-                    if (file.Length > 0)
-                    {
-                        string path = await SaveFile(file);
-                        _context.ProductImages.Add(new ProductImage { ProductId = model.Id, ImageUrl = path });
-                    }
-                }
-            }
+            // حفظ المعرض والألوان وشرائح الأسعار
+            await ProcessSubItems(model, galleryImages, productColorsHex, productColorsName);
 
-            // 3. الألوان (تمت الإعادة)
-            if (productColorsHex != null && productColorsHex.Length > 0)
-            {
-                for (int i = 0; i < productColorsHex.Length; i++)
-                {
-                    if (!string.IsNullOrEmpty(productColorsHex[i]))
-                    {
-                        _context.ProductColors.Add(new ProductColor
-                        {
-                            ProductId = model.Id,
-                            ColorHex = productColorsHex[i],
-                            ColorName = productColorsName?.ElementAtOrDefault(i) ?? "لون"
-                        });
-                    }
-                }
-            }
+            var userId = _userManager.GetUserId(User);
+            var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+            await _auditService.LogAsync(userId, "Create", "Product", model.Id.ToString(), $"تم إضافة منتج جديد: {model.Name}", ip);
 
-            await _context.SaveChangesAsync();
-            TempData["Success"] = "تم إضافة المنتج بنجاح!";
+            TempData["Success"] = "تم إضافة المنتج بنجاح";
             return RedirectToAction(nameof(Index));
         }
 
@@ -106,15 +96,13 @@ namespace Diska.Areas.Admin.Controllers
         {
             var product = await _context.Products
                 .Include(p => p.Images)
-                .Include(p => p.ProductColors) // جلب الألوان
+                .Include(p => p.PriceTiers)
+                .Include(p => p.ProductColors)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
             if (product == null) return NotFound();
 
-            var merchants = await _userManager.GetUsersInRoleAsync("Merchant");
-            ViewBag.Merchants = new SelectList(merchants, "Id", "ShopName", product.MerchantId);
-            ViewBag.Categories = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
-
+            await PrepareDropdowns(product.MerchantId, product.CategoryId);
             return View(product);
         }
 
@@ -122,83 +110,55 @@ namespace Diska.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, Product model, IFormFile mainImage, List<IFormFile> galleryImages, string[] productColorsHex, string[] productColorsName)
         {
+
             if (id != model.Id) return NotFound();
 
-            var productToUpdate = await _context.Products
-                .Include(p => p.ProductColors) // تضمين الألوان للحذف
-                .FirstOrDefaultAsync(p => p.Id == id);
+            var productToUpdate = await _context.Products.FirstOrDefaultAsync(p => p.Id == id);
+           
 
             if (productToUpdate == null) return NotFound();
 
             // تحديث البيانات
             productToUpdate.Name = model.Name;
             productToUpdate.NameEn = model.NameEn;
-            productToUpdate.Description = model.Description;
-            productToUpdate.DescriptionEn = model.DescriptionEn;
+            productToUpdate.Brand = model.Brand;
+            productToUpdate.SKU = model.SKU;
+            productToUpdate.Barcode = model.Barcode;
             productToUpdate.Price = model.Price;
             productToUpdate.OldPrice = model.OldPrice;
+            productToUpdate.CostPrice = model.CostPrice;
             productToUpdate.StockQuantity = model.StockQuantity;
+            productToUpdate.LowStockThreshold = model.LowStockThreshold;
             productToUpdate.UnitsPerCarton = model.UnitsPerCarton;
+            productToUpdate.Weight = model.Weight;
+            productToUpdate.Status = model.Status;
+            productToUpdate.Description = model.Description;
+            productToUpdate.DescriptionEn = model.DescriptionEn;
+            productToUpdate.Slug = model.Slug;
+            productToUpdate.MetaTitle = model.MetaTitle;
+            productToUpdate.MetaDescription = model.MetaDescription;
             productToUpdate.CategoryId = model.CategoryId;
             productToUpdate.MerchantId = model.MerchantId;
-            productToUpdate.IsActive = model.IsActive;
             productToUpdate.ProductionDate = model.ProductionDate;
             productToUpdate.ExpiryDate = model.ExpiryDate;
 
-            // تحديث الصورة الرئيسية
             if (mainImage != null)
             {
                 productToUpdate.ImageUrl = await SaveFile(mainImage);
             }
 
-            // إضافة صور جديدة للمعرض
-            if (galleryImages != null && galleryImages.Any())
-            {
-                foreach (var file in galleryImages)
-                {
-                    if (file.Length > 0)
-                    {
-                        string path = await SaveFile(file);
-                        _context.ProductImages.Add(new ProductImage { ProductId = productToUpdate.Id, ImageUrl = path });
-                    }
-                }
-            }
-
-            // تحديث الألوان (حذف القديم وإضافة الجديد)
-            _context.ProductColors.RemoveRange(productToUpdate.ProductColors);
-            if (productColorsHex != null && productColorsHex.Length > 0)
-            {
-                for (int i = 0; i < productColorsHex.Length; i++)
-                {
-                    if (!string.IsNullOrEmpty(productColorsHex[i]))
-                    {
-                        _context.ProductColors.Add(new ProductColor
-                        {
-                            ProductId = productToUpdate.Id,
-                            ColorHex = productColorsHex[i],
-                            ColorName = productColorsName?.ElementAtOrDefault(i) ?? "لون"
-                        });
-                    }
-                }
-            }
+            // تحديث العناصر الفرعية
+            await ProcessSubItems(productToUpdate, galleryImages, productColorsHex, productColorsName, model.PriceTiers, true);
 
             await _context.SaveChangesAsync();
-            TempData["Success"] = "تم تعديل المنتج بنجاح!";
-            return RedirectToAction(nameof(Index));
-        }
 
-        // حذف صورة
-        [HttpPost]
-        public async Task<IActionResult> DeleteImage(int id)
-        {
-            var img = await _context.ProductImages.FindAsync(id);
-            if (img != null)
-            {
-                _context.ProductImages.Remove(img);
-                await _context.SaveChangesAsync();
-                return Ok();
-            }
-            return NotFound();
+            var userId = _userManager.GetUserId(User);
+            var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+            await _auditService.LogAsync(userId, "Update", "Product", id.ToString(), $"تم تعديل بيانات المنتج: {model.Name}. السعر الجديد: {model.Price}", ip);
+
+
+            TempData["Success"] = "تم تحديث المنتج بنجاح";
+            return RedirectToAction(nameof(Index));
         }
 
         [HttpPost]
@@ -207,11 +167,94 @@ namespace Diska.Areas.Admin.Controllers
             var product = await _context.Products.FindAsync(id);
             if (product != null)
             {
+                string prodName = product.Name;
+
                 _context.Products.Remove(product);
                 await _context.SaveChangesAsync();
+                var userId = _userManager.GetUserId(User);
+                var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+                await _auditService.LogAsync(userId, "Delete", "Product", id.ToString(), $"تم حذف المنتج: {prodName}", ip);
                 TempData["Success"] = "تم حذف المنتج.";
             }
             return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ExportToCsv()
+        {
+            var products = await _context.Products.Include(p => p.Category).Include(p => p.Merchant).ToListAsync();
+            var builder = new StringBuilder();
+            builder.AppendLine("Id,Name,SKU,Price,Stock,Category,Merchant,Status");
+
+            foreach (var p in products)
+            {
+                builder.AppendLine($"{p.Id},{p.Name},{p.SKU},{p.Price},{p.StockQuantity},{p.Category?.Name},{p.Merchant?.ShopName},{p.Status}");
+            }
+
+            return File(Encoding.UTF8.GetBytes(builder.ToString()), "text/csv", $"products_{DateTime.Now:yyyyMMdd}.csv");
+        }
+
+        // Helpers
+        private async Task PrepareDropdowns(string selectedMerchant = null, int? selectedCategory = null)
+        {
+            var merchants = await _userManager.GetUsersInRoleAsync("Merchant");
+            ViewBag.Merchants = new SelectList(merchants, "Id", "ShopName", selectedMerchant);
+            ViewBag.Categories = new SelectList(_context.Categories, "Id", "Name", selectedCategory);
+        }
+
+        private async Task ProcessSubItems(Product product, List<IFormFile> gallery, string[] colorsHex, string[] colorsName, List<PriceTier> priceTiers = null, bool isEdit = false)
+        {
+            // Gallery
+            if (gallery != null)
+            {
+                foreach (var file in gallery)
+                {
+                    if (file.Length > 0)
+                    {
+                        string path = await SaveFile(file);
+                        _context.ProductImages.Add(new ProductImage { ProductId = product.Id, ImageUrl = path });
+                    }
+                }
+            }
+
+            // Colors
+            if (isEdit)
+            {
+                var oldColors = await _context.ProductColors.Where(c => c.ProductId == product.Id).ToListAsync();
+                _context.ProductColors.RemoveRange(oldColors);
+
+                var oldTiers = await _context.PriceTiers.Where(t => t.ProductId == product.Id).ToListAsync();
+                _context.PriceTiers.RemoveRange(oldTiers);
+            }
+
+            if (colorsHex != null)
+            {
+                for (int i = 0; i < colorsHex.Length; i++)
+                {
+                    if (!string.IsNullOrEmpty(colorsHex[i]))
+                    {
+                        _context.ProductColors.Add(new ProductColor
+                        {
+                            ProductId = product.Id,
+                            ColorHex = colorsHex[i],
+                            ColorName = (colorsName != null && colorsName.Length > i) ? colorsName[i] : "Color"
+                        });
+                    }
+                }
+            }
+
+            // Price Tiers (B2B)
+            if (priceTiers != null)
+            {
+                foreach (var tier in priceTiers)
+                {
+                    if (tier.MinQuantity > 0 && tier.UnitPrice > 0)
+                    {
+                        tier.ProductId = product.Id;
+                        _context.PriceTiers.Add(tier);
+                    }
+                }
+            }
         }
 
         private async Task<string> SaveFile(IFormFile file)
@@ -219,14 +262,9 @@ namespace Diska.Areas.Admin.Controllers
             string folder = "images/products/";
             string fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
             string serverPath = Path.Combine(_webHostEnvironment.WebRootPath, folder + fileName);
-
-            string dirPath = Path.GetDirectoryName(serverPath);
-            if (!Directory.Exists(dirPath)) Directory.CreateDirectory(dirPath);
-
-            using (var stream = new FileStream(serverPath, FileMode.Create))
-            {
-                await file.CopyToAsync(stream);
-            }
+            string dir = Path.GetDirectoryName(serverPath);
+            if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+            using (var stream = new FileStream(serverPath, FileMode.Create)) await file.CopyToAsync(stream);
             return folder + fileName;
         }
     }

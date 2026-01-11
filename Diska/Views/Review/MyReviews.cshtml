@@ -1,0 +1,94 @@
+﻿@model IEnumerable<Diska.Models.ProductReview>
+@using System.Globalization
+@{
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    ViewData["Title"] = isAr ? "تقييماتي" : "My Reviews";
+    Layout = "_Layout";
+}
+
+<section class="section-padding">
+    <div class="container">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="page-title" style="margin:0;">@(isAr ? "تقييماتي" : "My Reviews") <i class="fas fa-star text-warning"></i></h2>
+                <p style="color:#666; margin-top:5px;">@(isAr ? "سجل بآرائك وتقييماتك للمنتجات" : "History of your product reviews")</p>
+            </div>
+            <a asp-controller="Account" asp-action="Profile" class="btn btn-outline-secondary small">
+                <i class="fas @(isAr ? "fa-arrow-right" : "fa-arrow-left")"></i> @(isAr ? "عودة لحسابي" : "Back to Profile")
+            </a>
+        </div>
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success" style="background:#dcfce7; color:#166534; padding:10px; border-radius:8px; margin-bottom:20px; border:1px solid #bbf7d0;">
+                <i class="fas fa-check-circle"></i> @TempData["Success"]
+            </div>
+        }
+
+        @if (!Model.Any())
+        {
+            <div style="text-align:center; padding:60px; background:#fff; border-radius:15px; border:1px solid #eee;">
+                <i class="far fa-comment-dots fa-4x" style="color:#e2e8f0; margin-bottom:20px;"></i>
+                <h3 style="color:#64748b;">@(isAr ? "لم تقم بتقييم أي منتجات بعد." : "No reviews yet.")</h3>
+                <a asp-controller="Home" asp-action="Index" class="btn primary small" style="margin-top:20px;">
+                    @(isAr ? "تصفح المنتجات" : "Browse Products")
+                </a>
+            </div>
+        }
+        else
+        {
+            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:25px;">
+                @foreach (var item in Model)
+                {
+                    <div class="card" style="background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:20px; box-shadow:0 2px 5px rgba(0,0,0,0.02);">
+                        <div style="display:flex; align-items:center; gap:15px; margin-bottom:15px; border-bottom:1px solid #f5f5f5; padding-bottom:10px;">
+                            <img src="~/@item.Product?.ImageUrl" onerror="this.src='/images/default.png'" style="width:50px; height:50px; border-radius:8px; object-fit:contain; border:1px solid #eee;">
+                            <div>
+                                <h5 style="margin:0; font-size:1rem; font-weight:bold;">
+                                    <a asp-controller="Product" asp-action="Details" asp-route-id="@item.ProductId" style="color:inherit; text-decoration:none;">
+                                        @(isAr? item.Product?.Name : item.Product?.NameEn)
+                                    </a>
+                                </h5>
+                                <small style="color:#999;">@item.CreatedAt.ToString("dd MMMM yyyy")</small>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom:15px;">
+                            <div style="color:#f59e0b; font-size:1.1rem; margin-bottom:5px;">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    if (i <= item.Rating)
+                                    {
+                                        <i class="fas fa-star"></i>
+                                    }
+                                    else
+                                    {
+
+                                        <i class="far fa-star" style="color:#ddd;"></i>
+                                    }
+                                }
+                            </div>
+                            <p style="color:#555; line-height:1.6; font-size:0.95rem; background:#f9fafb; padding:10px; border-radius:8px;">
+                                <i class="fas fa-quote-right" style="color:#ddd; margin-right:5px;"></i>
+                                @item.Comment
+                            </p>
+                        </div>
+
+                        <div style="display:flex; justify-content:flex-end; gap:10px;">
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn small" style="background:#e0f2fe; color:#0284c7; padding:6px 12px; border:none; font-size:0.8rem;">
+                                <i class="fas fa-edit"></i> @(isAr ? "تعديل" : "Edit")
+                            </a>
+                            <form asp-action="Delete" method="post" onsubmit="return confirm('@(isAr ? "هل أنت متأكد من الحذف؟" : "Delete review?")');" style="margin:0;">
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <button type="submit" class="btn small" style="background:#fee2e2; color:#dc2626; padding:6px 12px; border:none; font-size:0.8rem;">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</section>

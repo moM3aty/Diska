@@ -1,98 +1,106 @@
 ﻿@model IEnumerable<Diska.Models.Category>
 @{
-    ViewData["Title"] = "إدارة التصنيفات";
+    ViewData["Title"] = "إدارة الأقسام";
     Layout = "_AdminLayout";
 }
 
-<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
+<div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h2 style="margin:0; color:var(--primary);">إدارة أقسام المتجر</h2>
-        <p style="color:#64748b; margin-top:5px;">عرض وتعديل التصنيفات الرئيسية للمنتجات</p>
+        <h2 class="text-primary fw-bold mb-0">الأقسام والتصنيفات</h2>
+        <p class="text-muted small">هيكلة المنتجات والأقسام الفرعية</p>
     </div>
-
     <a asp-action="Create" class="btn btn-primary">
         <i class="fas fa-plus"></i> إضافة قسم جديد
     </a>
 </div>
 
-<div class="card">
-    @if (!Model.Any())
-    {
-        <div style="text-align:center; padding:50px; color:#64748b;">
-            <i class="fas fa-tags fa-3x" style="margin-bottom:15px; color:#cbd5e1;"></i>
-            <p>لا توجد تصنيفات مسجلة حالياً.</p>
-        </div>
-    }
-    else
-    {
-        <table style="width:100%;">
-            <thead>
-                <tr>
-                    <th>الأيقونة</th>
-                    <th>الاسم (عربي)</th>
-                    <th>الاسم (إنجليزي)</th>
-                    <th>عدد المنتجات</th>
-                    <th>إجراءات</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model)
-                {
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
                     <tr>
-                        <td>
-                            <div style="width:40px; height:40px; background:#f8fafc; border-radius:8px; display:flex; align-items:center; justify-content:center; border:1px solid #e2e8f0;">
-                                <i class="@item.IconClass fa-lg" style="color:var(--primary);"></i>
-                            </div>
-                        </td>
-                        <td><strong>@item.Name</strong></td>
-                        <td>@item.NameEn</td>
-                        <td>
-                            <span class="badge" style="background:#e0f2fe; color:#0284c7;">
-                                @(item.Products?.Count ?? 0) منتج
-                            </span>
-                        </td>
-                        <td>
-                            <div style="display:flex; gap:5px;">
-                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline" style="padding:6px 10px;" title="تعديل">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-
-                                <!-- زر الحذف المتصل بـ SweetAlert -->
-                                <button type="button" onclick="confirmDeleteCategory(@item.Id, '@item.Name')" class="btn btn-danger" style="padding:6px 10px; background:#fee2e2; color:#dc2626; border:none;" title="حذف">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-
-                                <!-- فورم الحذف المخفي -->
-                                <form id="deleteForm-@item.Id" asp-action="Delete" method="post" style="display:none;">
-                                    <input type="hidden" name="id" value="@item.Id" />
-                                </form>
-                            </div>
-                        </td>
+                        <th class="ps-4">المعلومات</th>
+                        <th>المستوى (الأب)</th>
+                        <th>الحالة</th>
+                        <th>الترتيب</th>
+                        <th>SEO Slug</th>
+                        <th class="text-end pe-4">إجراءات</th>
                     </tr>
-                }
-            </tbody>
-        </table>
-    }
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <i class="fas fa-layer-group fa-3x mb-3 opacity-50"></i>
+                                <p>لا توجد أقسام مضافة</p>
+                            </td>
+                        </tr>
+                    }
+                    @foreach (var item in Model)
+                    {
+                        bool isParent = item.ParentId == null;
+                        <tr class="@(isParent ? "bg-white fw-bold" : "")">
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center">
+                                    @if (!string.IsNullOrEmpty(item.ImageUrl))
+                                    {
+                                        <img src="~/@item.ImageUrl" class="rounded me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                                    }
+                                    else
+                                    {
+                                        <div class="bg-light rounded d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                            <i class="@(item.IconClass ?? "fas fa-folder") text-muted"></i>
+                                        </div>
+                                    }
+                                    <div>
+                                        <div class="text-dark">@item.Name</div>
+                                        <small class="text-muted">@item.NameEn</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                @if (item.Parent != null)
+                                {
+                                    <span class="badge bg-light text-dark border">
+                                        <i class="fas fa-level-up-alt me-1"></i> @item.Parent.Name
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-primary bg-opacity-10 text-primary">رئيسي</span>
+                                }
+                            </td>
+                            <td>
+                                @if (item.IsActive)
+                                {
+                                    <span class="badge bg-success">نشط</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">معطل</span>
+                                }
+                            </td>
+                            <td>@item.DisplayOrder</td>
+                            <td><code class="text-muted small">@item.Slug</code></td>
+                            <td class="text-end pe-4">
+                                <div class="btn-group">
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('حذف القسم؟');">
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
-
-<!-- سكريبت SweetAlert الخاص بالحذف -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-    function confirmDeleteCategory(id, name) {
-        Swal.fire({
-            title: 'هل أنت متأكد؟',
-            text: "سيتم حذف القسم '" + name + "' وكافة المنتجات التابعة له! لا يمكن التراجع عن هذا الإجراء.",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'نعم، احذفه!',
-            cancelButtonText: 'إلغاء'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // إرسال الفورم المخفي
-                document.getElementById('deleteForm-' + id).submit();
-            }
-        });
-    }
-</script>

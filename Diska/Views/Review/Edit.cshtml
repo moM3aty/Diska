@@ -1,0 +1,81 @@
+﻿@model Diska.Models.ProductReview
+@using System.Globalization
+@{
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    ViewData["Title"] = isAr ? "تعديل التقييم" : "Edit Review";
+    Layout = "_Layout";
+}
+
+<style>
+    .rating-group {
+        display: inline-flex;
+        flex-direction: row-reverse;
+        gap: 5px;
+    }
+
+        .rating-group input {
+            display: none;
+        }
+
+        .rating-group label {
+            font-size: 2rem;
+            color: #ddd;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+            .rating-group label:hover,
+            .rating-group label:hover ~ label,
+            .rating-group input:checked ~ label {
+                color: #f59e0b;
+            }
+</style>
+
+<section class="section-padding" style="min-height:70vh; display:flex; align-items:center;">
+    <div class="container">
+        <div style="max-width:600px; margin:0 auto; background:#fff; padding:40px; border-radius:16px; border:1px solid #e2e8f0; box-shadow:0 10px 30px rgba(0,0,0,0.03);">
+
+            <div style="text-align:center; margin-bottom:30px;">
+                <h2 style="color:var(--primary); margin:0;">@(isAr ? "تعديل تقييمك" : "Edit Your Review")</h2>
+                <p style="color:#666; margin-top:5px;">@(isAr? Model.Product?.Name : Model.Product?.NameEn)</p>
+            </div>
+
+            @if (TempData["Error"] != null)
+            {
+                <div style="background:#fee2e2; color:#ef4444; padding:10px; border-radius:8px; margin-bottom:20px; border:1px solid #fecaca; text-align:center;">
+                    @TempData["Error"]
+                </div>
+            }
+
+            <form asp-action="Edit" method="post">
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="ProductId" />
+
+                <div class="form-group text-center mb-4">
+                    <label style="display:block; margin-bottom:10px; font-weight:bold; color:#334155;">@(isAr ? "التقييم العام" : "Overall Rating")</label>
+                    <div class="rating-group">
+                        <input type="radio" id="star5" name="Rating" value="5" @(Model.Rating == 5 ? "checked" : "") /><label for="star5" title="Excellent"><i class="fas fa-star"></i></label>
+                        <input type="radio" id="star4" name="Rating" value="4" @(Model.Rating == 4 ? "checked" : "") /><label for="star4" title="Good"><i class="fas fa-star"></i></label>
+                        <input type="radio" id="star3" name="Rating" value="3" @(Model.Rating == 3 ? "checked" : "") /><label for="star3" title="Average"><i class="fas fa-star"></i></label>
+                        <input type="radio" id="star2" name="Rating" value="2" @(Model.Rating == 2 ? "checked" : "") /><label for="star2" title="Poor"><i class="fas fa-star"></i></label>
+                        <input type="radio" id="star1" name="Rating" value="1" @(Model.Rating == 1 ? "checked" : "") /><label for="star1" title="Bad"><i class="fas fa-star"></i></label>
+                    </div>
+                </div>
+
+                <div class="form-group mb-4">
+                    <label style="display:block; margin-bottom:8px; font-weight:bold; color:#334155;">@(isAr ? "تعليقك" : "Your Comment")</label>
+                    <textarea asp-for="Comment" rows="4" class="form-control" style="width:100%; padding:15px; border:1px solid #cbd5e1; border-radius:10px; font-family:inherit;" required></textarea>
+                </div>
+
+                <div style="display:flex; gap:15px;">
+                    <button type="submit" class="btn primary w-100" style="padding:12px; font-weight:bold; font-size:1.1rem; border-radius:8px;">
+                        @(isAr ? "حفظ التعديلات" : "Save Changes")
+                    </button>
+                    <a asp-action="MyReviews" class="btn" style="border:1px solid #ccc; color:#666; padding:12px; border-radius:8px; text-decoration:none;">
+                        @(isAr ? "إلغاء" : "Cancel")
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>

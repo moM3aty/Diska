@@ -4,49 +4,135 @@
     Layout = "_AdminLayout";
 }
 
-<h2 style="margin-bottom:20px;">مراجعة تقييمات العملاء</h2>
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+    <div>
+        <h2 style="margin:0; color:var(--primary);">إدارة التقييمات والمراجعات</h2>
+        <p style="color:#64748b; margin-top:5px;">مراقبة آراء العملاء والتحكم في المحتوى</p>
+    </div>
+</div>
+
+<!-- أدوات البحث والفلترة -->
+<div class="card" style="margin-bottom:20px; padding:15px;">
+    <form method="get" asp-action="Index">
+        <div style="display:flex; gap:15px; align-items:center; flex-wrap:wrap;">
+            <div style="flex:1; min-width:250px;">
+                <input type="text" name="search" class="form-control" placeholder="بحث باسم المنتج، العميل، أو المحتوى..." value="@ViewBag.CurrentSearch">
+            </div>
+
+            <div style="width:150px;">
+                <select name="rating" class="form-control">
+                    <option value="">الكل (النجوم)</option>
+                    <option value="5" selected="@(ViewBag.CurrentRating == 5)">5 نجوم</option>
+                    <option value="4" selected="@(ViewBag.CurrentRating == 4)">4 نجوم</option>
+                    <option value="3" selected="@(ViewBag.CurrentRating == 3)">3 نجوم</option>
+                    <option value="2" selected="@(ViewBag.CurrentRating == 2)">2 نجوم</option>
+                    <option value="1" selected="@(ViewBag.CurrentRating == 1)">1 نجمة</option>
+                </select>
+            </div>
+
+            <div style="width:150px;">
+                <select name="status" class="form-control">
+                    <option value="All" selected="@(ViewBag.CurrentStatus == "All")">كل الحالات</option>
+                    <option value="Visible" selected="@(ViewBag.CurrentStatus == "Visible")">ظاهر</option>
+                    <option value="Hidden" selected="@(ViewBag.CurrentStatus == "Hidden")">مخفي</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">بحث</button>
+        </div>
+    </form>
+</div>
 
 <div class="card">
     @if (!Model.Any())
     {
-        <div style="text-align:center; padding:30px; color:#666;">لا توجد تقييمات حتى الآن.</div>
+        <div style="text-align:center; padding:50px; color:#666;">
+            <i class="fas fa-star-half-alt fa-3x" style="color:#e2e8f0; margin-bottom:15px;"></i>
+            <p>لا توجد تقييمات مطابقة.</p>
+        </div>
     }
     else
     {
-        <table style="width:100%;">
-            <thead>
-                <tr>
-                    <th>المنتج</th>
-                    <th>العميل</th>
-                    <th>التقييم</th>
-                    <th>التعليق</th>
-                    <th>التاريخ</th>
-                    <th>حذف</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model)
-                {
+        <div class="table-responsive">
+            <table class="table align-middle" style="width:100%;">
+                <thead class="bg-light">
                     <tr>
-                        <td>@(item.Product?.Name ?? "منتج محذوف")</td>
-                        <td>@(item.User?.FullName ?? "مستخدم")</td>
-                        <td style="color:#f59e0b;">
-                            @for (int i = 0; i < item.Rating; i++)
-                            {
-                                <i class="fas fa-star"></i>
-                            }
-                        </td>
-                        <td style="max-width:300px;">@item.Comment</td>
-                        <td style="font-size:0.85rem; color:#666;">@item.CreatedAt.ToString("yyyy/MM/dd")</td>
-                        <td>
-                            <form asp-action="Delete" method="post" onsubmit="return confirm('حذف هذا التقييم؟');">
-                                <input type="hidden" name="id" value="@item.Id" />
-                                <button type="submit" class="btn" style="color:red; background:none;"><i class="fas fa-trash"></i></button>
-                            </form>
-                        </td>
+                        <th style="width:50px;">#</th>
+                        <th>المنتج</th>
+                        <th>العميل</th>
+                        <th style="width:120px;">التقييم</th>
+                        <th>التعليق</th>
+                        <th>الحالة</th>
+                        <th style="width:120px;">إجراءات</th>
                     </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.Id</td>
+                            <td>
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <img src="~/@item.Product?.ImageUrl" style="width:40px; height:40px; border-radius:5px; object-fit:cover; border:1px solid #eee;">
+                                    <span style="font-weight:bold; font-size:0.9rem;">@(item.Product?.Name ?? "منتج محذوف")</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div>@(item.User?.FullName ?? "مستخدم محذوف")</div>
+                                <small class="text-muted">@item.CreatedAt.ToString("yyyy/MM/dd")</small>
+                            </td>
+                            <td>
+                                <div style="color:#f59e0b; font-size:0.8rem;">
+                                    @for (int i = 0; i < 5; i++)
+                                    {
+                                        if (i < item.Rating)
+                                        {
+                                            <i class="fas fa-star"></i>
+                                        }
+                                        else
+                                        {
+
+                                            <i class="far fa-star" style="color:#ddd;"></i>
+                                        }
+                                    }
+                                </div>
+                            </td>
+                            <td>
+                                <p style="margin:0; font-size:0.9rem; color:#555; max-width:350px; line-height:1.5;">@item.Comment</p>
+                            </td>
+                            <td>
+                                @if (item.IsVisible)
+                                {
+                                    <span class="badge bg-success">ظاهر</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">مخفي</span>
+                                }
+                            </td>
+                            <td>
+                                <div style="display:flex; gap:5px;">
+                                    <!-- زر الإخفاء/الإظهار -->
+                                    <form asp-action="ToggleVisibility" method="post" style="display:inline;">
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary" title="@(item.IsVisible ? "إخفاء" : "إظهار")">
+                                            <i class="fas @(item.IsVisible ? "fa-eye-slash" : "fa-eye")"></i>
+                                        </button>
+                                    </form>
+
+                                    <!-- زر الحذف -->
+                                    <form asp-action="Delete" method="post" onsubmit="return confirm('حذف هذا التقييم نهائياً؟');" style="display:inline;">
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <button type="submit" class="btn btn-sm btn-danger" title="حذف">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     }
 </div>

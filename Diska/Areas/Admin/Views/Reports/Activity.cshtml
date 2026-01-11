@@ -1,0 +1,54 @@
+﻿@model IEnumerable<Diska.Areas.Admin.Controllers.ActivityViewModel>
+@{
+    ViewData["Title"] = "سجل النشاط";
+    Layout = "_AdminLayout";
+}
+
+<div class="page-title mb-4">
+    <h2 class="text-primary fw-bold"><i class="fas fa-history"></i> سجل نشاط النظام</h2>
+    <p class="text-muted">تتبع آخر العمليات التي تمت على المنصة</p>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <ul class="list-group list-group-flush">
+            @if (!Model.Any())
+            {
+                <li class="list-group-item p-5 text-center text-muted">لا يوجد نشاط مسجل حديثاً.</li>
+            }
+            @foreach (var item in Model)
+            {
+                <li class="list-group-item p-3 d-flex align-items-start hover-bg">
+                    <div class="me-3 mt-1">
+                        @if (item.Type == "Order")
+                        {
+                            <div class="bg-primary bg-opacity-10 text-primary rounded-circle p-2 icon-sm d-flex align-items-center justify-content-center" style="width:40px; height:40px;">
+                                <i class="fas fa-shopping-bag"></i>
+                            </div>
+                        }
+                        else if (item.Type == "Product")
+                        {
+                            <div class="bg-success bg-opacity-10 text-success rounded-circle p-2 icon-sm d-flex align-items-center justify-content-center" style="width:40px; height:40px;">
+                                <i class="fas fa-box"></i>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="bg-secondary bg-opacity-10 text-secondary rounded-circle p-2 icon-sm d-flex align-items-center justify-content-center" style="width:40px; height:40px;">
+                                <i class="fas fa-info"></i>
+                            </div>
+                        }
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between">
+                            <h6 class="fw-bold mb-1">@item.Title</h6>
+                            <small class="text-muted">@item.Date.ToString("yyyy-MM-dd HH:mm")</small>
+                        </div>
+                        <p class="text-muted small mb-1">@item.Description</p>
+                        <span class="badge bg-light text-dark border"><i class="far fa-user me-1"></i> @item.User</span>
+                    </div>
+                </li>
+            }
+        </ul>
+    </div>
+</div>

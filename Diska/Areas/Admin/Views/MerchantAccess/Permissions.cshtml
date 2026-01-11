@@ -1,0 +1,76 @@
+﻿@model List<Diska.Models.MerchantPermission>
+@{
+    ViewData["Title"] = "صلاحيات التاجر";
+    Layout = "_AdminLayout";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="text-primary fw-bold mb-0">مصفوفة الصلاحيات (Permission Matrix)</h2>
+        <p class="text-muted mt-1">للتاجر: <strong>@ViewBag.MerchantName</strong></p>
+    </div>
+    <a href="/Admin/Dashboard/Merchants" class="btn btn-outline-secondary">عودة للتجار</a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <form asp-action="SavePermissions" method="post">
+            <input type="hidden" name="merchantId" value="@ViewBag.MerchantId" />
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped text-center align-middle mb-0">
+                    <thead class="bg-dark text-white">
+                        <tr>
+                            <th class="py-3 text-start ps-4">الموديول (Module)</th>
+                            <th class="py-3 bg-info bg-opacity-25">عرض (View)</th>
+                            <th class="py-3 bg-success bg-opacity-25">إنشاء (Create)</th>
+                            <th class="py-3 bg-warning bg-opacity-25">تعديل (Edit)</th>
+                            <th class="py-3 bg-danger bg-opacity-25">حذف (Delete)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < Model.Count; i++)
+                        {
+                            <tr>
+                                <td class="text-start ps-4 fw-bold">
+                                    <input type="hidden" name="model[@i].Module" value="@Model[i].Module" />
+                                    @Model[i].Module
+                                </td>
+                                <td>
+                                    <div class="form-check d-flex justify-content-center">
+                                        <input class="form-check-input" type="checkbox" name="model[@i].CanView" value="true" @(Model[i].CanView ? "checked" : "")>
+                                        <input type="hidden" name="model[@i].CanView" value="false">
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="form-check d-flex justify-content-center">
+                                        <input class="form-check-input" type="checkbox" name="model[@i].CanCreate" value="true" @(Model[i].CanCreate ? "checked" : "")>
+                                        <input type="hidden" name="model[@i].CanCreate" value="false">
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="form-check d-flex justify-content-center">
+                                        <input class="form-check-input" type="checkbox" name="model[@i].CanEdit" value="true" @(Model[i].CanEdit ? "checked" : "")>
+                                        <input type="hidden" name="model[@i].CanEdit" value="false">
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="form-check d-flex justify-content-center">
+                                        <input class="form-check-input" type="checkbox" name="model[@i].CanDelete" value="true" @(Model[i].CanDelete ? "checked" : "")>
+                                        <input type="hidden" name="model[@i].CanDelete" value="false">
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="p-4 text-end bg-light border-top">
+                <button type="submit" class="btn btn-primary px-5 fw-bold">
+                    <i class="fas fa-save me-2"></i> حفظ الصلاحيات
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

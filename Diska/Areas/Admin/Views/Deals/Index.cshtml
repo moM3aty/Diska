@@ -4,69 +4,101 @@
     Layout = "_AdminLayout";
 }
 
-<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-    <h2 style="margin:0;">إدارة صفقات الجملة</h2>
-    <a asp-action="Create" class="btn btn-primary"><i class="fas fa-plus"></i> إنشاء صفقة جديدة</a>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="text-primary fw-bold mb-0">العروض والصفقات</h2>
+        <p class="text-muted small">إدارة الخصومات الجماعية وعروض الأقسام</p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="fas fa-plus"></i> إنشاء عرض جديد
+    </a>
 </div>
 
-<div class="card">
-    @if (!Model.Any())
-    {
-        <div style="text-align:center; padding:30px; color:#666;">
-            <p>لا توجد صفقات نشطة.</p>
-        </div>
-    }
-    else
-    {
-        <table style="width:100%;">
-            <thead>
-                <tr>
-                    <th>المنتج</th>
-                    <th>سعر الصفقة</th>
-                    <th>الهدف</th>
-                    <th>المحجوز</th>
-                    <th>تاريخ الانتهاء</th>
-                    <th>الحالة</th>
-                    <th>حذف</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model)
-                {
-                    double progress = item.TargetQuantity > 0 ? (double)item.ReservedQuantity / item.TargetQuantity * 100 : 0;
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
                     <tr>
-                        <td>
-                            <strong>@(item.Product?.Name ?? "منتج محذوف")</strong>
-                        </td>
-                        <td style="color:#d97706; font-weight:bold;">@item.DealPrice.ToString("N0")</td>
-                        <td>@item.TargetQuantity</td>
-                        <td>
-                            @item.ReservedQuantity
-                            <div style="width:50px; height:4px; background:#eee; display:inline-block; vertical-align:middle; margin-right:5px;">
-                                <div style="width:@Math.Min(progress, 100)%; height:100%; background:green;"></div>
-                            </div>
-                        </td>
-                        <td>@item.EndDate.ToString("yyyy/MM/dd")</td>
-                        <td>
-                            @if (item.IsActive)
-                            {
-                                <span class="badge" style="background:#dcfce7; color:green;">نشط</span>
-                            }
-                            else
-                            {
-
-                                <span class="badge" style="background:#fee2e2; color:red;">منتهي</span>
-                            }
-                        </td>
-                        <td>
-                            <form asp-action="Delete" method="post" onsubmit="return confirm('حذف هذه الصفقة؟');">
-                                <input type="hidden" name="id" value="@item.Id" />
-                                <button type="submit" class="btn" style="color:red; background:none;"><i class="fas fa-trash"></i></button>
-                            </form>
-                        </td>
+                        <th class="ps-4">العنوان</th>
+                        <th>ينطبق على</th>
+                        <th>الخصم</th>
+                        <th>التقدم / الهدف</th>
+                        <th>الفترة</th>
+                        <th>الحالة</th>
+                        <th class="text-end pe-4">إجراءات</th>
                     </tr>
-                }
-            </tbody>
-        </table>
-    }
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="fas fa-tags fa-3x mb-3 opacity-50"></i>
+                                <p>لا توجد صفقات نشطة حالياً</p>
+                            </td>
+                        </tr>
+                    }
+                    @foreach (var item in Model)
+                    {
+                        double progress = item.TargetQuantity > 0 ? (double)item.ReservedQuantity / item.TargetQuantity * 100 : 0;
+                        string statusBadge = item.Status switch { "Active" => "bg-success", "Scheduled" => "bg-info text-dark", "Expired" => "bg-warning text-dark", _ => "bg-secondary" };
+
+                        <tr>
+                            <td class="ps-4 fw-bold">@item.Title</td>
+                            <td>
+                                @if (item.ProductId.HasValue)
+                                {
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-box text-primary me-2"></i>
+                                        <span>@(item.Product?.Name ?? "منتج محذوف")</span>
+                                    </div>
+                                }
+                                else if (item.CategoryId.HasValue)
+                                {
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-layer-group text-warning me-2"></i>
+                                        <span>@(item.Category?.Name ?? "قسم محذوف")</span>
+                                    </div>
+                                }
+                            </td>
+                            <td>
+                                @if (item.IsPercentage)
+                                {
+                                    <span class="badge bg-danger">@item.DiscountValue.ToString("0")% خصم</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">@item.DiscountValue.ToString("N0") ج.م خصم</span>
+                                    <div class="small text-muted">السعر: @item.DealPrice.ToString("N0")</div>
+                                }
+                            </td>
+                            <td style="min-width: 150px;">
+                                <div class="d-flex justify-content-between small mb-1">
+                                    <span>@item.ReservedQuantity</span>
+                                    <span class="text-muted">/ @item.TargetQuantity</span>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: @Math.Min(progress, 100)%;"></div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="small"><i class="fas fa-calendar-alt text-muted me-1"></i> @item.EndDate.ToString("dd MMM")</div>
+                            </td>
+                            <td><span class="badge @statusBadge">@item.Status</span></td>
+                            <td class="text-end pe-4">
+                                <div class="btn-group">
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary"><i class="fas fa-edit"></i></a>
+                                    <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('حذف هذا العرض؟');">
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>

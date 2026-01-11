@@ -1,0 +1,114 @@
+﻿@model Diska.Models.GroupDeal
+@using System.Globalization
+@{
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    ViewData["Title"] = Model.Title;
+    var products = ViewBag.IncludedProducts as List<Diska.Models.Product>;
+    var timeLeft = Model.EndDate - DateTime.Now;
+}
+
+<section class="section-padding" style="background:#f9fafb;">
+    <div class="container">
+
+        <div class="breadcrumb" style="margin-bottom:20px;">
+            <a asp-controller="Home" asp-action="Index">@(isAr ? "الرئيسية" : "Home")</a> /
+            <a asp-action="Index">@(isAr ? "العروض" : "Deals")</a> /
+            <span>@Model.Title</span>
+        </div>
+
+        <!-- Deal Header Card -->
+        <div class="card" style="border:none; border-radius:15px; overflow:hidden; box-shadow:0 5px 20px rgba(0,0,0,0.05); margin-bottom:30px;">
+            <div style="background:linear-gradient(135deg, var(--primary), #1e293b); padding:40px; color:#fff; text-align:center; position:relative;">
+                <span class="tag" style="background:var(--accent); color:#000; font-weight:bold; padding:5px 15px; border-radius:20px; display:inline-block; margin-bottom:15px;">
+                    @(isAr ? "عرض محدود" : "Limited Offer")
+                </span>
+
+                <h1 style="font-size:2.5rem; font-weight:800; margin-bottom:10px;">@Model.Title</h1>
+
+                <p style="font-size:1.2rem; opacity:0.9;">
+                    @if (Model.IsPercentage)
+                    {
+                        @(isAr ? $"خصم {Model.DiscountValue:0}% على المنتجات المختارة" : $"{Model.DiscountValue:0}% OFF on selected items")
+                    }
+                    else
+                    {
+                        @(isAr ? $"خصم {Model.DiscountValue:N0} جنيه على المنتجات المختارة" : $"{Model.DiscountValue:N0} EGP OFF on selected items")
+                    }
+                </p>
+
+                <div style="display:inline-flex; align-items:center; gap:10px; background:rgba(255,255,255,0.1); padding:10px 20px; border-radius:10px; margin-top:20px;">
+                    <i class="far fa-clock"></i>
+                    <span>@(isAr ? "ينتهي خلال:" : "Ends in:") <strong>@timeLeft.Days @(isAr ? "يوم" : "Days")</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Included Products -->
+        <div class="section-header">
+            <h3>@(isAr ? "المنتجات المشمولة في العرض" : "Products in this Deal")</h3>
+        </div>
+
+        @if (products != null && products.Any())
+        {
+            <div class="products-grid">
+                @foreach (var item in products)
+                {
+                    decimal finalPrice = item.Price;
+                    if (Model.IsPercentage)
+                    {
+                        finalPrice = item.Price - (item.Price * (Model.DiscountValue / 100));
+                    }
+                    else
+                    {
+                        finalPrice = item.Price - Model.DiscountValue;
+                    }
+
+                    <div class="product-card" data-id="@item.Id">
+
+                        <div class="flash-badge" style="background:var(--danger);">
+                            @(Model.IsPercentage ? $"{Model.DiscountValue:0}%" : $"-{Model.DiscountValue:N0}")
+                        </div>
+
+                        <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id" class="product-img">
+                            <img src="~/@item.ImageUrl" alt="@item.Name" onerror="this.src='/images/default.png'">
+                        </a>
+
+                        <div class="product-info">
+                            <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id" style="text-decoration:none; color:inherit;">
+                                <h4>@(isAr? item.Name: item.NameEn)</h4>
+                            </a>
+
+                            <div class="pricing">
+                                <span class="current-price" style="color:var(--danger);">@finalPrice.ToString("N0") <small>@(isAr ? "ج.م" : "EGP")</small></span>
+                                <span class="old-price">@item.Price.ToString("N0")</span>
+                            </div>
+
+                            <div class="add-to-cart">
+                                <button onclick="addToCartSimple(@item.Id)" class="add-btn" style="width:100%;">
+                                    @(isAr ? "إضافة للسلة" : "Add to Cart") <i class="fas fa-cart-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div style="text-align:center; padding:50px; color:#666;">
+                <p>@(isAr ? "لا توجد منتجات متاحة في هذا العرض حالياً." : "No products available in this deal currently.")</p>
+            </div>
+        }
+
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        function addToCartSimple(id) {
+            if(typeof addItemToCart === 'function') {
+                addItemToCart(id, 1);
+            }
+        }
+    </script>
+}

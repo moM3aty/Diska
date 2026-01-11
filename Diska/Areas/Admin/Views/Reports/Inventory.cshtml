@@ -1,0 +1,85 @@
+﻿@model IEnumerable<Diska.Models.Product>
+@{
+    ViewData["Title"] = "تقرير المخزون";
+    Layout = "_AdminLayout";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="text-primary fw-bold"><i class="fas fa-boxes"></i> تقرير جرد المخزون</h2>
+    <form asp-action="ExportInventory" method="post">
+        <button type="submit" class="btn btn-outline-success"><i class="fas fa-file-csv"></i> تصدير الكل CSV</button>
+    </form>
+</div>
+
+<!-- Filters -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="d-flex gap-3 align-items-end">
+            <div class="flex-grow-1">
+                <label class="form-label">حالة المخزون</label>
+                <select name="stockStatus" class="form-select" onchange="this.form.submit()">
+                    <option value="All" selected="@(ViewBag.StockStatus == "All")">الكل</option>
+                    <option value="Low" selected="@(ViewBag.StockStatus == "Low")">منخفض (نواقص)</option>
+                    <option value="Out" selected="@(ViewBag.StockStatus == "Out")">نافذ (Zero Stock)</option>
+                    <option value="InStock" selected="@(ViewBag.StockStatus == "InStock")">متوفر جيداً</option>
+                </select>
+            </div>
+            <div>
+                <a asp-action="Inventory" class="btn btn-secondary">إعادة تعيين</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light">
+                <tr>
+                    <th>المنتج</th>
+                    <th>القسم</th>
+                    <th>التاجر</th>
+                    <th>سعر التكلفة / البيع</th>
+                    <th>الكمية الحالية</th>
+                    <th>الحالة</th>
+                    <th>إجراء</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr class="@(item.StockQuantity == 0 ? "table-danger" : (item.StockQuantity <= item.LowStockThreshold ? "table-warning" : ""))">
+                        <td>
+                            <div class="fw-bold">@item.Name</div>
+                            <small class="text-muted">SKU: @item.SKU</small>
+                        </td>
+                        <td>@item.Category?.Name</td>
+                        <td>@item.Merchant?.ShopName</td>
+                        <td>
+                            <div class="small">ت: @item.CostPrice.ToString("N0")</div>
+                            <div class="small fw-bold">ب: @item.Price.ToString("N0")</div>
+                        </td>
+                        <td class="fw-bold fs-5 text-center">@item.StockQuantity</td>
+                        <td>
+                            @if (item.StockQuantity == 0)
+                            {
+                                <span class="badge bg-danger">نافذ</span>
+                            }
+                            else if (item.StockQuantity <= item.LowStockThreshold)
+                            {
+                                <span class="badge bg-warning text-dark">منخفض</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">متوفر</span>
+                            }
+                        </td>
+                        <td>
+                            <a asp-controller="Products" asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-primary">تعديل</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

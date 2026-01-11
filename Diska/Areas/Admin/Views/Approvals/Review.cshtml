@@ -1,0 +1,120 @@
+﻿@model Diska.Models.PendingMerchantAction
+@using System.Text.Json
+@{
+    ViewData["Title"] = "مراجعة الطلب";
+    Layout = "_AdminLayout";
+
+    string displayOld = "غير متوفر";
+    string displayNew = "غير متوفر";
+
+    try
+    {
+        if (!string.IsNullOrEmpty(Model.OldValueJson))
+        {
+            // محاولة عرض JSON بشكل بسيط إذا لم يكن هناك تنسيق مخصص
+            displayOld = Model.OldValueJson.Replace("{", "").Replace("}", "").Replace("\"", "");
+        }
+
+        if (!string.IsNullOrEmpty(Model.NewValueJson))
+        {
+            // تنسيق مخصص حسب النوع
+            if (Model.ActionType == "UpdateProductPrice")
+            {
+                using (JsonDocument doc = JsonDocument.Parse(Model.NewValueJson))
+                {
+                    if (doc.RootElement.TryGetProperty("Price", out var p)) displayNew = p.ToString() + " ج.م";
+                }
+            }
+            else if (Model.ActionType == "WithdrawRequest")
+            {
+                using (JsonDocument doc = JsonDocument.Parse(Model.NewValueJson))
+                {
+                    if (doc.RootElement.TryGetProperty("Amount", out var a)) displayNew = a.ToString() + " ج.م";
+                }
+            }
+            else
+            {
+                displayNew = Model.NewValueJson;
+            }
+        }
+    }
+    catch { }
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="fw-bold mb-0">مراجعة طلب: <span class="text-primary">@Model.ActionType</span></h4>
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm">عودة</a>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-light py-3">
+                <div class="d-flex justify-content-between">
+                    <span><strong>التاجر:</strong> @Model.Merchant?.ShopName</span>
+                    <span class="text-muted">@Model.RequestDate.ToString("yyyy-MM-dd HH:mm")</span>
+                </div>
+            </div>
+            <div class="card-body p-4">
+
+                @if (Model.ActionType == "UpdateProductPrice")
+                {
+                    <div class="row text-center mb-4">
+                        <div class="col-md-5">
+                            <div class="p-3 border rounded bg-light">
+                                <small class="text-muted d-block mb-2">القيمة الحالية</small>
+                                <h4 class="text-secondary mb-0">@displayOld</h4>
+                            </div>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-center justify-content-center">
+                            <i class="fas fa-arrow-left fa-2x text-muted"></i>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="p-3 border rounded border-primary bg-primary bg-opacity-10">
+                                <small class="text-primary d-block mb-2">القيمة الجديدة</small>
+                                <h4 class="text-primary mb-0 fw-bold">@displayNew</h4>
+                            </div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-light border text-center">
+                        <h4 class="text-primary mb-0">@displayNew</h4>
+                        <small class="text-muted">قيمة الطلب</small>
+                    </div>
+                }
+
+                <div class="alert alert-info d-flex align-items-center">
+                    <i class="fas fa-info-circle fa-lg me-3"></i>
+                    <div>
+                        <strong>تفاصيل:</strong> التاجر يطلب إجراء <strong>@Model.ActionType</strong> على <strong>@Model.EntityName #@Model.EntityId</strong>.
+                        يرجى المراجعة قبل الموافقة.
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <form asp-action="Reject" method="post" id="rejectForm" class="mb-3">
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <label class="form-label fw-bold">سبب الرفض (في حالة الرفض):</label>
+                    <textarea name="reason" class="form-control mb-2" rows="2" placeholder="اكتب سبب الرفض هنا..."></textarea>
+                </form>
+
+                <div class="d-flex gap-2">
+                    <form asp-action="Approve" method="post" class="flex-grow-1">
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <button type="submit" class="btn btn-success w-100 py-2 fw-bold">
+                            <i class="fas fa-check-circle me-2"></i> موافقة وتنفيذ
+                        </button>
+                    </form>
+
+                    <button type="button" onclick="if(confirm('تأكيد الرفض؟')) document.getElementById('rejectForm').submit();" class="btn btn-danger flex-grow-1 py-2 fw-bold">
+                        <i class="fas fa-times-circle me-2"></i> رفض الطلب
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>

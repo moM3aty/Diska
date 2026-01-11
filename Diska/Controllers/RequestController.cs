@@ -5,9 +5,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Diska.Services;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Diska.Controllers
 {
+    [Authorize]
     public class RequestController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -21,111 +25,104 @@ namespace Diska.Controllers
             _notificationService = notificationService;
         }
 
+        // 1. عرض قائمة طلبات العميل
         public async Task<IActionResult> Index()
         {
             var user = await _userManager.GetUserAsync(User);
-            string userId = user?.Id;
-
             var requests = await _context.DealRequests
-                .Include(r => r.Offers) // تضمين عدد العروض
-                .Where(r => r.Status == "Approved" || r.Status == "Completed" || (userId != null && r.UserId == userId))
+                .Include(r => r.Offers)
+                .Where(r => r.UserId == user.Id)
                 .OrderByDescending(r => r.RequestDate)
                 .ToListAsync();
 
             return View(requests);
         }
 
-        // تفاصيل الطلب والعروض المقدمة عليه
-        [Authorize]
-        public async Task<IActionResult> Details(int id)
+        // 2. صفحة إنشاء طلب جديد (GET)
+        [HttpGet]
+        public IActionResult Create()
         {
-            var request = await _context.DealRequests
-                .Include(r => r.Offers)
-                .ThenInclude(o => o.Merchant)
-                .FirstOrDefaultAsync(r => r.Id == id);
-
-            if (request == null) return NotFound();
-
-            return View(request);
+            return View();
         }
 
+        // 2. حفظ الطلب (POST)
         [HttpPost]
-        [Authorize(Roles = "Merchant")]
-        public async Task<IActionResult> SubmitOffer(int requestId, decimal price, string notes)
-        {
-            var user = await _userManager.GetUserAsync(User);
-            var request = await _context.DealRequests.FindAsync(requestId);
-
-            if (request == null || request.Status != "Approved") return NotFound();
-
-            var offer = new MerchantOffer
-            {
-                DealRequestId = requestId,
-                MerchantId = user.Id,
-                OfferPrice = price,
-                Notes = notes,
-                CreatedAt = DateTime.Now
-            };
-
-            _context.MerchantOffers.Add(offer);
-            await _context.SaveChangesAsync();
-
-            // إشعار العميل
-            await _notificationService.NotifyUserAsync(request.UserId, "عرض جديد", $"قام التاجر {user.ShopName} بتقديم عرض سعر على طلبك.", "Order", $"/Request/Details/{requestId}");
-
-            TempData["Message"] = "تم تقديم العرض بنجاح!";
-            return RedirectToAction("Details", new { id = requestId });
-        }
-
-        [HttpPost]
-        [Authorize]
-        public async Task<IActionResult> AcceptOffer(int offerId)
-        {
-            var offer = await _context.MerchantOffers.Include(o => o.DealRequest).FirstOrDefaultAsync(o => o.Id == offerId);
-            var user = await _userManager.GetUserAsync(User);
-
-            // التأكد أن المستخدم هو صاحب الطلب
-            if (offer == null || offer.DealRequest.UserId != user.Id) return Forbid();
-
-            // قبول العرض وتحديث حالة الطلب
-            offer.IsAccepted = true;
-            offer.DealRequest.Status = "Completed";
-
-            await _context.SaveChangesAsync();
-
-            // إشعار التاجر
-            await _notificationService.NotifyUserAsync(offer.MerchantId, "تم قبول عرضك", $"وافق العميل على عرضك لطلب {offer.DealRequest.ProductName}. يرجى التواصل معه.", "Order", $"/Request/Details/{offer.DealRequestId}");
-
-            TempData["Message"] = "تم قبول العرض! يرجى التواصل مع التاجر لإتمام الصفقة.";
-            return RedirectToAction("Details", new { id = offer.DealRequestId });
-        }
-
-        [HttpPost]
-        [Authorize]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(DealRequest request)
         {
             if (ModelState.IsValid)
             {
                 var user = await _userManager.GetUserAsync(User);
+
                 request.UserId = user.Id;
                 request.RequestDate = DateTime.Now;
-                request.Status = "Pending";
+                request.Status = "Pending"; // يذهب للمراجعة من الأدمن
+
                 _context.DealRequests.Add(request);
                 await _context.SaveChangesAsync();
-                TempData["Message"] = "تم إرسال طلبك بنجاح للمراجعة.";
+
+                // إشعار للأدمن
+                await _notificationService.NotifyAdminsAsync("طلب خاص جديد", $"العميل {user.FullName} أرسل طلب شراء خاص: {request.ProductName}");
+
+                TempData["Success"] = "تم إرسال طلبك بنجاح، سيتم مراجعته قريباً.";
                 return RedirectToAction(nameof(Index));
             }
-            return RedirectToAction(nameof(Index));
+            return View(request);
         }
 
+        // 3. تفاصيل الطلب والعروض المقدمة عليه
+        public async Task<IActionResult> Details(int id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var request = await _context.DealRequests
+                .Include(r => r.Offers)
+                .ThenInclude(o => o.Merchant)
+                .FirstOrDefaultAsync(r => r.Id == id && r.UserId == user.Id);
+
+            if (request == null) return NotFound();
+
+            return View(request);
+        }
+
+        // قبول عرض من تاجر
         [HttpPost]
-        [Authorize]
+        public async Task<IActionResult> AcceptOffer(int offerId)
+        {
+            var offer = await _context.MerchantOffers
+                .Include(o => o.DealRequest)
+                .FirstOrDefaultAsync(o => o.Id == offerId);
+
+            var user = await _userManager.GetUserAsync(User);
+
+            // التأكد من الملكية والصلاحية
+            if (offer == null || offer.DealRequest.UserId != user.Id) return Forbid();
+
+            // قبول العرض وتحديث حالة الطلب
+            offer.IsAccepted = true;
+            offer.DealRequest.Status = "Completed"; // تم الاتفاق
+
+            await _context.SaveChangesAsync();
+
+            // إشعار التاجر
+            await _notificationService.NotifyUserAsync(offer.MerchantId, "عرض مقبول", $"وافق العميل على عرضك لطلب {offer.DealRequest.ProductName}. يرجى البدء في التنفيذ.", "Order");
+
+            TempData["Success"] = "تم قبول العرض! يرجى التواصل مع التاجر لإتمام الصفقة.";
+            return RedirectToAction(nameof(Details), new { id = offer.DealRequestId });
+        }
+
+        // حذف الطلب (إذا كان مازال معلقاً أو مرفوضاً)
+        [HttpPost]
         public async Task<IActionResult> Delete(int id)
         {
             var user = await _userManager.GetUserAsync(User);
             var request = await _context.DealRequests.FirstOrDefaultAsync(r => r.Id == id && r.UserId == user.Id);
-            if (request != null) { _context.DealRequests.Remove(request); await _context.SaveChangesAsync(); }
+
+            if (request != null)
+            {
+                _context.DealRequests.Remove(request);
+                await _context.SaveChangesAsync();
+                TempData["Success"] = "تم حذف الطلب.";
+            }
             return RedirectToAction(nameof(Index));
         }
     }

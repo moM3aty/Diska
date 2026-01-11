@@ -1,0 +1,170 @@
+﻿@model IEnumerable<Diska.Models.Product>
+@{
+    ViewData["Title"] = "نواقص المخزون";
+    Layout = "_AdminLayout";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="text-primary fw-bold mb-0">إدارة المخزون والتنبيهات</h2>
+        <p class="text-muted small">متابعة نواقص المخزون وطلبات العملاء</p>
+    </div>
+</div>
+
+<!-- Tabs -->
+<ul class="nav nav-tabs mb-4">
+    <li class="nav-item">
+        <a class="nav-link text-muted" asp-action="Index">طلبات العملاء (Waitlist)</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active fw-bold" href="#">نواقص المخزون (Low Stock)</a>
+    </li>
+</ul>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 text-danger"><i class="fas fa-exclamation-triangle"></i> منتجات وصلت للحد الأدنى (@Model.Count())</h5>
+    </div>
+    <div class="card-body p-0">
+        @if (!Model.Any())
+        {
+            <div class="text-center py-5 text-muted">
+                <i class="fas fa-check-circle fa-3x mb-3 text-success opacity-50"></i>
+                <p>ممتاز! المخزون في حالة جيدة.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">المنتج</th>
+                            <th>التاجر (المورد)</th>
+                            <th>الكمية الحالية</th>
+                            <th>الحد الأدنى</th>
+                            <th>الحالة</th>
+                            <th class="text-end pe-4">إجراءات التوريد</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr class="@(item.StockQuantity == 0 ? "table-danger" : "")">
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center">
+                                        <img src="~/@item.ImageUrl" class="rounded me-2 border" style="width:40px; height:40px; object-fit:cover;">
+                                        <div>
+                                            <div class="fw-bold">@item.Name</div>
+                                            <small class="text-muted">SKU: @item.SKU</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <i class="fas fa-store text-secondary me-1"></i> @item.Merchant?.ShopName
+                                </td>
+                                <td>
+                                    <span class="fw-bold fs-5 @(item.StockQuantity == 0 ? "text-danger" : "text-warning")">
+                                        @item.StockQuantity
+                                    </span>
+                                </td>
+                                <td class="text-muted">@item.LowStockThreshold</td>
+                                <td>
+                                    @if (item.StockQuantity == 0)
+                                    {
+                                        <span class="badge bg-danger">نافذ (Out of Stock)</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark">منخفض (Low)</span>
+                                    }
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="btn-group">
+                                        <!-- Request from Supplier -->
+                                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="openNotifyModal('@item.Id', '@item.Name', '@item.Merchant?.ShopName')">
+                                            <i class="fas fa-paper-plane me-1"></i> طلب توريد
+                                        </button>
+
+                                        <!-- Quick Update -->
+                                        <button type="button" class="btn btn-sm btn-outline-success" onclick="openStockModal('@item.Id', '@item.Name', '@item.StockQuantity')">
+                                            <i class="fas fa-edit me-1"></i> تحديث
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Modal: Notify Merchant -->
+<div class="modal fade" id="notifyModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="NotifyMerchant" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title">طلب توريد من التاجر</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="productId" id="notifyProdId">
+                    <p>إرسال إشعار للتاجر: <strong id="notifyMerchantName"></strong></p>
+                    <p class="text-muted small">بخصوص المنتج: <span id="notifyProdName"></span></p>
+
+                    <div class="mb-3">
+                        <label class="form-label">رسالة الإشعار</label>
+                        <textarea name="message" class="form-control" rows="3" placeholder="مثال: المخزون أوشك على النفاد، يرجى توريد 50 قطعة خلال يومين."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">إرسال الطلب</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Update Stock -->
+<div class="modal fade" id="stockModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <form asp-action="QuickUpdateStock" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title">تحديث المخزون</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="productId" id="stockProdId">
+                    <div class="mb-3 text-center">
+                        <label class="form-label mb-2">الكمية الجديدة لـ <br><strong id="stockProdName"></strong></label>
+                        <input type="number" name="newQuantity" id="stockQty" class="form-control form-control-lg text-center fw-bold" required min="0">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success w-100">تأكيد التحديث</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openNotifyModal(id, name, merchant) {
+        document.getElementById('notifyProdId').value = id;
+        document.getElementById('notifyProdName').innerText = name;
+        document.getElementById('notifyMerchantName').innerText = merchant;
+        new bootstrap.Modal(document.getElementById('notifyModal')).show();
+    }
+
+    function openStockModal(id, name, qty) {
+        document.getElementById('stockProdId').value = id;
+        document.getElementById('stockProdName').innerText = name;
+        document.getElementById('stockQty').value = qty;
+        new bootstrap.Modal(document.getElementById('stockModal')).show();
+    }
+</script>

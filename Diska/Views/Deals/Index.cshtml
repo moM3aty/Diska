@@ -2,106 +2,102 @@
 @using System.Globalization
 @{
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
-    ViewData["Title"] = isAr ? "صفقات الجملة" : "Wholesale Deals";
+    ViewData["Title"] = isAr ? "العروض والصفقات" : "Deals & Offers";
 }
 
 <section class="section-padding">
     <div class="container">
-        <div style="text-align: center; margin-bottom: 40px;">
-            <h2 class="page-title" style="justify-content: center;">🔥 @(isAr ? "صفقات الكميات الكبيرة" : "Bulk Deals")</h2>
-            <p style="color: #666;">@(isAr ? "اشتري مع غيرك وحققوا التارجت عشان السعر ينزل!" : "Group buy to hit the target and lower the price!")</p>
+        <div class="section-header" style="justify-content:center; text-align:center; margin-bottom:40px;">
+            <div>
+                <h2 style="color:var(--primary); font-size:2rem; margin-bottom:10px;">
+                    <i class="fas fa-fire" style="color: #f59e0b;"></i> @(isAr ? "أقوى العروض والصفقات" : "Hot Deals & Offers")
+                </h2>
+                <p style="color:#666;">@(isAr ? "اغتنم الفرصة وتسوق بأفضل الأسعار قبل انتهاء الوقت" : "Grab the chance and shop with best prices before time runs out")</p>
+            </div>
         </div>
 
-        <div class="products-grid">
-            @foreach (var deal in Model)
-            {
-                var percentage = (double)deal.ReservedQuantity / deal.TargetQuantity * 100;
-                var timeLeft = deal.EndDate - DateTime.Now;
+        @if (!Model.Any())
+        {
+            <div style="text-align:center; padding:60px; background:#fff; border-radius:15px; border:1px solid #eee;">
+                <i class="fas fa-hourglass-end fa-4x" style="color:#e2e8f0; margin-bottom:20px;"></i>
+                <h3 style="color:#64748b;">@(isAr ? "لا توجد عروض نشطة حالياً." : "No active deals at the moment.")</h3>
+                <a asp-controller="Home" asp-action="Index" class="btn primary small" style="margin-top:20px;">
+                    @(isAr ? "تصفح المنتجات" : "Browse Products")
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="products-grid">
+                @foreach (var deal in Model)
+                {
+                    var timeLeft = deal.EndDate - DateTime.Now;
 
-                <div class="product-card deal-card" id="deal-@deal.Id">
-                    <div class="flash-badge" style="background: linear-gradient(45deg, #ff9800, #f57c00);">
-                        <i class="fas fa-clock"></i> @timeLeft.Days @(isAr ? "يوم باقي" : "Days left")
-                    </div>
+                    <div class="product-card deal-card" style="border:2px solid var(--accent);">
 
-                    <div class="product-img">
-                        <img src="~/@deal.Product?.ImageUrl" alt="@deal.Product?.Name">
-                    </div>
-
-                    <div class="product-info">
-                        <h4>@(isAr? deal.Product?.Name : (deal.Product?.NameEn ?? deal.Product?.Name))</h4>
-
-                        <div class="pricing">
-                            <span class="current-price" style="color:#d32f2f; font-size:1.2rem;">@deal.DealPrice.ToString("N2")</span>
-                            <span class="old-price">@deal.Product?.Price.ToString("N2")</span>
+                        <div class="flash-badge" style="background:var(--accent); color:#000;">
+                            <i class="far fa-clock"></i> @timeLeft.Days @(isAr ? "يوم باقي" : "Days left")
                         </div>
 
-                        <!-- Progress Bar -->
-                        <div style="margin: 15px 0;">
-                            <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:5px;">
-                                <span>@(isAr ? "تم حجز:" : "Reserved:") <b id="reserved-@deal.Id">@deal.ReservedQuantity</b></span>
-                                <span>@(isAr ? "الهدف:" : "Target:") <b>@deal.TargetQuantity</b></span>
+                        <a asp-action="Details" asp-route-id="@deal.Id" class="product-img">
+                            @if (deal.Product != null)
+                            {
+                                <img src="~/@deal.Product.ImageUrl" alt="@deal.Title" onerror="this.src='/images/default.png'">
+                            }
+                            else
+                            {
+                                <!-- صورة افتراضية للعروض العامة -->
+                                <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#f8fafc; color:#cbd5e1;">
+                                    <i class="fas fa-tags fa-4x"></i>
+                                </div>
+                            }
+                        </a>
+
+                        <div class="product-info">
+                            <a asp-action="Details" asp-route-id="@deal.Id" style="text-decoration:none; color:inherit;">
+                                <h4>@deal.Title</h4>
+                            </a>
+
+                            <p style="font-size:0.9rem; color:#666; margin-bottom:10px;">
+                                @if (deal.Product != null)
+                                {
+                                    <span>@(isAr? deal.Product.Name : deal.Product.NameEn)</span>
+                                }
+                                else if (deal.Category != null)
+                                {
+
+                                    <span>@(isAr ? "خصم على قسم " + deal.Category.Name : "Discount on " + deal.Category.NameEn)</span>
+                                }
+                            </p>
+
+                            <div class="pricing">
+                                <span class="discount-badge" style="margin:0; font-size:1rem;">
+                                    @(deal.IsPercentage ? $"{deal.DiscountValue:0}% OFF" : $"{deal.DiscountValue:N0} EGP OFF")
+                                </span>
                             </div>
-                            <div style="background:#eee; height:10px; border-radius:5px; overflow:hidden;">
-                                <div id="progress-@deal.Id" style="background:#10b981; height:100%; width:@percentage%;"></div>
+
+                            @if (deal.TargetQuantity > 0)
+                            {
+                                <div style="margin-top:15px;">
+                                    <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:5px;">
+                                        <span>@(isAr ? "المحجوز" : "Reserved"): @deal.ReservedQuantity</span>
+                                        <span>@(isAr ? "الهدف" : "Target"): @deal.TargetQuantity</span>
+                                    </div>
+                                    <div style="background:#eee; height:8px; border-radius:4px; overflow:hidden;">
+                                        <div style="background:var(--success); height:100%; width:@(Math.Min((double)deal.ReservedQuantity / deal.TargetQuantity * 100, 100))%"></div>
+                                    </div>
+                                </div>
+                            }
+
+                            <div class="card-actions" style="margin-top:15px;">
+                                <a asp-action="Details" asp-route-id="@deal.Id" class="btn primary w-100" style="text-align:center; display:block;">
+                                    @(isAr ? "عرض التفاصيل" : "View Details")
+                                </a>
                             </div>
                         </div>
-
-                        <form onsubmit="joinDeal(event, @deal.Id)" style="display:flex; gap:10px;">
-                            <input type="number" name="quantity" value="1" min="1" class="form-control" style="width:70px; text-align:center;">
-                            <button type="submit" class="btn primary w-100">@(isAr ? "انضم للصفقة" : "Join Deal")</button>
-                        </form>
                     </div>
-                </div>
-            }
-        </div>
+                }
+            </div>
+        }
     </div>
 </section>
-
-@section Scripts {
-    <script>
-        async function joinDeal(e, dealId) {
-            e.preventDefault();
-            const form = e.target;
-            const qty = form.querySelector('input[name="quantity"]').value;
-            const btn = form.querySelector('button');
-
-            // Check login (simple check, backend handles auth)
-            // Ideally check a global JS variable for auth status
-
-            const formData = new FormData();
-            formData.append('dealId', dealId);
-            formData.append('quantity', qty);
-
-            try {
-                btn.disabled = true;
-                const response = await fetch('/Deals/JoinDeal', {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
-                    }
-                });
-
-                if (response.status === 401) {
-                    window.location.href = '/Account/Login';
-                    return;
-                }
-
-                const result = await response.json();
-                if (result.success) {
-                    alert(result.message);
-                    // Update UI live
-                    document.getElementById(`reserved-${dealId}`).innerText = result.reserved;
-                    document.getElementById(`progress-${dealId}`).style.width = result.newProgress + '%';
-                } else {
-                    alert(result.message);
-                }
-            } catch (error) {
-                console.error(error);
-                alert("حدث خطأ ما");
-            } finally {
-                btn.disabled = false;
-            }
-        }
-    </script>
-}

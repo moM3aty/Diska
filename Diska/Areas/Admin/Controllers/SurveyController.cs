@@ -29,31 +29,31 @@ namespace Diska.Areas.Admin.Controllers
         [HttpGet]
         public IActionResult Create()
         {
-            return View();
+            return View(new Survey { StartDate = DateTime.Now, EndDate = DateTime.Now.AddDays(14) });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Survey survey, List<string> QuestionsText, List<string> QuestionsType)
+        public async Task<IActionResult> Create(Survey survey, List<string> QText, List<string> QTextEn, List<string> QType, List<string> QOptions)
         {
             if (ModelState.IsValid)
             {
-                // حفظ الاستبيان أولاً
                 _context.Surveys.Add(survey);
-                await _context.SaveChangesAsync(); // للحصول على ID
+                await _context.SaveChangesAsync(); // Get ID
 
-                // حفظ الأسئلة
-                if (QuestionsText != null)
+                if (QText != null)
                 {
-                    for (int i = 0; i < QuestionsText.Count; i++)
+                    for (int i = 0; i < QText.Count; i++)
                     {
-                        if (!string.IsNullOrWhiteSpace(QuestionsText[i]))
+                        if (!string.IsNullOrWhiteSpace(QText[i]))
                         {
                             var question = new SurveyQuestion
                             {
                                 SurveyId = survey.Id,
-                                QuestionText = QuestionsText[i],
-                                Type = QuestionsType[i] ?? "Text"
+                                QuestionText = QText[i],
+                                QuestionTextEn = (QTextEn != null && QTextEn.Count > i) ? QTextEn[i] : QText[i],
+                                Type = QType[i],
+                                Options = (QOptions != null && QOptions.Count > i) ? QOptions[i] : null
                             };
                             _context.SurveyQuestions.Add(question);
                         }
@@ -61,6 +61,7 @@ namespace Diska.Areas.Admin.Controllers
                     await _context.SaveChangesAsync();
                 }
 
+                TempData["Success"] = "تم إنشاء الاستبيان بنجاح.";
                 return RedirectToAction(nameof(Index));
             }
             return View(survey);
@@ -74,7 +75,6 @@ namespace Diska.Areas.Admin.Controllers
                 .FirstOrDefaultAsync(s => s.Id == id);
 
             if (survey == null) return NotFound();
-
             return View(survey);
         }
 
@@ -86,6 +86,7 @@ namespace Diska.Areas.Admin.Controllers
             {
                 survey.IsActive = !survey.IsActive;
                 await _context.SaveChangesAsync();
+                TempData["Success"] = survey.IsActive ? "تم تفعيل الاستبيان" : "تم إيقاف الاستبيان";
             }
             return RedirectToAction(nameof(Index));
         }
@@ -98,6 +99,7 @@ namespace Diska.Areas.Admin.Controllers
             {
                 _context.Surveys.Remove(survey);
                 await _context.SaveChangesAsync();
+                TempData["Success"] = "تم حذف الاستبيان";
             }
             return RedirectToAction(nameof(Index));
         }

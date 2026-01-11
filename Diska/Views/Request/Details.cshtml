@@ -1,121 +1,136 @@
 ﻿@model Diska.Models.DealRequest
-@using Microsoft.AspNetCore.Identity
-@inject UserManager<Diska.Models.ApplicationUser> UserManager
 @using System.Globalization
 @{
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
     ViewData["Title"] = isAr ? "تفاصيل الطلب" : "Request Details";
-    var currentUser = await UserManager.GetUserAsync(User);
-    bool isOwner = currentUser != null && Model.UserId == currentUser.Id;
-    bool isMerchant = User.IsInRole("Merchant");
+    Layout = "_Layout";
 }
 
-<section class="section-padding">
+<section class="section-padding" style="background-color: #f9fafb;">
     <div class="container">
 
-        <div style="margin-bottom:20px;">
-            <a asp-action="Index" style="color:#666; text-decoration:none;"><i class="fas fa-arrow-right"></i> @(isAr ? "العودة للطلبات" : "Back to Requests")</a>
+        <div class="breadcrumb" style="margin-bottom:20px;">
+            <a asp-action="Index">@(isAr ? "طلباتي" : "My Requests")</a> / <span>#@Model.Id</span>
         </div>
 
-        <div class="request-details-card" style="background:#fff; border-radius:15px; border:1px solid #eee; padding:30px; margin-bottom:30px;">
-            <div style="display:flex; justify-content:space-between; align-items:start;">
-                <div>
-                    <h2 style="color:var(--primary); margin:0 0 10px;">@Model.ProductName</h2>
-                    <p style="color:#666; font-size:1.1rem; margin-bottom:5px;">
-                        <i class="fas fa-cubes"></i> @(isAr ? "الكمية المطلوبة:" : "Quantity:") <strong>@Model.TargetQuantity</strong>
-                    </p>
-                    <p style="color:#666;">
-                        <i class="fas fa-map-marker-alt"></i> @Model.Location
-                    </p>
-                </div>
-                <div style="text-align:center;">
-                    <div style="background:#f0f9ff; padding:10px 20px; border-radius:10px; margin-bottom:10px;">
-                        <span style="display:block; font-size:0.9rem; color:#64748b;">@(isAr ? "السعر المستهدف" : "Target Price")</span>
-                        <strong style="font-size:1.5rem; color:#0284c7;">@Model.DealPrice.ToString("N0")</strong>
-                    </div>
-                    @if (Model.Status == "Completed")
-                    {
-                        <span class="badge" style="background:#dcfce7; color:#166534; padding:8px 15px; font-size:0.9rem;">@(isAr ? "مكتمل" : "Completed")</span>
-                    }
-                    else
-                    {
-                        <span class="badge" style="background:#fffbeb; color:#d97706; padding:8px 15px; font-size:0.9rem;">@(isAr ? "مفتوح للعروض" : "Open for Offers")</span>
-                    }
-                </div>
-            </div>
-        </div>
+        <div class="row" style="display:flex; flex-wrap:wrap; gap:30px;">
 
-        <!-- قسم تقديم العروض (للتجار فقط) -->
-        @if (isMerchant && !isOwner && Model.Status == "Approved")
-        {
-            <div class="offer-form-box" style="background:#f8fafc; padding:20px; border-radius:10px; border:1px dashed var(--primary); margin-bottom:30px;">
-                <h4 style="margin-top:0; color:var(--primary);"><i class="fas fa-hand-holding-usd"></i> @(isAr ? "تقديم عرض سعر" : "Submit an Offer")</h4>
-                <form asp-action="SubmitOffer" method="post" style="display:flex; gap:15px; align-items:flex-end; flex-wrap:wrap;">
-                    <input type="hidden" name="requestId" value="@Model.Id" />
-                    <div style="flex:1; min-width:150px;">
-                        <label style="display:block; margin-bottom:5px; font-size:0.9rem;">السعر المقترح (للقطعة)</label>
-                        <input type="number" name="price" class="form-control" required style="width:100%; padding:10px; border:1px solid #ccc; border-radius:5px;">
-                    </div>
-                    <div style="flex:2; min-width:250px;">
-                        <label style="display:block; margin-bottom:5px; font-size:0.9rem;">ملاحظات (شروط الدفع، التوصيل...)</label>
-                        <input type="text" name="notes" class="form-control" required style="width:100%; padding:10px; border:1px solid #ccc; border-radius:5px;">
-                    </div>
-                    <button type="submit" class="btn primary" style="height:42px; padding:0 25px;">@(isAr ? "أرسل العرض" : "Send Offer")</button>
-                </form>
-            </div>
-        }
-
-        <!-- قائمة العروض -->
-        <h3 style="margin-bottom:20px; color:var(--primary);">@(isAr ? $"العروض المقدمة ({Model.Offers?.Count ?? 0})" : $"Offers ({Model.Offers?.Count ?? 0})")</h3>
-
-        <div class="offers-list">
-            @if (Model.Offers != null && Model.Offers.Any())
-            {
-                foreach (var offer in Model.Offers)
-                {
-                    <div class="offer-card" style="background:#fff; border:1px solid @(offer.IsAccepted ? "#22c55e" : "#eee"); border-radius:10px; padding:20px; margin-bottom:15px; display:flex; justify-content:space-between; align-items:center; position:relative;">
-                        @if (offer.IsAccepted)
-                        {
-                            <span style="position:absolute; top:-10px; right:20px; background:#22c55e; color:#fff; padding:3px 10px; border-radius:4px; font-size:0.8rem;">
-                                <i class="fas fa-check"></i> عرض مقبول
-                            </span>
+            <!-- Request Info -->
+            <div class="col-lg-8" style="flex:2; min-width:300px;">
+                <div class="card" style="background:#fff; padding:30px; border-radius:16px; border:1px solid #e2e8f0; margin-bottom:30px;">
+                    <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:20px;">
+                        <h2 style="margin:0; color:var(--primary);">@Model.ProductName</h2>
+                        @{
+                            var statusText = isAr ? (Model.Status == "Pending" ? "قيد المراجعة" : Model.Status == "Approved" ? "مفتوح للعروض" : Model.Status == "Completed" ? "مكتمل" : "مرفوض") : Model.Status;
+                            var statusColor = Model.Status == "Approved" ? "#dcfce7" : (Model.Status == "Pending" ? "#fffbeb" : "#eee");
+                            var textColor = Model.Status == "Approved" ? "#166534" : (Model.Status == "Pending" ? "#d97706" : "#333");
                         }
+                        <span style="background:@statusColor; color:@textColor; padding:5px 15px; border-radius:20px; font-weight:bold; font-size:0.9rem;">@statusText</span>
+                    </div>
 
-                        <div style="display:flex; align-items:center; gap:15px;">
-                            <div style="width:50px; height:50px; background:#f1f5f9; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#64748b; font-size:1.5rem;">
-                                <i class="fas fa-store"></i>
-                            </div>
-                            <div>
-                                <h4 style="margin:0;">@offer.Merchant?.ShopName</h4>
-                                <p style="margin:5px 0 0; color:#555;">@offer.Notes</p>
-                                <small style="color:#999;">@offer.CreatedAt.ToString("dd/MM/yyyy hh:mm tt")</small>
-                            </div>
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:20px; color:#555;">
+                        <div>
+                            <small style="color:#999;">@(isAr ? "الكمية" : "Quantity")</small>
+                            <div style="font-weight:bold; font-size:1.1rem;">@Model.TargetQuantity</div>
                         </div>
-
-                        <div style="text-align:center;">
-                            <div style="font-size:1.4rem; font-weight:bold; color:var(--primary);">@offer.OfferPrice.ToString("N0") <small>ج.م</small></div>
-
-                            @if (isOwner && Model.Status != "Completed")
-                            {
-                                <form asp-action="AcceptOffer" method="post" style="margin-top:10px;" onsubmit="return confirm('هل أنت متأكد من قبول هذا العرض؟ سيتم إغلاق الطلب.');">
-                                    <input type="hidden" name="offerId" value="@offer.Id" />
-                                    <button type="submit" class="btn primary small" style="background:#22c55e;">@(isAr ? "قبول العرض" : "Accept")</button>
-                                </form>
-                            }
-                            else if (offer.IsAccepted)
-                            {
-                                <a href="tel:@offer.Merchant?.PhoneNumber" class="btn btn-outline small" style="margin-top:10px; display:inline-block;"><i class="fas fa-phone"></i> اتصل</a>
-                            }
+                        <div>
+                            <small style="color:#999;">@(isAr ? "السعر المستهدف" : "Target Price")</small>
+                            <div style="font-weight:bold; font-size:1.1rem; color:var(--primary);">@Model.DealPrice.ToString("N0") <small>@(isAr ? "ج.م" : "EGP")</small></div>
                         </div>
+                        <div>
+                            <small style="color:#999;">@(isAr ? "الموقع" : "Location")</small>
+                            <div style="font-weight:bold; font-size:1.1rem;">@Model.Location</div>
+                        </div>
+                        <div>
+                            <small style="color:#999;">@(isAr ? "التاريخ" : "Date")</small>
+                            <div style="font-weight:bold;">@Model.RequestDate.ToString("dd/MM/yyyy")</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Offers List -->
+                <h3 style="margin-bottom:20px; color:#334155;">
+                    @(isAr ? "العروض المقدمة" : "Received Offers")
+                    <span style="font-size:1rem; color:#999; font-weight:normal;">(@(Model.Offers?.Count ?? 0))</span>
+                </h3>
+
+                @if (Model.Offers == null || !Model.Offers.Any())
+                {
+                    <div style="text-align:center; padding:40px; background:#fff; border-radius:12px; border:1px dashed #ccc; color:#777;">
+                        <p>@(isAr ? "لم تتلق أي عروض حتى الآن. يرجى الانتظار." : "No offers received yet. Please wait.")</p>
                     </div>
                 }
-            }
-            else
-            {
-                <div style="text-align:center; padding:30px; background:#f8fafc; color:#777; border-radius:10px;">
-                    @(isAr ? "لم يتم تقديم أي عروض بعد." : "No offers yet.")
+                else
+                {
+                    <div style="display:grid; gap:15px;">
+                        @foreach (var offer in Model.Offers)
+                        {
+                            <div class="card" style="background:#fff; padding:20px; border-radius:12px; border:1px solid @(offer.IsAccepted ? "var(--success)" : "#e2e8f0"); position:relative;">
+                                @if (offer.IsAccepted)
+                                {
+                                    <div style="position:absolute; top:10px; left:10px; background:var(--success); color:#fff; padding:3px 10px; border-radius:4px; font-size:0.75rem;">
+                                        <i class="fas fa-check"></i> @(isAr ? "تم القبول" : "Accepted")
+                                    </div>
+                                }
+
+                                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px;">
+                                    <div style="display:flex; align-items:center; gap:15px;">
+                                        <div style="width:50px; height:50px; background:#f1f5f9; border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--primary); font-size:1.5rem;">
+                                            <i class="fas fa-store"></i>
+                                        </div>
+                                        <div>
+                                            <h4 style="margin:0; font-size:1.1rem;">@offer.Merchant?.ShopName</h4>
+                                            <small style="color:#666;">@offer.CreatedAt.ToString("dd/MM HH:mm")</small>
+                                        </div>
+                                    </div>
+
+                                    <div style="text-align:center;">
+                                        <div style="font-size:1.5rem; font-weight:bold; color:var(--primary);">@offer.OfferPrice.ToString("N0") <small>@(isAr ? "ج.م" : "EGP")</small></div>
+                                        <small style="color:#999;">@(isAr ? "للقطعة" : "Per Unit")</small>
+                                    </div>
+                                </div>
+
+                                <div style="margin-top:15px; background:#f9fafb; padding:10px; border-radius:8px; font-size:0.95rem; color:#555;">
+                                    <strong>@(isAr ? "ملاحظات:" : "Notes:")</strong> @offer.Notes
+                                </div>
+
+                                @if (!offer.IsAccepted && Model.Status == "Approved")
+                                {
+                                    <form asp-action="AcceptOffer" method="post" style="margin-top:15px; text-align:right;">
+                                        <input type="hidden" name="offerId" value="@offer.Id" />
+                                        <button type="submit" class="btn primary small" onclick="return confirm('@(isAr ? "هل أنت متأكد من قبول هذا العرض؟" : "Accept this offer?")')">
+                                            @(isAr ? "قبول العرض" : "Accept Offer")
+                                        </button>
+                                    </form>
+                                }
+                                else if (offer.IsAccepted)
+                                {
+                                    <div style="margin-top:15px; text-align:right;">
+                                        <a href="tel:@offer.Merchant?.PhoneNumber" class="btn" style="border:1px solid var(--primary); color:var(--primary); text-decoration:none;">
+                                            <i class="fas fa-phone"></i> @(isAr ? "تواصل مع التاجر" : "Contact Merchant")
+                                        </a>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            <!-- Sidebar Info -->
+            <div class="col-lg-4" style="flex:1; min-width:250px;">
+                <div class="card" style="background:#e0f2fe; padding:25px; border-radius:16px; border:none; color:#0284c7;">
+                    <h4 style="margin-top:0; display:flex; align-items:center; gap:10px;">
+                        <i class="fas fa-info-circle"></i> @(isAr ? "كيف يعمل؟" : "How it works?")
+                    </h4>
+                    <ul style="padding-right:20px; line-height:1.6; font-size:0.95rem;">
+                        <li>@(isAr ? "بعد إرسال الطلب، يتم مراجعته من الإدارة." : "Request is reviewed by admin.")</li>
+                        <li>@(isAr ? "عند الموافقة، يظهر الطلب للتجار." : "Once approved, merchants see it.")</li>
+                        <li>@(isAr ? "ستتلقى عروض أسعار مختلفة هنا." : "You receive offers here.")</li>
+                        <li>@(isAr ? "اختر العرض المناسب وتواصل مع التاجر." : "Choose the best offer and contact merchant.")</li>
+                    </ul>
                 </div>
-            }
+            </div>
         </div>
 
     </div>

@@ -1,119 +1,425 @@
-﻿@model IEnumerable<Diska.Models.Order>
+﻿@using System.Globalization
+@model IEnumerable<Diska.Models.Order>
 @{
     ViewData["Title"] = "لوحة القيادة";
     Layout = "_AdminLayout";
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    var culture = new CultureInfo(isAr ? "ar-EG" : "en-US");
+
+    // --- حماية البيانات من القيم الفارغة (Null Safety) ---
+    decimal totalSales = ViewBag.TotalSales != null ? Convert.ToDecimal(ViewBag.TotalSales) : 0;
+    int totalOrders = ViewBag.TotalOrders != null ? Convert.ToInt32(ViewBag.TotalOrders) : 0;
+    int pendingOrders = ViewBag.PendingOrders != null ? Convert.ToInt32(ViewBag.PendingOrders) : 0;
+    int completedOrders = ViewBag.CompletedOrders != null ? Convert.ToInt32(ViewBag.CompletedOrders) : 0;
+    int totalMerchants = ViewBag.TotalMerchants != null ? Convert.ToInt32(ViewBag.TotalMerchants) : 0;
+    int lowStockItems = ViewBag.LowStockItems != null ? Convert.ToInt32(ViewBag.LowStockItems) : 0;
+    int pendingRequests = ViewBag.PendingRequests != null ? Convert.ToInt32(ViewBag.PendingRequests) : 0;
+
+    // بيانات الرسوم البيانية الآمنة
+    var chartLabels = ViewBag.ChartLabels ?? new string[] { };
+    var chartValues = ViewBag.ChartValues ?? new decimal[] { };
 }
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    /* --- Dashboard Specific Styles (Included for safety) --- */
+    .stat-card-modern {
+        background: var(--bg-card, #fff);
+        border-radius: 16px;
+        padding: 1.5rem;
+        border: 1px solid var(--border-color, #e2e8f0);
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        position: relative;
+        overflow: hidden;
+        height: 100%;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
 
-<div class="page-title">
-    <i class="fas fa-tachometer-alt" style="color: var(--primary);"></i> نظرة عامة
+        .stat-card-modern::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #4f46e5, #3b82f6);
+            opacity: 0.5;
+        }
+
+        .stat-card-modern:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+
+    .stat-content h3 {
+        font-size: 1.8rem;
+        font-weight: 800;
+        margin: 0;
+        line-height: 1.2;
+        color: var(--text-main, #0f172a);
+    }
+
+    .stat-content p {
+        color: var(--text-muted, #64748b);
+        font-size: 0.85rem;
+        margin: 5px 0 0;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .hover-scale {
+        transition: transform 0.3s ease;
+    }
+
+        .hover-scale:hover {
+            transform: scale(1.02);
+        }
+
+    /* Chart Container */
+    .chart-wrapper {
+        position: relative;
+        height: 320px;
+        width: 100%;
+        background: linear-gradient(to bottom, var(--bg-card, #fff), rgba(79, 70, 229, 0.02));
+        border-radius: 12px;
+        padding: 10px;
+    }
+</style>
+
+<!-- 1. Welcome Section -->
+<div class="row mb-4 fade-up">
+    <div class="col-12">
+        <div class="card border-0 overflow-hidden position-relative text-white"
+             style="background: linear-gradient(135deg, #4f46e5 0%, #312e81 100%); border-radius: 16px; min-height: 220px;">
+
+            <div class="card-body p-4 p-lg-5 position-relative z-1 d-flex align-items-center">
+                <div class="row w-100 align-items-center">
+                    <div class="col-lg-7">
+                        <span class="badge bg-white bg-opacity-25 text-white mb-3 border border-white border-opacity-25">
+                            <i class="fas fa-calendar-alt me-1"></i> @DateTime.Now.ToString("dd MMMM yyyy", culture)
+                        </span>
+                        <h1 class="text-white mb-3 fw-bold display-6">@(isAr ? "مرحباً، المسؤول!" : "Welcome back, Admin!") 👋</h1>
+                        <p class="mb-4 opacity-90 fs-5 fw-light">
+                            @(isAr ? "إليك ملخص سريع لأداء متجرك اليوم. لديك طلبات جديدة وبعض التنبيهات التي تحتاج انتباهك." : "Here's what's happening with your store today. You have new orders and some alerts requiring attention.")
+                        </p>
+                        <div class="d-flex gap-3">
+                            <a href="/Admin/Products/Create" class="btn btn-light text-primary fw-bold shadow-lg border-0 px-4">
+                                <i class="fas fa-plus me-2"></i> @(isAr ? "إضافة منتج" : "Add Product")
+                            </a>
+                            <a href="/Admin/Dashboard/Orders" class="btn btn-outline-light fw-bold px-4">
+                                <i class="fas fa-list me-2"></i> @(isAr ? "إدارة الطلبات" : "Manage Orders")
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-lg-5 d-none d-lg-block text-end position-relative">
+                        <i class="fas fa-chart-line" style="font-size: 10rem; opacity: 0.15; transform: rotate(-10deg);"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Abstract Decoration -->
+            <div style="position:absolute; top:-80px; right:-80px; width:300px; height:300px; border-radius:50%; background:radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);"></div>
+            <div style="position:absolute; bottom:-50px; left:50px; width:150px; height:150px; border-radius:50%; background:radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);"></div>
+        </div>
+    </div>
 </div>
 
-<!-- Stats Cards (نفس الكود السابق للبطاقات) -->
-<div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 30px;">
-    <!-- ... Cards code from previous batch ... -->
-    <div class="card" style="border-right: 4px solid #10b981;">
-        <p style="color: #666; margin:0;">مبيعات اليوم</p>
-        <h2 style="margin:5px 0;">@ViewBag.DailySales.ToString("N0") <small>ج.م</small></h2>
+<!-- 2. Key Metrics Grid (Modern Cards) -->
+<div class="row g-4 mb-4 fade-up" style="animation-delay: 0.1s;">
+    <!-- Revenue -->
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card-modern">
+            <div class="stat-icon" style="background-color: rgba(16, 185, 129, 0.1); color: #10b981;">
+                <i class="fas fa-wallet"></i>
+            </div>
+            <div class="stat-content flex-grow-1">
+                <p>@(isAr ? "إجمالي المبيعات" : "Total Revenue")</p>
+                <h3>@totalSales.ToString("N0") <small class="fs-6 text-muted fw-normal">@(isAr ? "ج.م" : "EGP")</small></h3>
+                <div class="d-flex align-items-center gap-2 mt-1">
+                    <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2">
+                        <i class="fas fa-arrow-up small me-1"></i> 12.5%
+                    </span>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="card" style="border-right: 4px solid #f59e0b;">
-        <p style="color: #666; margin:0;">طلبات معلقة</p>
-        <h2 style="margin:5px 0;">@ViewBag.PendingOrders</h2>
+
+    <!-- Orders -->
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card-modern">
+            <div class="stat-icon" style="background-color: rgba(59, 130, 246, 0.1); color: #3b82f6;">
+                <i class="fas fa-shopping-bag"></i>
+            </div>
+            <div class="stat-content flex-grow-1">
+                <p>@(isAr ? "الطلبات الجديدة" : "New Orders")</p>
+                <h3>@totalOrders</h3>
+                <div class="d-flex align-items-center gap-2 mt-1">
+                    <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill px-2">
+                        @pendingOrders @(isAr ? "معلق" : "Pending")
+                    </span>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="card" style="border-right: 4px solid #3b82f6;">
-        <p style="color: #666; margin:0;">عدد التجار</p>
-        <h2 style="margin:5px 0;">@ViewBag.TotalMerchants</h2>
+
+    <!-- Merchants -->
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card-modern">
+            <div class="stat-icon" style="background-color: rgba(79, 70, 229, 0.1); color: #4f46e5;">
+                <i class="fas fa-store"></i>
+            </div>
+            <div class="stat-content flex-grow-1">
+                <p>@(isAr ? "التجار النشطين" : "Active Merchants")</p>
+                <h3>@totalMerchants</h3>
+                <div class="d-flex align-items-center gap-2 mt-1">
+                    <small class="text-muted"><i class="fas fa-check-circle text-success me-1"></i> موثق</small>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="card" style="border-right: 4px solid #ef4444;">
-        <p style="color: #666; margin:0;">نواقص المخزون</p>
-        <h2 style="margin:5px 0;">@ViewBag.LowStockItems</h2>
+
+    <!-- Alerts -->
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card-modern" style="border-bottom: 4px solid #ef4444;">
+            <div class="stat-icon" style="background-color: rgba(239, 68, 68, 0.1); color: #ef4444;">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="stat-content flex-grow-1">
+                <p>@(isAr ? "تنبيهات المخزون" : "Stock Alerts")</p>
+                <h3>@lowStockItems</h3>
+                <div class="d-flex align-items-center gap-2 mt-1">
+                    <a href="/Admin/Restock" class="text-danger fw-bold text-decoration-none small">
+                        @(isAr ? "اتخاذ إجراء" : "Action") <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
-<!-- Charts Section (جديد) -->
-<div style="display:grid; grid-template-columns: 2fr 1fr; gap:20px; margin-bottom:30px;">
-
+<!-- 3. Charts Section -->
+<div class="row g-4 mb-4 fade-up" style="animation-delay: 0.2s;">
     <!-- Sales Chart -->
-    <div class="card">
-        <h3 style="margin-top:0; color:var(--primary);">حركة المبيعات (آخر 7 أيام)</h3>
-        <canvas id="salesChart" height="200"></canvas>
+    <div class="col-lg-8">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-header border-0 pt-4 px-4 pb-0 bg-transparent">
+                <div>
+                    <h5 class="card-title mb-1">@(isAr ? "تحليل المبيعات" : "Sales Analytics")</h5>
+                    <small class="text-muted">@(isAr ? "أداء المبيعات خلال الأسبوع الماضي" : "Sales performance over last 7 days")</small>
+                </div>
+            </div>
+            <div class="card-body px-4 pb-4">
+                <div class="chart-wrapper">
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Order Status Chart -->
-    <div class="card">
-        <h3 style="margin-top:0; color:var(--primary);">حالات الطلبات</h3>
-        <canvas id="statusChart" height="200"></canvas>
+    <div class="col-lg-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-header border-0 pt-4 px-4 pb-0 bg-transparent">
+                <h5 class="card-title mb-0">@(isAr ? "توزيع الطلبات" : "Order Status")</h5>
+            </div>
+            <div class="card-body px-4 d-flex flex-column justify-content-center align-items-center">
+                <div style="height: 220px; width: 100%; position: relative;">
+                    <canvas id="ordersDoughnut"></canvas>
+                    <div class="position-absolute top-50 start-50 translate-middle text-center">
+                        <small class="text-muted d-block text-uppercase" style="font-size: 0.7rem; letter-spacing: 1px;">@(isAr ? "الإجمالي" : "TOTAL")</small>
+                        <h3 class="fw-bold m-0 text-dark">@totalOrders</h3>
+                    </div>
+                </div>
+
+                <div class="row w-100 mt-4 g-2">
+                    <div class="col-6">
+                        <div class="p-2 rounded border d-flex align-items-center gap-2">
+                            <span class="badge bg-success rounded-circle p-1"> </span>
+                            <div>
+                                <small class="d-block text-muted" style="font-size: 0.7rem;">@(isAr ? "مكتمل" : "Done")</small>
+                                <strong class="text-dark">@completedOrders</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 rounded border d-flex align-items-center gap-2">
+                            <span class="badge bg-warning rounded-circle p-1"> </span>
+                            <div>
+                                <small class="d-block text-muted" style="font-size: 0.7rem;">@(isAr ? "معلق" : "Pending")</small>
+                                <strong class="text-dark">@pendingOrders</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
-<!-- Recent Orders Table -->
-<div class="card">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h3 style="margin:0;">أحدث الطلبات</h3>
-        <a asp-action="Orders" class="btn btn-outline small">عرض الكل</a>
+<!-- 4. Recent Orders Table -->
+<div class="row fade-up" style="animation-delay: 0.3s;">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-bottom pt-4 px-4 pb-3 d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="card-title mb-0">@(isAr ? "أحدث الطلبات" : "Recent Orders")</h5>
+                </div>
+                <a href="/Admin/Dashboard/Orders" class="btn btn-sm btn-primary rounded-pill px-3">
+                    @(isAr ? "عرض الكل" : "View All") <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light text-muted">
+                        <tr>
+                            <th class="ps-4 text-uppercase small fw-bold">@(isAr ? "الطلب" : "Order")</th>
+                            <th class="text-uppercase small fw-bold">@(isAr ? "العميل" : "Customer")</th>
+                            <th class="text-uppercase small fw-bold">@(isAr ? "المبلغ" : "Amount")</th>
+                            <th class="text-uppercase small fw-bold">@(isAr ? "الحالة" : "Status")</th>
+                            <th class="text-end pe-4 text-uppercase small fw-bold">@(isAr ? "خيارات" : "Option")</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var order in Model)
+                            {
+                                <tr>
+                                    <td class="ps-4">
+                                        <a href="/Admin/Dashboard/OrderDetails/@order.Id" class="fw-bold text-primary text-decoration-none">#@order.Id</a>
+                                        <div class="small text-muted">@order.OrderDate.ToString("dd MMM, hh:mm tt")</div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="rounded-circle bg-light d-flex align-items-center justify-content-center text-primary fw-bold border" style="width: 32px; height: 32px; font-size: 0.8rem;">
+                                                @(order.CustomerName?.FirstOrDefault())
+                                            </div>
+                                            <span class="fw-bold text-dark">@order.CustomerName</span>
+                                        </div>
+                                    </td>
+                                    <td class="fw-bold">@order.TotalAmount.ToString("N0")</td>
+                                    <td>
+                                        @{
+                                            var badge = order.Status switch
+                                            {
+                                                "Pending" => "bg-warning bg-opacity-10 text-warning",
+                                                "Confirmed" => "bg-info bg-opacity-10 text-info",
+                                                "Completed" => "bg-success bg-opacity-10 text-success",
+                                                "Delivered" => "bg-success bg-opacity-10 text-success",
+                                                "Cancelled" => "bg-danger bg-opacity-10 text-danger",
+                                                _ => "bg-secondary bg-opacity-10 text-secondary"
+                                            };
+                                        }
+                                        <span class="badge @badge rounded-pill px-3">@order.Status</span>
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <a href="/Admin/Dashboard/OrderDetails/@order.Id" class="btn btn-sm btn-light border" title="View">
+                                            <i class="fas fa-eye text-muted"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr><td colspan="5" class="text-center py-5 text-muted">@(isAr ? "لا توجد طلبات حديثة" : "No recent orders")</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
-    <table style="width:100%;">
-        <thead>
-            <tr style="background:#f9fafb;">
-                <th>رقم الطلب</th>
-                <th>العميل</th>
-                <th>المبلغ</th>
-                <th>الحالة</th>
-                <th>الإجراء</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var order in Model)
-            {
-                <tr style="border-bottom:1px solid #eee;">
-                    <td>#@order.Id</td>
-                    <td>@order.CustomerName</td>
-                    <td>@order.TotalAmount.ToString("N0")</td>
-                    <td>
-                        <span class="badge" style="background:@(order.Status == "Pending" ? "#fffbeb" : "#dcfce7"); color:@(order.Status == "Pending" ? "#d97706" : "#166534");">
-                            @order.Status
-                        </span>
-                    </td>
-                    <td><a asp-action="OrderDetails" asp-route-id="@order.Id" class="btn btn-outline small">تفاصيل</a></td>
-                </tr>
-            }
-        </tbody>
-    </table>
 </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Sales Chart
+@section Scripts {
+    <!-- Chart.js (CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Check for theme
+        const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+        const textColor = isDark ? '#94a3b8' : '#64748b';
+        const gridColor = isDark ? '#334155' : '#f1f5f9';
+
+        // 1. Sales Chart
         const ctxSales = document.getElementById('salesChart').getContext('2d');
+        const salesGradient = ctxSales.createLinearGradient(0, 0, 0, 300);
+        salesGradient.addColorStop(0, 'rgba(79, 70, 229, 0.2)');
+        salesGradient.addColorStop(1, 'rgba(79, 70, 229, 0)');
+
         new Chart(ctxSales, {
             type: 'line',
             data: {
-                labels: ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'],
+                labels: @Html.Raw(Json.Serialize(chartLabels)),
                 datasets: [{
-                    label: 'المبيعات (ج.م)',
-                    data: [12000, 19000, 3000, 5000, 20000, 30000, 45000], // داتا وهمية للعرض، يمكن ربطها بالكنترولر
-                    borderColor: '#2563eb',
-                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    label: '@(isAr ? "المبيعات" : "Sales")',
+                    data: @Html.Raw(Json.Serialize(chartValues)),
+                    borderColor: '#4f46e5',
+                    backgroundColor: salesGradient,
+                    borderWidth: 2,
+                    tension: 0.4,
                     fill: true,
-                    tension: 0.4
+                    pointBackgroundColor: isDark ? '#1e293b' : '#ffffff',
+                    pointBorderColor: '#4f46e5',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
                 }]
             },
-            options: { responsive: true }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: isDark ? '#1e293b' : '#fff',
+                        titleColor: isDark ? '#fff' : '#1e293b',
+                        bodyColor: textColor,
+                        borderColor: gridColor,
+                        borderWidth: 1,
+                        padding: 10,
+                        displayColors: false,
+                        callbacks: { label: (c) => c.parsed.y.toLocaleString() + ' @(isAr ? "ج.م" : "EGP")' }
+                    }
+                },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: textColor } },
+                    y: { grid: { color: gridColor, borderDash: [5, 5] }, ticks: { color: textColor } }
+                }
+            }
         });
 
-        // Status Chart
-        const ctxStatus = document.getElementById('statusChart').getContext('2d');
-        new Chart(ctxStatus, {
+        // 2. Orders Doughnut
+        const ctxOrders = document.getElementById('ordersDoughnut').getContext('2d');
+        new Chart(ctxOrders, {
             type: 'doughnut',
             data: {
-                labels: ['معلق', 'مؤكد', 'مشحون', 'مكتمل'],
+                labels: ['Completed', 'Pending', 'Cancelled'],
                 datasets: [{
-                    data: [@ViewBag.PendingOrders, 5, 3, 10], // داتا وهمية للعرض
-                    backgroundColor: ['#f59e0b', '#3b82f6', '#7c3aed', '#10b981']
+                    data: [@completedOrders, @pendingOrders, @(totalOrders - completedOrders - pendingOrders)],
+                    backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                    borderWidth: 0,
+                    hoverOffset: 5
                 }]
             },
-            options: { responsive: true }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '80%',
+                plugins: { legend: { display: false } }
+            }
         });
-    });
-</script>
+    </script>
+}

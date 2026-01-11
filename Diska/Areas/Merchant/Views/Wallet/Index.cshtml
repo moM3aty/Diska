@@ -1,0 +1,92 @@
+﻿@model IEnumerable<Diska.Models.WalletTransaction>
+@{
+    ViewData["Title"] = "محفظتي";
+    Layout = "_MerchantLayout";
+}
+
+<div class="row g-4 mb-4">
+    <!-- Balance Card -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm bg-primary text-white h-100">
+            <div class="card-body p-4 text-center">
+                <p class="mb-1 opacity-75">الرصيد القابل للسحب</p>
+                <h1 class="display-4 fw-bold">@(((decimal)ViewBag.Balance).ToString("N0")) <small class="fs-6">ج.م</small></h1>
+
+                <form asp-action="RequestWithdraw" method="post" class="mt-4 d-flex justify-content-center gap-2">
+                    <input type="number" name="amount" class="form-control form-control-sm w-auto" placeholder="مبلغ السحب" min="100">
+                    <button type="submit" class="btn btn-light btn-sm fw-bold text-primary">طلب سحب</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+                <h5 class="card-title text-primary mb-4">ملخص الحركة</h5>
+                <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
+                    <span class="text-muted"><i class="fas fa-arrow-down text-success me-2"></i> إجمالي الأرباح</span>
+                    <span class="fw-bold text-success">@(((decimal)ViewBag.TotalEarnings).ToString("N0")) ج.م</span>
+                </div>
+                <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
+                    <span class="text-muted"><i class="fas fa-arrow-up text-danger me-2"></i> المسحوبات/الخصومات</span>
+                    <span class="fw-bold text-danger">@(((decimal)ViewBag.TotalWithdrawals).ToString("N0")) ج.م</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3">
+        <h5 class="mb-0 text-secondary">سجل المعاملات</h5>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light">
+                <tr>
+                    <th>نوع العملية</th>
+                    <th>القيمة</th>
+                    <th>الوصف</th>
+                    <th>التاريخ</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="4" class="text-center py-4 text-muted">لا توجد معاملات حتى الآن.</td>
+                    </tr>
+                }
+                @foreach (var item in Model)
+                {
+                    bool isPositive = item.Type == "Deposit" || item.Type == "Sale";
+                    <tr>
+                        <td>
+                            @if (item.Type == "Deposit" || item.Type == "Sale")
+                            {
+                                <span class="badge bg-success">إيداع/بيع</span>
+                            }
+                            else if (item.Type == "Withdraw")
+                            {
+
+                                <span class="badge bg-warning text-dark">سحب</span>
+                            }
+                            else
+                            {
+
+                                <span class="badge bg-danger">خصم</span>
+                            }
+                        </td>
+                        <td class="fw-bold @(isPositive ? "text-success" : "text-danger")" dir="ltr">
+                            @(isPositive ? "+" : "-")@item.Amount.ToString("N0")
+                        </td>
+                        <td class="text-muted small">@item.Description</td>
+                        <td class="text-muted small">@item.TransactionDate.ToString("yyyy/MM/dd HH:mm")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

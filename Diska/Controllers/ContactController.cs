@@ -15,6 +15,14 @@ namespace Diska.Controllers
             _context = context;
         }
 
+        // 1. عرض صفحة التواصل (Static Info + Form)
+        [HttpGet]
+        public IActionResult Index()
+        {
+            return View();
+        }
+
+        // 2. استقبال الرسالة (Form Action)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SendMessage(ContactMessage model)
@@ -25,14 +33,14 @@ namespace Diska.Controllers
                 _context.ContactMessages.Add(model);
                 await _context.SaveChangesAsync();
 
-                // يمكن إضافة إشعار للأدمن هنا
+                // يمكن إضافة كود لإرسال إيميل للإدارة هنا
 
-                TempData["Success"] = "تم إرسال رسالتك بنجاح، سيتواصل معك فريق الدعم قريباً.";
-                return RedirectToAction("Contact", "Home");
+                TempData["Success"] = "تم إرسال رسالتك بنجاح! شكراً لتواصلك معنا.";
+                return RedirectToAction(nameof(Index));
             }
 
-            TempData["Error"] = "حدث خطأ، يرجى التأكد من البيانات.";
-            return RedirectToAction("Contact", "Home");
+            TempData["Error"] = "عفواً، يرجى التأكد من صحة البيانات المدخلة.";
+            return View("Index", model); // إعادة عرض الصفحة مع الأخطاء
         }
     }
 }

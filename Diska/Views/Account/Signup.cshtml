@@ -1,7 +1,7 @@
 ﻿@using System.Globalization
 @{
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
-    ViewData["Title"] = isAr ? "إنشاء حساب جديد" : "Sign Up";
+    ViewData["Title"] = isAr ? "إنشاء حساب" : "Sign Up";
     Layout = null;
 }
 
@@ -10,71 +10,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@ViewData["Title"] | DISKA</title>
-    @if (isAr)
-    {
-        <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
-        <style>
-            body {
-                font-family: 'Cairo';
-            }</style>
-    }
-    else
-    {
-        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-        <style>
-            body {
-                font-family: 'Roboto';
-            }</style>
-    }
+    <title>@ViewData["Title"] - DISKA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/css/style.css">
     <style>
-        .auth-container {
-            max-width: 500px;
-            margin: 40px auto;
-            background: #fff;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-            .form-group label {
-                display: block;
-                margin-bottom: 5px;
-                font-weight: bold;
-                color: #333;
-            }
-
-        .form-control {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            outline: none;
-            font-family: inherit;
-        }
-
-        .btn.primary {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            background: #0F172A;
-            color: #FACC15;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-            .btn.primary:hover {
-                background: #1e293b;
-            }
-
-        /* Custom Radio Toggle */
         .type-toggle {
             display: flex;
             background: #f1f5f9;
@@ -90,9 +29,9 @@
                 cursor: pointer;
                 border-radius: 8px;
                 transition: 0.3s;
-                margin: 0;
                 font-weight: bold;
                 color: #64748b;
+                margin: 0;
             }
 
             .type-toggle input {
@@ -101,82 +40,80 @@
 
                 .type-toggle input:checked + label {
                     background: #fff;
-                    color: #0F172A;
+                    color: var(--primary); /* Uses CSS var from style.css */
                     box-shadow: 0 2px 5px rgba(0,0,0,0.05);
                 }
+        /* Fallback for primary color if var not loaded yet */
+        :root {
+            --primary: #0F172A;
+        }
     </style>
 </head>
-<body style="background-color: #F8FAFC;">
+<body class="auth-body">
 
     <div class="auth-container">
-        <div style="text-align: center; margin-bottom: 25px;">
-            <h2 style="color: #0F172A;">@(isAr ? "انضم إلى عائلة ديسكا" : "Join Diska Family")</h2>
-            <p style="color: #666;">@(isAr ? "حدد نوع حسابك وابدأ الآن" : "Choose account type and start now")</p>
+        <div class="auth-header">
+            <h2>@(isAr ? "إنشاء حساب جديد" : "Create Account")</h2>
+            <p>@(isAr ? "انضم لعائلة ديسكا" : "Join Diska Family")</p>
         </div>
 
-        <form asp-action="Signup" method="post" id="signupForm">
-            @if (ViewBag.Error != null)
-            {
-                <div style="background:#fee2e2; color:#dc2626; padding:10px; border-radius:8px; margin-bottom:15px; text-align:center;">@ViewBag.Error</div>
-            }
+        @if (ViewBag.Error != null)
+        {
+            <div style="background:#fee2e2; color:#ef4444; padding:10px; border-radius:8px; margin-bottom:20px; text-align:center; border:1px solid #fecaca;">
+                @ViewBag.Error
+            </div>
+        }
+
+        <form asp-action="Signup" method="post">
 
             <div class="type-toggle">
-                <input type="radio" name="type" id="typeCustomer" value="Customer" checked onchange="toggleFields()">
-                <label for="typeCustomer">👤 @(isAr ? "مشتري / محل" : "Buyer")</label>
+                <input type="radio" name="type" id="typeCust" value="Customer" checked onchange="toggleShop(false)">
+                <label for="typeCust">👤 @(isAr ? "عميل / مشتري" : "Customer")</label>
 
-                <input type="radio" name="type" id="typeMerchant" value="Merchant" onchange="toggleFields()">
-                <label for="typeMerchant">🏪 @(isAr ? "تاجر / مورد" : "Merchant")</label>
+                <input type="radio" name="type" id="typeMerch" value="Merchant" onchange="toggleShop(true)">
+                <label for="typeMerch">🏪 @(isAr ? "تاجر / مورد" : "Merchant")</label>
             </div>
 
             <div class="form-group">
                 <label>@(isAr ? "الاسم بالكامل" : "Full Name")</label>
-                <input type="text" name="fullName" class="form-control" required>
+                <input type="text" name="fullName" required>
             </div>
 
             <div class="form-group">
-                <label>@(isAr ? "رقم الموبايل" : "Phone Number")</label>
-                <input type="tel" name="phone" class="form-control" placeholder="01xxxxxxxxx" required style="direction: ltr; text-align: right;">
+                <label>@(isAr ? "رقم الهاتف" : "Phone Number")</label>
+                <input type="tel" name="phone" placeholder="01xxxxxxxxx" required style="direction:ltr; text-align:@(isAr ? "right" : "left");">
             </div>
 
-            <!-- Merchant Only Fields -->
-            <div id="merchantFields" style="display: none;">
-                <div class="form-group">
-                    <label>@(isAr ? "اسم النشاط التجاري / المحل" : "Shop / Business Name")</label>
-                    <input type="text" name="shopName" id="shopNameInput" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label>@(isAr ? "رقم السجل التجاري (اختياري)" : "Commercial Register (Optional)")</label>
-                    <input type="text" name="commercialReg" class="form-control">
-                </div>
+            <div class="form-group" id="shopField" style="display:none;">
+                <label>@(isAr ? "اسم المحل / النشاط" : "Shop Name")</label>
+                <input type="text" name="shopName">
+            </div>
+
+            <div class="form-group" id="regField" style="display:none;">
+                <label>@(isAr ? "السجل التجاري (اختياري)" : "Commercial Register")</label>
+                <input type="text" name="commercialReg">
             </div>
 
             <div class="form-group">
                 <label>@(isAr ? "كلمة المرور" : "Password")</label>
-                <input type="password" name="password" class="form-control" placeholder="********" required>
+                <input type="password" name="password" placeholder="********" required>
             </div>
 
-            <button type="submit" class="btn primary">@(isAr ? "إنشاء الحساب" : "Create Account")</button>
+            <button type="submit" class="btn primary add-btn" style="width:100%;">@(isAr ? "إنشاء الحساب" : "Register")</button>
         </form>
 
-        <div style="text-align: center; margin-top: 20px;">
-            <p>@(isAr ? "لديك حساب بالفعل؟" : "Already registered?") <a asp-action="Login" style="color: #0F172A; font-weight: bold;">@(isAr ? "تسجيل الدخول" : "Login")</a></p>
+        <div class="auth-footer">
+            @(isAr ? "لديك حساب بالفعل؟" : "Already registered?")
+            <a asp-action="Login" style="font-weight:bold;">@(isAr ? "تسجيل الدخول" : "Login")</a>
         </div>
     </div>
 
     <script>
-        function toggleFields() {
-            const isMerchant = document.getElementById('typeMerchant').checked;
-            const fields = document.getElementById('merchantFields');
-            const shopInput = document.getElementById('shopNameInput');
-
-            if (isMerchant) {
-                fields.style.display = 'block';
-                shopInput.setAttribute('required', 'required');
-            } else {
-                fields.style.display = 'none';
-                shopInput.removeAttribute('required');
-            }
+        function toggleShop(show) {
+            document.getElementById('shopField').style.display = show ? 'block' : 'none';
+            document.getElementById('regField').style.display = show ? 'block' : 'none';
         }
     </script>
+
 </body>
 </html>

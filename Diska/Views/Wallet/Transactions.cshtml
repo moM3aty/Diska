@@ -1,0 +1,70 @@
+﻿@model IEnumerable<Diska.Models.WalletTransaction>
+@using System.Globalization
+@{
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    ViewData["Title"] = isAr ? "سجل المعاملات" : "Transactions History";
+}
+
+<section class="section-padding">
+    <div class="container">
+
+        <div class="breadcrumb" style="margin-bottom:20px;">
+            <a asp-action="Index">@(isAr ? "المحفظة" : "My Wallet")</a> /
+            <span>@(isAr ? "السجل الكامل" : "History")</span>
+        </div>
+
+        <h2 class="page-title">@(isAr ? "سجل المعاملات المالية" : "Transaction History")</h2>
+
+        @if (!Model.Any())
+        {
+            <div style="text-align: center; padding: 60px; background: #fff; border-radius: 12px; border: 1px solid #eee;">
+                <i class="fas fa-file-invoice-dollar fa-3x" style="color: #e2e8f0; margin-bottom: 20px;"></i>
+                <p style="color: #666;">@(isAr ? "لم تقم بأي عمليات مالية بعد." : "No transactions found.")</p>
+            </div>
+        }
+        else
+        {
+            <div style="background: #fff; border-radius: 12px; border: 1px solid #eee; overflow: hidden;">
+                <table style="width: 100%; text-align: @(isAr ? "right" : "left"); border-collapse: collapse;">
+                    <thead style="background: #f8fafc; color: #64748b;">
+                        <tr>
+                            <th style="padding: 15px; border-bottom: 1px solid #eee;">@(isAr ? "نوع العملية" : "Type")</th>
+                            <th style="padding: 15px; border-bottom: 1px solid #eee;">@(isAr ? "التفاصيل" : "Details")</th>
+                            <th style="padding: 15px; border-bottom: 1px solid #eee;">@(isAr ? "التاريخ" : "Date")</th>
+                            <th style="padding: 15px; border-bottom: 1px solid #eee; text-align: end;">@(isAr ? "المبلغ" : "Amount")</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            bool isPositive = item.Type == "Deposit" || item.Type == "Refund";
+                            <tr>
+                                <td style="padding: 15px; border-bottom: 1px solid #f5f5f5;">
+                                    @if (item.Type == "Deposit")
+                                    {
+                                        <span style="background: #dcfce7; color: #16a34a; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem;">@(isAr ? "إيداع" : "Deposit")</span>
+                                    }
+                                    else if (item.Type == "Purchase")
+                                    {
+
+                                        <span style="background: #fee2e2; color: #dc2626; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem;">@(isAr ? "شراء" : "Purchase")</span>
+                                    }
+                                    else
+                                    {
+
+                                        <span style="background: #e0f2fe; color: #0284c7; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem;">@item.Type</span>
+                                    }
+                                </td>
+                                <td style="padding: 15px; border-bottom: 1px solid #f5f5f5; color: #333;">@item.Description</td>
+                                <td style="padding: 15px; border-bottom: 1px solid #f5f5f5; color: #666; font-size: 0.9rem;">@item.TransactionDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td style="padding: 15px; border-bottom: 1px solid #f5f5f5; text-align: end; font-weight: bold; color: @(isPositive ? "#16a34a" : "#dc2626");" dir="ltr">
+                                    @(isPositive ? "+" : "-")@item.Amount.ToString("N0")
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</section>

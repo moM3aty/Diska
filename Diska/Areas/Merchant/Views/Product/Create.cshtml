@@ -1,0 +1,79 @@
+﻿@model Diska.Models.Product
+@using System.Globalization
+@{
+    ViewData["Title"] = "إضافة منتج";
+    Layout = "_MerchantLayout";
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-primary">@(isAr ? "إضافة منتج جديد" : "Add New Product")</h5>
+                <a asp-action="Index" class="btn btn-sm btn-outline-secondary">@(isAr ? "إلغاء" : "Cancel")</a>
+            </div>
+            <div class="card-body p-4">
+
+                <div class="alert alert-warning d-flex align-items-center mb-4">
+                    <i class="fas fa-exclamation-triangle fa-lg me-3"></i>
+                    <div>
+                        @(isAr ? "ملاحظة: المنتجات الجديدة تخضع للمراجعة من قبل الإدارة قبل ظهورها للعملاء." : "Note: New products require admin approval before going live.")
+                    </div>
+                </div>
+
+                <form asp-action="Create" enctype="multipart/form-data">
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">@(isAr ? "اسم المنتج (عربي)" : "Name Ar")</label>
+                            <input asp-for="Name" class="form-control" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">@(isAr ? "اسم المنتج (إنجليزي)" : "Name En")</label>
+                            <input asp-for="NameEn" class="form-control" required />
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">@(isAr ? "القسم" : "Category")</label>
+                            <select asp-for="CategoryId" class="form-select" asp-items="ViewBag.Categories" required>
+                                <option value="">@(isAr ? "-- اختر --" : "-- Select --")</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">@(isAr ? "الكمية المتاحة" : "Stock")</label>
+                            <input asp-for="StockQuantity" type="number" class="form-control" required />
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">@(isAr ? "سعر البيع" : "Price")</label>
+                            <input asp-for="Price" type="number" step="0.01" class="form-control fw-bold" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">@(isAr ? "السعر قبل الخصم (اختياري)" : "Old Price")</label>
+                            <input asp-for="OldPrice" type="number" step="0.01" class="form-control" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">@(isAr ? "وصف المنتج" : "Description")</label>
+                        <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">@(isAr ? "صورة المنتج" : "Product Image")</label>
+                        <input type="file" name="mainImage" class="form-control" accept="image/*" required>
+                    </div>
+
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-primary px-4 fw-bold">@(isAr ? "حفظ وإرسال للمراجعة" : "Submit for Review")</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

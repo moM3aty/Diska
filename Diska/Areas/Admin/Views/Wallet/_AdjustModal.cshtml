@@ -1,0 +1,50 @@
+﻿<!-- نافذة التسوية اليدوية -->
+<div class="modal fade" id="adjustModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="AdjustBalance" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-sliders-h text-primary"></i> تسوية رصيد يدوية</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning small">
+                        <i class="fas fa-exclamation-triangle"></i> هذا الإجراء سيؤثر مباشرة على المحفظة المالية للمستخدم. يرجى توخي الحذر.
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">المستخدم المستهدف</label>
+                        <select name="userId" class="form-select" asp-items="ViewBag.Users" required>
+                            <option value="">-- اختر المستخدم --</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label d-block">نوع العملية</label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="type" id="radioDeposit" value="Deposit" checked>
+                            <label class="btn btn-outline-success" for="radioDeposit"><i class="fas fa-plus"></i> إيداع (زيادة)</label>
+
+                            <input type="radio" class="btn-check" name="type" id="radioDeduction" value="Deduction">
+                            <label class="btn btn-outline-danger" for="radioDeduction"><i class="fas fa-minus"></i> خصم (نقص)</label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">المبلغ (ج.م)</label>
+                        <input type="number" name="amount" class="form-control fw-bold" min="1" step="0.01" required placeholder="0.00">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">سبب التسوية / البيان</label>
+                        <textarea name="description" class="form-control" rows="2" required placeholder="مثال: تعويض عن طلب تالف، مكافأة ولاء..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary fw-bold">تنفيذ العملية</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

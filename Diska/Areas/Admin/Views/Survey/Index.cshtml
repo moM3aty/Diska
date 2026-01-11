@@ -1,63 +1,107 @@
 ﻿@model IEnumerable<Diska.Models.Survey>
 @{
-    ViewData["Title"] = "الاستبيانات";
+    ViewData["Title"] = "إدارة الاستبيانات";
     Layout = "_AdminLayout";
 }
 
 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-    <h2 style="margin:0;">إدارة الاستبيانات</h2>
+    <div>
+        <h2 style="margin:0; color:var(--primary);">إدارة الاستبيانات</h2>
+        <p style="color:#64748b; margin-top:5px;">إنشاء استطلاعات رأي وجمع ملاحظات العملاء</p>
+    </div>
     <a asp-action="Create" class="btn btn-primary"><i class="fas fa-plus"></i> إنشاء استبيان جديد</a>
 </div>
 
 <div class="card">
     @if (!Model.Any())
     {
-        <div style="text-align:center; padding:30px; color:#666;">
+        <div style="text-align:center; padding:50px; color:#64748b;">
+            <i class="fas fa-poll-h fa-3x" style="margin-bottom:15px; color:#cbd5e1;"></i>
             <p>لا توجد استبيانات مسجلة حالياً.</p>
-            <small class="text-muted">(تأكد من ترحيل قاعدة البيانات لإضافة جداول الاستبيانات)</small>
         </div>
     }
     else
     {
-        <table>
-            <thead>
-                <tr>
-                    <th>العنوان</th>
-                    <th>الجمهور المستهدف</th>
-                    <th>تاريخ الانتهاء</th>
-                    <th>الاستجابات</th>
-                    <th>الحالة</th>
-                    <th>إجراءات</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model)
-                {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
                     <tr>
-                        <td>@item.Title</td>
-                        <td>
-                            @if(item.TargetAudience == "All") { <span class="badge" style="background:#e2e8f0; color:#333;">الكل</span> }
-                            else if(item.TargetAudience == "Merchant") { <span class="badge" style="background:#7c3aed; color:#fff;">تجار</span> }
-                            else { <span class="badge" style="background:#2563eb; color:#fff;">عملاء</span> }
-                        </td>
-                        <td>@item.EndDate.ToString("yyyy/MM/dd")</td>
-                        <td>@item.Responses.Count</td>
-                        <td>
-                            @if(item.IsActive) { <span class="badge" style="background:#dcfce7; color:#166534;">نشط</span> }
-                            else { <span class="badge" style="background:#fee2e2; color:#b91c1c;">متوقف</span> }
-                        </td>
-                        <td>
-                            <a asp-action="Results" asp-route-id="@item.Id" class="btn btn-outline" style="font-size:0.8rem; padding:5px 10px;">النتائج</a>
-                            <form asp-action="ToggleStatus" method="post" style="display:inline;">
-                                <input type="hidden" name="id" value="@item.Id" />
-                                <button type="submit" class="btn" style="font-size:0.8rem; padding:5px 10px; background:#f1f5f9;">
-                                    @(item.IsActive ? "إيقاف" : "تفعيل")
-                                </button>
-                            </form>
-                        </td>
+                        <th>العنوان</th>
+                        <th>الجمهور</th>
+                        <th>الفترة</th>
+                        <th>المشاركات</th>
+                        <th>الحالة</th>
+                        <th>إجراءات</th>
                     </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                <strong>@item.Title</strong>
+                                @if (!string.IsNullOrEmpty(item.Description))
+                                {
+                                    <div class="small text-muted">@item.Description</div>
+                                }
+                            </td>
+                            <td>
+                                @if (item.TargetAudience == "All")
+                                {
+                                    <span class="badge bg-secondary">الكل</span>
+                                }
+                                else if (item.TargetAudience == "Merchant")
+                                {
+
+                                    <span class="badge bg-warning text-dark">تجار</span>
+                                }
+                                else
+                                {
+
+                                    <span class="badge bg-info text-dark">عملاء</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="small">@item.StartDate.ToString("dd/MM") - @item.EndDate.ToString("dd/MM")</div>
+                            </td>
+                            <td>
+                                <span class="fw-bold text-primary">@item.Responses.Count</span>
+                            </td>
+                            <td>
+                                @if (item.IsActive && item.EndDate > DateTime.Now)
+                                {
+                                    <span class="badge bg-success">نشط</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-light text-dark border">@(item.IsActive ? "منتهي" : "متوقف")</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a asp-action="Results" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-chart-pie me-1"></i> النتائج
+                                    </a>
+
+                                    <form asp-action="ToggleStatus" method="post" class="d-inline">
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary" title="@(item.IsActive ? "إيقاف" : "تفعيل")">
+                                            <i class="fas @(item.IsActive ? "fa-pause" : "fa-play")"></i>
+                                        </button>
+                                    </form>
+
+                                    <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('حذف الاستبيان وجميع نتائجه؟');">
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     }
 </div>

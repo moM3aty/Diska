@@ -1,77 +1,130 @@
-﻿@using System.Globalization
+﻿@model IEnumerable<Diska.Models.UserNotification>
+@using System.Globalization
 @{
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
     ViewData["Title"] = isAr ? "الإشعارات" : "Notifications";
+    Layout = "_Layout";
 }
 
 <section class="section-padding" style="min-height: 70vh;">
     <div class="container">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #eee; padding-bottom:15px;">
-            <h2 style="margin:0;">@(isAr ? "الإشعارات" : "Notifications") 🔔</h2>
-            <button class="btn" onclick="clearAllNotifications()" style="color:#dc2626; background:transparent; border:1px solid #dc2626; padding:5px 15px; border-radius:5px;">
-                @(isAr ? "مسح الكل" : "Clear All")
-            </button>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h2 class="page-title" style="margin:0;">@(isAr ? "الإشعارات" : "Notifications") 🔔</h2>
+
+            @if (Model.Any())
+            {
+                <button onclick="clearAllNotifications()" class="btn small" style="color:#dc2626; border:1px solid #dc2626; background:transparent;">
+                    <i class="fas fa-trash-alt"></i> @(isAr ? "مسح الكل" : "Clear All")
+                </button>
+            }
         </div>
 
-        <div id="notificationsPageList">
-            <!-- Loaded via JS -->
-            <div style="text-align:center; padding:50px;">
-                <i class="fas fa-spinner fa-spin fa-2x" style="color:var(--primary);"></i>
-            </div>
+        <div id="notificationsContainer">
+            @if (!Model.Any())
+            {
+                <div style="text-align:center; padding:60px; background:#fff; border-radius:15px; border:1px solid #eee;">
+                    <i class="far fa-bell-slash fa-4x" style="color:#e2e8f0; margin-bottom:20px;"></i>
+                    <h3 style="color:#64748b;">@(isAr ? "لا توجد إشعارات حالياً." : "No notifications yet.")</h3>
+                </div>
+            }
+            else
+            {
+                <div style="display:flex; flex-direction:column; gap:15px;">
+                    @foreach (var item in Model)
+                    {
+                        <div class="card notif-item @(item.IsRead ? "" : "unread")" id="notif-@item.Id" style="background:@(item.IsRead ? "#fff" : "#f0f9ff"); border:1px solid #e2e8f0; border-radius:12px; padding:20px; transition:0.3s; position:relative;">
+
+                            <div style="display:flex; gap:15px; align-items:flex-start;">
+                                <div style="width:45px; height:45px; background:#e0f2fe; color:var(--primary); border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                    @if (item.Type == "Order")
+                                    {
+                                        <i class="fas fa-box"></i>
+                                    }
+                                    else if (item.Type == "Wallet")
+                                    {
+
+                                        <i class="fas fa-wallet"></i>
+                                    }
+                                    else if (item.Type == "Alert")
+                                    {
+
+                                        <i class="fas fa-exclamation-circle text-danger"></i>
+                                    }
+                                    else
+                                    {
+
+                                        <i class="fas fa-info"></i>
+                                    }
+                                </div>
+
+                                <div style="flex:1;">
+                                    <h4 style="margin:0 0 5px; font-size:1rem; font-weight:@(item.IsRead ? "normal" : "bold"); color:var(--text-dark);">@item.Title</h4>
+                                    <p style="margin:0 0 8px; color:#666; font-size:0.9rem; line-height:1.5;">@item.Message</p>
+                                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                                        <small style="color:#999;">@item.TimeAgo</small>
+                                        @if (!string.IsNullOrEmpty(item.Link) && item.Link != "#")
+                                        {
+                                            <a href="@item.Link" class="btn small" style="padding:4px 10px; font-size:0.8rem; background:#f8fafc; color:var(--primary); border:1px solid #ddd;">
+                                                @(isAr ? "عرض التفاصيل" : "View Details") <i class="fas @(isAr ? "fa-arrow-left" : "fa-arrow-right")"></i>
+                                            </a>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+
+                            @if (!item.IsRead)
+                            {
+                                <button onclick="markAsRead(@item.Id)" style="position:absolute; top:15px; @(isAr ? "left" : "right"):15px; background:none; border:none; color:var(--primary); cursor:pointer;" title="@(isAr ? "تحديد كمقروء" : "Mark as read")">
+                                    <i class="fas fa-circle" style="font-size:0.7rem;"></i>
+                                </button>
+                            }
+                        </div>
+                    }
+                </div>
+            }
         </div>
     </div>
 </section>
 
 @section Scripts {
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            loadAllNotifications();
-        });
-
-        async function loadAllNotifications() {
-            const container = document.getElementById('notificationsPageList');
+        async function markAsRead(id) {
             try {
-                const response = await fetch('/Notification/GetRecent');
-                const data = await response.json();
-
-                container.innerHTML = '';
-
-                if (data.length === 0) {
-                    container.innerHTML = `<div style="text-align:center; padding:40px; color:#777;">@(isAr ? "لا توجد إشعارات حالياً" : "No notifications found")</div>`;
-                    return;
-                }
-
-                data.forEach(n => {
-                    const html = `
-                        <div class="notif-item" style="background:${n.isRead ? '#fff' : '#f0f9ff'}; padding:15px; border-bottom:1px solid #eee; display:flex; align-items:start; gap:15px; transition:0.2s;">
-                            <div style="width:10px; height:10px; background:${n.isRead ? 'transparent' : '#2563eb'}; border-radius:50%; margin-top:8px;"></div>
-                            <div style="flex:1;">
-                                <h4 style="margin:0 0 5px; font-size:1rem; font-weight:${n.isRead ? 'normal' : 'bold'};">${n.title}</h4>
-                                <p style="margin:0; color:#666; font-size:0.9rem;">${n.message}</p>
-                                <span style="font-size:0.8rem; color:#999; margin-top:5px; display:block;">${n.timeAgo}</span>
-                            </div>
-                        </div>
-                    `;
-                    container.insertAdjacentHTML('beforeend', html);
+                const response = await fetch('/Notification/MarkAsRead', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `id=${id}`
                 });
 
-                // Mark all as read visually after loading (optional)
-                // In a real app, you might want to mark them read only when viewed
+                if (response.ok) {
+                    const card = document.getElementById(`notif-${id}`);
+                    card.style.background = '#fff';
+                    card.querySelector('h4').style.fontWeight = 'normal';
+                    // إخفاء نقطة التمييز
+                    const btn = card.querySelector('button[onclick^="markAsRead"]');
+                    if(btn) btn.remove();
 
-            } catch (error) {
-                console.error(error);
-                container.innerHTML = '<p style="color:red; text-align:center;">Error loading data</p>';
-            }
+                    // تحديث عداد الهيدر
+                    updateBadgeCount();
+                }
+            } catch (e) { console.error(e); }
         }
 
         async function clearAllNotifications() {
-            if(!confirm('@(isAr ? "هل أنت متأكد؟" : "Are you sure?")')) return;
+            if(!confirm('@(isAr ? "هل أنت متأكد من مسح جميع الإشعارات؟" : "Clear all notifications?")')) return;
 
-            await fetch('/Notification/ClearAll', { method: 'POST' });
-            loadAllNotifications();
-            // Update header badge
-            const badge = document.querySelector('.notif-badge');
-            if(badge) badge.style.display = 'none';
+            try {
+                const response = await fetch('/Notification/ClearAll', { method: 'POST' });
+                if (response.ok) {
+                    window.location.reload();
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function updateBadgeCount() {
+            const badge = document.getElementById('cartBadge'); // أو ID شارة الإشعارات في الهيدر
+            // هذه الوظيفة عادة ما تكون موجودة في Layout، لكن هنا للتوضيح
         }
     </script>
 }

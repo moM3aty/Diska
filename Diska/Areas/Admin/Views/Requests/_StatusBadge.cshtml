@@ -1,0 +1,41 @@
+﻿@model string
+
+@{
+    var status = Model;
+    string badgeClass = "bg-secondary";
+    string icon = "fa-circle";
+    string text = status;
+
+    switch (status)
+    {
+        case "Pending":
+            badgeClass = "bg-warning text-dark";
+            icon = "fa-clock";
+            text = "جديد";
+            break;
+        case "InReview":
+            badgeClass = "bg-info text-dark";
+            icon = "fa-eye";
+            text = "قيد المراجعة";
+            break;
+        case "Approved":
+            badgeClass = "bg-success";
+            icon = "fa-check-circle";
+            text = "مقبول";
+            break;
+        case "Rejected":
+            badgeClass = "bg-danger";
+            icon = "fa-times-circle";
+            text = "مرفوض";
+            break;
+        case "Completed":
+            badgeClass = "bg-primary";
+            icon = "fa-handshake";
+            text = "مكتمل";
+            break;
+    }
+}
+
+<span class="badge @badgeClass">
+    <i class="fas @icon me-1"></i> @text
+</span>

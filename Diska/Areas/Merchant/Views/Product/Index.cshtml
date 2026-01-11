@@ -1,0 +1,134 @@
+﻿@model IEnumerable<Diska.Models.Product>
+@using System.Globalization
+@{
+    ViewData["Title"] = "منتجاتي";
+    Layout = "_MerchantLayout";
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+    <div>
+        <h2 style="margin:0; color:var(--primary);">@(isAr ? "إدارة منتجاتي" : "My Products")</h2>
+        <p style="color:#64748b; margin-top:5px;">@(isAr ? "قائمة المنتجات وحالة المخزون" : "Product list & stock status")</p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="fas fa-plus"></i> @(isAr ? "إضافة منتج جديد" : "Add New Product")
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    @if (!Model.Any())
+    {
+        <div style="text-align:center; padding:50px; color:#666;">
+            <i class="fas fa-box-open fa-3x" style="margin-bottom:15px; opacity:0.5;"></i>
+            <p>@(isAr ? "لم تقم بإضافة أي منتجات بعد." : "No products found.")</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">@(isAr ? "المنتج" : "Product")</th>
+                        <th>@(isAr ? "القسم" : "Category")</th>
+                        <th>@(isAr ? "السعر" : "Price")</th>
+                        <th>@(isAr ? "المخزون" : "Stock")</th>
+                        <th>@(isAr ? "الحالة" : "Status")</th>
+                        <th class="text-end pe-4">@(isAr ? "تعديل السعر" : "Update Price")</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="ps-4">
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <img src="~/@item.ImageUrl" style="width:50px; height:50px; object-fit:contain; border-radius:8px; border:1px solid #eee;">
+                                    <div>
+                                        <strong style="display:block; color:var(--text-dark);">@(isAr? item.Name: item.NameEn)</strong>
+                                        <small style="color:#64748b;">SKU: @item.SKU</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="badge bg-light text-dark border">@item.Category?.Name</span></td>
+                            <td class="fw-bold">@item.Price.ToString("N0")</td>
+                            <td>
+                                @if (item.StockQuantity == 0)
+                                {
+                                    <span class="text-danger fw-bold">@(isAr ? "نافذ" : "Out of Stock")</span>
+                                }
+                                else if (item.StockQuantity < 10)
+                                {
+                                    <span class="text-warning fw-bold">@item.StockQuantity (@(isAr ? "منخفض" : "Low"))</span>
+                                }
+                                else
+                                {
+                                    <span class="text-success fw-bold">@item.StockQuantity</span>
+                                }
+                            </td>
+                            <td>
+                                @if (item.Status == "Active")
+                                {
+                                    <span class="badge bg-success">@(isAr ? "نشط" : "Active")</span>
+                                }
+                                else if (item.Status == "Pending")
+                                {
+                                    <span class="badge bg-warning text-dark">@(isAr ? "قيد المراجعة" : "Pending")</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">@(isAr ? "مسودة/مخفي" : item.Status)</span>
+                                }
+                            </td>
+                            <td class="text-end pe-4">
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="requestPriceUpdate('@item.Id', '@item.Name', '@item.Price')">
+                                    <i class="fas fa-tag"></i> @(isAr ? "طلب تعديل سعر" : "Update Price")
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<!-- Modal for Price Update Request -->
+<div class="modal fade" id="priceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="RequestUpdate" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(isAr ? "طلب تعديل سعر" : "Request Price Update")</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="id" id="modalProdId">
+                    <p>@(isAr ? "المنتج:" : "Product:") <strong id="modalProdName"></strong></p>
+                    <p class="text-muted small">@(isAr ? "السعر الحالي:" : "Current Price:") <span id="modalCurrentPrice"></span></p>
+
+                    <div class="mb-3">
+                        <label class="form-label">@(isAr ? "السعر الجديد المقترح" : "New Price")</label>
+                        <input type="number" name="newPrice" class="form-control" step="0.01" required>
+                    </div>
+                    <div class="alert alert-info small">
+                        <i class="fas fa-info-circle"></i> @(isAr ? "سيتم إرسال هذا الطلب للإدارة للموافقة عليه قبل تطبيقه." : "This request requires admin approval.")
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">@(isAr ? "إرسال الطلب" : "Send Request")</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function requestPriceUpdate(id, name, price) {
+        document.getElementById('modalProdId').value = id;
+        document.getElementById('modalProdName').innerText = name;
+        document.getElementById('modalCurrentPrice').innerText = price;
+        new bootstrap.Modal(document.getElementById('priceModal')).show();
+    }
+</script>

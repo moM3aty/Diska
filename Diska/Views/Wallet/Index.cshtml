@@ -7,77 +7,67 @@
 
 <section class="section-padding">
     <div class="container">
-        <h2 class="page-title">@(isAr ? "محفظتي" : "My Wallet") 💳</h2>
 
-        <!-- Wallet Card -->
-        <div class="wallet-card" style="background: linear-gradient(135deg, #0F172A 0%, #334155 100%); color:#fff; padding:30px; border-radius:15px; text-align:center; max-width:600px; margin:0 auto 40px; box-shadow:0 10px 30px rgba(0,0,0,0.1);">
-            <p style="opacity:0.8; margin-bottom:10px;">@(isAr ? "الرصيد الحالي" : "Current Balance")</p>
-            <h1 style="font-size:3rem; margin:0; color:#FACC15;">@(((decimal)ViewBag.Balance).ToString("N2")) <small style="font-size:1.2rem; color:#fff;">@(isAr ? "ج.م" : "EGP")</small></h1>
-
-            <!-- Demo Top-up Form -->
-            <form asp-action="TopUp" method="post" style="margin-top:30px; display:flex; gap:10px; justify-content:center;">
-                <input type="number" name="amount" placeholder="100" min="1" style="padding:10px; border-radius:8px; border:none; width:120px; text-align:center;">
-                <button type="submit" class="btn" style="background:#FACC15; color:#0F172A; border:none; padding:10px 20px; border-radius:8px; font-weight:bold; cursor:pointer;">
-                    <i class="fas fa-plus"></i> @(isAr ? "شحن رصيد" : "Top Up")
-                </button>
-            </form>
-            @if (TempData["Success"] != null)
-            {
-                <div style="margin-top:15px; color:#10b981; background:rgba(255,255,255,0.1); padding:5px; border-radius:5px;">@TempData["Success"]</div>
-            }
+        <div class="breadcrumb" style="margin-bottom:20px;">
+            <a asp-controller="Home" asp-action="Index">@(isAr ? "الرئيسية" : "Home")</a> /
+            <span>@(isAr ? "محفظتي" : "My Wallet")</span>
         </div>
 
-        <!-- Transactions History -->
-        <h3 style="margin-bottom:20px; color:var(--primary);">@(isAr ? "سجل العمليات" : "Transaction History")</h3>
+        <div style="max-width: 800px; margin: 0 auto;">
 
-        <div class="card" style="padding:0; overflow:hidden;">
+            <!-- Balance Card -->
+            <div style="background: linear-gradient(135deg, var(--primary) 0%, #1e40af 100%); color: #fff; padding: 40px; border-radius: 16px; text-align: center; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+                <p style="margin: 0 0 10px; opacity: 0.9; font-size: 1.1rem;">@(isAr ? "رصيدك الحالي" : "Current Balance")</p>
+                <h1 style="margin: 0 0 20px; font-size: 3.5rem; font-weight: 800;">
+                    @(((decimal)ViewBag.Balance).ToString("N0")) <small style="font-size: 1.5rem;">@(isAr ? "ج.م" : "EGP")</small>
+                </h1>
+
+                <div style="display: flex; gap: 15px; justify-content: center;">
+                    <a asp-action="TopUp" class="btn" style="background: var(--accent); color: var(--primary); font-weight: bold; border: none; padding: 12px 30px; border-radius: 50px;">
+                        <i class="fas fa-plus-circle"></i> @(isAr ? "شحن الرصيد" : "Top Up")
+                    </a>
+                </div>
+            </div>
+
+            <!-- Recent Transactions Header -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; color: var(--primary);">@(isAr ? "آخر المعاملات" : "Recent Transactions")</h3>
+                <a asp-action="Transactions" class="btn btn-outline small" style="border: 1px solid #ddd; color: #666; padding: 5px 15px; border-radius: 20px;">
+                    @(isAr ? "عرض الكل" : "View All")
+                </a>
+            </div>
+
+            <!-- Transactions List -->
             @if (!Model.Any())
             {
-                <div style="padding:30px; text-align:center; color:#777;">
-                    @(isAr ? "لا توجد معاملات سابقة." : "No transactions yet.")
+                <div style="text-align: center; padding: 40px; background: #fff; border: 1px solid #eee; border-radius: 12px;">
+                    <p style="color: #999;">@(isAr ? "لا توجد معاملات حديثة." : "No recent transactions.")</p>
                 </div>
             }
             else
             {
-                <table style="width:100%; border-collapse:collapse;">
-                    <thead style="background:#f8fafc; color:#64748b;">
-                        <tr>
-                            <th style="padding:15px; text-align:inherit;">@(isAr ? "العملية" : "Type")</th>
-                            <th style="padding:15px; text-align:inherit;">@(isAr ? "الوصف" : "Description")</th>
-                            <th style="padding:15px; text-align:inherit;">@(isAr ? "التاريخ" : "Date")</th>
-                            <th style="padding:15px; text-align:inherit;">@(isAr ? "المبلغ" : "Amount")</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var t in Model)
-                        {
-                            <tr style="border-bottom:1px solid #eee;">
-                                <td style="padding:15px;">
-                                    @if (t.Type == "Deposit")
-                                    {
-                                        <span class="badge" style="background:#dcfce7; color:#166534;">إيداع</span>
-                                    }
-                                    else if (t.Type == "Refund")
-                                    {
-
-                                        <span class="badge" style="background:#e0f2fe; color:#0284c7;">استرداد</span>
-                                    }
-                                    else
-                                    {
-
-                                        <span class="badge" style="background:#f1f5f9; color:#334155;">شراء</span>
-                                    }
-                                </td>
-                                <td style="padding:15px;">@t.Description</td>
-                                <td style="padding:15px; color:#666; font-size:0.9rem;">@t.TransactionDate.ToString("yyyy/MM/dd HH:mm")</td>
-                                <td style="padding:15px; font-weight:bold; color:@(t.Type == "Purchase" ? "#dc2626" : "#16a34a");">
-                                    @(t.Type == "Purchase" ? "-" : "+")@t.Amount.ToString("N2")
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+                <div style="background: #fff; border: 1px solid #eee; border-radius: 12px; overflow: hidden;">
+                    @foreach (var item in Model)
+                    {
+                        bool isPositive = item.Type == "Deposit" || item.Type == "Refund";
+                        <div style="padding: 15px 20px; border-bottom: 1px solid #f5f5f5; display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <div style="width: 40px; height: 40px; background: @(isPositive ? "#dcfce7" : "#fee2e2"); color: @(isPositive ? "#16a34a" : "#dc2626"); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas @(isPositive ? "fa-arrow-down" : "fa-arrow-up")"></i>
+                                </div>
+                                <div>
+                                    <h4 style="margin: 0; font-size: 1rem;">@item.Description</h4>
+                                    <small style="color: #999;">@item.TransactionDate.ToString("dd MMMM yyyy, hh:mm tt")</small>
+                                </div>
+                            </div>
+                            <div style="font-weight: bold; color: @(isPositive ? "#16a34a" : "#dc2626"); font-size: 1.1rem;">
+                                @(isPositive ? "+" : "-")@item.Amount.ToString("N0")
+                            </div>
+                        </div>
+                    }
+                </div>
             }
         </div>
+
     </div>
 </section>

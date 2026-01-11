@@ -1,5 +1,5 @@
 ﻿using Diska.Data;
-using Diska.Services; // إضافة الـ Namespace الجديد
+using Diska.Services; // ضروري للوصول إلى AuditService وغيرها
 using Diska.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
@@ -9,20 +9,14 @@ using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Database Connection
+// 1. الاتصال بقاعدة البيانات
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-// 2. Register Services (تم التحديث)
-builder.Services.AddScoped<INotificationService, NotificationService>();
-// تسجيل خدمات الدفع والشحن الجديدة
-builder.Services.AddScoped<IShippingService, ShippingService>();
-builder.Services.AddScoped<IPaymentService, PaymentService>();
-
-// 3. Identity Setup
+// 2. إعدادات الهوية (Identity)
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
     options.SignIn.RequireConfirmedAccount = false;
@@ -36,24 +30,31 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
-// 4. Localization
+// 3. تسجيل الخدمات (Dependency Injection) - هذا هو الجزء الذي يحل مشكلتك
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IShippingService, ShippingService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IAuditService, AuditService>(); // <-- حل مشكلة AuditService
+builder.Services.AddScoped<IPermissionService, PermissionService>(); // لصلاحيات التجار
+
+// 4. اللغات (Localization)
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 builder.Services.AddControllersWithViews()
     .AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix)
     .AddDataAnnotationsLocalization();
 
-// 5. Session
+// 5. الجلسة (Session)
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(60);
+    options.IdleTimeout = TimeSpan.FromMinutes(120);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
 
 var app = builder.Build();
 
-// 6. Data Seeding
+// 6. تهيئة البيانات (Seeding)
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -70,6 +71,7 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+// 7. الـ Middleware
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -79,6 +81,7 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
+// إعدادات اللغة
 var supportedCultures = new[] { new CultureInfo("ar-EG"), new CultureInfo("en-US") };
 app.UseRequestLocalization(new RequestLocalizationOptions
 {
@@ -94,10 +97,12 @@ app.UseAuthorization();
 
 app.UseSession();
 
+// مسار المناطق (Admin, Merchant)
 app.MapControllerRoute(
     name: "areas",
     pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}");
 
+// المسار الافتراضي
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");

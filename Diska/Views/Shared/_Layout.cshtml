@@ -7,22 +7,33 @@
 @{
     var isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
     var dir = isAr ? "rtl" : "ltr";
+    var lang = isAr ? "ar" : "en";
+
+    // جلب المستخدم الحالي بأمان
+    var user = await UserManager.GetUserAsync(User);
+    var userRole = "Customer";
+    if (user != null)
+    {
+        var roles = await UserManager.GetRolesAsync(user);
+        userRole = roles.FirstOrDefault() ?? "Customer";
+    }
 }
 
 <!DOCTYPE html>
-<html lang="@(isAr ? "ar" : "en")" dir="@dir">
+<html lang="@lang" dir="@dir">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@ViewData["Title"] - DISKA</title>
 
-    <!-- Fonts -->
+    <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
-    <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Original Style -->
+    <!-- Styles -->
     <link rel="stylesheet" href="~/css/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+
 </head>
 <body class="@(Context.Request.Cookies["theme"] == "dark" ? "dark-mode" : "")">
 
@@ -31,97 +42,101 @@
         <div class="container header-container">
 
             <!-- Logo -->
-            <a asp-controller="Home" asp-action="Index" class="logo" style="display: flex; align-items: center; text-decoration: none;">
-                <img src="~/images/ChatGPT_Image_22_ديسمبر_2025__12_14_35_ص-removebg-preview.png" alt="DISKA Logo">
+            <a asp-area="" asp-controller="Home" asp-action="Index" class="logo">
+                <img src="~/images/logo2.png" alt="DISKA" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                <h2 style="color:var(--accent); display:none; margin:0; font-size:1.5rem;">DISKA</h2>
             </a>
 
             <!-- Search Box -->
-            <div class="search-box">
-                <form asp-controller="Home" asp-action="Search" method="get" style="display:flex; width:100%;">
-                    <input type="text" name="query" placeholder="@(isAr ? "ابحث عن منتج، مورد، أو علامة تجارية..." : "Search for products, suppliers...")" value="@Context.Request.Query["query"]">
-                    <button type="submit"><i class="fas fa-search"></i></button>
-                </form>
-            </div>
+            <form class="search-box" asp-area="" asp-controller="Home" asp-action="Search" method="get">
+                <input type="text" name="query" placeholder="@(isAr ? "ابحث عن منتج..." : "Search...")" value="@Context.Request.Query["query"]">
+                <button type="submit"><i class="fas fa-search"></i></button>
+            </form>
 
-            <!-- Header Actions -->
+            <!-- Actions -->
             <div class="header-actions" style="margin-top: 5px;">
 
-     
-
-                @if (!SignInManager.IsSignedIn(User))
+                <!-- Account -->
+                @if (SignInManager.IsSignedIn(User))
                 {
-                    <a asp-controller="Account" asp-action="Login" class="action-item">
+                    <a asp-area="" asp-controller="Profile" asp-action="Index" class="action-item">
+                        <i class="fas fa-user"></i>
+                        <div>
+                            <span class="icon-label">@(isAr ? "مرحباً" : "Hello")</span>
+     
+                        </div>
+                    </a>
+                }
+                else
+                {
+                    <a asp-area="" asp-controller="Account" asp-action="Login" class="action-item">
                         <i class="fas fa-sign-in-alt"></i>
-                        <span class="icon-label">@(isAr ? "دخول" : "Login")</span>
+                        <div >
+                            <span class="icon-label">@(isAr ? "دخول" : "Login")</span>
+                        </div>
                     </a>
                 }
 
-                @if (SignInManager.IsSignedIn(User))
-                {
-                    @if (User.IsInRole("Admin"))
-                    {
-                        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="action-item" title="@(isAr ? "لوحة التحكم" : "Dashboard")" style="color:#FACC15 !important;">
-                            <i class="fas fa-cogs"></i>
-                            <span class="icon-label">@(isAr ? "إدارة" : "Admin")</span>
-                        </a>
-                    }
-
-                    @if (User.IsInRole("Merchant"))
-                    {
-                        <a asp-controller="Merchant" asp-action="Index" class="action-item" title="@(isAr ? "لوحة التاجر" : "Merchant")" style="color:#FACC15 !important;">
-                            <i class="fas fa-store"></i>
-                            <span class="icon-label">@(isAr ? "تاجر" : "Panel")</span>
-                        </a>
-                    }
-                }
-
-                <!-- Cart -->
-                <a asp-controller="Cart" asp-action="Index" class="action-item cart-icon" style="text-decoration: none;">
-                    <i class="fas fa-shopping-cart"></i>
-                    <span class="badge" id="cartBadge">@ViewBag.CartCount</span>
-                    <span class="icon-label">@(isAr ? "السلة" : "Cart")</span>
-                </a>
-
-                <!-- Wishlist -->
-                <a asp-controller="Wishlist" asp-action="Index" class="action-item" style="text-decoration: none;">
+                <!-- Wishlist (Icon Only) -->
+                <a asp-area="" asp-controller="Wishlist" asp-action="Index" class="action-item" title="@(isAr ? "المفضلة" : "Wishlist")">
                     <i class="fas fa-heart"></i>
                     <span class="icon-label">@(isAr ? "المفضلة" : "Wishlist")</span>
                 </a>
 
-                <!-- Notifications (تم الإصلاح: التوجيه لـ Notification/Index) -->
                 <a asp-controller="Notification" asp-action="Index" class="action-item notif-icon-container" style="text-decoration: none; position: relative;">
                     <i class="fas fa-bell"></i>
                     <span class="badge notif-badge" style="background:red; display:none;">0</span>
                     <span class="icon-label">@(isAr ? "تنبيهات" : "Alerts")</span>
                 </a>
 
-                <!-- Logout (Only Icon) -->
-                @if (SignInManager.IsSignedIn(User))
+                <!-- Cart -->
+                <a asp-area="" asp-controller="Cart" asp-action="Index" class="action-item" style="position:relative;">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="badge" id="cartBadge">0</span>
+                    <div >
+                        <span class="icon-label">@(isAr ? "السلة" : "Cart")</span>
+                        <strong class="icon-label" id="headerCartTotal">0.00</strong>
+                    </div>
+                </a>
+
+               
+                <!-- Role Specific Link (Admin / Merchant / Sell with us) -->
+                @if (User.IsInRole("Admin"))
                 {
-                    <a asp-controller="Account" asp-action="Logout" class="action-item" title="@(isAr ? "خروج" : "Logout")" style="color:#ef4444 !important; margin-right: 15px;">
-                        <i class="fas fa-sign-out-alt"></i>
-                        <span class="icon-label">@(isAr ? "خروج" : "Logout")</span>
+                    <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="merchant-link">
+                        <i class="fas fa-cogs"></i> @(isAr ? "الإدارة" : "Admin")
+                    </a>
+                }
+                else if (User.IsInRole("Merchant"))
+                {
+                    <a asp-area="Merchant" asp-controller="Dashboard" asp-action="Index" class="merchant-link">
+                        <i class="fas fa-store"></i> @(isAr ? "لوحة التاجر" : "My Panel")
+                    </a>
+                }
+                else
+                {
+                    <a asp-area="" asp-controller="Home" asp-action="MerchantLanding" class="merchant-link">
+                        <i class="fas fa-hand-holding-usd"></i> @(isAr ? "بيع معنا" : "Sell with Us")
                     </a>
                 }
 
-                <!-- Menu Toggle -->
-                <div class="action-item mobile-menu-btn">
+                <!-- Mobile Menu Btn -->
+                <div class="mobile-menu-btn" onclick="toggleMenu()">
                     <i class="fas fa-bars"></i>
                 </div>
-
             </div>
         </div>
     </header>
 
     <!-- Mobile Sidebar -->
-    <div class="mobile-sidebar">
+    <div class="mobile-sidebar" id="mobileSidebar">
         <div class="sidebar-header">
-            <h3>DISKA <span style="color:var(--accent);">Menu</span></h3>
-            <button class="close-menu"><i class="fas fa-times"></i></button>
+            <h3>DISKA</h3>
+            <button class="close-menu" onclick="toggleMenu()"><i class="fas fa-times"></i></button>
         </div>
         <ul class="sidebar-links">
 
-            <!-- Dark Mode Toggle -->
+            <!-- Dark Mode -->
             <li id="darkModeToggleSidebar" style="cursor: pointer;">
                 <a href="javascript:void(0)">
                     <i class="fas @(Context.Request.Cookies["theme"] == "dark" ? "fa-sun" : "fa-moon")"></i>
@@ -131,56 +146,53 @@
 
             <hr style="border-top: 1px solid #eee; margin: 10px 0;">
 
-            <!-- User Section -->
+            <!-- User Specific Links -->
             @if (SignInManager.IsSignedIn(User))
             {
-               
-
                 @if (User.IsInRole("Admin"))
                 {
-                    <li><a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" style="color: #FACC15;"><i class="fas fa-cogs"></i> @(isAr ? "لوحة التحكم (Admin)" : "Dashboard")</a></li>
+                    <li><a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" style="color: #FACC15;"><i class="fas fa-cogs"></i> @(isAr ? "الإدارة" : "Admin")</a></li>
                 }
                 @if (User.IsInRole("Merchant"))
                 {
-                    <li><a asp-controller="Merchant" asp-action="Index" style="color: #FACC15;"><i class="fas fa-store"></i> @(isAr ? "لوحة التاجر" : "Merchant Panel")</a></li>
+                    <li><a asp-area="Merchant" asp-controller="Dashboard" asp-action="Index" style="color: #FACC15;"><i class="fas fa-store"></i> @(isAr ? "لوحة التاجر" : "Merchant Panel")</a></li>
                 }
 
-                <li><a asp-controller="Account" asp-action="Profile"><i class="fas fa-user-circle"></i> @(isAr ? "حسابي" : "My Profile")</a></li>
-                <li><a asp-controller="Order" asp-action="MyOrders"><i class="fas fa-box"></i> @(isAr ? "طلباتي" : "My Orders")</a></li>
-                <li><a asp-controller="Wishlist" asp-action="Index"><i class="fas fa-heart"></i> @(isAr ? "المفضلة" : "Wishlist")</a></li>
+                <li><a asp-area="" asp-controller="Profile" asp-action="Index"><i class="fas fa-user-circle"></i> @(isAr ? "حسابي" : "My Profile")</a></li>
+                <li><a asp-area="" asp-controller="Order" asp-action="MyOrders"><i class="fas fa-box"></i> @(isAr ? "طلباتي" : "My Orders")</a></li>
+                <li><a asp-area="" asp-controller="Address" asp-action="Index"><i class="fas fa-map-marker-alt"></i> @(isAr ? "العناوين" : "Addresses")</a></li>
+                <li><a asp-area="" asp-controller="Wishlist" asp-action="Index"><i class="fas fa-heart"></i> @(isAr ? "المفضلة" : "Wishlist")</a></li>
 
-                <li><a asp-controller="Account" asp-action="Logout" style="color: #ef4444;"><i class="fas fa-sign-out-alt"></i> @(isAr ? "تسجيل خروج" : "Logout")</a></li>
+                <li><a asp-area="" asp-controller="Account" asp-action="Logout" style="color: #ef4444;"><i class="fas fa-sign-out-alt"></i> @(isAr ? "خروج" : "Logout")</a></li>
             }
             else
             {
-                <li><a asp-controller="Account" asp-action="Login"><i class="fas fa-sign-in-alt"></i> @(isAr ? "تسجيل الدخول" : "Login")</a></li>
-                <li><a asp-controller="Account" asp-action="Signup"><i class="fas fa-user-plus"></i> @(isAr ? "إنشاء حساب جديد" : "Register")</a></li>
-                <li><a asp-controller="Demo" asp-action="LoginAsGuest" style="color: #0284c7;"><i class="fas fa-user-secret"></i> @(isAr ? "تصفح كزائر" : "Guest Mode")</a></li>
+                <li><a asp-area="" asp-controller="Account" asp-action="Login"><i class="fas fa-sign-in-alt"></i> @(isAr ? "دخول" : "Login")</a></li>
+                <li><a asp-area="" asp-controller="Account" asp-action="Signup"><i class="fas fa-user-plus"></i> @(isAr ? "حساب جديد" : "Register")</a></li>
             }
 
             <hr style="border-top: 1px solid #eee; margin: 15px 0;">
 
-            <!-- Main Links -->
-            <li><a asp-controller="Home" asp-action="Index"><i class="fas fa-home"></i> @(isAr ? "الرئيسية" : "Home")</a></li>
-            <li><a asp-controller="Cart" asp-action="Index"><i class="fas fa-shopping-cart"></i> @(isAr ? "سلة المشتريات" : "Cart")</a></li>
-            <li><a asp-controller="Home" asp-action="Deals"><i class="fas fa-fire" style="color: #f59e0b;"></i> @(isAr ? "العروض والصفقات" : "Hot Deals")</a></li>
-            <li><a asp-controller="Request" asp-action="Index"><i class="fas fa-bullhorn" style="color: #8b5cf6;"></i> @(isAr ? "طلبات خاصة" : "Special Requests")</a></li>
+            <!-- Main Navigation -->
+            <li><a asp-area="" asp-controller="Home" asp-action="Index"><i class="fas fa-home"></i> @(isAr ? "الرئيسية" : "Home")</a></li>
+            <li><a asp-area="" asp-controller="Cart" asp-action="Index"><i class="fas fa-shopping-cart"></i> @(isAr ? "السلة" : "Cart")</a></li>
+            <li><a asp-area="" asp-controller="Deals" asp-action="Index"><i class="fas fa-fire" style="color: #f59e0b;"></i> @(isAr ? "العروض" : "Deals")</a></li>
+            <li><a asp-area="" asp-controller="Request" asp-action="Index"><i class="fas fa-bullhorn" style="color: #8b5cf6;"></i> @(isAr ? "طلبات خاصة" : "Special Requests")</a></li>
 
             @if (!User.IsInRole("Merchant"))
             {
-                <li><a asp-controller="Home" asp-action="MerchantLanding"><i class="fas fa-hand-holding-usd"></i> @(isAr ? "بع معنا (للتجار)" : "Sell with Us")</a></li>
+                <li><a asp-area="" asp-controller="Home" asp-action="MerchantLanding"><i class="fas fa-hand-holding-usd"></i> @(isAr ? "بع معنا" : "Sell with Us")</a></li>
             }
 
             <hr style="border-top: 1px solid #eee; margin: 15px 0;">
 
-            <!-- Support Links -->
-            <li><a asp-controller="Home" asp-action="About"><i class="fas fa-info-circle"></i> @(isAr ? "من نحن" : "About Us")</a></li>
-            <li><a asp-controller="Home" asp-action="Contact"><i class="fas fa-headset"></i> @(isAr ? "تواصل معنا" : "Contact Us")</a></li>
-            <li><a asp-controller="Home" asp-action="FAQ"><i class="fas fa-question-circle"></i> @(isAr ? "الأسئلة الشائعة" : "FAQ")</a></li>
-            <li><a asp-controller="Home" asp-action="Policies"><i class="fas fa-shield-alt"></i> @(isAr ? "السياسات والشحن" : "Policies")</a></li>
+            <!-- Support -->
+            <li><a asp-area="" asp-controller="Home" asp-action="About"><i class="fas fa-info-circle"></i> @(isAr ? "من نحن" : "About Us")</a></li>
+            <li><a asp-area="" asp-controller="Contact" asp-action="Index"><i class="fas fa-headset"></i> @(isAr ? "تواصل معنا" : "Contact Us")</a></li>
+            <li><a asp-area="" asp-controller="Home" asp-action="FAQ"><i class="fas fa-question-circle"></i> @(isAr ? "الأسئلة الشائعة" : "FAQ")</a></li>
         </ul>
     </div>
-    <div class="menu-overlay"></div>
+    <div class="menu-overlay" id="menuOverlay" onclick="toggleMenu()"></div>
 
     <!-- Main Content -->
     <main role="main" style="min-height: 60vh;">
@@ -192,85 +204,81 @@
         <div class="container">
             <div class="footer-grid">
                 <div>
-                    <a asp-controller="Home" asp-action="Index" class="logo">
-                        <img src="~/images/ChatGPT_Image_22_ديسمبر_2025__12_14_35_ص-removebg-preview.png" alt="DISKA Logo">
-                    </a>
-                    <p style="margin-top: 15px; color: #cbd5e1;">
-                        @(isAr ? "منصتك الأولى لتجارة الجملة في مصر. نربطك بأفضل الموردين بأقل الأسعار." : "Your #1 wholesale platform in Egypt. Connecting you with the best suppliers at lowest prices.")
-                    </p>
+                    <h4 style="color:var(--accent);">DISKA</h4>
+                    <p>@(isAr ? "منصتك الأولى لتجارة الجملة في مصر." : "Your #1 wholesale platform in Egypt.")</p>
                 </div>
 
                 <div>
-                    <h4>@(isAr ? "روابط هامة" : "Important Links")</h4>
+                    <h4>@(isAr ? "روابط هامة" : "Links")</h4>
                     <ul>
-                        <li><a asp-controller="Home" asp-action="About">@(isAr ? "من نحن" : "About Us")</a></li>
-                        <li><a asp-controller="Home" asp-action="MerchantLanding">@(isAr ? "بيع معنا (للتجار)" : "Sell with Us")</a></li>
-                        <li><a asp-controller="Request" asp-action="Index">@(isAr ? "طلبات خاصة" : "Special Requests")</a></li>
-                        <li><a asp-controller="Home" asp-action="Contact">@(isAr ? "تواصل معنا" : "Contact Us")</a></li>
+                        <li><a asp-area="" asp-controller="Home" asp-action="About">@(isAr ? "من نحن" : "About Us")</a></li>
+                        <li><a asp-area="" asp-controller="Home" asp-action="MerchantLanding">@(isAr ? "بع معنا" : "Sell with Us")</a></li>
+                        <li><a asp-area="" asp-controller="Contact" asp-action="Index">@(isAr ? "تواصل معنا" : "Contact Us")</a></li>
                     </ul>
                 </div>
 
                 <div>
-                    <h4>@(isAr ? "المساعدة والسياسات" : "Help & Policies")</h4>
+                    <h4>@(isAr ? "المساعدة" : "Help")</h4>
                     <ul>
-                        <li><a asp-controller="Home" asp-action="Policies" asp-fragment="shipping">@(isAr ? "الشحن والتوصيل" : "Shipping & Delivery")</a></li>
-                        <li><a asp-controller="Home" asp-action="Policies" asp-fragment="return">@(isAr ? "سياسة الإرجاع" : "Return Policy")</a></li>
-                        <li><a asp-controller="Home" asp-action="FAQ">@(isAr ? "الأسئلة الشائعة" : "FAQ")</a></li>
-                        <li><a asp-controller="Account" asp-action="Profile">@(isAr ? "حسابي" : "My Profile")</a></li>
+                        <li><a asp-area="" asp-controller="Home" asp-action="Policies">@(isAr ? "السياسات" : "Policies")</a></li>
+                        <li><a asp-area="" asp-controller="Home" asp-action="FAQ">@(isAr ? "الأسئلة الشائعة" : "FAQ")</a></li>
+                        <li><a asp-area="" asp-controller="Profile" asp-action="Index">@(isAr ? "حسابي" : "My Profile")</a></li>
                     </ul>
                 </div>
             </div>
 
             <div class="copyrights">
-                <p>&copy; @DateTime.Now.Year DISKA - @(isAr ? "جميع الحقوق محفوظة" : "All Rights Reserved")</p>
-                <p>Design and programming by <a href="https://www.facebook.com/profile.php?id=100090592885243&mibextid=ZbWKwL" target="_blank"><strong style="color: #FACC15;">GMTWEB</strong></a></p>
+                <p>&copy; @DateTime.Now.Year DISKA. All Rights Reserved.</p>
             </div>
         </div>
     </footer>
-    <!-- Tools & Popups -->
-    <partial name="_SurveyPopup" model="null" />
-    <div class="toast-container"></div>
 
+    <!-- Tools -->
+    <div class="toast-container"></div>
     <div class="floating-container">
-        <a href="javascript:void(0)" id="langSwitcher" class="float-btn lang-btn" title="Language">
-            <i class="fas fa-globe"></i>
-        </a>
-        <a href="https://wa.me/201000000000" target="_blank" class="float-btn whatsapp-btn">
-            <i class="fab fa-whatsapp"></i>
-        </a>
+        <!-- Language Switcher -->
+        <form id="langForm" asp-area="" asp-controller="Language" asp-action="SetLanguage" method="post" class="d-inline">
+            <input type="hidden" name="culture" value="@(isAr ? "en-US" : "ar-EG")" />
+            <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+            <a href="javascript:void(0)" onclick="document.getElementById('langForm').submit();" class="float-btn lang-btn">
+                <i class="fas fa-globe"></i>
+            </a>
+        </form>
+        <a href="https://wa.me/201000000000" target="_blank" class="float-btn whatsapp-btn"><i class="fab fa-whatsapp"></i></a>
     </div>
 
     <script src="~/js/script.js"></script>
     <script src="~/js/cart.js"></script>
-    <script src="~/js/system-core.js"></script>
-    <script src="~/js/survey.js"></script>
     <script>
+        function toggleMenu() {
+            var sidebar = document.getElementById('mobileSidebar');
+            var overlay = document.getElementById('menuOverlay');
+            if (sidebar && overlay) {
+                sidebar.classList.toggle('active');
+                overlay.classList.toggle('active');
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
-            // Cart Badge Init
+            // Cart Badge
             const cart = JSON.parse(localStorage.getItem('DISKA_CART')) || [];
             const badge = document.getElementById('cartBadge');
-            if(badge) badge.innerText = cart.length;
-
-            // Dark Mode Logic
-            function toggleDarkMode() {
-                document.body.classList.toggle('dark-mode');
-                const isDark = document.body.classList.contains('dark-mode');
-
-                // Update Icons
-                const icons = document.querySelectorAll('#darkModeToggle i, #darkModeToggleSidebar i');
-                icons.forEach(icon => {
-                    icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
-                });
-
-                // Set Cookie
-                document.cookie = "theme=" + (isDark ? "dark" : "light") + "; path=/; max-age=31536000";
+            if(badge) {
+                badge.innerText = cart.length;
+                if(cart.length > 0) badge.style.display = 'flex';
             }
 
-            const toggleBtn = document.getElementById('darkModeToggle');
-            const toggleSidebar = document.getElementById('darkModeToggleSidebar');
-
-            if(toggleBtn) toggleBtn.addEventListener('click', toggleDarkMode);
-            if(toggleSidebar) toggleSidebar.addEventListener('click', toggleDarkMode);
+            // Dark Mode
+            const toggleBtn = document.getElementById('darkModeToggleSidebar');
+            if(toggleBtn) {
+                toggleBtn.addEventListener('click', () => {
+                    document.body.classList.toggle('dark-mode');
+                    const isDark = document.body.classList.contains('dark-mode');
+                    document.cookie = "theme=" + (isDark ? "dark" : "light") + "; path=/; max-age=31536000";
+                });
+            }
+            // Apply saved theme
+            if (document.cookie.includes('theme=dark')) document.body.classList.add('dark-mode');
         });
     </script>
     @await RenderSectionAsync("Scripts", required: false)

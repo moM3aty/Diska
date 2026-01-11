@@ -1,0 +1,76 @@
+﻿@model Diska.Models.ProductReview
+@using System.Globalization
+@{
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    ViewData["Title"] = isAr ? "إضافة تقييم" : "Add Review";
+    Layout = "_Layout";
+    string productName = ViewBag.ProductName as string;
+}
+
+<style>
+    .rating-group {
+        display: inline-flex;
+        flex-direction: row-reverse; /* لعكس الترتيب ليتوافق مع الـ CSS */
+        gap: 5px;
+    }
+
+        .rating-group input {
+            display: none;
+        }
+
+        .rating-group label {
+            font-size: 2rem;
+            color: #ddd;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+            .rating-group label:hover,
+            .rating-group label:hover ~ label,
+            .rating-group input:checked ~ label {
+                color: #f59e0b;
+            }
+</style>
+
+<section class="section-padding" style="min-height:70vh; display:flex; align-items:center;">
+    <div class="container">
+        <div style="max-width:600px; margin:0 auto; background:#fff; padding:40px; border-radius:16px; border:1px solid #e2e8f0; box-shadow:0 10px 30px rgba(0,0,0,0.03);">
+
+            <div style="text-align:center; margin-bottom:30px;">
+                <h2 style="color:var(--primary); margin:0;">@(isAr ? "رأيك يهمنا!" : "We value your opinion!")</h2>
+                <p style="color:#666; margin-top:5px;">@(isAr ? $"كيف كانت تجربتك مع {productName}؟" : $"How was your experience with {productName}?")</p>
+            </div>
+
+            <form asp-action="Create" method="post">
+                <input type="hidden" asp-for="ProductId" />
+
+                <div class="form-group text-center mb-4">
+                    <label style="display:block; margin-bottom:10px; font-weight:bold; color:#334155;">@(isAr ? "التقييم العام" : "Overall Rating")</label>
+                    <div class="rating-group">
+                        <input type="radio" id="star5" name="Rating" value="5" /><label for="star5" title="Excellent"><i class="fas fa-star"></i></label>
+                        <input type="radio" id="star4" name="Rating" value="4" /><label for="star4" title="Good"><i class="fas fa-star"></i></label>
+                        <input type="radio" id="star3" name="Rating" value="3" /><label for="star3" title="Average"><i class="fas fa-star"></i></label>
+                        <input type="radio" id="star2" name="Rating" value="2" /><label for="star2" title="Poor"><i class="fas fa-star"></i></label>
+                        <input type="radio" id="star1" name="Rating" value="1" /><label for="star1" title="Bad"><i class="fas fa-star"></i></label>
+                    </div>
+                    <span asp-validation-for="Rating" class="text-danger d-block mt-2" style="font-size:0.85rem; color:red;"></span>
+                </div>
+
+                <div class="form-group mb-4">
+                    <label style="display:block; margin-bottom:8px; font-weight:bold; color:#334155;">@(isAr ? "اكتب تعليقك" : "Write your review")</label>
+                    <textarea asp-for="Comment" rows="4" class="form-control" style="width:100%; padding:15px; border:1px solid #cbd5e1; border-radius:10px; font-family:inherit;" placeholder="@(isAr ? "أخبرنا عن جودة المنتج، التغليف، سرعة التوصيل..." : "Tell us about product quality, packaging, delivery speed...")" required></textarea>
+                    <span asp-validation-for="Comment" class="text-danger" style="font-size:0.85rem; color:red;"></span>
+                </div>
+
+                <div style="display:flex; gap:15px;">
+                    <button type="submit" class="btn primary w-100" style="padding:12px; font-weight:bold; font-size:1.1rem; border-radius:8px;">
+                        @(isAr ? "نشر التقييم" : "Submit Review")
+                    </button>
+                    <a asp-controller="Product" asp-action="Details" asp-route-id="@Model.ProductId" class="btn" style="border:1px solid #ccc; color:#666; padding:12px; border-radius:8px; text-decoration:none;">
+                        @(isAr ? "إلغاء" : "Cancel")
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>

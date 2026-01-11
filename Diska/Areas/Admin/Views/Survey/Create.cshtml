@@ -4,72 +4,113 @@
     Layout = "_AdminLayout";
 }
 
-<div class="card" style="max-width:800px; margin:0 auto;">
-    <h2 style="margin-bottom:20px;">إنشاء استبيان جديد</h2>
-
-    <form asp-action="Create" method="post">
-        <div class="form-group" style="margin-bottom:15px;">
-            <label>عنوان الاستبيان</label>
-            <input asp-for="Title" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;" required />
-        </div>
-
-        <div style="display:flex; gap:20px; margin-bottom:15px;">
-            <div style="flex:1;">
-                <label>تاريخ الانتهاء</label>
-                <input asp-for="EndDate" type="date" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;" />
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-primary">إنشاء استبيان جديد</h5>
+                <a asp-action="Index" class="btn btn-sm btn-outline-secondary">إلغاء</a>
             </div>
-            <div style="flex:1;">
-                <label>الجمهور المستهدف</label>
-                <select asp-for="TargetAudience" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;">
-                    <option value="All">الكل</option>
-                    <option value="Merchant">التجار فقط</option>
-                    <option value="Customer">العملاء فقط</option>
-                </select>
+            <div class="card-body p-4">
+                <form asp-action="Create" method="post">
+
+                    <!-- Basic Info -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label">العنوان (عربي)</label>
+                            <input asp-for="Title" class="form-control" required placeholder="رأيك يهمنا..." />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">العنوان (إنجليزي)</label>
+                            <input asp-for="TitleEn" class="form-control" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">وصف (اختياري)</label>
+                            <textarea asp-for="Description" class="form-control" rows="2"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">تاريخ البدء</label>
+                            <input asp-for="StartDate" type="date" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">تاريخ الانتهاء</label>
+                            <input asp-for="EndDate" type="date" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">الجمهور المستهدف</label>
+                            <select asp-for="TargetAudience" class="form-select">
+                                <option value="All">الكل</option>
+                                <option value="Customer">العملاء</option>
+                                <option value="Merchant">التجار</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <!-- Questions Builder -->
+                    <h5 class="text-secondary mb-3"><i class="fas fa-list-ol"></i> الأسئلة</h5>
+                    <div id="questionsContainer"></div>
+
+                    <button type="button" onclick="addQuestion()" class="btn btn-outline-primary w-100 py-2 border-dashed mb-4">
+                        <i class="fas fa-plus-circle"></i> إضافة سؤال جديد
+                    </button>
+
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-primary px-4 fw-bold">حفظ ونشر</button>
+                    </div>
+                </form>
             </div>
         </div>
-
-        <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
-
-        <h4 style="margin-bottom:10px;">الأسئلة</h4>
-        <div id="questionsContainer">
-            <!-- Questions will be added here via JS -->
-            <div class="question-row" style="background:#f8fafc; padding:15px; border-radius:8px; margin-bottom:10px; border:1px solid #eee;">
-                <div style="display:flex; gap:10px; margin-bottom:10px;">
-                    <input type="text" name="QuestionsText" placeholder="نص السؤال" class="form-control" style="flex:3; padding:8px; border:1px solid #ddd; border-radius:5px;" required>
-                    <select name="QuestionsType" class="form-control" style="flex:1; padding:8px; border:1px solid #ddd; border-radius:5px;">
-                        <option value="Text">نص حر</option>
-                        <option value="Star">تقييم نجوم</option>
-                        <option value="YesNo">نعم / لا</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-
-        <button type="button" onclick="addQuestion()" class="btn btn-outline" style="margin-bottom:20px; width:100%; border-style:dashed;">+ إضافة سؤال آخر</button>
-
-        <div style="text-align:left;">
-            <button type="submit" class="btn btn-primary" style="padding:10px 30px;">نشر الاستبيان</button>
-        </div>
-    </form>
+    </div>
 </div>
 
 <script>
     function addQuestion() {
         const container = document.getElementById('questionsContainer');
         const div = document.createElement('div');
-        div.className = 'question-row';
-        div.style = 'background:#f8fafc; padding:15px; border-radius:8px; margin-bottom:10px; border:1px solid #eee;';
+        div.className = 'card bg-light border p-3 mb-3 position-relative';
+
         div.innerHTML = `
-            <div style="display:flex; gap:10px; margin-bottom:10px;">
-                <input type="text" name="QuestionsText" placeholder="نص السؤال" class="form-control" style="flex:3; padding:8px; border:1px solid #ddd; border-radius:5px;" required>
-                <select name="QuestionsType" class="form-control" style="flex:1; padding:8px; border:1px solid #ddd; border-radius:5px;">
-                    <option value="Text">نص حر</option>
-                    <option value="Star">تقييم نجوم</option>
-                    <option value="YesNo">نعم / لا</option>
-                </select>
-                <button type="button" onclick="this.parentElement.parentElement.remove()" style="color:red; background:none; border:none; cursor:pointer;">&times;</button>
+            <button type="button" onclick="this.parentElement.remove()" class="btn-close position-absolute top-0 end-0 m-2" aria-label="Close"></button>
+            <div class="row g-2">
+                <div class="col-md-6">
+                    <label class="form-label small text-muted">نص السؤال (عربي)</label>
+                    <input type="text" name="QText" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small text-muted">نص السؤال (إنجليزي)</label>
+                    <input type="text" name="QTextEn" class="form-control form-control-sm">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small text-muted">نوع السؤال</label>
+                    <select name="QType" class="form-select form-select-sm" onchange="toggleOptions(this)">
+                        <option value="Text">نص حر (Text)</option>
+                        <option value="Star">تقييم نجوم (1-5)</option>
+                        <option value="YesNo">نعم / لا</option>
+                        <option value="MCQ">اختيار متعدد (MCQ)</option>
+                    </select>
+                </div>
+                <div class="col-md-8 options-field" style="display:none;">
+                    <label class="form-label small text-muted">الخيارات (افصل بينهم بفاصلة)</label>
+                    <input type="text" name="QOptions" class="form-control form-control-sm" placeholder="مثال: جيد, متوسط, سيء">
+                </div>
             </div>
         `;
         container.appendChild(div);
     }
+
+    function toggleOptions(select) {
+        const optionsDiv = select.closest('.row').querySelector('.options-field');
+        if (select.value === 'MCQ') {
+            optionsDiv.style.display = 'block';
+            optionsDiv.querySelector('input').setAttribute('required', 'required');
+        } else {
+            optionsDiv.style.display = 'none';
+            optionsDiv.querySelector('input').removeAttribute('required');
+        }
+    }
+
+    // Add first question by default
+    document.addEventListener('DOMContentLoaded', addQuestion);
 </script>

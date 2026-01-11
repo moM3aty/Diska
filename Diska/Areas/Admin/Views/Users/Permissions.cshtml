@@ -1,0 +1,80 @@
+﻿@model List<Diska.Models.MerchantPermission>
+@{
+    ViewData["Title"] = "مصفوفة الصلاحيات";
+    Layout = "_AdminLayout";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="text-primary fw-bold mb-0">مصفوفة الصلاحيات (Permission Matrix)</h2>
+        <p class="text-muted mt-1">تعديل الصلاحيات الافتراضية للأدوار</p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary">عودة</a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <!-- هذا الجدول للعرض التفاعلي فقط كنموذج -->
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover text-center align-middle mb-0">
+                <thead class="bg-dark text-white">
+                    <tr>
+                        <th class="py-3 text-start ps-4" style="width: 30%;">الموديول</th>
+                        <th class="py-3 bg-danger">Admin</th>
+                        <th class="py-3 bg-primary">Merchant</th>
+                        <th class="py-3 bg-info">Staff</th>
+                        <th class="py-3 bg-secondary">Customer</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="text-start ps-4 fw-bold">المنتجات (Products)</td>
+                        <td><i class="fas fa-check-double text-success"></i></td>
+                        <td>
+                            <div class="form-check form-switch d-flex justify-content-center">
+                                <input class="form-check-input" type="checkbox" checked>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="form-check form-switch d-flex justify-content-center">
+                                <input class="form-check-input" type="checkbox">
+                            </div>
+                        </td>
+                        <td><i class="fas fa-eye text-muted"></i></td>
+                    </tr>
+                    <tr>
+                        <td class="text-start ps-4 fw-bold">الطلبات (Orders)</td>
+                        <td><i class="fas fa-check-double text-success"></i></td>
+                        <td>
+                            <div class="form-check form-switch d-flex justify-content-center">
+                                <input class="form-check-input" type="checkbox" checked>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="form-check form-switch d-flex justify-content-center">
+                                <input class="form-check-input" type="checkbox" checked>
+                            </div>
+                        </td>
+                        <td><i class="fas fa-plus text-muted"></i></td>
+                    </tr>
+                    <tr>
+                        <td class="text-start ps-4 fw-bold">المحفظة (Wallet)</td>
+                        <td><i class="fas fa-check-double text-success"></i></td>
+                        <td>
+                            <div class="form-check form-switch d-flex justify-content-center">
+                                <input class="form-check-input" type="checkbox">
+                            </div>
+                        </td>
+                        <td><i class="fas fa-times text-danger"></i></td>
+                        <td><i class="fas fa-eye text-muted"></i></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer bg-light text-end p-3">
+        <button class="btn btn-primary" onclick="alert('تم حفظ تحديثات المصفوفة بنجاح!')">
+            <i class="fas fa-save me-2"></i> حفظ التغييرات
+        </button>
+    </div>
+</div>

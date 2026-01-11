@@ -4,63 +4,115 @@
     Layout = "_AdminLayout";
 }
 
-<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-    <h2 style="margin:0;">بنرات الصفحة الرئيسية</h2>
-    <a asp-action="Create" class="btn btn-primary"><i class="fas fa-plus"></i> إضافة بنر جديد</a>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="text-primary fw-bold mb-0">البنرات الإعلانية</h2>
+        <p class="text-muted small">التحكم في العروض والشرائح في الصفحة الرئيسية</p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="fas fa-plus"></i> إضافة بنر جديد
+    </a>
 </div>
 
-<div class="card">
-    @if (!Model.Any())
-    {
-        <div style="text-align:center; padding:30px; color:#666;">
-            <p>لا توجد بنرات مضافة حالياً.</p>
-        </div>
-    }
-    else
-    {
-        <table style="width:100%;">
-            <thead>
-                <tr>
-                    <th>الصورة</th>
-                    <th>العنوان</th>
-                    <th>الحالة</th>
-                    <th>الترتيب</th>
-                    <th>إجراءات</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model)
-                {
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
                     <tr>
-                        <td><img src="~/@item.ImageUrl" style="width:120px; height:auto; border-radius:8px; border:1px solid #eee;"></td>
-                        <td>
-                            <strong>@item.Title</strong><br>
-                            <small class="text-muted">@item.Subtitle</small>
-                        </td>
-                        <td>
-                            @if (item.IsActive)
-                            {
-                                <span class="badge" style="background:#dcfce7; color:green;">نشط</span>
-                            }
-                            else
-                            {
-
-                                <span class="badge" style="background:#fee2e2; color:red;">غير نشط</span>
-                            }
-                        </td>
-                        <td>@item.DisplayOrder</td>
-                        <td>
-                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn" style="color:#0284c7; background:#e0f2fe; padding:5px 10px; margin-left:5px;">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <form asp-action="Delete" method="post" onsubmit="return confirm('حذف هذا البنر؟');" style="display:inline;">
-                                <input type="hidden" name="id" value="@item.Id" />
-                                <button type="submit" class="btn" style="color:red; background:none;"><i class="fas fa-trash"></i></button>
-                            </form>
-                        </td>
+                        <th class="ps-4">المعاينة</th>
+                        <th>العنوان</th>
+                        <th>الجدولة</th>
+                        <th>الربط</th>
+                        <th>الحالة</th>
+                        <th>الترتيب</th>
+                        <th class="text-end pe-4">إجراءات</th>
                     </tr>
-                }
-            </tbody>
-        </table>
-    }
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="fas fa-images fa-3x mb-3 opacity-50"></i>
+                                <p>لا توجد بنرات مضافة حتى الآن</p>
+                            </td>
+                        </tr>
+                    }
+                    @foreach (var item in Model)
+                    {
+                        string statusBadge = item.Status switch
+                        {
+                            "Active" => "bg-success",
+                            "Scheduled" => "bg-info text-dark",
+                            "Expired" => "bg-warning text-dark",
+                            _ => "bg-secondary"
+                        };
+                        string statusText = item.Status switch
+                        {
+                            "Active" => "نشط",
+                            "Scheduled" => "مجدول",
+                            "Expired" => "منتهي",
+                            _ => "معطل"
+                        };
+
+                        <tr>
+                            <td class="ps-4">
+                                <div class="position-relative" style="width: 100px; height: 50px;">
+                                    <img src="~/@item.ImageDesktop" class="w-100 h-100 object-fit-cover rounded border" alt="Desktop">
+                                    <span class="position-absolute bottom-0 end-0 badge bg-dark opacity-75" style="font-size:0.6rem;">Desk</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark">@item.Title</div>
+                                <div class="small text-muted">@item.Subtitle</div>
+                            </td>
+                            <td>
+                                <div class="small"><i class="fas fa-play text-success me-1"></i> @item.StartDate.ToString("dd/MM/yy")</div>
+                                <div class="small"><i class="fas fa-stop text-danger me-1"></i> @item.EndDate.ToString("dd/MM/yy")</div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border">
+                                    @if (item.LinkType == "External")
+                                    {
+                                        <i class="fas fa-link"></i>
+                                    }
+                                    else if (item.LinkType == "Product")
+                                    {
+
+                                        <i class="fas fa-box"></i>
+                                    }
+                                    else if (item.LinkType == "Category")
+                                    {
+
+                                        <i class="fas fa-layer-group"></i>
+                                    }
+                                    @item.LinkType
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge @statusBadge">@statusText</span>
+                            </td>
+                            <td>
+                                <span class="fw-bold">@item.Priority</span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="btn-group">
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary" title="تعديل">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('هل أنت متأكد من حذف هذا البنر؟')">
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="حذف">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>

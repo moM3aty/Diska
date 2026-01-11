@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 
 namespace Diska.Controllers
 {
+    // كنترولر لتجربة الموقع كضيف (Guest Mode)
     public class DemoController : Controller
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
@@ -44,7 +45,7 @@ namespace Diska.Controllers
 
             await _signInManager.SignInAsync(guestUser, isPersistent: false);
 
-            return View("Welcome");
+            return RedirectToAction("Index", "Home");
         }
     }
 }

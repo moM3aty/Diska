@@ -1,0 +1,151 @@
+﻿@model Diska.Models.Survey
+@using System.Globalization
+@{
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    ViewData["Title"] = isAr ? Model.Title : Model.TitleEn;
+    Layout = "_Layout";
+}
+
+<style>
+    .survey-q-card {
+        background: #fff;
+        padding: 25px;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 20px;
+    }
+
+    .q-text {
+        font-weight: bold;
+        color: #1e293b;
+        margin-bottom: 15px;
+        display: block;
+        font-size: 1.1rem;
+    }
+
+    /* Star Rating Style */
+    .star-rating-input {
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: flex-end;
+        gap: 5px;
+    }
+
+        .star-rating-input input {
+            display: none;
+        }
+
+        .star-rating-input label {
+            font-size: 1.8rem;
+            color: #ddd;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+            .star-rating-input label:hover,
+            .star-rating-input label:hover ~ label,
+            .star-rating-input input:checked ~ label {
+                color: #FACC15;
+            }
+
+    /* Radio/Checkbox Style */
+    .option-label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 15px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+        .option-label:hover {
+            background: #f8fafc;
+            border-color: var(--primary);
+        }
+
+        .option-label input {
+            accent-color: var(--primary);
+            width: 18px;
+            height: 18px;
+        }
+</style>
+
+<section class="section-padding" style="background-color: #f9fafb;">
+    <div class="container">
+
+        <div style="max-width: 800px; margin: 0 auto;">
+            <div class="text-center mb-5">
+                <h2 style="color:var(--primary); margin-bottom:10px;">@(isAr? Model.Title: Model.TitleEn)</h2>
+                @if (!string.IsNullOrEmpty(Model.Description))
+                {
+                    <p style="color:#666;">@Model.Description</p>
+                }
+            </div>
+
+            @if (TempData["Error"] != null)
+            {
+                <div style="background:#fee2e2; color:#ef4444; padding:15px; border-radius:8px; margin-bottom:20px; border:1px solid #fecaca; text-align:center;">
+                    @TempData["Error"]
+                </div>
+            }
+
+            <form asp-action="Submit" method="post">
+                <input type="hidden" name="surveyId" value="@Model.Id" />
+
+                @foreach (var q in Model.Questions)
+                {
+                    <div class="survey-q-card">
+                        <span class="q-text">@(isAr? q.QuestionText: q.QuestionTextEn)</span>
+
+                        @if (q.Type == "Text")
+                        {
+                            <textarea name="q_@q.Id" rows="3" class="form-control" style="width:100%; padding:15px; border:1px solid #cbd5e1; border-radius:8px;" placeholder="@(isAr ? "إجابتك..." : "Your answer...")" required></textarea>
+                        }
+                        else if (q.Type == "Star")
+                        {
+                            <div class="star-rating-input">
+                                @for (int i = 5; i >= 1; i--)
+                                {
+                                    <input type="radio" id="q_@(q.Id)_@i" name="q_@q.Id" value="@i" required>
+                                    <label for="q_@(q.Id)_@i"><i class="fas fa-star"></i></label>
+                                }
+                            </div>
+                        }
+                        else if (q.Type == "YesNo")
+                        {
+                            <label class="option-label">
+                                <input type="radio" name="q_@q.Id" value="Yes" required> <span>@(isAr ? "نعم" : "Yes")</span>
+                            </label>
+                            <label class="option-label">
+                                <input type="radio" name="q_@q.Id" value="No"> <span>@(isAr ? "لا" : "No")</span>
+                            </label>
+                        }
+                        else if (q.Type == "MCQ" && !string.IsNullOrEmpty(q.Options))
+                        {
+                            var opts = q.Options.Split(',');
+                            foreach (var opt in opts)
+                            {
+                                <label class="option-label">
+                                    <input type="radio" name="q_@q.Id" value="@opt.Trim()" required> <span>@opt.Trim()</span>
+                                </label>
+                            }
+                        }
+                    </div>
+                }
+
+                <div style="display:flex; gap:15px; margin-top:30px;">
+                    <button type="submit" class="btn primary add-btn" style="flex:1; padding:15px; font-size:1.1rem; border-radius:10px;">
+                        @(isAr ? "إرسال الإجابات" : "Submit Answers")
+                    </button>
+                    <a asp-action="Index" class="btn" style="padding:15px 30px; border:1px solid #ccc; border-radius:10px; color:#666; text-decoration:none;">
+                        @(isAr ? "إلغاء" : "Cancel")
+                    </a>
+                </div>
+            </form>
+        </div>
+
+    </div>
+</section>

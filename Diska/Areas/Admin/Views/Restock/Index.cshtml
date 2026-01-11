@@ -1,66 +1,116 @@
-﻿@model IEnumerable<Diska.Models.Banner>
+﻿@model IEnumerable<Diska.Models.RestockSubscription>
 @{
-    ViewData["Title"] = "إدارة البنرات";
+    ViewData["Title"] = "طلبات التوفر";
     Layout = "_AdminLayout";
 }
 
-<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-    <h2 style="margin:0;">بنرات الصفحة الرئيسية</h2>
-    <a asp-action="Create" class="btn btn-primary"><i class="fas fa-plus"></i> إضافة بنر جديد</a>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="text-primary fw-bold mb-0">إدارة المخزون والتنبيهات</h2>
+        <p class="text-muted small">متابعة نواقص المخزون وطلبات العملاء</p>
+    </div>
 </div>
 
-<div class="card">
-    @if (!Model.Any())
-    {
-        <div style="text-align:center; padding:30px; color:#666;">
-            <p>لا توجد بنرات مضافة حالياً.</p>
-        </div>
-    }
-    else
-    {
-        <table style="width:100%;">
-            <thead>
-                <tr>
-                    <th>الصورة</th>
-                    <th>العنوان</th>
-                    <th>الحالة</th>
-                    <th>الترتيب</th>
-                    <th>إجراءات</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model)
-                {
-                    <tr>
-                        <td><img src="~/@item.ImageUrl" style="width:120px; height:auto; border-radius:8px; border:1px solid #eee;"></td>
-                        <td>
-                            <strong>@item.Title</strong><br>
-                            <small class="text-muted">@item.Subtitle</small>
-                        </td>
-                        <td>
-                            @if (item.IsActive)
-                            {
-                                <span class="badge" style="background:#dcfce7; color:green;">نشط</span>
-                            }
-                            else
-                            {
+<!-- Tabs -->
+<ul class="nav nav-tabs mb-4">
+    <li class="nav-item">
+        <a class="nav-link active fw-bold" href="#">طلبات العملاء (Waitlist)</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link text-muted" asp-action="LowStock">نواقص المخزون (Low Stock)</a>
+    </li>
+</ul>
 
-                                <span class="badge" style="background:#fee2e2; color:red;">غير نشط</span>
-                            }
-                        </td>
-                        <td>@item.DisplayOrder</td>
-                        <td>
-                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn" style="color:#0284c7; background:#e0f2fe; padding:5px 10px; margin-left:5px;">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <form asp-action="Delete" method="post" onsubmit="return confirm('حذف هذا البنر؟');" style="display:inline;">
-                                <input type="hidden" name="id" value="@item.Id" />
-                                <button type="submit" class="btn" style="color:red; background:none;"><i class="fas fa-trash"></i></button>
-                            </form>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    }
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3">
+        <h5 class="mb-0 text-primary">قائمة انتظار العملاء</h5>
+    </div>
+    <div class="card-body p-0">
+        @if (!Model.Any())
+        {
+            <div class="text-center py-5 text-muted">
+                <i class="fas fa-user-clock fa-3x mb-3 opacity-50"></i>
+                <p>لا يوجد عملاء في قائمة الانتظار حالياً.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">المنتج</th>
+                            <th>التاجر</th>
+                            <th>حالة المخزون</th>
+                            <th>العميل</th>
+                            <th>تاريخ الطلب</th>
+                            <th>الحالة</th>
+                            <th class="text-end pe-4">الإجراء</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            bool isAvailable = item.Product.StockQuantity > 0;
+                            <tr class="@(isAvailable ? "table-success bg-opacity-10" : "")">
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center">
+                                        <img src="~/@item.Product?.ImageUrl" class="rounded me-2 border" style="width:40px; height:40px; object-fit:cover;">
+                                        <span class="fw-bold">@item.Product?.Name</span>
+                                    </div>
+                                </td>
+                                <td>@item.Product?.Merchant?.ShopName</td>
+                                <td>
+                                    @if (isAvailable)
+                                    {
+                                        <span class="badge bg-success">متوفر (@item.Product.StockQuantity)</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">نافذ</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(item.UserId))
+                                    {
+                                        <span class="badge bg-light text-dark border"><i class="fas fa-user"></i> مسجل</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">@item.Email</span>
+                                    }
+                                </td>
+                                <td class="text-muted small">@item.RequestDate.ToString("yyyy/MM/dd")</td>
+                                <td>
+                                    @if (item.IsNotified)
+                                    {
+                                        <span class="badge bg-info text-dark">تم الإشعار</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark">في الانتظار</span>
+                                    }
+                                </td>
+                                <td class="text-end pe-4">
+                                    @if (!item.IsNotified && isAvailable)
+                                    {
+                                        <form asp-action="MarkAsNotified" method="post">
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <button type="submit" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-bell me-1"></i> إشعار
+                                            </button>
+                                        </form>
+                                    }
+                                    else if (!isAvailable)
+                                    {
+                                        <button disabled class="btn btn-sm btn-outline-secondary">انتظار التوفر</button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
 </div>

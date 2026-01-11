@@ -4,60 +4,64 @@
     ViewData["Title"] = isAr ? "سلة المشتريات" : "Shopping Cart";
 }
 
-<section class="section-padding cart-section">
+<section class="cart-section section-padding">
     <div class="container">
-        <h2 class="page-title">@(isAr ? "سلة المشتريات" : "Shopping Cart")</h2>
+        <h2 class="page-title">@(isAr ? "سلة المشتريات" : "Shopping Cart") 🛒</h2>
 
         <div class="cart-layout" style="display:grid; grid-template-columns: 2fr 1fr; gap:30px;">
 
-            <!-- Items List -->
+            <!-- Items Container -->
             <div class="cart-items-container">
                 <div id="cartItemsList">
-                    <!-- Items injected via JS -->
-                    <div style="text-align:center; padding:40px; color:#666;">
-                        <i class="fas fa-spinner fa-spin fa-2x"></i>
+                    <!-- سيتم ملؤه بواسطة JS (cart.js) بناءً على LocalStorage -->
+                    <div style="text-align:center; padding:40px;">
+                        <i class="fas fa-spinner fa-spin fa-2x" style="color:var(--primary);"></i>
                         <p>@(isAr ? "جاري تحميل السلة..." : "Loading cart...")</p>
                     </div>
                 </div>
             </div>
 
             <!-- Summary -->
-            <div class="cart-summary-box" style="background:#f8fafc; padding:25px; border-radius:12px; height:fit-content; border:1px solid #e2e8f0;">
-                <h3 style="margin-bottom:20px; color:var(--primary);">@(isAr ? "ملخص الطلب" : "Order Summary")</h3>
+            <div class="cart-summary" style="height:fit-content; background:#f8fafc; padding:20px; border-radius:12px; border:1px solid #eee;">
+                <h3 style="margin-bottom:20px;">@(isAr ? "ملخص الطلب" : "Order Summary")</h3>
 
-                <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+                <div class="summary-row" style="display:flex; justify-content:space-between; margin-bottom:10px;">
                     <span>@(isAr ? "المجموع الفرعي" : "Subtotal")</span>
-                    <span id="cartSubtotal" style="font-weight:bold;">0.00</span>
+                    <span id="cartSubtotal">0.00</span>
                 </div>
-
-                <div style="display:flex; justify-content:space-between; margin-bottom:15px; color:#666; font-size:0.9rem;">
+                <div class="summary-row" style="display:flex; justify-content:space-between; margin-bottom:10px;">
                     <span>@(isAr ? "الضريبة (14%)" : "VAT (14%)")</span>
-                    <span>@(isAr ? "شامل الضريبة" : "Inclusive")</span>
+                    <span style="color:#666; font-size:0.8rem;">@(isAr ? "مشمولة" : "Included")</span>
                 </div>
 
-                <hr style="border:0; border-top:1px solid #ddd; margin:15px 0;">
+                <hr style="border-top:1px solid #ddd; margin:15px 0;">
 
-                <div style="display:flex; justify-content:space-between; margin-bottom:20px; font-size:1.2rem;">
-                    <strong>@(isAr ? "الإجمالي" : "Total")</strong>
-                    <strong id="cartTotal" style="color:var(--primary);">0.00</strong>
+                <div class="summary-row total" style="display:flex; justify-content:space-between; margin-bottom:20px; font-weight:bold; font-size:1.2rem;">
+                    <span>@(isAr ? "الإجمالي" : "Total")</span>
+                    <span id="cartTotal" style="color:var(--primary);">0.00</span>
                 </div>
 
-                <a asp-action="Checkout" class="btn primary w-100" style="text-align:center; display:block; text-decoration:none;">
-                    @(isAr ? "متابعة الشراء" : "Proceed to Checkout") <i class="fas fa-arrow-left"></i>
+                <a asp-action="Checkout" class="btn primary w-100" style="text-align:center; display:block; padding:12px; border-radius:8px; text-decoration:none;">
+                    @(isAr ? "إتمام الشراء" : "Checkout") <i class="fas @(isAr ? "fa-arrow-left" : "fa-arrow-right")"></i>
                 </a>
 
                 <a asp-controller="Home" asp-action="Index" style="display:block; text-align:center; margin-top:15px; color:#666; text-decoration:none; font-size:0.9rem;">
-                    @(isAr ? "العودة للتسوق" : "Continue Shopping")
+                    @(isAr ? "متابعة التسوق" : "Continue Shopping")
                 </a>
             </div>
+
         </div>
     </div>
 </section>
 
 @section Scripts {
+    <script src="~/js/cart.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            renderCartPage();
+            // استدعاء دالة الرسم الموجودة في cart.js
+            if(typeof renderCartPage === 'function') {
+                renderCartPage();
+            }
         });
     </script>
 }

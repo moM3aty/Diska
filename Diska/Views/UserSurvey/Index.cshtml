@@ -1,0 +1,50 @@
+﻿@model IEnumerable<Diska.Models.Survey>
+@using System.Globalization
+@{
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    ViewData["Title"] = isAr ? "الاستبيانات" : "Surveys";
+}
+
+<section class="section-padding">
+    <div class="container">
+        <h2 class="page-title">@(isAr ? "استطلاعات الرأي المتاحة" : "Available Surveys") 📋</h2>
+
+        @if (!Model.Any())
+        {
+            <div style="text-align:center; padding:60px; background:#fff; border-radius:15px; border:1px solid #eee;">
+                <i class="fas fa-clipboard-check fa-4x" style="color:#e2e8f0; margin-bottom:20px;"></i>
+                <h3 style="color:#64748b;">@(isAr ? "لا توجد استبيانات جديدة حالياً." : "No new surveys available.")</h3>
+                <p style="color:#999;">@(isAr ? "شكراً لاهتمامك، تابعنا لاحقاً." : "Thank you for your interest, check back later.")</p>
+                <a asp-controller="Home" asp-action="Index" class="btn primary small" style="margin-top:20px;">
+                    @(isAr ? "العودة للرئيسية" : "Back Home")
+                </a>
+            </div>
+        }
+        else
+        {
+            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:25px;">
+                @foreach (var item in Model)
+                {
+                    <div class="card" style="background:#fff; padding:25px; border-radius:12px; border:1px solid #e2e8f0; box-shadow:0 5px 15px rgba(0,0,0,0.03); transition:0.3s;">
+                        <div style="margin-bottom:15px;">
+                            <span class="badge" style="background:#e0f2fe; color:#0284c7; font-size:0.8rem; margin-bottom:10px; display:inline-block;">
+                                @(isAr ? "جديد" : "New")
+                            </span>
+                            <h3 style="margin:0 0 10px; color:var(--primary); font-size:1.2rem;">@(isAr? item.Title: item.TitleEn)</h3>
+                            <p style="color:#666; font-size:0.9rem; line-height:1.6;">@(item.Description ?? (isAr ? "شاركنا رأيك..." : "Share your feedback..."))</p>
+                        </div>
+
+                        <div style="border-top:1px solid #f5f5f5; padding-top:15px; display:flex; justify-content:space-between; align-items:center;">
+                            <small style="color:#999;">
+                                <i class="far fa-calendar-alt"></i> @(isAr ? "ينتهي:" : "Ends:") @item.EndDate.ToString("dd MMM")
+                            </small>
+                            <a asp-action="Take" asp-route-id="@item.Id" class="btn primary small" style="padding:8px 20px;">
+                                @(isAr ? "بدء الاستبيان" : "Start Survey") <i class="fas @(isAr ? "fa-arrow-left" : "fa-arrow-right")"></i>
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</section>

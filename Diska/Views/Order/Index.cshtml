@@ -1,0 +1,97 @@
+﻿@model IEnumerable<Diska.Models.Order>
+@using System.Globalization
+@{
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    ViewData["Title"] = isAr ? "طلباتي" : "My Orders";
+    Layout = "_Layout";
+}
+
+<section class="section-padding">
+    <div class="container">
+        <h2 class="page-title">@(isAr ? "سجل الطلبات" : "Order History") 📦</h2>
+
+        @if (TempData["Message"] != null)
+        {
+            <div style="background:#dcfce7; color:#166534; padding:15px; border-radius:8px; margin-bottom:20px; border:1px solid #bbf7d0;">
+                <i class="fas fa-check-circle"></i> @TempData["Message"]
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div style="background:#fee2e2; color:#ef4444; padding:15px; border-radius:8px; margin-bottom:20px; border:1px solid #fecaca;">
+                <i class="fas fa-exclamation-circle"></i> @TempData["Error"]
+            </div>
+        }
+
+        @if (!Model.Any())
+        {
+            <div style="text-align:center; padding:50px; background:#fff; border-radius:15px; border:1px solid #eee;">
+                <i class="fas fa-box-open fa-4x" style="color:#e2e8f0; margin-bottom:20px;"></i>
+                <h3 style="color:#64748b;">@(isAr ? "لم تقم بأي طلبات بعد." : "No orders yet.")</h3>
+                <a asp-controller="Home" asp-action="Index" class="btn primary small" style="margin-top:15px;">
+                    @(isAr ? "ابدأ التسوق" : "Start Shopping")
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="orders-list">
+                @foreach (var order in Model)
+                {
+                    <div class="order-card-box">
+                        <div class="order-header">
+                            <div>
+                                <strong>#@order.Id</strong>
+                                <span class="order-date" style="color:#999; font-size:0.8rem; margin-inline-start:10px;">
+                                    <i class="far fa-clock"></i> @order.OrderDate.ToString("dd/MM/yyyy")
+                                </span>
+                            </div>
+                            @{
+                                var statusClass = order.Status switch
+                                {
+                                    "Pending" => "pending",
+                                    "Confirmed" => "confirmed",
+                                    "Shipped" => "shipped",
+                                    "Delivered" => "delivered", // تأكد من وجود كلاس للـ delivered في الـ CSS أو سيأخذ الستايل الافتراضي
+                                    _ => ""
+                                };
+
+                                var statusText = isAr ? (order.Status == "Pending" ? "قيد المراجعة" : (order.Status == "Confirmed" ? "مؤكد" : (order.Status == "Shipped" ? "تم الشحن" : (order.Status == "Delivered" ? "تم التسليم" : "ملغي")))) : order.Status;
+                            }
+                            <span class="status-label @statusClass">@statusText</span>
+                        </div>
+
+                        <div class="order-body">
+                            <div class="order-row">
+                                <span class="sub-info">@(isAr ? "عدد المنتجات" : "Items"): <strong>@order.OrderItems.Count</strong></span>
+                                <span class="order-price">@order.TotalAmount.ToString("N0") <small>@(isAr ? "ج.م" : "EGP")</small></span>
+                            </div>
+                            <div class="order-row">
+                                <span class="sub-info">
+                                    @(isAr ? "طريقة الدفع" : "Payment"):
+                                    @(order.PaymentMethod == "Cash" ? (isAr ? "الدفع عند الاستلام" : "Cash") : (isAr ? "المحفظة" : "Wallet"))
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="order-footer">
+                            <a asp-action="Details" asp-route-id="@order.Id" class="btn-outline" style="text-decoration:none;">
+                                <i class="fas fa-eye"></i> @(isAr ? "التفاصيل والتتبع" : "Details & Track")
+                            </a>
+
+                            @if (order.Status == "Pending")
+                            {
+                                <form asp-action="Cancel" method="post" onsubmit="return confirm('@(isAr ? "هل أنت متأكد من إلغاء هذا الطلب؟" : "Are you sure you want to cancel this order?")')" style="display:inline;">
+                                    <input type="hidden" name="id" value="@order.Id" />
+                                    <button type="submit" style="background:none; border:none; color:#ef4444; cursor:pointer; font-weight:bold; font-size:0.9rem;">
+                                        <i class="fas fa-times"></i> @(isAr ? "إلغاء الطلب" : "Cancel Order")
+                                    </button>
+                                </form>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</section>  

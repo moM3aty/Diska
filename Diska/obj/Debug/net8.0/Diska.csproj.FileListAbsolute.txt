@@ -53,7 +53,6 @@ C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\Microsof
 C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\Microsoft.VisualStudio.Web.CodeGeneration.Templating.dll
 C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\Microsoft.VisualStudio.Web.CodeGeneration.Utils.dll
 C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\Microsoft.VisualStudio.Web.CodeGenerators.Mvc.dll
-C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\Microsoft.Win32.SystemEvents.dll
 C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\Mono.TextTemplating.dll
 C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\Newtonsoft.Json.dll
 C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\NuGet.Common.dll
@@ -72,14 +71,11 @@ C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\System.C
 C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\System.Composition.Runtime.dll
 C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\System.Composition.TypedParts.dll
 C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\System.Configuration.ConfigurationManager.dll
-C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\System.Drawing.Common.dll
 C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\System.IdentityModel.Tokens.Jwt.dll
 C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\System.Memory.Data.dll
 C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\System.Reflection.MetadataLoadContext.dll
 C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\System.Runtime.Caching.dll
 C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\System.Security.Cryptography.ProtectedData.dll
-C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\System.Security.Permissions.dll
-C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\System.Windows.Extensions.dll
 C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\af\Humanizer.resources.dll
 C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\ar\Humanizer.resources.dll
 C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\az\Humanizer.resources.dll
@@ -225,11 +221,7 @@ C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\runtimes
 C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\runtimes\win-arm64\native\Microsoft.Data.SqlClient.SNI.dll
 C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\runtimes\win-x64\native\Microsoft.Data.SqlClient.SNI.dll
 C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\runtimes\win-x86\native\Microsoft.Data.SqlClient.SNI.dll
-C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\runtimes\win\lib\net7.0\Microsoft.Win32.SystemEvents.dll
-C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\runtimes\win\lib\net7.0\System.Drawing.Common.dll
 C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\runtimes\win\lib\net6.0\System.Runtime.Caching.dll
-C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\runtimes\win\lib\net7.0\System.Security.Cryptography.ProtectedData.dll
-C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\runtimes\win\lib\net7.0\System.Windows.Extensions.dll
 C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\obj\Debug\net8.0\Diska.csproj.AssemblyReference.cache
 C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\obj\Debug\net8.0\rpswa.dswa.cache.json
 C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\obj\Debug\net8.0\Diska.GeneratedMSBuildEditorConfig.editorconfig
@@ -258,3 +250,9 @@ C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\obj\Debug\net8.0\refint\D
 C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\obj\Debug\net8.0\Diska.pdb
 C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\obj\Debug\net8.0\Diska.genruntimeconfig.cache
 C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\obj\Debug\net8.0\ref\Diska.dll
+C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\Microsoft.Extensions.Caching.Memory.dll
+C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\Microsoft.Extensions.DependencyInjection.dll
+C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll
+C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\Microsoft.Extensions.Logging.dll
+C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\Microsoft.Extensions.Logging.Abstractions.dll
+C:\Users\MOHAMED ABO-ELM3ATY\Downloads\B2B\Diska\Diska\bin\Debug\net8.0\Microsoft.Extensions.Options.dll

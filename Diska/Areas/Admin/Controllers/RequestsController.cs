@@ -3,7 +3,7 @@ using Diska.Data;
 using Microsoft.EntityFrameworkCore;
 using Diska.Models;
 using Microsoft.AspNetCore.Authorization;
-using Diska.Services; // For notifications
+using Diska.Services;
 
 namespace Diska.Areas.Admin.Controllers
 {
@@ -20,42 +20,107 @@ namespace Diska.Areas.Admin.Controllers
             _notificationService = notificationService;
         }
 
-        public async Task<IActionResult> Index()
+        // 1. القائمة الرئيسية
+        public async Task<IActionResult> Index(string status = "All", string search = "")
         {
-            var requests = await _context.DealRequests
-                .OrderByDescending(r => r.RequestDate)
-                .ToListAsync();
+            var query = _context.DealRequests.Include(r => r.User).AsQueryable();
+
+            // Filter by Status
+            if (status != "All")
+            {
+                query = query.Where(r => r.Status == status);
+            }
+
+            // Search
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(r => r.ProductName.Contains(search) || r.User.FullName.Contains(search));
+            }
+
+            var requests = await query.OrderByDescending(r => r.RequestDate).ToListAsync();
+
+            ViewBag.CurrentStatus = status;
             return View(requests);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Approve(int id)
+        // 2. تفاصيل الطلب وإدارته
+        public async Task<IActionResult> Details(int id)
         {
-            var request = await _context.DealRequests.FindAsync(id);
-            if (request != null)
-            {
-                request.Status = "Approved";
-                await _context.SaveChangesAsync();
+            var request = await _context.DealRequests
+                .Include(r => r.User)
+                .Include(r => r.Offers)
+                .FirstOrDefaultAsync(r => r.Id == id);
 
-                // إشعار صاحب الطلب
-                await _notificationService.NotifyUserAsync(request.UserId, "تمت الموافقة", $"تمت الموافقة على طلبك '{request.ProductName}' وهو متاح الآن للتجار.", "System", "/Request/Index");
+            if (request == null) return NotFound();
 
-                // إشعار التجار (اختياري - يمكن أن يسبب ضغطاً إذا كان عدد التجار كبيراً)
-                // await _notificationService.NotifyMerchantsAsync("طلب شراء جديد", $"عميل يطلب {request.ProductName}، هل يمكنك توفيره؟", "/Request/Index");
-            }
-            return RedirectToAction(nameof(Index));
+            return View(request);
         }
 
+        // 3. تحديث الحالة (Workflow)
         [HttpPost]
-        public async Task<IActionResult> Reject(int id)
+        public async Task<IActionResult> UpdateStatus(int id, string status, string notes)
+        {
+            var request = await _context.DealRequests.FindAsync(id);
+            if (request == null) return NotFound();
+
+            string oldStatus = request.Status;
+            request.Status = status;
+            request.UpdatedAt = DateTime.Now;
+
+            if (!string.IsNullOrEmpty(notes))
+            {
+                request.AdminNotes = notes;
+            }
+
+            await _context.SaveChangesAsync();
+
+            // إشعارات بناءً على الحالة
+            if (oldStatus != status)
+            {
+                string title = "تحديث طلبك";
+                string msg = "";
+                string type = "Info";
+
+                switch (status)
+                {
+                    case "InReview":
+                        msg = $"طلبك لمنتج '{request.ProductName}' قيد المراجعة الآن.";
+                        break;
+                    case "Approved":
+                        title = "مبروك! تمت الموافقة";
+                        msg = $"تمت الموافقة على طلبك '{request.ProductName}'. سيتمكن التجار من تقديم عروضهم الآن.";
+                        type = "Success";
+                        break;
+                    case "Rejected":
+                        title = "عذراً";
+                        msg = $"تم رفض طلبك لمنتج '{request.ProductName}'. راجع الملاحظات.";
+                        type = "Alert";
+                        break;
+                }
+
+                if (!string.IsNullOrEmpty(msg))
+                {
+                    await _notificationService.NotifyUserAsync(request.UserId, title, msg, type, $"/Request/Details/{id}");
+                }
+            }
+
+            TempData["Success"] = "تم تحديث حالة الطلب بنجاح.";
+            return RedirectToAction(nameof(Details), new { id = id });
+        }
+
+        // 4. حفظ الملاحظات فقط
+        [HttpPost]
+        public async Task<IActionResult> SaveNotes(int id, string notes)
         {
             var request = await _context.DealRequests.FindAsync(id);
             if (request != null)
             {
-                request.Status = "Rejected";
+                request.AdminNotes = notes;
+                request.UpdatedAt = DateTime.Now;
                 await _context.SaveChangesAsync();
+                TempData["Success"] = "تم حفظ الملاحظات.";
             }
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Details), new { id = id });
         }
 
         [HttpPost]
@@ -66,6 +131,7 @@ namespace Diska.Areas.Admin.Controllers
             {
                 _context.DealRequests.Remove(request);
                 await _context.SaveChangesAsync();
+                TempData["Success"] = "تم حذف الطلب.";
             }
             return RedirectToAction(nameof(Index));
         }

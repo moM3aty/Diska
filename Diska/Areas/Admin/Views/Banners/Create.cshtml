@@ -4,69 +4,172 @@
     Layout = "_AdminLayout";
 }
 
-<div class="card" style="max-width:800px; margin:0 auto;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h2 style="margin:0;">إضافة بنر إعلاني</h2>
-        <a asp-action="Index" class="btn btn-outline">إلغاء</a>
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-primary">إضافة بنر جديد</h5>
+                <a asp-action="Index" class="btn btn-sm btn-outline-secondary">إلغاء</a>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="Create" enctype="multipart/form-data" id="bannerForm">
+
+                    <!-- 1. الصور -->
+                    <h6 class="text-muted fw-bold mb-3 border-bottom pb-2">الوسائط</h6>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label">صورة الديسك توب (Desktop)</label>
+                            <input type="file" name="desktopFile" class="form-control" accept="image/*" required onchange="previewImage(this, 'previewDesktop')">
+                            <div class="mt-2 border rounded bg-light d-flex align-items-center justify-content-center" style="height: 100px;">
+                                <img id="previewDesktop" style="max-height: 100%; max-width: 100%; display: none;">
+                                <span class="text-muted small" id="deskPlaceholder">معاينة</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">صورة الموبايل (Mobile)</label>
+                            <input type="file" name="mobileFile" class="form-control" accept="image/*" onchange="previewImage(this, 'previewMobile')">
+                            <div class="mt-2 border rounded bg-light d-flex align-items-center justify-content-center" style="height: 100px;">
+                                <img id="previewMobile" style="max-height: 100%; max-width: 100%; display: none;">
+                                <span class="text-muted small" id="mobPlaceholder">اختياري (سيستخدم الديسك توب)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. النصوص -->
+                    <h6 class="text-muted fw-bold mb-3 border-bottom pb-2">النصوص والمحتوى</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label asp-for="Title" class="form-label"></label>
+                            <input asp-for="Title" class="form-control" placeholder="مثال: خصم 50% على..." />
+                            <span asp-validation-for="Title" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="TitleEn" class="form-label"></label>
+                            <input asp-for="TitleEn" class="form-control" placeholder="Ex: 50% OFF..." />
+                            <span asp-validation-for="TitleEn" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">نص فرعي (عربي)</label>
+                            <input asp-for="Subtitle" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">نص فرعي (إنجليزي)</label>
+                            <input asp-for="SubtitleEn" class="form-control" />
+                        </div>
+                    </div>
+
+                    <!-- 3. التوجيه -->
+                    <h6 class="text-muted fw-bold mb-3 border-bottom pb-2">التوجيه والربط</h6>
+                    <div class="row g-3 mb-4 align-items-end">
+                        <div class="col-md-4">
+                            <label class="form-label">نوع الرابط</label>
+                            <select asp-for="LinkType" id="linkType" class="form-select" onchange="toggleLinkInputs()">
+                                <option value="External">رابط خارجي</option>
+                                <option value="Category">قسم (Category)</option>
+                                <option value="Product">منتج (Product)</option>
+                                <option value="Deal">صفقة (Deal)</option>
+                            </select>
+                        </div>
+
+                        <!-- Dynamic Inputs -->
+                        <div class="col-md-8" id="inputContainer">
+                            <div id="divExternal" class="link-input">
+                                <label class="form-label">الرابط (URL)</label>
+                                <input type="text" asp-for="LinkId" id="valExternal" class="form-control" placeholder="https://..." />
+                            </div>
+                            <div id="divCategory" class="link-input" style="display:none;">
+                                <label class="form-label">اختر القسم</label>
+                                <select id="valCategory" class="form-select" asp-items="ViewBag.Categories">
+                                    <option value="">-- اختر --</option>
+                                </select>
+                            </div>
+                            <div id="divProduct" class="link-input" style="display:none;">
+                                <label class="form-label">اختر المنتج</label>
+                                <select id="valProduct" class="form-select" asp-items="ViewBag.Products">
+                                    <option value="">-- اختر --</option>
+                                </select>
+                            </div>
+                            <div id="divDeal" class="link-input" style="display:none;">
+                                <label class="form-label">رقم الصفقة</label>
+                                <input type="number" id="valDeal" class="form-control" placeholder="أدخل رقم الصفقة" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. الجدولة -->
+                    <h6 class="text-muted fw-bold mb-3 border-bottom pb-2">الجدولة والترتيب</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label">تاريخ البدء</label>
+                            <input asp-for="StartDate" type="datetime-local" class="form-control" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">تاريخ الانتهاء</label>
+                            <input asp-for="EndDate" type="datetime-local" class="form-control" />
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">الأولوية</label>
+                            <input asp-for="Priority" type="number" class="form-control" value="0" />
+                        </div>
+                        <div class="col-md-2 pt-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" asp-for="IsActive" checked>
+                                <label class="form-check-label">تفعيل</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">حفظ البنر</button>
+                </form>
+            </div>
+        </div>
     </div>
-
-    <form asp-action="Create" method="post" enctype="multipart/form-data">
-
-        <div class="form-group" style="margin-bottom:20px; text-align:center; border:2px dashed #ccc; padding:20px; border-radius:10px;">
-            <label for="imageFile" style="cursor:pointer; display:block;">
-                <i class="fas fa-cloud-upload-alt fa-3x" style="color:#cbd5e1;"></i>
-                <p style="margin:10px 0;">اضغط لرفع صورة البنر</p>
-                <input type="file" name="imageFile" id="imageFile" accept="image/*" style="display:none;" onchange="previewBanner(this)" required>
-                <img id="bannerPreview" style="max-width:100%; max-height:200px; margin-top:10px; display:none; border-radius:10px;">
-            </label>
-        </div>
-
-        <div class="form-row" style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-bottom:15px;">
-            <div class="form-group">
-                <label>العنوان الرئيسي</label>
-                <input asp-for="Title" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;" required />
-            </div>
-            <div class="form-group">
-                <label>النص الفرعي</label>
-                <input asp-for="Subtitle" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;" />
-            </div>
-        </div>
-
-        <div class="form-row" style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-bottom:15px;">
-            <div class="form-group">
-                <label>نص الزر</label>
-                <input asp-for="ButtonText" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;" value="تسوق الآن" />
-            </div>
-            <div class="form-group">
-                <label>رابط التوجيه (Link)</label>
-                <input asp-for="LinkUrl" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;" value="#" />
-            </div>
-        </div>
-
-        <div class="form-row" style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-bottom:20px;">
-            <div class="form-group">
-                <label>الترتيب</label>
-                <input asp-for="DisplayOrder" type="number" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px;" value="0" />
-            </div>
-            <div class="form-group" style="display:flex; align-items:center; gap:10px; padding-top:30px;">
-                <input asp-for="IsActive" type="checkbox" style="width:20px; height:20px;" checked />
-                <label style="margin:0;">تفعيل البنر فوراً</label>
-            </div>
-        </div>
-
-        <button type="submit" class="btn btn-primary" style="width:100%; padding:12px;">حفظ البنر</button>
-    </form>
 </div>
 
-<script>
-    function previewBanner(input) {
-        if (input.files && input.files[0]) {
-            var reader = new FileReader();
-            reader.onload = function (e) {
-                document.getElementById('bannerPreview').src = e.target.result;
-                document.getElementById('bannerPreview').style.display = 'block';
-            };
-            reader.readAsDataURL(input.files[0]);
+@section Scripts {
+    <script>
+        function previewImage(input, imgId) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById(imgId).src = e.target.result;
+                    document.getElementById(imgId).style.display = 'block';
+                    // Hide placeholder text
+                    document.getElementById(imgId).nextElementSibling.style.display = 'none';
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
         }
-    }
-</script>
+
+        function toggleLinkInputs() {
+            var type = document.getElementById('linkType').value;
+            // Hide all
+            document.querySelectorAll('.link-input').forEach(el => el.style.display = 'none');
+            // Reset main input name to avoid conflicts? No, we will sync value on submit
+
+            // Show selected
+            document.getElementById('div' + type).style.display = 'block';
+        }
+
+        // Sync value to the main LinkId field before submit
+        document.getElementById('bannerForm').addEventListener('submit', function() {
+            var type = document.getElementById('linkType').value;
+            var finalVal = "";
+
+            if (type === 'External') finalVal = document.getElementById('valExternal').value;
+            else if (type === 'Category') finalVal = document.getElementById('valCategory').value;
+            else if (type === 'Product') finalVal = document.getElementById('valProduct').value;
+            else if (type === 'Deal') finalVal = document.getElementById('valDeal').value;
+
+            // Ensure the bound input gets the value
+            // If LinkId input is inside divExternal, we need to make sure it's the one being sent
+            // A simpler way: Have one hidden input for LinkId, and update it from the others
+            // Let's assume the first input (valExternal) is mapped to asp-for="LinkId".
+            // We need to update it if type is NOT External.
+
+            if (type !== 'External') {
+                document.getElementById('valExternal').value = finalVal;
+            }
+        });
+    </script>
+}

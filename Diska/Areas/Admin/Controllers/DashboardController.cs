@@ -1,12 +1,12 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Diska.Data;
 using Microsoft.EntityFrameworkCore;
 using Diska.Models;
 using Microsoft.AspNetCore.Identity;
 using Diska.Services;
 
-namespace Diska.Areas.Admin.Controllers
+namespace Diska.Web.Areas.Admin.Controllers
 {
     [Area("Admin")]
     [Authorize(Roles = "Admin")]
@@ -23,18 +23,53 @@ namespace Diska.Areas.Admin.Controllers
             _notificationService = notificationService;
         }
 
-        // --- الرئيسية ---
+        // --- الرئيسية (لوحة القيادة والإحصائيات) ---
         public async Task<IActionResult> Index()
         {
             var today = DateTime.Today;
+
+            // 1. إحصائيات المبيعات والطلبات
             ViewBag.DailySales = await _context.Orders
                 .Where(o => o.OrderDate.Date == today && o.Status != "Cancelled")
                 .SumAsync(o => (decimal?)o.TotalAmount) ?? 0;
 
-            ViewBag.PendingOrders = await _context.Orders.CountAsync(o => o.Status == "Pending");
-            ViewBag.TotalMerchants = await _userManager.GetUsersInRoleAsync("Merchant").ContinueWith(t => t.Result.Count);
-            ViewBag.LowStockItems = await _context.Products.CountAsync(p => p.StockQuantity < 10);
+            ViewBag.TotalSales = await _context.Orders
+                .Where(o => o.Status != "Cancelled")
+                .SumAsync(o => (decimal?)o.TotalAmount) ?? 0;
 
+            ViewBag.TotalOrders = await _context.Orders.CountAsync();
+            ViewBag.PendingOrders = await _context.Orders.CountAsync(o => o.Status == "Pending");
+            ViewBag.CompletedOrders = await _context.Orders.CountAsync(o => o.Status == "Delivered");
+
+            // 2. إحصائيات النظام
+            ViewBag.TotalMerchants = (await _userManager.GetUsersInRoleAsync("Merchant")).Count;
+            ViewBag.LowStockItems = await _context.Products.CountAsync(p => p.StockQuantity < 10);
+            ViewBag.PendingRequests = await _context.DealRequests.CountAsync(r => r.Status == "Pending");
+
+            // 3. بيانات الرسم البياني (آخر 7 أيام)
+            var last7Days = DateTime.Today.AddDays(-6);
+            var salesData = await _context.Orders
+                .Where(o => o.OrderDate >= last7Days && o.Status != "Cancelled")
+                .GroupBy(o => o.OrderDate.Date)
+                .Select(g => new { Date = g.Key, Total = g.Sum(x => x.TotalAmount) })
+                .ToListAsync();
+
+            // ملء الأيام التي لا يوجد فيها مبيعات بالصفر لضمان استمرارية الرسم البياني
+            var chartLabels = new List<string>();
+            var chartValues = new List<decimal>();
+
+            for (int i = 0; i < 7; i++)
+            {
+                var date = last7Days.AddDays(i);
+                var record = salesData.FirstOrDefault(x => x.Date == date);
+                chartLabels.Add(date.ToString("dd/MM"));
+                chartValues.Add(record?.Total ?? 0);
+            }
+
+            ViewBag.ChartLabels = chartLabels.ToArray();
+            ViewBag.ChartValues = chartValues.ToArray();
+
+            // 4. أحدث الطلبات للعرض في الجدول
             var recentOrders = await _context.Orders
                 .Include(o => o.User)
                 .OrderByDescending(o => o.OrderDate)
@@ -44,12 +79,18 @@ namespace Diska.Areas.Admin.Controllers
             return View(recentOrders);
         }
 
-        // --- الطلبات ---
+        // --- إدارة الطلبات ---
         public async Task<IActionResult> Orders(string status = "All")
         {
             var query = _context.Orders.Include(o => o.User).AsQueryable();
-            if (status != "All") query = query.Where(o => o.Status == status);
-            return View(await query.OrderByDescending(o => o.OrderDate).ToListAsync());
+
+            if (status != "All")
+            {
+                query = query.Where(o => o.Status == status);
+            }
+
+            var orders = await query.OrderByDescending(o => o.OrderDate).ToListAsync();
+            return View(orders);
         }
 
         public async Task<IActionResult> OrderDetails(int id)
@@ -57,6 +98,7 @@ namespace Diska.Areas.Admin.Controllers
             var order = await _context.Orders
                 .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.Product)
+                .Include(o => o.User)
                 .FirstOrDefaultAsync(o => o.Id == id);
 
             if (order == null) return NotFound();
@@ -66,82 +108,66 @@ namespace Diska.Areas.Admin.Controllers
         [HttpPost]
         public async Task<IActionResult> UpdateOrderStatus(int id, string status)
         {
-            var order = await _context.Orders.Include(o => o.User).FirstOrDefaultAsync(o => o.Id == id);
+            var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == id);
             if (order != null)
             {
+                var oldStatus = order.Status;
                 order.Status = status;
                 await _context.SaveChangesAsync();
 
-                // إشعار المستخدم
-                string msg = $"تم تحديث حالة طلبك #{id} إلى: {status}";
-                await _notificationService.NotifyUserAsync(order.UserId, "تحديث الطلب", msg, "Order", $"/Order/Track/{id}");
+                if (oldStatus != status)
+                {
+                    string msg = $"تم تحديث حالة طلبك #{id} إلى: {status}";
+                    // إشعار العميل
+                    await _notificationService.NotifyUserAsync(order.UserId, "تحديث الطلب", msg, "Order", $"/Order/Track/{id}");
+                }
+
+                TempData["Success"] = "تم تحديث حالة الطلب بنجاح.";
             }
-            return RedirectToAction(nameof(Orders));
+            return RedirectToAction(nameof(OrderDetails), new { id = id });
         }
 
-        // --- التجار ---
+        [HttpPost]
+        public async Task<IActionResult> RefundUser(string userId, decimal amount, string reason)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user != null)
+            {
+                user.WalletBalance += amount;
+
+                _context.WalletTransactions.Add(new WalletTransaction
+                {
+                    UserId = userId,
+                    Amount = amount,
+                    Type = "Refund",
+                    Description = reason,
+                    TransactionDate = DateTime.Now
+                });
+
+                await _context.SaveChangesAsync();
+                await _userManager.UpdateAsync(user);
+
+                await _notificationService.NotifyUserAsync(userId, "استرداد أموال", $"تم استرداد مبلغ {amount} ج.م إلى محفظتك. السبب: {reason}", "Wallet");
+
+                TempData["Success"] = "تم استرداد المبلغ للمستخدم بنجاح.";
+            }
+            return RedirectToAction(nameof(Index)); // أو العودة للطلب
+        }
+
+        // --- إدارة التجار ---
         public async Task<IActionResult> Merchants()
         {
             var merchants = await _userManager.GetUsersInRoleAsync("Merchant");
             return View(merchants);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> ToggleMerchantStatus(string id)
-        {
-            var user = await _userManager.FindByIdAsync(id);
-            if (user != null)
-            {
-                user.IsVerifiedMerchant = !user.IsVerifiedMerchant;
-                await _userManager.UpdateAsync(user);
-            }
-            return RedirectToAction(nameof(Merchants));
-        }
-
-        // --- المنتجات ---
-        public async Task<IActionResult> Products()
-        {
-            var products = await _context.Products
-                .Include(p => p.Category)
-                .Include(p => p.Merchant)
-                .OrderByDescending(p => p.Id)
-                .ToListAsync();
-            return View(products);
-        }
-
-        // --- التصنيفات ---
-        public async Task<IActionResult> Categories()
-        {
-            return View(await _context.Categories.ToListAsync());
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> CreateCategory(Category category)
-        {
-            if (ModelState.IsValid)
-            {
-                _context.Categories.Add(category);
-                await _context.SaveChangesAsync();
-            }
-            return RedirectToAction(nameof(Categories));
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> DeleteCategory(int id)
-        {
-            var cat = await _context.Categories.FindAsync(id);
-            if (cat != null)
-            {
-                _context.Categories.Remove(cat);
-                await _context.SaveChangesAsync();
-            }
-            return RedirectToAction(nameof(Categories));
-        }
-
-        // --- الرسائل ---
+        // --- إدارة الرسائل (Support) ---
         public async Task<IActionResult> Messages()
         {
-            return View(await _context.ContactMessages.OrderByDescending(m => m.DateSent).ToListAsync());
+            var messages = await _context.ContactMessages
+                .OrderByDescending(m => m.DateSent)
+                .ToListAsync();
+            return View(messages);
         }
 
         [HttpPost]
@@ -152,6 +178,20 @@ namespace Diska.Areas.Admin.Controllers
             {
                 _context.ContactMessages.Remove(msg);
                 await _context.SaveChangesAsync();
+                TempData["Success"] = "تم حذف الرسالة.";
+            }
+            return RedirectToAction(nameof(Messages));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteMultipleMessages(List<int> selectedIds)
+        {
+            if (selectedIds != null && selectedIds.Any())
+            {
+                var messages = await _context.ContactMessages.Where(m => selectedIds.Contains(m.Id)).ToListAsync();
+                _context.ContactMessages.RemoveRange(messages);
+                await _context.SaveChangesAsync();
+                TempData["Success"] = $"تم حذف {messages.Count} رسالة.";
             }
             return RedirectToAction(nameof(Messages));
         }

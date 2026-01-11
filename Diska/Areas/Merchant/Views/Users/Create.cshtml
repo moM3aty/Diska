@@ -1,0 +1,66 @@
+﻿@{
+    ViewData["Title"] = "إضافة موظف";
+    Layout = "_MerchantLayout";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 text-primary">بيانات الموظف الجديد</h5>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="Create" method="post">
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label">الاسم بالكامل</label>
+                            <input type="text" name="fullName" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">رقم الموبايل (اسم الدخول)</label>
+                            <input type="tel" name="phone" class="form-control" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">كلمة المرور</label>
+                            <input type="password" name="password" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <h6 class="text-muted mb-3 border-bottom pb-2">تحديد الصلاحيات</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="permissions" value="Products" id="permProd">
+                                <label class="form-check-label" for="permProd">إدارة المنتجات (إضافة/تعديل)</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="permissions" value="Orders" id="permOrder">
+                                <label class="form-check-label" for="permOrder">متابعة الطلبات</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="permissions" value="Restock" id="permRestock">
+                                <label class="form-check-label" for="permRestock">طلبات النواقص</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="permissions" value="Reviews" id="permReview">
+                                <label class="form-check-label" for="permReview">الرد على التقييمات</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-end">
+                        <a asp-action="Index" class="btn btn-secondary">إلغاء</a>
+                        <button type="submit" class="btn btn-primary px-4">حفظ البيانات</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

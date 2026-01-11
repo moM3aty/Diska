@@ -1,0 +1,74 @@
+﻿@model Diska.Models.DealRequest
+@using System.Globalization
+@{
+    ViewData["Title"] = "تفاصيل الطلب";
+    Layout = "_MerchantLayout";
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+
+        <a asp-action="Index" class="text-decoration-none text-muted mb-3 d-inline-block">
+            <i class="fas fa-arrow-right"></i> @(isAr ? "عودة للقائمة" : "Back to List")
+        </a>
+
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 text-primary">@(isAr ? "بيانات الطلب" : "Request Details")</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="text-muted small">@(isAr ? "المنتج المطلوب" : "Product")</label>
+                        <div class="fw-bold fs-5">@Model.ProductName</div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="text-muted small">@(isAr ? "الكمية" : "Quantity")</label>
+                        <div class="fw-bold">@Model.TargetQuantity</div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="text-muted small">@(isAr ? "السعر المستهدف" : "Target Price")</label>
+                        <div class="fw-bold text-success">@Model.DealPrice.ToString("N0")</div>
+                    </div>
+                    <div class="col-12 border-top pt-2 mt-2">
+                        <label class="text-muted small"><i class="fas fa-map-marker-alt text-danger"></i> @(isAr ? "موقع التوصيل" : "Location")</label>
+                        <div>@Model.Location</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Offer Form -->
+        <div class="card border-0 shadow-sm border-top border-4 border-primary">
+            <div class="card-body p-4">
+                <h5 class="mb-3 fw-bold">@(isAr ? "تقديم عرض سعر" : "Submit Your Offer")</h5>
+
+                <form asp-action="SubmitOffer" method="post">
+                    <input type="hidden" name="requestId" value="@Model.Id" />
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">@(isAr ? "سرك المقترح (للقطعة)" : "Your Price (Per Unit)")</label>
+                            <div class="input-group">
+                                <input type="number" name="price" class="form-control fw-bold" required placeholder="0.00">
+                                <span class="input-group-text">@(isAr ? "ج.م" : "EGP")</span>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">@(isAr ? "ملاحظات العرض (شروط الدفع/التوصيل)" : "Notes (Payment/Delivery Terms)")</label>
+                            <textarea name="notes" class="form-control" rows="3" required placeholder="@(isAr ? "مثال: السعر شامل التوصيل، الدفع عند الاستلام..." : "Ex: Price includes delivery...")"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 text-end">
+                        <button type="submit" class="btn btn-primary px-5 fw-bold">
+                            <i class="fas fa-paper-plane me-2"></i> @(isAr ? "إرسال العرض للعميل" : "Send Offer")
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>

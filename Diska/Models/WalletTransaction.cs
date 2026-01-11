@@ -3,7 +3,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Diska.Models
 {
-    // نموذج حركة المحفظة (سجل العمليات)
     public class WalletTransaction
     {
         public int Id { get; set; }
@@ -13,11 +12,11 @@ namespace Diska.Models
         public virtual ApplicationUser User { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
-        public decimal Amount { get; set; } // المبلغ (+ للإيداع/الاسترداد، - للشراء)
+        public decimal Amount { get; set; } 
 
-        public string Description { get; set; } // وصف العملية (مثلاً: شراء طلب رقم #10)
+        public string Description { get; set; } 
 
-        public string Type { get; set; } // "Deposit" (إيداع), "Purchase" (شراء), "Refund" (استرداد)
+        public string Type { get; set; } 
 
         public DateTime TransactionDate { get; set; } = DateTime.Now;
     }

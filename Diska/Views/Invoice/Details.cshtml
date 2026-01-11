@@ -1,0 +1,114 @@
+﻿@model Diska.Models.Order
+@using System.Globalization
+@{
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    ViewData["Title"] = isAr ? "تفاصيل الفاتورة" : "Invoice Details";
+}
+
+<section class="section-padding" style="background:#f9fafb;">
+    <div class="container">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <a asp-action="Index" class="text-decoration-none text-muted small">
+                    <i class="fas @(isAr ? "fa-arrow-right" : "fa-arrow-left")"></i> @(isAr ? "العودة للفواتير" : "Back to Invoices")
+                </a>
+                <h2 class="text-primary fw-bold mt-2">@(isAr ? "فاتورة ضريبية" : "Tax Invoice")</h2>
+                <span class="text-muted">#INV-@Model.Id.ToString("D5")</span>
+            </div>
+            <div>
+                <a asp-action="Print" asp-route-id="@Model.Id" target="_blank" class="btn primary">
+                    <i class="fas fa-print me-2"></i> @(isAr ? "طباعة / تحميل" : "Print / Download")
+                </a>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm p-4 p-md-5 mb-4" id="invoiceArea">
+
+            <!-- Header -->
+            <div class="row mb-5 border-bottom pb-4">
+                <div class="col-6">
+                    <h3 class="fw-bold text-dark">DISKA <span class="text-warning">B2B</span></h3>
+                    <p class="text-muted mb-0">123 Street Name, Cairo, Egypt</p>
+                    <p class="text-muted mb-0">Tax ID: 123-456-789</p>
+                </div>
+                <div class="col-6 text-end">
+                    <h5 class="text-muted">@(isAr ? "فاتورة إلى" : "Invoice To")</h5>
+                    <h5 class="fw-bold">@Model.CustomerName</h5>
+                    <p class="text-muted mb-0">@Model.Address, @Model.City</p>
+                    <p class="text-muted mb-0">@Model.Phone</p>
+                </div>
+            </div>
+
+            <!-- Meta -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <small class="text-muted text-uppercase fw-bold">@(isAr ? "تاريخ الفاتورة" : "Invoice Date")</small>
+                    <p class="fw-bold">@Model.OrderDate.ToString("dd MMM yyyy")</p>
+                </div>
+                <div class="col-md-3">
+                    <small class="text-muted text-uppercase fw-bold">@(isAr ? "حالة الدفع" : "Payment Status")</small>
+                    <p class="text-success fw-bold">@(isAr ? "تم الدفع" : "Paid") <i class="fas fa-check-circle"></i></p>
+                </div>
+                <div class="col-md-3">
+                    <small class="text-muted text-uppercase fw-bold">@(isAr ? "طريقة الدفع" : "Payment Method")</small>
+                    <p class="fw-bold">@Model.PaymentMethod</p>
+                </div>
+            </div>
+
+            <!-- Items -->
+            <div class="table-responsive mb-4">
+                <table class="table table-bordered align-middle">
+                    <thead class="bg-light">
+                        <tr>
+                            <th style="width:50%">@(isAr ? "المنتج" : "Item")</th>
+                            <th class="text-center">@(isAr ? "الكمية" : "Qty")</th>
+                            <th class="text-end">@(isAr ? "سعر الوحدة" : "Unit Price")</th>
+                            <th class="text-end">@(isAr ? "الإجمالي" : "Total")</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.OrderItems)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@(isAr? item.Product?.Name : item.Product?.NameEn)</strong>
+                                    <div class="small text-muted">SKU: @item.Product?.SKU</div>
+                                </td>
+                                <td class="text-center">@item.Quantity</td>
+                                <td class="text-end">@item.UnitPrice.ToString("N2")</td>
+                                <td class="text-end fw-bold">@((item.Quantity * item.UnitPrice).ToString("N2"))</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Totals -->
+            <div class="row justify-content-end">
+                <div class="col-md-5 col-lg-4">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td class="text-muted">@(isAr ? "المجموع الفرعي" : "Subtotal")</td>
+                            <td class="text-end">@((Model.TotalAmount - Model.ShippingCost).ToString("N2"))</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">@(isAr ? "الشحن" : "Shipping")</td>
+                            <td class="text-end">@Model.ShippingCost.ToString("N2")</td>
+                        </tr>
+                        <tr class="border-top">
+                            <td class="fw-bold fs-5">@(isAr ? "الإجمالي" : "Total")</td>
+                            <td class="text-end fw-bold fs-5 text-primary">@Model.TotalAmount.ToString("N2") ج.م</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="text-center mt-5 pt-4 border-top">
+                <p class="text-muted">@(isAr ? "شكراً لتعاملكم معنا" : "Thank you for your business")</p>
+                <small class="text-muted">www.diska.com | support@diska.com</small>
+            </div>
+
+        </div>
+    </div>
+</section>

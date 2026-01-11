@@ -3,63 +3,130 @@
 @{
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
     ViewData["Title"] = isAr ? "عناويني" : "My Addresses";
+    Layout = "_Layout";
 }
 
-<section class="section-padding">
+<style>
+    .address-card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 20px;
+        position: relative;
+        transition: all 0.3s ease;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+        .address-card:hover {
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            transform: translateY(-3px);
+            border-color: var(--primary);
+        }
+
+        .address-card.default {
+            background-color: #f8fafc;
+            border: 1px solid var(--primary);
+        }
+
+    .default-badge {
+        position: absolute;
+        top: 15px;
+        @(isAr ? "left" : "right") : 15px;
+        background: var(--primary);
+        color: #fff;
+        font-size: 0.75rem;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-weight: bold;
+    }
+
+    .address-actions {
+        margin-top: auto;
+        padding-top: 15px;
+        border-top: 1px solid #eee;
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+    }
+</style>
+
+<section class="section-padding" style="background-color: #f9fafb; min-height: 80vh;">
     <div class="container">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <h2 class="page-title" style="margin:0;">@(isAr ? "دفتر العناوين" : "Address Book") 📍</h2>
+
+        <!-- Header -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
+            <div>
+                <h2 class="page-title" style="margin:0;">@(isAr ? "دفتر العناوين" : "Address Book")</h2>
+                <p style="color:#666; margin-top:5px;">@(isAr ? "إدارة عناوين الشحن والتوصيل" : "Manage your shipping addresses")</p>
+            </div>
             <a asp-action="Create" class="btn primary small">
-                <i class="fas fa-plus"></i> @(isAr ? "إضافة عنوان جديد" : "Add New Address")
+                <i class="fas fa-plus"></i> @(isAr ? "إضافة عنوان" : "Add Address")
             </a>
         </div>
 
+        @if (TempData["Success"] != null)
+        {
+            <div style="background:#dcfce7; color:#166534; padding:15px; border-radius:8px; margin-bottom:20px; border:1px solid #bbf7d0;">
+                <i class="fas fa-check-circle"></i> @TempData["Success"]
+            </div>
+        }
+
         @if (!Model.Any())
         {
-            <div style="text-align:center; padding:40px; background:#f8fafc; border-radius:10px; border:1px solid #eee;">
-                <i class="fas fa-map-marked-alt fa-3x" style="color:#cbd5e1; margin-bottom:15px;"></i>
-                <p style="color:#666;">@(isAr ? "لم تقم بإضافة أي عناوين شحن بعد." : "No addresses found.")</p>
+            <div style="text-align:center; padding:60px; background:#fff; border-radius:15px; border:1px solid #eee;">
+                <i class="fas fa-map-marked-alt fa-4x" style="color:#e2e8f0; margin-bottom:20px;"></i>
+                <h3 style="color:#64748b;">@(isAr ? "لا توجد عناوين مسجلة." : "No addresses found.")</h3>
+                <a asp-action="Create" class="btn primary small" style="margin-top:20px;">
+                    @(isAr ? "إضافة عنوان جديد" : "Add New Address")
+                </a>
             </div>
         }
         else
         {
-            <div class="addresses-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:20px;">
+            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:25px;">
                 @foreach (var addr in Model)
                 {
-                    <div class="address-card" style="background:#fff; border:1px solid @(addr.IsDefault ? "var(--primary)" : "#eee"); padding:20px; border-radius:10px; position:relative; box-shadow:0 2px 5px rgba(0,0,0,0.05);">
+                    <div class="address-card @(addr.IsDefault ? "default" : "")">
 
                         @if (addr.IsDefault)
                         {
-                            <span style="position:absolute; top:15px; left:15px; background:var(--primary); color:#fff; font-size:0.7rem; padding:3px 8px; border-radius:4px;">
-                                @(isAr ? "الافتراضي" : "Default")
+                            <span class="default-badge">
+                                <i class="fas fa-check"></i> @(isAr ? "الافتراضي" : "Default")
                             </span>
                         }
 
-                        <h4 style="margin:0 0 10px; color:var(--primary);">@addr.Title</h4>
+                        <h4 style="margin:0 0 10px; color:var(--text-dark); font-weight:bold; display:flex; align-items:center; gap:8px;">
+                            <i class="fas fa-home" style="color:#cbd5e1;"></i> @addr.Title
+                        </h4>
 
-                        <p style="margin:0 0 5px; color:#555;">
-                            <i class="fas fa-map-marker-alt" style="color:var(--accent); width:20px;"></i>
-                            @addr.Governorate - @addr.City
-                        </p>
-                        <p style="margin:0 0 5px; color:#666; font-size:0.9rem; padding-right:25px;">
-                            @addr.Street
-                        </p>
-                        <p style="margin:0; font-weight:bold; color:#333;">
-                            <i class="fas fa-phone" style="color:var(--accent); width:20px;"></i>
-                            @addr.PhoneNumber
-                        </p>
+                        <div style="color:#555; line-height:1.6; font-size:0.95rem; flex:1;">
+                            <p style="margin:0;">@addr.Governorate, @addr.City</p>
+                            <p style="margin:0;">@addr.Street</p>
+                            <p style="margin:8px 0 0; color:var(--primary); font-weight:bold; font-size:0.9rem;">
+                                <i class="fas fa-phone-alt"></i> @addr.PhoneNumber
+                            </p>
+                        </div>
 
-                        <div class="actions" style="margin-top:20px; border-top:1px solid #eee; padding-top:15px; display:flex; gap:10px;">
+                        <div class="address-actions">
                             @if (!addr.IsDefault)
                             {
-                                <form asp-action="SetDefault" method="post" style="flex:1;">
+                                <form asp-action="SetDefault" method="post" style="margin:0;">
                                     <input type="hidden" name="id" value="@addr.Id" />
-                                    <button type="submit" class="btn small" style="background:#e0f2fe; color:#0284c7; width:100%; border:none;">@(isAr ? "تعيين كافتراضي" : "Set Default")</button>
+                                    <button type="submit" class="btn small" style="background:transparent; color:#666; border:1px solid #ddd; padding:6px 12px; font-size:0.8rem;" title="@(isAr ? "تعيين كافتراضي" : "Set as Default")">
+                                        <i class="fas fa-star"></i>
+                                    </button>
                                 </form>
                             }
-                            <form asp-action="Delete" method="post" onsubmit="return confirm('@(isAr ? "هل أنت متأكد من الحذف؟" : "Confirm delete?")');">
+
+                            <a asp-action="Edit" asp-route-id="@addr.Id" class="btn small" style="background:#e0f2fe; color:#0284c7; border:none; padding:6px 12px; font-size:0.8rem;">
+                                <i class="fas fa-edit"></i> @(isAr ? "تعديل" : "Edit")
+                            </a>
+
+                            <form asp-action="Delete" method="post" onsubmit="return confirm('@(isAr ? "هل أنت متأكد من الحذف؟" : "Delete this address?")');" style="margin:0;">
                                 <input type="hidden" name="id" value="@addr.Id" />
-                                <button type="submit" class="btn small" style="background:#fee2e2; color:#dc2626; border:none; padding:5px 15px;">
+                                <button type="submit" class="btn small" style="background:#fee2e2; color:#dc2626; border:none; padding:6px 12px; font-size:0.8rem;">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </form>

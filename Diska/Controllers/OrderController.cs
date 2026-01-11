@@ -1,9 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Diska.Data;
 using Microsoft.EntityFrameworkCore;
-using Diska.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Diska.Models;
+using Diska.Services;
 
 namespace Diska.Controllers
 {
@@ -12,14 +13,17 @@ namespace Diska.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly INotificationService _notificationService;
 
-        public OrderController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+        public OrderController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, INotificationService notificationService)
         {
             _context = context;
             _userManager = userManager;
+            _notificationService = notificationService;
         }
 
-        public async Task<IActionResult> MyOrders()
+        // 1. سجل الطلبات (Order History)
+        public async Task<IActionResult> Index()
         {
             var user = await _userManager.GetUserAsync(User);
             var orders = await _context.Orders
@@ -32,6 +36,16 @@ namespace Diska.Controllers
             return View(orders);
         }
 
+        // 2. إنشاء طلب (توجيه للدفع أو معالجة مباشرة)
+        [HttpGet]
+        public IActionResult Create()
+        {
+            // عادة يتم إنشاء الطلب عبر سلة المشتريات (Cart/Checkout)
+            // لذا سنقوم بالتوجيه لصفحة الدفع
+            return RedirectToAction("Checkout", "Cart");
+        }
+
+        // 3. تفاصيل الطلب وتتبعه (Details & Tracking)
         public async Task<IActionResult> Details(int id)
         {
             var user = await _userManager.GetUserAsync(User);
@@ -45,18 +59,7 @@ namespace Diska.Controllers
             return View(order);
         }
 
-        // صفحة تتبع الطلب الجديدة
-        public async Task<IActionResult> Track(int id)
-        {
-            var user = await _userManager.GetUserAsync(User);
-            var order = await _context.Orders
-                .FirstOrDefaultAsync(o => o.Id == id && o.UserId == user.Id);
-
-            if (order == null) return NotFound();
-
-            return View(order);
-        }
-
+        // 4. إلغاء الطلب (Cancel)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Cancel(int id)
@@ -68,9 +71,10 @@ namespace Diska.Controllers
 
             if (order == null) return NotFound();
 
+            // السماح بالإلغاء فقط إذا كان الطلب "قيد الانتظار"
             if (order.Status == "Pending")
             {
-                // إرجاع المخزون
+                // إرجاع الكميات للمخزون
                 foreach (var item in order.OrderItems)
                 {
                     var product = await _context.Products.FindAsync(item.ProductId);
@@ -80,7 +84,7 @@ namespace Diska.Controllers
                     }
                 }
 
-                // استرداد للمحفظة إذا كان الدفع بالمحفظة
+                // إذا كان الدفع بالمحفظة، يتم استرداد المبلغ
                 if (order.PaymentMethod == "Wallet")
                 {
                     user.WalletBalance += order.TotalAmount;
@@ -90,7 +94,7 @@ namespace Diska.Controllers
                         UserId = user.Id,
                         Amount = order.TotalAmount,
                         Type = "Refund",
-                        Description = $"إلغاء الطلب #{order.Id}",
+                        Description = $"استرداد قيمة الطلب الملغي #{id}",
                         TransactionDate = DateTime.Now
                     });
 
@@ -99,14 +103,18 @@ namespace Diska.Controllers
 
                 order.Status = "Cancelled";
                 await _context.SaveChangesAsync();
-                TempData["Message"] = "تم إلغاء الطلب بنجاح";
+
+                // إشعار للإدارة (اختياري)
+                // await _notificationService.NotifyAdminsAsync(...);
+
+                TempData["Message"] = "تم إلغاء الطلب بنجاح وتم استرداد المبلغ (إن وجد).";
             }
             else
             {
-                TempData["Error"] = "عفواً، لا يمكن إلغاء الطلب في هذه المرحلة (قد تم تأكيده أو شحنه).";
+                TempData["Error"] = "عفواً، لا يمكن إلغاء الطلب في هذه المرحلة (قد يكون تم تأكيده أو شحنه).";
             }
 
-            return RedirectToAction(nameof(MyOrders));
+            return RedirectToAction(nameof(Index)); // العودة لسجل الطلبات
         }
     }
 }

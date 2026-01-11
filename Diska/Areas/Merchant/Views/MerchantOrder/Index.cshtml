@@ -1,0 +1,101 @@
+﻿@model IEnumerable<Diska.Models.OrderItem>
+@using System.Globalization
+@{
+    ViewData["Title"] = "الطلبات الواردة";
+    Layout = "_MerchantLayout";
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+    <div>
+        <h2 style="margin:0; color:var(--primary);">@(isAr ? "الطلبات الواردة" : "Incoming Orders")</h2>
+        <p style="color:#64748b; margin-top:5px;">@(isAr ? "متابعة وتجهيز الطلبات الجديدة" : "Track and fulfill new orders")</p>
+    </div>
+
+    <!-- فلاتر سريعة -->
+    <div class="btn-group">
+        <a asp-action="Index" asp-route-status="All" class="btn btn-outline-secondary @(Context.Request.Query["status"] == "All" ? "active" : "")">@(isAr ? "الكل" : "All")</a>
+        <a asp-action="Index" asp-route-status="Pending" class="btn btn-outline-warning @(Context.Request.Query["status"] == "Pending" ? "active" : "")">@(isAr ? "جديد" : "New")</a>
+        <a asp-action="Index" asp-route-status="Confirmed" class="btn btn-outline-primary @(Context.Request.Query["status"] == "Confirmed" ? "active" : "")">@(isAr ? "مؤكد" : "Confirmed")</a>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    @if (!Model.Any())
+    {
+        <div style="text-align:center; padding:60px; color:#666;">
+            <i class="fas fa-clipboard-list fa-4x" style="color:#e2e8f0; margin-bottom:20px;"></i>
+            <h4 style="margin:0;">@(isAr ? "لا توجد طلبات جديدة" : "No new orders")</h4>
+            <p style="margin-top:10px;">@(isAr ? "استرح قليلاً، سنخبرك فور وصول طلب جديد." : "Relax, we'll notify you when a new order arrives.")</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">رقم الطلب</th>
+                        <th>المنتج</th>
+                        <th>الكمية / السعر</th>
+                        <th>الإجمالي</th>
+                        <th>حالة الطلب</th>
+                        <th>التاريخ</th>
+                        <th class="text-end pe-4">إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="ps-4">
+                                <a asp-action="Details" asp-route-orderId="@item.OrderId" class="fw-bold text-decoration-none">#@item.OrderId</a>
+                            </td>
+                            <td>
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <img src="~/@item.Product?.ImageUrl" style="width:40px; height:40px; border-radius:6px; object-fit:cover; border:1px solid #eee;">
+                                    <div>
+                                        <div class="fw-bold text-dark">@(isAr? item.Product?.Name : item.Product?.NameEn)</div>
+                                        <small class="text-muted">SKU: @item.Product?.SKU</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="fw-bold">@item.Quantity <small class="text-muted fw-normal">قطعة</small></div>
+                                <div class="small text-muted">@item.UnitPrice.ToString("N0") ج.م / قطعة</div>
+                            </td>
+                            <td>
+                                <span class="fw-bold text-primary">@((item.Quantity * item.UnitPrice).ToString("N0")) ج.م</span>
+                            </td>
+                            <td>
+                                @{
+                                    string status = item.Order.Status;
+                                    string badgeClass = status switch
+                                    {
+                                        "Pending" => "bg-warning text-dark",
+                                        "Confirmed" => "bg-primary",
+                                        "Shipped" => "bg-info text-dark",
+                                        "Delivered" => "bg-success",
+                                        "Cancelled" => "bg-danger",
+                                        _ => "bg-secondary"
+                                    };
+                                    string statusText = isAr ? (status == "Pending" ? "قيد الانتظار" : (status == "Confirmed" ? "مؤكد" : (status == "Shipped" ? "تم الشحن" : status))) : status;
+                                }
+                                <span class="badge @badgeClass">@statusText</span>
+                            </td>
+                            <td class="text-muted small">
+                                <div>@item.Order.OrderDate.ToString("yyyy-MM-dd")</div>
+                                <div>@item.Order.OrderDate.ToString("hh:mm tt")</div>
+                            </td>
+                            <td class="text-end pe-4">
+                                <a asp-action="Details" asp-route-orderId="@item.OrderId" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye me-1"></i> @(isAr ? "تفاصيل" : "Details")
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

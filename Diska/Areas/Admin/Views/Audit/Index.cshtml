@@ -1,0 +1,95 @@
+﻿@model IEnumerable<Diska.Models.AuditLog>
+@{
+    ViewData["Title"] = "سجلات التدقيق";
+    Layout = "_AdminLayout";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="text-primary fw-bold"><i class="fas fa-fingerprint"></i> سجلات التدقيق (Audit Logs)</h2>
+    <span class="text-muted">آخر 100 عملية</span>
+</div>
+
+<!-- Filters -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label">معرف المستخدم (User ID)</label>
+                <input type="text" name="userId" class="form-control" placeholder="بحث بالمعرف..." value="@Context.Request.Query["userId"]">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">نوع الإجراء</label>
+                <select name="actionType" class="form-select" asp-items="ViewBag.ActionTypes">
+                    <option value="All">الكل</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">من تاريخ</label>
+                <input type="date" name="fromDate" class="form-control" value="@Context.Request.Query["fromDate"]">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">إلى تاريخ</label>
+                <input type="date" name="toDate" class="form-control" value="@Context.Request.Query["toDate"]">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-secondary w-100">تصفية</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Logs Table -->
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 text-nowrap">
+            <thead class="bg-light">
+                <tr>
+                    <th>الوقت</th>
+                    <th>الإجراء</th>
+                    <th>العنصر</th>
+                    <th>التفاصيل</th>
+                    <th>المستخدم (ID)</th>
+                    <th>IP Address</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">لا توجد سجلات مطابقة.</td>
+                    </tr>
+                }
+                @foreach (var log in Model)
+                {
+                    <tr>
+                        <td class="small text-muted">@log.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                        <td>
+                            @{
+                                var badgeClass = log.Action switch
+                                {
+                                    "Create" => "bg-success",
+                                    "Update" => "bg-info text-dark",
+                                    "Delete" => "bg-danger",
+                                    "Login" => "bg-primary",
+                                    _ => "bg-secondary"
+                                };
+                            }
+                            <span class="badge @badgeClass">@log.Action</span>
+                        </td>
+                        <td>
+                            <span class="fw-bold text-dark">@log.EntityName</span>
+                            <small class="text-muted d-block">ID: @log.EntityId</small>
+                        </td>
+                        <td class="text-wrap" style="max-width: 300px;">
+                            <small>@log.Details</small>
+                        </td>
+                        <td>
+                            <code class="text-primary">@log.UserId</code>
+                        </td>
+                        <td class="small font-monospace">@log.IpAddress</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,79 @@
+﻿@model IEnumerable<Diska.Models.ProductReview>
+@{
+    ViewData["Title"] = "تقييمات منتجاتي";
+    Layout = "_MerchantLayout";
+}
+
+<div class="row g-4 mb-4">
+    <div class="col-md-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4 d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="text-muted">متوسط تقييم المتجر</h5>
+                    <div class="d-flex align-items-center gap-2">
+                        <h1 class="mb-0 fw-bold text-warning">@(((double)ViewBag.AverageRating).ToString("0.0"))</h1>
+                        <div class="text-warning">
+                            @for (int i = 0; i < 5; i++)
+                            {
+                                <i class="fas @(i < (int)(double)ViewBag.AverageRating ? "fa-star" : "fa-star-half-alt")"></i>
+                            }
+                        </div>
+                    </div>
+                    <small class="text-muted">من أصل @ViewBag.TotalReviews تقييم</small>
+                </div>
+                <i class="fas fa-award fa-4x text-warning opacity-25"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3">
+        <h5 class="mb-0 text-primary">آراء العملاء</h5>
+    </div>
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead class="bg-light">
+                <tr>
+                    <th style="width:20%">المنتج</th>
+                    <th style="width:15%">العميل</th>
+                    <th style="width:15%">التقييم</th>
+                    <th>التعليق</th>
+                    <th style="width:15%">التاريخ</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="5" class="text-center py-5 text-muted">لا توجد تقييمات حتى الآن.</td>
+                    </tr>
+                }
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <img src="~/@item.Product?.ImageUrl" width="35" height="35" class="rounded border">
+                                <span class="fw-bold small">@item.Product?.Name</span>
+                            </div>
+                        </td>
+                        <td>@item.User?.FullName</td>
+                        <td>
+                            <div class="text-warning small">
+                                @for (int i = 0; i < item.Rating; i++)
+                                {
+                                    <i class="fas fa-star"></i>
+                                }
+                            </div>
+                        </td>
+                        <td>
+                            <p class="mb-0 small text-muted">@item.Comment</p>
+                        </td>
+                        <td class="small text-muted">@item.CreatedAt.ToString("yyyy-MM-dd")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

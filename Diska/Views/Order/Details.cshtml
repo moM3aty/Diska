@@ -2,129 +2,101 @@
 @using System.Globalization
 @{
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
-    ViewData["Title"] = isAr ? $"تفاصيل الطلب #{Model.Id}" : $"Order #{Model.Id}";
+    ViewData["Title"] = isAr ? "تفاصيل الطلب" : "Order Details";
+    Layout = "_Layout";
 
-    var statusColor = Model.Status switch
-    {
-        "Pending" => "#F59E0B",
-        "Confirmed" => "#3B82F6",
-        "Shipped" => "#10B981",
-        "Cancelled" => "#EF4444",
-        _ => "#64748B"
-    };
-
-    var statusText = isAr ? (Model.Status == "Pending" ? "قيد الانتظار" : (Model.Status == "Confirmed" ? "مؤكد" : (Model.Status == "Shipped" ? "تم الشحن" : Model.Status))) : Model.Status;
+    // تحديد حالة التتبع
+    int step = 0;
+    if (Model.Status == "Pending") { step = 1; }
+    else if (Model.Status == "Confirmed") { step = 2; }
+    else if (Model.Status == "Shipped") { step = 3; }
+    else if (Model.Status == "Delivered") { step = 4; }
 }
 
-<section class="section-padding">
+<section class="section-padding" style="background-color: #f9fafb;">
     <div class="container">
 
-        <div class="breadcrumb" style="margin-bottom:20px; color:#666;">
-            <a asp-controller="Home" asp-action="Index">@(isAr ? "الرئيسية" : "Home")</a> /
-            <a asp-action="MyOrders">@(isAr ? "طلباتي" : "My Orders")</a> /
-            <span>#@Model.Id</span>
+        <div class="breadcrumb" style="margin-bottom:20px;">
+            <a asp-action="Index">@(isAr ? "سجل الطلبات" : "Order History")</a> / <span>#@Model.Id</span>
         </div>
 
-        <div class="order-details-box" style="background:#fff; border-radius:15px; border:1px solid #eee; overflow:hidden;">
+        <div class="order-summary-box new-design" style="margin-top:0; padding:0; overflow:hidden;">
 
-            <!-- Order Header -->
-            <div style="background:#f8fafc; padding:20px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-                <div>
-                    <h2 style="margin:0; font-size:1.3rem; color:var(--primary);">@(isAr ? $"طلب رقم #{Model.Id}" : $"Order #{Model.Id}")</h2>
-                    <span style="font-size:0.9rem; color:#666;">@Model.OrderDate.ToString("dd MMMM yyyy, hh:mm tt")</span>
-                </div>
-                <span class="badge" style="background:@statusColor; color:#fff; padding:8px 15px; border-radius:20px; font-size:0.9rem;">@statusText</span>
+            <div style="padding:20px; border-bottom:1px solid #eee; background:#fff;">
+                <h3 style="margin:0; color:var(--primary);">@(isAr ? "تفاصيل الطلب" : "Order Details") #@Model.Id</h3>
+                <span style="color:#666; font-size:0.9rem;">@Model.OrderDate.ToString("dd MMMM yyyy, hh:mm tt")</span>
             </div>
 
-            <!-- Tracking Bar (New) -->
-            <div class="tracking-bar" style="padding:30px 20px; border-bottom:1px solid #eee;">
-                <div style="display:flex; justify-content:space-between; position:relative; max-width:600px; margin:0 auto;">
-                    <!-- Line -->
-                    <div style="position:absolute; top:15px; left:0; width:100%; height:3px; background:#e2e8f0; z-index:1;"></div>
+            <!-- Tracking Bar (Custom Style for Client) -->
+            @if (Model.Status != "Cancelled")
+            {
+                <div style="padding:30px 20px; background:#fff; border-bottom:1px solid #eee;">
+                    <div style="display:flex; justify-content:space-between; position:relative; max-width:500px; margin:0 auto;">
+                        <div style="position:absolute; top:12px; left:0; width:100%; height:3px; background:#e2e8f0; z-index:0;"></div>
+                        <div style="position:absolute; top:12px; left:0; width:@((step - 1) * 33)%; height:3px; background:var(--success); z-index:0; transition:width 0.5s;"></div>
 
-                    <!-- Steps -->
-                    @{
-                        int step = Model.Status == "Pending" ? 1 : (Model.Status == "Confirmed" ? 2 : (Model.Status == "Shipped" ? 3 : 0));
-                    }
-
-                    <div class="step @(step >= 1 ? "active" : "")" style="position:relative; z-index:2; text-align:center;">
-                        <div style="width:30px; height:30px; background:@(step >= 1 ? "var(--success)" : "#e2e8f0"); border-radius:50%; margin:0 auto 5px; display:flex; align-items:center; justify-content:center; color:#fff;"><i class="fas fa-receipt"></i></div>
-                        <span style="font-size:0.8rem;">@(isAr ? "تم الطلب" : "Placed")</span>
-                    </div>
-
-                    <div class="step @(step >= 2 ? "active" : "")" style="position:relative; z-index:2; text-align:center;">
-                        <div style="width:30px; height:30px; background:@(step >= 2 ? "var(--success)" : "#e2e8f0"); border-radius:50%; margin:0 auto 5px; display:flex; align-items:center; justify-content:center; color:#fff;"><i class="fas fa-box-open"></i></div>
-                        <span style="font-size:0.8rem;">@(isAr ? "تم التأكيد" : "Confirmed")</span>
-                    </div>
-
-                    <div class="step @(step >= 3 ? "active" : "")" style="position:relative; z-index:2; text-align:center;">
-                        <div style="width:30px; height:30px; background:@(step >= 3 ? "var(--success)" : "#e2e8f0"); border-radius:50%; margin:0 auto 5px; display:flex; align-items:center; justify-content:center; color:#fff;"><i class="fas fa-truck"></i></div>
-                        <span style="font-size:0.8rem;">@(isAr ? "في الطريق" : "Shipped")</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Content -->
-            <div style="padding:30px;">
-                <h3 style="margin-bottom:20px; color:var(--primary); font-size:1.1rem;">@(isAr ? "المنتجات" : "Items")</h3>
-
-                <div class="table-responsive">
-                    <table style="width:100%; border-collapse:collapse;">
-                        <thead style="background:#f1f5f9;">
-                            <tr>
-                                <th style="padding:10px; text-align:inherit;">@(isAr ? "المنتج" : "Product")</th>
-                                <th style="padding:10px; text-align:center;">@(isAr ? "الكمية" : "Qty")</th>
-                                <th style="padding:10px; text-align:inherit;">@(isAr ? "السعر" : "Price")</th>
-                                <th style="padding:10px; text-align:inherit;">@(isAr ? "الإجمالي" : "Total")</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var item in Model.OrderItems)
-                            {
-                                <tr style="border-bottom:1px solid #eee;">
-                                    <td style="padding:15px 10px; display:flex; align-items:center; gap:10px;">
-                                        <img src="~/@(item.Product?.ImageUrl ?? "images/default.png")" style="width:50px; height:50px; object-fit:contain; border:1px solid #eee; border-radius:5px;">
-                                        <span>@(isAr? item.Product?.Name : (item.Product?.NameEn ?? item.Product?.Name))</span>
-                                    </td>
-                                    <td style="padding:10px; text-align:center;">@item.Quantity</td>
-                                    <td style="padding:10px;">@item.UnitPrice.ToString("N2")</td>
-                                    <td style="padding:10px; font-weight:bold;">@((item.Quantity * item.UnitPrice).ToString("N2"))</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-
-                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:30px; margin-top:30px;">
-                    <div style="background:#f8fafc; padding:20px; border-radius:10px;">
-                        <h4 style="margin:0 0 10px; color:var(--primary); font-size:1rem;">@(isAr ? "عنوان التوصيل" : "Shipping Address")</h4>
-                        <p style="margin:0; color:#555; line-height:1.6;">
-                            <strong>@Model.CustomerName</strong><br>
-                            @Model.Phone<br>
-                            @Model.Address, @Model.City, @Model.Governorate
-                        </p>
-                    </div>
-
-                    <div style="background:#f8fafc; padding:20px; border-radius:10px;">
-                        <h4 style="margin:0 0 10px; color:var(--primary); font-size:1rem;">@(isAr ? "ملخص الدفع" : "Payment Summary")</h4>
-                        <div style="display:flex; justify-content:space-between; margin-bottom:5px; color:#555;">
-                            <span>@(isAr ? "طريقة الدفع" : "Method")</span>
-                            <strong>@Model.PaymentMethod</strong>
+                        <div style="z-index:1; text-align:center;">
+                            <div style="width:25px; height:25px; background:@(step >= 1 ? "var(--success)" : "#e2e8f0"); border-radius:50%; margin:0 auto 5px; color:#fff; display:flex; align-items:center; justify-content:center; font-size:0.7rem;"><i class="fas fa-check"></i></div>
+                            <span style="font-size:0.8rem; color:@(step >= 1 ? "#000" : "#999")">@(isAr ? "تم الطلب" : "Placed")</span>
                         </div>
-                        <div style="display:flex; justify-content:space-between; margin-top:10px; padding-top:10px; border-top:1px solid #ddd; font-size:1.2rem; color:var(--primary);">
-                            <strong>@(isAr ? "الإجمالي الكلي" : "Total")</strong>
-                            <strong>@Model.TotalAmount.ToString("N2") @(isAr ? "ج.م" : "EGP")</strong>
+                        <div style="z-index:1; text-align:center;">
+                            <div style="width:25px; height:25px; background:@(step >= 2 ? "var(--success)" : "#e2e8f0"); border-radius:50%; margin:0 auto 5px; color:#fff; display:flex; align-items:center; justify-content:center; font-size:0.7rem;"><i class="fas fa-box"></i></div>
+                            <span style="font-size:0.8rem; color:@(step >= 2 ? "#000" : "#999")">@(isAr ? "مؤكد" : "Confirmed")</span>
+                        </div>
+                        <div style="z-index:1; text-align:center;">
+                            <div style="width:25px; height:25px; background:@(step >= 3 ? "var(--success)" : "#e2e8f0"); border-radius:50%; margin:0 auto 5px; color:#fff; display:flex; align-items:center; justify-content:center; font-size:0.7rem;"><i class="fas fa-truck"></i></div>
+                            <span style="font-size:0.8rem; color:@(step >= 3 ? "#000" : "#999")">@(isAr ? "مشحون" : "Shipped")</span>
+                        </div>
+                        <div style="z-index:1; text-align:center;">
+                            <div style="width:25px; height:25px; background:@(step >= 4 ? "var(--success)" : "#e2e8f0"); border-radius:50%; margin:0 auto 5px; color:#fff; display:flex; align-items:center; justify-content:center; font-size:0.7rem;"><i class="fas fa-home"></i></div>
+                            <span style="font-size:0.8rem; color:@(step >= 4 ? "#000" : "#999")">@(isAr ? "مستلم" : "Delivered")</span>
                         </div>
                     </div>
                 </div>
+            }
+            else
+            {
+                <div style="padding:20px; background:#fee2e2; color:#dc2626; text-align:center; font-weight:bold;">
+                    <i class="fas fa-times-circle"></i> @(isAr ? "هذا الطلب ملغي" : "This order is cancelled")
+                </div>
+            }
+
+            <div class="checkout-items" style="max-height:none; padding:20px; background:#fff;">
+                @foreach (var item in Model.OrderItems)
+                {
+                    <div class="c-item" style="border-bottom:1px solid #f5f5f5; padding-bottom:15px; margin-bottom:15px;">
+                        <img src="~/@item.Product?.ImageUrl" onerror="this.src='/images/default.png'" style="width:60px; height:60px; object-fit:contain; border:1px solid #eee; border-radius:8px;">
+                        <div>
+                            <h4 style="font-size:1rem; margin-bottom:5px;">@(isAr? item.Product?.Name : item.Product?.NameEn)</h4>
+                            <small style="color:#666;">@(isAr ? "الكمية" : "Qty"): <strong>@item.Quantity</strong> x @item.UnitPrice.ToString("N0")</small>
+                        </div>
+                        <span style="font-weight:bold; color:var(--primary);">@((item.Quantity * item.UnitPrice).ToString("N0"))</span>
+                    </div>
+                }
             </div>
 
-            <div style="padding:20px; text-align:center; border-top:1px solid #eee;">
-                <button onclick="window.print()" class="btn btn-outline" style="border:1px solid #ccc; padding:10px 20px; border-radius:5px; background:none; cursor:pointer;">
-                    <i class="fas fa-print"></i> @(isAr ? "طباعة الفاتورة" : "Print Invoice")
-                </button>
-            </div>
+            <div style="background:#f9f9f9; padding:20px; border-top:1px solid #eee;">
+                <div class="cost-row">
+                    <span>@(isAr ? "عنوان التوصيل" : "Shipping Address")</span>
+                    <strong style="max-width:250px; text-align:@(isAr ? "left" : "right");">@Model.Governorate, @Model.City - @Model.Address</strong>
+                </div>
+                <div class="cost-row">
+                    <span>@(isAr ? "طريقة الدفع" : "Payment Method")</span>
+                    <strong>@(Model.PaymentMethod == "Cash" ? (isAr ? "دفع عند الاستلام" : "Cash") : (isAr ? "محفظة" : "Wallet"))</strong>
+                </div>
 
+                <div class="summary-divider"></div>
+
+                <div class="cost-row">
+                    <span>@(isAr ? "الشحن" : "Shipping")</span>
+                    <span>@Model.ShippingCost.ToString("N0")</span>
+                </div>
+                <div class="total-row" style="font-size:1.4rem;">
+                    <span>@(isAr ? "الإجمالي" : "Total")</span>
+                    <span>@Model.TotalAmount.ToString("N0") <small>@(isAr ? "ج.م" : "EGP")</small></span>
+                </div>
+            </div>
         </div>
+
     </div>
 </section>

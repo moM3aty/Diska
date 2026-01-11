@@ -3,64 +3,63 @@
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
     ViewData["Title"] = isAr ? "إتمام الطلب" : "Checkout";
 
-    // قيم افتراضية من الكنترولر (للتعبئة التلقائية)
-    string defaultName = ViewBag.ShopName ?? ViewBag.FullName;
-    string defaultPhone = ViewBag.Phone;
-    string defaultGov = ViewBag.Governorate;
-    string defaultCity = ViewBag.City;
-    string defaultAddress = ViewBag.Address;
+    // بيانات افتراضية من الكنترولر
+    string defName = ViewBag.ShopName ?? ViewBag.FullName;
+    string defPhone = ViewBag.Phone;
+    string defGov = ViewBag.Governorate;
+    string defCity = ViewBag.City;
+    string defAddr = ViewBag.Address;
 }
 
-<section class="section-padding">
+<section class="checkout-section section-padding">
     <div class="container">
-        <h2 class="page-title">@(isAr ? "بيانات الشحن والدفع" : "Shipping & Payment")</h2>
+        <h2 class="page-title">@(isAr ? "بيانات الشحن والدفع" : "Shipping & Payment") 🚚</h2>
 
         <div class="checkout-grid" style="display:grid; grid-template-columns: 1.5fr 1fr; gap:30px;">
 
-            <!-- Form -->
+            <!-- نموذج البيانات -->
             <div class="checkout-form" style="background:#fff; padding:30px; border-radius:12px; border:1px solid #eee;">
                 <form id="checkoutForm">
-                    <h3 style="margin-bottom:20px; font-size:1.2rem; color:var(--primary);">
-                        <i class="fas fa-map-marker-alt"></i> @(isAr ? "عنوان التوصيل" : "Shipping Address")
+                    <h3 style="margin-bottom:20px; color:var(--primary); font-size:1.2rem;">
+                        <i class="fas fa-map-marker-alt"></i> @(isAr ? "عنوان التوصيل" : "Delivery Address")
                     </h3>
 
                     <div class="form-group mb-3">
-                        <label>@(isAr ? "الاسم / اسم المحل" : "Name / Shop Name")</label>
-                        <input type="text" id="shopName" class="form-control" required placeholder="@(isAr ? "اسم المستلم" : "Receiver Name")" value="@defaultName">
+                        <label class="fw-bold mb-2">@(isAr ? "الاسم / اسم المحل" : "Name / Shop Name")</label>
+                        <input type="text" id="shopName" class="form-control" required placeholder="@(isAr ? "اسم المستلم" : "Receiver Name")" value="@defName">
                     </div>
 
                     <div class="form-group mb-3">
-                        <label>@(isAr ? "رقم الموبايل" : "Phone Number")</label>
-                        <input type="tel" id="phone" class="form-control" required placeholder="01xxxxxxxxx" value="@defaultPhone">
+                        <label class="fw-bold mb-2">@(isAr ? "رقم الموبايل" : "Phone Number")</label>
+                        <input type="tel" id="phone" class="form-control" required placeholder="01xxxxxxxxx" value="@defPhone" style="direction:ltr; text-align:@(isAr ? "right" : "left")">
                     </div>
 
-                    <div class="row" style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:15px;">
+                    <div class="row mb-3" style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
                         <div class="form-group">
-                            <label>@(isAr ? "المحافظة" : "Governorate")</label>
+                            <label class="fw-bold mb-2">@(isAr ? "المحافظة" : "Governorate")</label>
+                            <!-- يتم تعبئتها بواسطة JS (checkout-data.js) -->
                             <select id="govSelect" class="form-control" onchange="updateShippingCost()" required>
-                                <option value="" disabled selected>@(isAr ? "-- اختر المحافظة --" : "-- Select Governorate --")</option>
-                                <!-- يتم تعبئتها بواسطة JS -->
+                                <option value="" disabled selected>@(isAr ? "-- اختر --" : "-- Select --")</option>
                             </select>
-                            <!-- حقل مخفي لحفظ القيمة الافتراضية للـ JS -->
-                            <input type="hidden" id="savedGov" value="@defaultGov" />
+                            <input type="hidden" id="savedGov" value="@defGov">
                         </div>
                         <div class="form-group">
-                            <label>@(isAr ? "المدينة / المنطقة" : "City / Area")</label>
+                            <label class="fw-bold mb-2">@(isAr ? "المدينة / المنطقة" : "City / Area")</label>
                             <select id="citySelect" class="form-control" required disabled>
-                                <option value="" disabled selected>@(isAr ? "-- اختر المنطقة --" : "-- Select Area --")</option>
+                                <option value="" disabled selected>@(isAr ? "-- اختر المحافظة أولاً --" : "-- Select Gov First --")</option>
                             </select>
-                            <input type="hidden" id="savedCity" value="@defaultCity" />
+                            <input type="hidden" id="savedCity" value="@defCity">
                         </div>
                     </div>
 
                     <div class="form-group mb-4">
-                        <label>@(isAr ? "العنوان بالتفصيل" : "Detailed Address")</label>
-                        <input type="text" id="address" class="form-control" required placeholder="@(isAr ? "اسم الشارع - رقم العقار - علامة مميزة" : "Street - Building - Landmark")" value="@defaultAddress">
+                        <label class="fw-bold mb-2">@(isAr ? "العنوان بالتفصيل" : "Detailed Address")</label>
+                        <input type="text" id="address" class="form-control" required placeholder="@(isAr ? "اسم الشارع - رقم العقار - علامة مميزة" : "Street - Building - Landmark")" value="@defAddr">
                     </div>
 
                     <!-- وقت التوصيل -->
                     <div class="form-group mb-3">
-                        <label><i class="fas fa-clock"></i> @(isAr ? "وقت التوصيل المفضل" : "Preferred Delivery Time")</label>
+                        <label class="fw-bold mb-2"><i class="fas fa-clock"></i> @(isAr ? "وقت التوصيل المفضل" : "Preferred Delivery Time")</label>
                         <select id="deliverySlot" class="form-control">
                             <option value="Anytime">@(isAr ? "أي وقت (خلال اليوم)" : "Anytime (During Day)")</option>
                             <option value="Morning">@(isAr ? "صباحاً (10ص - 4م)" : "Morning (10AM - 4PM)")</option>
@@ -70,57 +69,58 @@
 
                     <!-- ملاحظات -->
                     <div class="form-group mb-4">
-                        <label><i class="fas fa-sticky-note"></i> @(isAr ? "ملاحظات إضافية" : "Order Notes")</label>
+                        <label class="fw-bold mb-2"><i class="fas fa-sticky-note"></i> @(isAr ? "ملاحظات إضافية" : "Order Notes")</label>
                         <textarea id="orderNotes" class="form-control" rows="2" placeholder="@(isAr ? "مثال: يرجى الاتصال قبل الوصول" : "Ex: Call before arrival")"></textarea>
                     </div>
 
-                    <h3 style="margin-bottom:20px; font-size:1.2rem; color:var(--primary);">
+                    <h3 style="margin:25px 0 15px; color:var(--primary); font-size:1.2rem;">
                         <i class="fas fa-wallet"></i> @(isAr ? "طريقة الدفع" : "Payment Method")
                     </h3>
 
                     <div class="payment-options">
                         <label class="payment-card selected" style="display:flex; align-items:center; gap:10px; padding:15px; border:1px solid #FACC15; background:#fffbeb; border-radius:8px; cursor:pointer; margin-bottom:10px;">
-                            <input type="radio" name="payment" value="Cash" checked>
+                            <input type="radio" name="payment" value="Cash" checked style="accent-color:var(--primary);">
                             <i class="fas fa-money-bill-wave" style="color:green;"></i>
                             <span>@(isAr ? "دفع عند الاستلام (كاش)" : "Cash on Delivery")</span>
                         </label>
-
-                        <!-- تم إزالة الشرط لأنه زائد، المستخدم مسجل دخول بالفعل -->
                         <label class="payment-card" style="display:flex; align-items:center; gap:10px; padding:15px; border:1px solid #ddd; border-radius:8px; cursor:pointer;">
-                            <input type="radio" name="payment" value="Wallet">
+                            <input type="radio" name="payment" value="Wallet" style="accent-color:var(--primary);">
                             <i class="fas fa-wallet" style="color:#3b82f6;"></i>
-                            <span>@(isAr ? "المحفظة الإلكترونية" : "Wallet Balance")</span>
+                            <span>@(isAr ? "خصم من المحفظة" : "Wallet Balance")</span>
                         </label>
                     </div>
                 </form>
             </div>
 
-            <!-- Summary -->
-            <div class="order-preview" style="background:#f8fafc; padding:25px; border-radius:12px; height:fit-content; border:1px solid #e2e8f0;">
-                <h3 style="margin-bottom:20px;">@(isAr ? "ملخص الفاتورة" : "Bill Summary")</h3>
+            <!-- ملخص الطلب -->
+            <div class="order-summary-box new-design" style="background:#f8fafc; padding:25px; border-radius:12px; height:fit-content; border:1px solid #e2e8f0;">
+                <h3 style="margin-bottom:20px;">@(isAr ? "ملخص الطلب" : "Order Summary")</h3>
 
-                <div id="checkoutItems" style="max-height:200px; overflow-y:auto; margin-bottom:20px; border-bottom:1px solid #ddd;">
-                    <!-- Items via JS -->
-                </div>
-
-                <div class="cost-row" style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                    <span>@(isAr ? "قيمة المنتجات" : "Subtotal")</span>
-                    <span id="subTotalDisplay">0.00</span>
-                </div>
-                <div class="cost-row" style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                    <span>@(isAr ? "مصاريف الشحن" : "Shipping")</span>
-                    <span id="shippingDisplay">50.00</span>
-                </div>
-                <hr>
-                <div class="cost-row total" style="display:flex; justify-content:space-between; margin-top:10px; font-size:1.3rem; font-weight:bold; color:var(--primary);">
-                    <span>@(isAr ? "الإجمالي الكلي" : "Grand Total")</span>
-                    <span id="grandTotalDisplay">0.00</span>
+                <div id="checkoutItems" class="checkout-items" style="max-height:250px; overflow-y:auto; margin-bottom:20px; border-bottom:1px solid #ddd;">
+                    <!-- Items Injected by JS -->
                 </div>
 
-                <button type="button" onclick="submitOrder()" class="btn primary w-100" style="margin-top:20px; padding:12px; font-size:1.1rem;">
-                    @(isAr ? "تأكيد الطلب" : "Confirm Order") <i class="fas fa-check-circle"></i>
+                <div style="background:#f9f9f9; padding:15px; border-top:1px solid #eee;">
+                    <div class="cost-row" style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                        <span>@(isAr ? "المجموع" : "Subtotal")</span>
+                        <span id="subTotalDisplay">0.00</span>
+                    </div>
+                    <div class="cost-row" style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                        <span>@(isAr ? "الشحن" : "Shipping")</span>
+                        <span id="shippingDisplay">0.00</span>
+                    </div>
+                    <hr>
+                    <div class="total-row" style="display:flex; justify-content:space-between; font-weight:bold; font-size:1.2rem; color:var(--primary);">
+                        <span>@(isAr ? "الإجمالي" : "Total")</span>
+                        <span id="grandTotalDisplay">0.00</span>
+                    </div>
+                </div>
+
+                <button type="button" onclick="submitOrder()" class="btn primary confirm-btn" style="width:100%; margin-top:20px; padding:12px; font-size:1.1rem; border-radius:8px;">
+                    @(isAr ? "تأكيد الطلب" : "Place Order") <i class="fas fa-check-circle"></i>
                 </button>
             </div>
+
         </div>
     </div>
 </section>
@@ -130,41 +130,59 @@
     <script src="~/js/cart.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // تهيئة السلة وعرض المنتجات
             renderCheckoutPreview();
 
-            // محاولة تحديد المحافظة المحفوظة تلقائياً
+            // منطق تبديل ستايل كروت الدفع
+            const paymentInputs = document.querySelectorAll('input[name="payment"]');
+            paymentInputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    document.querySelectorAll('.payment-card').forEach(c => {
+                        c.classList.remove('selected');
+                        c.style.borderColor = '#ddd';
+                        c.style.background = '#fff';
+                    });
+                    const parent = this.closest('.payment-card');
+                    parent.classList.add('selected');
+                    parent.style.borderColor = '#FACC15';
+                    parent.style.background = '#fffbeb';
+                });
+            });
+
+            // استرجاع العنوان المحفوظ (تأخير بسيط لضمان تحميل checkout-data.js)
             setTimeout(() => {
                 const savedGov = document.getElementById('savedGov').value;
                 const savedCity = document.getElementById('savedCity').value;
                 const govSelect = document.getElementById('govSelect');
                 const citySelect = document.getElementById('citySelect');
 
-                if (savedGov && govSelect) {
+                if(savedGov && govSelect.querySelector(`option[value="${savedGov}"]`)) {
                     govSelect.value = savedGov;
                     // تفعيل حدث التغيير لملء المدن
-                    const event = new Event('change');
-                    govSelect.dispatchEvent(event);
+                    govSelect.dispatchEvent(new Event('change'));
 
-                    // تحديد المدينة بعد ملء القائمة
-                    if (savedCity) {
-                        citySelect.value = savedCity;
+                    if(savedCity) {
+                        setTimeout(() => {
+                             if(citySelect.querySelector(`option[value="${savedCity}"]`)) {
+                                 citySelect.value = savedCity;
+                                 if(typeof updateShippingCost === 'function') updateShippingCost();
+                             }
+                        }, 100);
                     }
-
-                    // تحديث الشحن
-                    updateShippingCost();
-                } else {
-                    // حساب مبدئي (القاهرة افتراضياً إذا لم يوجد عنوان)
-                    updateShippingCost();
                 }
-            }, 500); // تأخير بسيط لضمان تحميل البيانات
+            }, 500);
         });
 
+        // دالة إرسال الطلب (تستدعي الـ API في CartController)
         async function submitOrder() {
             const form = document.getElementById('checkoutForm');
             if (!form.checkValidity()) { form.reportValidity(); return; }
 
             const cart = JSON.parse(localStorage.getItem('DISKA_CART')) || [];
-            if (cart.length === 0) { alert("السلة فارغة!"); return; }
+            if (cart.length === 0) {
+                Swal.fire({ icon: 'warning', title: '@(isAr ? "تنبيه" : "Warning")', text: '@(isAr ? "السلة فارغة!" : "Cart is empty!")' });
+                return;
+            }
 
             const shippingText = document.getElementById('shippingDisplay').innerText;
 
@@ -178,13 +196,15 @@
                 notes: document.getElementById('orderNotes')?.value || "",
                 paymentMethod: document.querySelector('input[name="payment"]:checked').value,
                 shippingCost: parseFloat(shippingText) || 0,
-                items: cart.map(i => ({ id: i.id, qty: i.qty, price: i.price }))
+                items: cart.map(i => ({ id: i.id, qty: i.qty }))
             };
 
+            const btn = document.querySelector('.confirm-btn');
+            const originalText = btn.innerHTML;
+
             try {
-                const btn = document.querySelector('button[onclick="submitOrder()"]');
                 btn.disabled = true;
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التنفيذ...';
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> @(isAr ? "جاري التنفيذ..." : "Processing...")';
 
                 const response = await fetch('/Cart/PlaceOrder', {
                     method: 'POST',
@@ -196,21 +216,17 @@
 
                 if (result.success) {
                     localStorage.removeItem('DISKA_CART');
-                    if(result.redirectUrl) {
-                        window.location.href = result.redirectUrl;
-                    } else {
-                        window.location.href = `/Cart/OrderSuccess?id=${result.orderId}`;
-                    }
+                    window.location.href = `/Cart/OrderSuccess?id=${result.orderId}`;
                 } else {
-                    alert("خطأ: " + result.message);
+                    Swal.fire({ icon: 'error', title: '@(isAr ? "خطأ" : "Error")', text: result.message });
                     btn.disabled = false;
-                    btn.innerHTML = 'تأكيد الطلب';
+                    btn.innerHTML = originalText;
                 }
             } catch (e) {
                 console.error(e);
-                alert("فشل الاتصال بالخادم");
+                Swal.fire({ icon: 'error', title: '@(isAr ? "خطأ" : "Error")', text: '@(isAr ? "فشل الاتصال بالخادم" : "Server Connection Failed")' });
                 btn.disabled = false;
-                btn.innerHTML = 'تأكيد الطلب';
+                btn.innerHTML = originalText;
             }
         }
     </script>

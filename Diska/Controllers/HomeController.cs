@@ -3,6 +3,7 @@ using Diska.Data;
 using Microsoft.EntityFrameworkCore;
 using Diska.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Localization;
 
 namespace Diska.Controllers
 {
@@ -17,16 +18,21 @@ namespace Diska.Controllers
 
         public async Task<IActionResult> Index()
         {
-            ViewBag.Categories = await _context.Categories.ToListAsync();
+            ViewBag.Categories = await _context.Categories
+                .Where(c => c.IsActive && c.ParentId == null)
+                .OrderBy(c => c.DisplayOrder)
+                .Take(8)
+                .ToListAsync();
 
             ViewBag.Banners = await _context.Banners
-                .Where(b => b.IsActive)
-                .OrderBy(b => b.DisplayOrder)
+                .Where(b => b.IsActive && b.StartDate <= DateTime.Now && b.EndDate >= DateTime.Now)
+                .OrderBy(b => b.Priority)
                 .ToListAsync();
 
             var products = await _context.Products
                 .Include(p => p.Category)
-                .Where(p => p.StockQuantity > 0 && p.IsActive)
+                .Include(p => p.Merchant)
+                .Where(p => p.Status == "Active" && p.StockQuantity > 0)
                 .OrderByDescending(p => p.Id)
                 .Take(12)
                 .ToListAsync();
@@ -39,38 +45,54 @@ namespace Diska.Controllers
             if (string.IsNullOrWhiteSpace(query)) return RedirectToAction(nameof(Index));
 
             ViewBag.SearchQuery = query;
-            ViewBag.Categories = await _context.Categories.ToListAsync();
 
             var products = await _context.Products
                 .Include(p => p.Category)
-                .Where(p => (p.Name.Contains(query) || p.NameEn.Contains(query) || p.Description.Contains(query)) && p.IsActive)
-                .Where(p => p.StockQuantity > 0)
+                .Include(p => p.Merchant)
+                .Where(p => p.Status == "Active" &&
+                            (p.Name.Contains(query) || p.NameEn.Contains(query) ||
+                             p.Description.Contains(query) || p.SKU.Contains(query)))
                 .ToListAsync();
 
-            return View("Index", products);
+            ViewBag.CategoryName = "نتائج البحث";
+            return View("~/Views/Product/Category.cshtml", products);
         }
 
         public async Task<IActionResult> Deals()
         {
             var deals = await _context.GroupDeals
                 .Include(d => d.Product)
-                .Where(d => d.IsActive)
+                .Where(d => d.IsActive && d.StartDate <= DateTime.Now && d.EndDate >= DateTime.Now)
+                .OrderBy(d => d.EndDate)
                 .ToListAsync();
             return View(deals);
         }
 
-        [Authorize]
-        public IActionResult Notifications()
-        {
-            return RedirectToAction("Index", "Notification");
-        }
-
-        public IActionResult Privacy() => View();
         public IActionResult About() => View();
-        public IActionResult Contact() => View();
+        public IActionResult Contact() => View(); // تم الاستغناء عنه لصالح ContactController ولكن لا بأس بوجوده كتحويل
         public IActionResult FAQ() => View();
         public IActionResult Policies() => View();
-        public IActionResult Terms() => View(); 
-        public IActionResult MerchantLanding() => View();
+
+        public IActionResult MerchantLanding()
+        {
+            // إذا كان المستخدم تاجراً بالفعل، نوجهه للوحته بدلاً من صفحة البيع
+            if (User.IsInRole("Merchant"))
+            {
+                return RedirectToAction("Index", "Dashboard", new { area = "Merchant" });
+            }
+            return View();
+        }
+
+        [HttpPost]
+        public IActionResult SetLanguage(string culture, string returnUrl)
+        {
+            Response.Cookies.Append(
+                CookieRequestCultureProvider.DefaultCookieName,
+                CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(culture)),
+                new CookieOptions { Expires = DateTimeOffset.UtcNow.AddYears(1) }
+            );
+
+            return LocalRedirect(returnUrl ?? "/");
+        }
     }
 }

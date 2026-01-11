@@ -5,54 +5,87 @@
     int totalResponses = Model.Responses?.Count ?? 0;
 }
 
-<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+<div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h2 style="margin:0;">نتائج: @Model.Title</h2>
-        <p style="color:#666; margin-top:5px;">إجمالي المشاركات: <strong>@totalResponses</strong></p>
+        <h2 class="text-primary fw-bold mb-1">نتائج: @Model.Title</h2>
+        <span class="text-muted">إجمالي المشاركات: <strong class="text-dark">@totalResponses</strong></span>
     </div>
-    <a asp-action="Index" class="btn btn-outline">عودة للقائمة</a>
+    <a asp-action="Index" class="btn btn-outline-secondary">عودة</a>
 </div>
 
-<div class="survey-results-grid" style="display:grid; gap:20px;">
-    @foreach (var question in Model.Questions)
+<div class="row g-4">
+    @foreach (var q in Model.Questions)
     {
-        <div class="card" style="padding:20px;">
-            <h4 style="margin-top:0; color:var(--primary); border-bottom:1px solid #eee; padding-bottom:10px;">@question.QuestionText</h4>
+        <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom-0 pb-0 pt-3">
+                    <h6 class="fw-bold mb-0">@q.QuestionText</h6>
+                    <small class="text-muted">Type: @q.Type</small>
+                </div>
+                <div class="card-body">
 
-            <div class="answers-list" style="max-height:300px; overflow-y:auto;">
-                @if (totalResponses == 0)
-                {
-                    <p style="color:#999;">لا توجد إجابات حتى الآن.</p>
-                }
-                else
-                {
-                    // تحليل الإجابات بناءً على النوع (بسيط للعرض)
-                    // في الوضع الحقيقي يتم معالجة JSON في الكنترولر
-                    <table style="width:100%; border-collapse:collapse;">
-                        <thead>
-                            <tr style="background:#f8f9fa;">
-                                <th style="padding:10px; text-align:right;">الإجابة</th>
-                                <th style="padding:10px; text-align:right;">المستخدم</th>
-                                <th style="padding:10px; text-align:right;">التاريخ</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var response in Model.Responses)
+                    @if (totalResponses == 0)
+                    {
+                        <p class="text-muted small">لا توجد بيانات.</p>
+                    }
+                    else
+                    {
+                        var answers = new List<string>();
+                        foreach (var r in Model.Responses)
+                        {
+                            try
                             {
-                                // استخراج الإجابة الخاصة بهذا السؤال من JSON
-                                var answers = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(response.AnswerJson);
-                                var key = $"q_{question.Id}";
-                                var answerText = answers != null && answers.ContainsKey(key) ? answers[key] : "-";
+                                var json = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(r.AnswerJson);
+                                var key = $"q_{q.Id}"; // المفتاح المستخدم في الـ Form سابقاً
+                                // لاحظ: في الكنترولر حفظنا الـ Id في الـ Form كـ name="q_ID"
+                                // لذا نبحث عنه هنا
 
-                                <tr>
-                                    <td style="padding:10px; border-bottom:1px solid #eee;">@answerText</td>
-                                    <td style="padding:10px; border-bottom:1px solid #eee; font-size:0.9rem; color:#666;">@response.UserId</td>
-                                    <td style="padding:10px; border-bottom:1px solid #eee; font-size:0.8rem;">@response.SubmittedAt.ToString("yyyy-MM-dd")</td>
-                                </tr>
+                                // بما أننا لم نستخدم اسم ثابت في Create، سنفترض أننا حفظنا البيانات بصيغة معينة
+                                // للتبسيط، سنقوم بعمل Loop بسيط للوصول للبيانات
+                                if (json != null && json.ContainsKey(key))
+                                {
+                                    answers.Add(json[key]);
+                                }
                             }
-                        </tbody>
-                    </table>
-                }
+                            catch { }
+                        }
+
+                        if (q.Type == "Star" || q.Type == "YesNo" || q.Type == "MCQ")
+                        {
+                            var groups = answers.GroupBy(x => x)
+                            .Select(g => new { Answer = g.Key, Count = g.Count(), Percent = (g.Count() * 100) / totalResponses })
+                            .OrderByDescending(g => g.Count);
+
+                            foreach (var g in groups)
+                            {
+                                <div class="mb-2">
+                                    <div class="d-flex justify-content-between small mb-1">
+                                        <span>@g.Answer</span>
+                                        <span class="fw-bold">@g.Count (@g.Percent%)</span>
+                                    </div>
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar bg-primary" role="progressbar" style="width: @g.Percent%"></div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else // Text
+                        {
+                            <div class="bg-light p-2 rounded" style="max-height: 150px; overflow-y: auto;">
+                                <ul class="list-unstyled mb-0 small">
+                                    @foreach (var txt in answers.Take(10))
+                                    {
+                                        <li class="border-bottom py-1">@txt</li>
+                                    }
+                                </ul>
+                                @if (answers.Count > 10)
+                                {
+                                    <span class="text-muted x-small">... والمزيد</span>
+                                }
+                            </div>
+                        }
+                    }
+                </div>
             </div>
         </div>
     }

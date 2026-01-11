@@ -11,162 +11,191 @@
     </a>
 </div>
 
-<div style="display:grid; grid-template-columns: 1fr 2fr; gap:25px;">
-
-    <!-- Info Card -->
-    <div>
-        <div class="card" style="text-align:center;">
-            <div style="width:100px; height:100px; background:#f1f5f9; border-radius:50%; margin:0 auto 15px; display:flex; align-items:center; justify-content:center; font-size:2.5rem; color:var(--primary);">
-                <i class="fas fa-user"></i>
-            </div>
-            <h3 style="margin:0; color:var(--primary);">@Model.User.FullName</h3>
-            <p style="color:#64748b; margin:5px 0;">@Model.User.PhoneNumber</p>
-
-            <div style="margin:15px 0; padding:10px; background:#f8fafc; border-radius:10px; border:1px solid #e2e8f0;">
-                <span style="display:block; font-size:0.8rem; color:#64748b;">الصلاحية الحالية</span>
-                <strong style="color:var(--text-dark);">@role</strong>
-            </div>
-
-            @if (role == "Merchant")
-            {
-                <div style="margin-bottom:15px; text-align:right;">
-                    <p style="margin:5px 0;"><strong>المحل:</strong> @Model.User.ShopName</p>
-                    <p style="margin:5px 0;"><strong>السجل التجاري:</strong> @Model.User.CommercialRegister</p>
-                    <p style="margin:5px 0;"><strong>البطاقة الضريبية:</strong> @Model.User.TaxCard</p>
-                    <hr style="margin:10px 0; border-top:1px solid #eee;">
-                    <form asp-action="ToggleVerification" method="post">
-                        <input type="hidden" name="id" value="@Model.User.Id" />
-                        @if (Model.User.IsVerifiedMerchant)
-                        {
-                            <button class="btn btn-danger w-100" style="background:#fee2e2; color:#dc2626; border:none;">إيقاف التوثيق</button>
-                        }
-                        else
-                        {
-                            <button class="btn btn-primary w-100" style="background:#dcfce7; color:#166534; border:none;">توثيق الحساب</button>
-                        }
-                    </form>
+<div class="row g-4">
+    <!-- Left: Profile Info -->
+    <div class="col-md-4">
+        <div class="card text-center mb-4">
+            <div class="card-body">
+                <div style="width:100px; height:100px; background:#f1f5f9; border-radius:50%; margin:0 auto 15px; display:flex; align-items:center; justify-content:center; font-size:2.5rem; color:var(--primary);">
+                    @(Model.User.FullName?.FirstOrDefault().ToString().ToUpper())
                 </div>
-            }
+                <h3 class="card-title text-primary">@Model.User.FullName</h3>
+                <p class="text-muted">@Model.User.PhoneNumber</p>
 
-            <hr style="margin:20px 0; border-top:1px solid #eee;">
-
-            <!-- Change Role -->
-            <form asp-action="ChangeRole" method="post">
-                <input type="hidden" name="id" value="@Model.User.Id" />
-                <label style="text-align:right; font-size:0.9rem;">تغيير الصلاحية:</label>
-                <div style="display:flex; gap:5px; margin-top:5px;">
-                    <select name="newRole" class="form-control" style="padding:8px;">
-                        <option value="Customer" selected="@(role == "Customer")">عميل</option>
-                        <option value="Merchant" selected="@(role == "Merchant")">تاجر</option>
-                        <option value="Admin" selected="@(role == "Admin")">أدمن</option>
-                    </select>
-                    <button class="btn btn-primary" style="padding:8px 15px;">حفظ</button>
+                <div class="bg-light rounded p-2 mb-3 border">
+                    <small class="text-muted d-block">الصلاحية</small>
+                    <strong>@role</strong>
                 </div>
-            </form>
+
+                @if (role == "Merchant")
+                {
+                    <div class="text-end text-muted small border-top pt-2">
+                        <p class="mb-1"><strong>المحل:</strong> @Model.User.ShopName</p>
+                        <p class="mb-2"><strong>السجل:</strong> @Model.User.CommercialRegister</p>
+
+                        <form asp-action="ToggleVerification" method="post">
+                            <input type="hidden" name="id" value="@Model.User.Id" />
+                            @if (Model.User.IsVerifiedMerchant)
+                            {
+                                <button class="btn btn-danger btn-sm w-100">إلغاء التوثيق</button>
+                            }
+                            else
+                            {
+                                <button class="btn btn-success btn-sm w-100">توثيق الحساب</button>
+                            }
+                        </form>
+                    </div>
+                }
+            </div>
         </div>
 
-        <!-- Wallet Management -->
+        <!-- Wallet Actions -->
         <div class="card">
-            <h4 style="margin-top:0; color:var(--primary);"><i class="fas fa-wallet"></i> إدارة المحفظة</h4>
-            <div style="text-align:center; margin:20px 0;">
-                <span style="font-size:2rem; font-weight:bold; color:green;">@Model.User.WalletBalance.ToString("N2")</span> <small>ج.م</small>
+            <div class="card-body">
+                <h5 class="card-title text-primary"><i class="fas fa-wallet"></i> المحفظة</h5>
+                <div class="text-center my-3">
+                    <h2 class="text-success fw-bold">@Model.User.WalletBalance.ToString("N0") <small class="fs-6">ج.م</small></h2>
+                </div>
+                <button onclick="document.getElementById('balanceForm').style.display='block'; this.style.display='none';" class="btn btn-outline-secondary w-100 btn-sm">تعديل الرصيد</button>
+
+                <form id="balanceForm" asp-action="ManageBalance" method="post" style="display:none;" class="mt-3 bg-light p-3 rounded">
+                    <input type="hidden" name="id" value="@Model.User.Id" />
+                    <div class="btn-group w-100 mb-2" role="group">
+                        <input type="radio" class="btn-check" name="type" id="typeAdd" value="add" checked>
+                        <label class="btn btn-outline-success btn-sm" for="typeAdd">إيداع (+)</label>
+                        <input type="radio" class="btn-check" name="type" id="typeDeduct" value="deduct">
+                        <label class="btn btn-outline-danger btn-sm" for="typeDeduct">خصم (-)</label>
+                    </div>
+                    <input type="number" name="amount" class="form-control form-control-sm mb-2" placeholder="المبلغ" required>
+                    <input type="text" name="reason" class="form-control form-control-sm mb-2" placeholder="السبب" required>
+                    <button class="btn btn-primary btn-sm w-100">تنفيذ</button>
+                </form>
             </div>
-
-            <button onclick="document.getElementById('balanceForm').style.display='block'" class="btn btn-outline w-100">تعديل الرصيد (إضافة/خصم)</button>
-
-            <form id="balanceForm" asp-action="ManageBalance" method="post" style="display:none; margin-top:15px; background:#f8fafc; padding:15px; border-radius:10px;">
-                <input type="hidden" name="id" value="@Model.User.Id" />
-                <div style="margin-bottom:10px;">
-                    <label style="font-size:0.8rem;">المبلغ (سالب للخصم)</label>
-                    <input type="number" name="amount" class="form-control" placeholder="مثال: 100 أو -50" required />
-                </div>
-                <div style="margin-bottom:10px;">
-                    <label style="font-size:0.8rem;">السبب</label>
-                    <input type="text" name="reason" class="form-control" placeholder="سبب العملية" required />
-                </div>
-                <button class="btn btn-primary w-100">تنفيذ</button>
-            </form>
         </div>
     </div>
 
-    <!-- Right Side: Activity -->
-    <div>
+    <!-- Right: Tabs (Activity & Logs) -->
+    <div class="col-md-8">
         <div class="card">
-            <h4 style="margin-top:0; margin-bottom:20px; color:#475569;">آخر الطلبات (@ViewBag.OrdersCount)</h4>
+            <div class="card-header bg-white">
+                <ul class="nav nav-tabs card-header-tabs" id="userTabs" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#orders">الطلبات (@ViewBag.OrdersCount)</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#wallet">المعاملات المالية</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#login">سجل الدخول 🔒</button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body tab-content">
 
-            @if (Model.Orders.Any())
-            {
-                <table style="width:100%; font-size:0.9rem;">
-                    <thead>
-                        <tr style="background:#f8fafc;">
-                            <th>رقم الطلب</th>
-                            <th>التاريخ</th>
-                            <th>المبلغ</th>
-                            <th>الحالة</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var order in Model.Orders)
-                        {
-                            <tr>
-                                <td>#@order.Id</td>
-                                <td>@order.OrderDate.ToString("yyyy/MM/dd")</td>
-                                <td>@order.TotalAmount.ToString("N0")</td>
-                                <td>
-                                    @{
-                                        var bg = order.Status == "Pending" ? "#fffbeb" : "#dcfce7";
-                                        var clr = order.Status == "Pending" ? "#d97706" : "#166534";
+                <!-- Orders Tab -->
+                <div class="tab-pane fade show active" id="orders">
+                    @if (Model.Orders.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light"><tr><th>#</th><th>التاريخ</th><th>المبلغ</th><th>الحالة</th></tr></thead>
+                                <tbody>
+                                    @foreach (var o in Model.Orders)
+                                    {
+                                        <tr>
+                                            <td>#@o.Id</td>
+                                            <td>@o.OrderDate.ToString("yyyy-MM-dd")</td>
+                                            <td>@o.TotalAmount.ToString("N0")</td>
+                                            <td><span class="badge bg-secondary">@o.Status</span></td>
+                                        </tr>
                                     }
-                                    <span class="badge" style="background:@bg; color:@clr;">@order.Status</span>
-                                </td>
-                                <td>
-                                    <a asp-controller="Dashboard" asp-action="OrderDetails" asp-route-id="@order.Id" class="btn btn-outline" style="padding:4px 8px; font-size:0.75rem;">عرض</a>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            }
-            else
-            {
-                <p style="color:#999; text-align:center;">لا توجد طلبات سابقة.</p>
-            }
-        </div>
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
 
-        <div class="card">
-            <h4 style="margin-top:0; margin-bottom:20px; color:#475569;">سجل المعاملات المالية</h4>
+                        <p class="text-center text-muted py-3">لا توجد طلبات.</p>
+                    }
+                </div>
 
-            @if (Model.Transactions.Any())
-            {
-                <table style="width:100%; font-size:0.9rem;">
-                    <thead>
-                        <tr style="background:#f8fafc;">
-                            <th>العملية</th>
-                            <th>المبلغ</th>
-                            <th>الوصف</th>
-                            <th>التاريخ</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var trans in Model.Transactions)
-                        {
-                            <tr>
-                                <td>@trans.Type</td>
-                                <td style="font-weight:bold; color:@(trans.Amount > 0 ? "green" : "red")">
-                                    @(trans.Amount > 0 ? "+" : "")@trans.Amount.ToString("N0")
-                                </td>
-                                <td style="font-size:0.85rem; color:#666;">@trans.Description</td>
-                                <td style="font-size:0.85rem; color:#999;">@trans.TransactionDate.ToString("yyyy/MM/dd")</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            }
-            else
-            {
-                <p style="color:#999; text-align:center;">لا توجد معاملات مالية.</p>
-            }
+                <!-- Wallet Tab -->
+                <div class="tab-pane fade" id="wallet">
+                    @if (Model.Transactions.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light"><tr><th>العملية</th><th>المبلغ</th><th>التاريخ</th><th>البيان</th></tr></thead>
+                                <tbody>
+                                    @foreach (var t in Model.Transactions)
+                                    {
+                                        <tr>
+                                            <td>@(t.Type == "Deposit" ? "إيداع" : "خصم")</td>
+                                            <td class="@(t.Amount > 0 ? "text-success" : "text-danger")">@t.Amount.ToString("N0")</td>
+                                            <td>@t.TransactionDate.ToString("yyyy-MM-dd")</td>
+                                            <td class="small">@t.Description</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+
+                        <p class="text-center text-muted py-3">لا توجد معاملات.</p>
+                    }
+                </div>
+
+                <!-- Login History Tab (New) -->
+                <div class="tab-pane fade" id="login">
+                    @if (Model.LoginLogs != null && Model.LoginLogs.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>وقت الدخول</th>
+                                        <th>IP Address</th>
+                                        <th>الجهاز / المتصفح</th>
+                                        <th>الحالة</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var log in Model.LoginLogs)
+                                    {
+                                        <tr>
+                                            <td>@log.LoginTime.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                            <td><span class="font-monospace">@log.IpAddress</span></td>
+                                            <td class="small">@log.DeviceInfo</td>
+                                            <td>
+                                                @if (log.IsSuccess)
+                                                {
+                                                    <span class="badge bg-success">ناجح</span>
+                                                }
+                                                else
+                                                {
+
+                                                    <span class="badge bg-danger" title="@log.FailureReason">فشل</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4 text-muted">
+                            <i class="fas fa-history fa-2x mb-2 opacity-50"></i>
+                            <p>سجل الدخول غير متوفر أو فارغ لهذا المستخدم.</p>
+                        </div>
+                    }
+                </div>
+
+            </div>
         </div>
     </div>
 </div>

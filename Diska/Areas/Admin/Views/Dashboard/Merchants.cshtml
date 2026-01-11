@@ -4,53 +4,65 @@
     Layout = "_AdminLayout";
 }
 
-<h2 style="margin-bottom:20px;">التجار المسجلين</h2>
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+    <h2 style="margin:0; color:var(--primary);">التجار المسجلين</h2>
+    <span class="badge" style="background:#e0f2fe; color:#0284c7; font-size:0.9rem;">العدد: @Model.Count()</span>
+</div>
 
 <div class="card">
-    <table>
-        <thead>
-            <tr>
-                <th>اسم التاجر</th>
-                <th>اسم المحل</th>
-                <th>رقم الهاتف</th>
-                <th>السجل التجاري</th>
-                <th>الحالة</th>
-                <th>إجراءات</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var merchant in Model)
-            {
+    <div class="table-responsive">
+        <table class="table" style="width:100%;">
+            <thead>
                 <tr>
-                    <td>@merchant.FullName</td>
-                    <td>@merchant.ShopName</td>
-                    <td>@merchant.PhoneNumber</td>
-                    <td>@merchant.CommercialRegister</td>
-                    <td>
-                        @if (merchant.IsVerifiedMerchant)
-                        {
-                            <span class="badge" style="background:#dcfce7; color:#16a34a;">موثق ✅</span>
-                        }
-                        else
-                        {
-                            <span class="badge" style="background:#fffbeb; color:#d97706;">قيد المراجعة ⏳</span>
-                        }
-                    </td>
-                    <td>
-                        <form asp-action="ToggleMerchantStatus" method="post">
-                            <input type="hidden" name="id" value="@merchant.Id" />
+                    <th>اسم التاجر</th>
+                    <th>اسم المحل</th>
+                    <th>رقم الهاتف</th>
+                    <th>السجل التجاري</th>
+                    <th>الحالة</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var merchant in Model)
+                {
+                    <tr>
+                        <td>
+                            <strong>@merchant.FullName</strong>
+                        </td>
+                        <td>
+                            <span style="color:var(--primary); font-weight:bold;">
+                                <i class="fas fa-store"></i> @merchant.ShopName
+                            </span>
+                        </td>
+                        <td>@merchant.PhoneNumber</td>
+                        <td>@merchant.CommercialRegister</td>
+                        <td>
                             @if (merchant.IsVerifiedMerchant)
                             {
-                                <button type="submit" class="btn" style="background:#fee2e2; color:#dc2626; font-size:0.8rem; padding:5px 10px;">إلغاء التوثيق</button>
+                                <span class="badge" style="background:#dcfce7; color:#16a34a;">موثق <i class="fas fa-check-circle"></i></span>
                             }
                             else
                             {
-                                <button type="submit" class="btn" style="background:#dcfce7; color:#16a34a; font-size:0.8rem; padding:5px 10px;">توثيق الحساب</button>
+                                <span class="badge" style="background:#fffbeb; color:#d97706;">قيد المراجعة <i class="fas fa-clock"></i></span>
                             }
-                        </form>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+                        </td>
+                        <td>
+                            <form asp-controller="Users" asp-action="ToggleVerification" method="post">
+                                <input type="hidden" name="id" value="@merchant.Id" />
+                                @if (merchant.IsVerifiedMerchant)
+                                {
+                                    <button type="submit" class="btn small" style="background:#fee2e2; color:#dc2626; font-size:0.8rem; padding:6px 12px; width:100%;">إلغاء التوثيق</button>
+                                }
+                                else
+                                {
+                                    <button type="submit" class="btn small" style="background:#10b981; color:#fff; font-size:0.8rem; padding:6px 12px; width:100%;">توثيق الحساب</button>
+                                }
+                            </form>
+                            <a asp-controller="Users" asp-action="Details" asp-route-id="@merchant.Id" class="btn btn-outline small" style="margin-top:5px; width:100%; justify-content:center;">التفاصيل</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 </div>

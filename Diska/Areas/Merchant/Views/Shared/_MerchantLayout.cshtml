@@ -1,0 +1,194 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using System.Globalization
+@inject UserManager<Diska.Models.ApplicationUser> UserManager
+@{
+    var user = await UserManager.GetUserAsync(User);
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    string dir = isAr ? "rtl" : "ltr";
+    string lang = isAr ? "ar" : "en";
+}
+<!DOCTYPE html>
+<html lang="@lang" dir="@dir">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - لوحة التاجر</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .sidebar {
+            width: 260px;
+            background-color: #1e293b;
+            color: #fff;
+            min-height: 100vh;
+            position: fixed;
+            right: 0;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .content-wrapper {
+            margin-right: 260px;
+            padding: 30px;
+            transition: 0.3s;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        .nav-link {
+            color: #cbd5e1;
+            padding: 12px 20px;
+            border-right: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+            .nav-link:hover, .nav-link.active {
+                background: #334155;
+                color: #fff;
+                border-right-color: #FACC15;
+            }
+
+            .nav-link i {
+                width: 25px;
+                text-align: center;
+            }
+
+        .menu-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: #64748b;
+            padding: 20px 20px 5px;
+            font-weight: bold;
+        }
+
+        .stat-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+        }
+
+        .top-bar {
+            background: #fff;
+            padding: 15px 30px;
+            margin-bottom: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        @@media (max-width: 768px) {
+            .sidebar
+
+        {
+            transform: translateX(100%);
+        }
+
+        .content-wrapper {
+            margin-right: 0;
+        }
+
+        }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h4 class="mb-0 fw-bold">DISKA <span class="text-warning small">Merchant</span></h4>
+        </div>
+        <div class="py-3">
+            <a href="/Merchant/Dashboard" class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Dashboard" ? "active" : "")">
+                <i class="fas fa-home"></i> <span>الرئيسية</span>
+            </a>
+
+            <div class="menu-label">إدارة المتجر</div>
+            <a href="/Merchant/Product" class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Product" ? "active" : "")">
+                <i class="fas fa-box"></i> <span>منتجاتي</span>
+            </a>
+            <a href="/Merchant/Orders" class="nav-link">
+                <i class="fas fa-shopping-bag"></i> <span>الطلبات الواردة</span>
+            </a>
+            <a href="/Merchant/Restock" class="nav-link">
+                <i class="fas fa-boxes"></i> <span>نواقص المخزون</span>
+            </a>
+
+            <div class="menu-label">التواصل والمالية</div>
+            <a href="/Merchant/Requests" class="nav-link">
+                <i class="fas fa-bullhorn"></i> <span>طلبات خاصة</span>
+            </a>
+            <a href="/Merchant/Wallet" class="nav-link">
+                <i class="fas fa-wallet"></i> <span>المحفظة</span>
+            </a>
+            <a href="/Merchant/Reviews" class="nav-link">
+                <i class="fas fa-star"></i> <span>التقييمات</span>
+            </a>
+            <a href="/Merchant/Users" class="nav-link">
+                <i class="fas fa-users"></i> <span>فريق العمل</span>
+            </a>
+
+            <div class="menu-label">الإعدادات</div>
+            <a href="/Merchant/Profile" class="nav-link">
+                <i class="fas fa-user-circle"></i> <span>الملف الشخصي</span>
+            </a>
+            <a href="/Account/Logout" class="nav-link text-danger">
+                <i class="fas fa-sign-out-alt"></i> <span>خروج</span>
+            </a>
+        </div>
+    </nav>
+
+    <div class="content-wrapper">
+        <div class="top-bar">
+            <div class="d-flex align-items-center">
+                <h5 class="mb-0 fw-bold text-primary">@ViewData["Title"]</h5>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <span class="badge bg-warning text-dark">@user?.ShopName</span>
+                <div class="d-flex align-items-center gap-2">
+                    <img src="https://ui-avatars.com/api/?name=@user?.FullName&background=random" class="rounded-circle" width="35">
+                    <span class="fw-bold small d-none d-md-block">@user?.FullName</span>
+                </div>
+            </div>
+        </div>
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show">
+                @TempData["Success"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show">
+                @TempData["Error"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        @RenderBody()
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

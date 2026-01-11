@@ -4,116 +4,181 @@
     Layout = "_AdminLayout";
 }
 
-<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
     <div>
         <h2 style="margin:0; color:var(--primary);">المستخدمين والصلاحيات</h2>
-        <p style="color:#64748b; margin-top:5px;">إدارة العملاء، التجار، وفريق العمل</p>
+        <span class="badge" style="background:#e0f2fe; color:#0284c7;">إجمالي: <span id="userCount">@Model.Count()</span></span>
     </div>
 
-    <div class="btn-group">
-        <a asp-action="Index" asp-route-role="All" class="btn btn-outline @(ViewBag.CurrentRole == "All" ? "active" : "")" style="border-radius:0 6px 6px 0;">الكل</a>
-        <a asp-action="Index" asp-route-role="Merchant" class="btn btn-outline @(ViewBag.CurrentRole == "Merchant" ? "active" : "")" style="border-radius:0;">التجار</a>
-        <a asp-action="Index" asp-route-role="Customer" class="btn btn-outline @(ViewBag.CurrentRole == "Customer" ? "active" : "")" style="border-radius:6px 0 0 6px;">العملاء</a>
+    <div style="display:flex; gap:10px;">
+        <a asp-action="Permissions" class="btn btn-outline-secondary">
+            <i class="fas fa-shield-alt"></i> مصفوفة الصلاحيات
+        </a>
+    </div>
+</div>
+
+<!-- أدوات البحث والفلترة -->
+<div class="card" style="margin-bottom:20px; padding:15px;">
+    <div style="display:flex; gap:15px; align-items:center; flex-wrap:wrap;">
+        <div style="flex:1; min-width:250px;">
+            <div class="input-group" style="position:relative;">
+                <input type="text" id="userSearch" class="form-control" placeholder="بحث بالاسم، الهاتف، أو المحل..." onkeyup="filterUsers()" style="padding-left: 35px;">
+                <i class="fas fa-search" style="position:absolute; left:10px; top:12px; color:#999;"></i>
+            </div>
+        </div>
+
+        <div style="width:150px;">
+            <select id="roleFilter" class="form-control" onchange="filterUsers()">
+                <option value="">كل الصلاحيات</option>
+                <option value="Admin">مسؤول</option>
+                <option value="Merchant">تاجر</option>
+                <option value="Customer">عميل</option>
+            </select>
+        </div>
+
+        <div style="width:150px;">
+            <select id="statusFilter" class="form-control" onchange="filterUsers()">
+                <option value="">كل الحالات</option>
+                <option value="Active">نشط</option>
+                <option value="Locked">محظور</option>
+                <option value="Unverified">غير موثق</option>
+            </select>
+        </div>
     </div>
 </div>
 
 <div class="card">
-    <table style="width:100%;">
-        <thead>
-            <tr>
-                <th>البيانات</th>
-                <th>الصلاحية</th>
-                <th>المحفظة</th>
-                <th>الحالة (للتجار)</th>
-                <th>إجراءات</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var user in Model)
-            {
+    <div class="table-responsive">
+        <table class="table" id="usersTable" style="width:100%;">
+            <thead>
                 <tr>
-                    <td>
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <div style="width:40px; height:40px; background:#f1f5f9; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#64748b; font-weight:bold;">
-                                @user.FullName?.FirstOrDefault()
-                            </div>
-                            <div>
-                                <strong style="display:block; color:var(--text-dark);">@user.FullName</strong>
-                                <small style="color:#64748b;">@user.PhoneNumber</small>
-                                @if (!string.IsNullOrEmpty(user.ShopName))
-                                {
-                                    <br>
-                            
-                                    <small style="color:var(--primary);"><i class="fas fa-store"></i> @user.ShopName</small>
-                                }
-                            </div>
-                        </div>
-                    </td>
-                    <td>
-                        @if (user.Role == "Admin")
-                        {
-                            <span class="badge" style="background:#0f172a; color:#fff;">مسؤول (Admin)</span>
-                        }
-                        else if (user.Role == "Merchant")
-                        {
+                    <th>البيانات</th>
+                    <th>الصلاحية</th>
+                    <th>الرصيد</th>
+                    <th>الحالة</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model)
+                {
+                    string status = user.IsLocked ? "Locked" : (user.Role == "Merchant" && !user.IsVerified ? "Unverified" : "Active");
 
-                            <span class="badge" style="background:#7c3aed; color:#fff;">تاجر</span>
-                        }
-                        else
-                        {
-
-                            <span class="badge" style="background:#e2e8f0; color:#334155;">عميل</span>
-                        }
-                    </td>
-                    <td>
-                        <span style="font-weight:bold; color:@(user.WalletBalance > 0 ? "#16a34a" : "#334155")">
-                            @user.WalletBalance.ToString("N0") <small>ج.م</small>
-                        </span>
-                    </td>
-                    <td>
-                        @if (user.Role == "Merchant")
-                        {
-                            if (user.IsVerified)
+                    <tr class="user-row" data-role="@user.Role" data-status="@status">
+                        <td>
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <div style="width:40px; height:40px; background:#f1f5f9; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#64748b; font-weight:bold;">
+                                    @(user.FullName?.FirstOrDefault().ToString().ToUpper() ?? "?")
+                                </div>
+                                <div>
+                                    <strong style="display:block; color:var(--text-dark);">@user.FullName</strong>
+                                    <small style="color:#64748b;">@user.PhoneNumber</small>
+                                    @if (!string.IsNullOrEmpty(user.ShopName))
+                                    {
+                                        <div style="font-size:0.75rem; color:var(--primary); margin-top:2px;">
+                                            <i class="fas fa-store"></i> @user.ShopName
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            @if (user.Role == "Admin")
                             {
-                                <span class="badge" style="background:#dcfce7; color:#166534;"><i class="fas fa-check-circle"></i> موثق</span>
+                                <span class="badge" style="background:#0f172a; color:#fff;">مسؤول</span>
+                            }
+                            else if (user.Role == "Merchant")
+                            {
+
+                                <span class="badge" style="background:#7c3aed; color:#fff;">تاجر</span>
                             }
                             else
                             {
 
-                                <span class="badge" style="background:#fffbeb; color:#d97706;"><i class="fas fa-clock"></i> قيد المراجعة</span>
+                                <span class="badge" style="background:#e2e8f0; color:#334155;">عميل</span>
                             }
-                        }
-                        else
-                        {
-                            <span style="color:#ccc;">-</span>
-                        }
-                    </td>
-                    <td>
-                        <div style="display:flex; gap:5px;">
-                            <a asp-action="Details" asp-route-id="@user.Id" class="btn btn-primary" style="padding:6px 12px; font-size:0.8rem;">
-                                التفاصيل
-                            </a>
-
-                            @if (user.Role == "Merchant")
+                        </td>
+                        <td>
+                            <span style="font-weight:bold; color:@(user.WalletBalance > 0 ? "#10b981" : "#333");">
+                                @user.WalletBalance.ToString("N0")
+                            </span>
+                        </td>
+                        <td>
+                            @if (user.IsLocked)
                             {
-                                <form asp-action="ToggleVerification" method="post" style="display:inline;">
-                                    <input type="hidden" name="id" value="@user.Id" />
-                                    <button type="submit" class="btn btn-outline" style="padding:6px 12px; font-size:0.8rem;" title="@(user.IsVerified ? "إلغاء التوثيق" : "توثيق")">
-                                        <i class="fas @(user.IsVerified ? "fa-ban" : "fa-check")"></i>
-                                    </button>
-                                </form>
+                                <span class="badge" style="background:#fee2e2; color:#dc2626;">محظور</span>
                             }
+                            else if (user.Role == "Merchant" && !user.IsVerified)
+                            {
 
-                            <form asp-action="Delete" method="post" style="display:inline;" data-confirm="هل أنت متأكد من حذف المستخدم @user.FullName نهائياً؟">
-                                <input type="hidden" name="id" value="@user.Id" />
-                                <button type="submit" class="btn btn-danger" style="padding:6px 12px; font-size:0.8rem; background:#fee2e2; color:#dc2626; border:none;">
+                                <span class="badge" style="background:#fffbeb; color:#d97706;">غير موثق</span>
+                            }
+                            else
+                            {
+
+                                <span class="badge" style="background:#dcfce7; color:#166534;">نشط</span>
+                            }
+                        </td>
+                        <td>
+                            <div style="display:flex; gap:5px;">
+                                <a asp-action="Details" asp-route-id="@user.Id" class="btn btn-outline small" style="padding:6px 12px;">التفاصيل</a>
+                                <button type="button" onclick="confirmDeleteUser('@user.Id', '@user.FullName')" class="btn btn-danger small" style="padding:6px 12px;">
                                     <i class="fas fa-trash"></i>
                                 </button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+                                <form id="deleteUserForm-@user.Id" asp-action="Delete" method="post" style="display:none;">
+                                    <input type="hidden" name="id" value="@user.Id" />
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <div id="noUsers" style="text-align:center; padding:30px; display:none; color:#666;">لا توجد نتائج مطابقة.</div>
+    </div>
 </div>
+
+<script>
+    function filterUsers() {
+        const input = document.getElementById('userSearch').value.toLowerCase();
+        const role = document.getElementById('roleFilter').value;
+        const status = document.getElementById('statusFilter').value;
+        const rows = document.querySelectorAll('.user-row');
+        let count = 0;
+
+        rows.forEach(row => {
+            const text = row.innerText.toLowerCase();
+            const rRole = row.getAttribute('data-role');
+            const rStatus = row.getAttribute('data-status');
+
+            const textMatch = text.includes(input);
+            const roleMatch = role === "" || rRole === role;
+            const statusMatch = status === "" || rStatus === status;
+
+            if (textMatch && roleMatch && statusMatch) {
+                row.style.display = "";
+                count++;
+            } else {
+                row.style.display = "none";
+            }
+        });
+
+        document.getElementById('userCount').innerText = count;
+        document.getElementById('noUsers').style.display = count === 0 ? 'block' : 'none';
+    }
+
+    function confirmDeleteUser(id, name) {
+        Swal.fire({
+            title: 'حذف المستخدم؟',
+            text: `هل أنت متأكد من حذف ${name}؟`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'نعم، حذف',
+            cancelButtonText: 'إلغاء'
+        }).then((result) => {
+            if (result.isConfirmed) document.getElementById('deleteUserForm-' + id).submit();
+        });
+    }
+</script>

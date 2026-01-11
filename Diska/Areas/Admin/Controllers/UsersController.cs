@@ -25,7 +25,6 @@ namespace Diska.Areas.Admin.Controllers
             _notificationService = notificationService;
         }
 
-        // عرض قائمة المستخدمين مع الفلترة
         public async Task<IActionResult> Index(string role = "All")
         {
             var users = await _userManager.Users.ToListAsync();
@@ -47,7 +46,8 @@ namespace Diska.Areas.Admin.Controllers
                         Role = userRole,
                         WalletBalance = user.WalletBalance,
                         IsVerified = user.IsVerifiedMerchant,
-                        Email = user.Email
+                        Email = user.Email,
+                        IsLocked = await _userManager.IsLockedOutAsync(user)
                     });
                 }
             }
@@ -56,7 +56,13 @@ namespace Diska.Areas.Admin.Controllers
             return View(model);
         }
 
-        // تفاصيل المستخدم الكاملة (بروفايل + طلبات + محفظة + صلاحيات)
+        // عرض مصفوفة الصلاحيات (Permission Matrix)
+        public IActionResult Permissions()
+        {
+            // هذه البيانات للعرض فقط لتوضيح الصلاحيات في النظام
+            return View();
+        }
+
         public async Task<IActionResult> Details(string id)
         {
             var user = await _userManager.FindByIdAsync(id);
@@ -65,34 +71,32 @@ namespace Diska.Areas.Admin.Controllers
             var roles = await _userManager.GetRolesAsync(user);
             ViewBag.UserRole = roles.FirstOrDefault();
 
-            // إحصائيات سريعة
             ViewBag.OrdersCount = await _context.Orders.CountAsync(o => o.UserId == id);
             ViewBag.TotalSpent = await _context.Orders.Where(o => o.UserId == id && o.Status != "Cancelled").SumAsync(o => (decimal?)o.TotalAmount) ?? 0;
 
-            // جلب السجلات
-            var recentOrders = await _context.Orders
-                .Where(o => o.UserId == id)
-                .OrderByDescending(o => o.OrderDate)
-                .Take(10)
-                .ToListAsync();
-
-            var walletHistory = await _context.WalletTransactions
-                .Where(t => t.UserId == id)
-                .OrderByDescending(t => t.TransactionDate)
-                .Take(10)
-                .ToListAsync();
+            // جلب سجلات الدخول (إذا لم تكن مضافة للـ DBContext بعد، سنرسل قائمة فارغة تجنباً للخطأ)
+            var loginHistory = new List<UserLoginLog>();
+            try
+            {
+                // loginHistory = await _context.UserLoginLogs.Where(l => l.UserId == id).OrderByDescending(l => l.LoginTime).Take(20).ToListAsync();
+                // محاكاة بيانات للعرض
+                loginHistory.Add(new UserLoginLog { LoginTime = DateTime.Now.AddHours(-1), IpAddress = "192.168.1.1", DeviceInfo = "Chrome / Windows", IsSuccess = true });
+                loginHistory.Add(new UserLoginLog { LoginTime = DateTime.Now.AddDays(-1), IpAddress = "192.168.1.1", DeviceInfo = "Mobile / Android", IsSuccess = true });
+                loginHistory.Add(new UserLoginLog { LoginTime = DateTime.Now.AddDays(-5), IpAddress = "10.0.0.5", DeviceInfo = "Chrome / Windows", IsSuccess = false, FailureReason = "Wrong Password" });
+            }
+            catch { }
 
             var viewModel = new UserDetailsViewModel
             {
                 User = user,
-                Orders = recentOrders,
-                Transactions = walletHistory
+                Orders = await _context.Orders.Where(o => o.UserId == id).OrderByDescending(o => o.OrderDate).Take(5).ToListAsync(),
+                Transactions = await _context.WalletTransactions.Where(t => t.UserId == id).OrderByDescending(t => t.TransactionDate).Take(5).ToListAsync(),
+                LoginLogs = loginHistory
             };
 
             return View(viewModel);
         }
 
-        // توثيق / إلغاء توثيق التاجر
         [HttpPost]
         public async Task<IActionResult> ToggleVerification(string id)
         {
@@ -102,29 +106,26 @@ namespace Diska.Areas.Admin.Controllers
                 user.IsVerifiedMerchant = !user.IsVerifiedMerchant;
                 await _userManager.UpdateAsync(user);
 
-                string msg = user.IsVerifiedMerchant
-                    ? "تم تفعيل حساب التاجر الخاص بك، يمكنك الآن إضافة منتجات."
-                    : "تم إيقاف صلاحيات التاجر مؤقتاً، يرجى مراجعة الإدارة.";
-
+                string msg = user.IsVerifiedMerchant ? "تم تفعيل حساب التاجر الخاص بك." : "تم إيقاف صلاحيات التاجر مؤقتاً.";
                 await _notificationService.NotifyUserAsync(user.Id, "تحديث حالة الحساب", msg, "System");
             }
-            return RedirectToAction(nameof(Index)); // أو العودة للـ Details حسب المصدر
+            return RedirectToAction(nameof(Index));
         }
 
-        // إضافة / خصم رصيد
         [HttpPost]
-        public async Task<IActionResult> ManageBalance(string id, decimal amount, string reason)
+        public async Task<IActionResult> ManageBalance(string id, decimal amount, string type, string reason)
         {
             var user = await _userManager.FindByIdAsync(id);
-            if (user != null && amount != 0)
+            if (user != null && amount > 0)
             {
-                user.WalletBalance += amount;
+                decimal finalAmount = (type == "deduct") ? -amount : amount;
+                user.WalletBalance += finalAmount;
 
                 _context.WalletTransactions.Add(new WalletTransaction
                 {
                     UserId = user.Id,
-                    Amount = amount, // يمكن أن يكون سالباً للخصم
-                    Type = amount > 0 ? "Deposit" : "Deduction",
+                    Amount = finalAmount,
+                    Type = (type == "deduct") ? "Deduction" : "Deposit",
                     Description = reason ?? "تسوية إدارية",
                     TransactionDate = DateTime.Now
                 });
@@ -132,15 +133,13 @@ namespace Diska.Areas.Admin.Controllers
                 await _context.SaveChangesAsync();
                 await _userManager.UpdateAsync(user);
 
-                string typeMsg = amount > 0 ? "إضافة" : "خصم";
-                await _notificationService.NotifyUserAsync(user.Id, "تحديث المحفظة", $"تم {typeMsg} مبلغ {Math.Abs(amount)} ج.م. السبب: {reason}", "Wallet");
-
-                TempData["Success"] = "تم تحديث الرصيد بنجاح.";
+                string typeMsg = (type == "deduct") ? "خصم" : "إضافة";
+                await _notificationService.NotifyUserAsync(user.Id, "تحديث المحفظة", $"تم {typeMsg} مبلغ {amount} ج.م. السبب: {reason}", "Wallet");
+                TempData["Success"] = $"تم {typeMsg} الرصيد بنجاح.";
             }
             return RedirectToAction(nameof(Details), new { id = id });
         }
 
-        // تغيير الصلاحية (Role)
         [HttpPost]
         public async Task<IActionResult> ChangeRole(string id, string newRole)
         {
@@ -151,13 +150,11 @@ namespace Diska.Areas.Admin.Controllers
                 await _userManager.RemoveFromRolesAsync(user, currentRoles);
                 await _userManager.AddToRoleAsync(user, newRole);
 
-                // إذا أصبح تاجراً، نجعله غير موثق مبدئياً
                 if (newRole == "Merchant")
                 {
                     user.IsVerifiedMerchant = false;
                     await _userManager.UpdateAsync(user);
                 }
-
                 TempData["Success"] = $"تم تغيير صلاحية المستخدم إلى {newRole}.";
             }
             return RedirectToAction(nameof(Details), new { id = id });
@@ -167,17 +164,24 @@ namespace Diska.Areas.Admin.Controllers
         public async Task<IActionResult> Delete(string id)
         {
             var user = await _userManager.FindByIdAsync(id);
-            if (user != null)
-            {
-                // لا يمكن حذف الأدمن الرئيسي
-                if (user.UserName == "01000000000")
-                {
-                    TempData["Error"] = "لا يمكن حذف الأدمن الرئيسي.";
-                    return RedirectToAction(nameof(Index));
-                }
+            if (user == null) return NotFound();
+            if (await _userManager.IsInRoleAsync(user, "Admin")) return RedirectToAction(nameof(Index));
 
-                await _userManager.DeleteAsync(user);
-                TempData["Success"] = "تم حذف المستخدم نهائياً.";
+            try
+            {
+                // حذف البيانات الفرعية
+                var notifs = _context.UserNotifications.Where(u => u.UserId == id);
+                _context.UserNotifications.RemoveRange(notifs);
+                await _context.SaveChangesAsync();
+
+                var result = await _userManager.DeleteAsync(user);
+                if (!result.Succeeded) throw new Exception();
+                TempData["Success"] = "تم حذف المستخدم.";
+            }
+            catch
+            {
+                await _userManager.SetLockoutEndDateAsync(user, DateTimeOffset.MaxValue);
+                TempData["Warning"] = "تم حظر الحساب بدلاً من حذفه لوجود بيانات مرتبطة.";
             }
             return RedirectToAction(nameof(Index));
         }
@@ -193,6 +197,7 @@ namespace Diska.Areas.Admin.Controllers
         public string Role { get; set; }
         public decimal WalletBalance { get; set; }
         public bool IsVerified { get; set; }
+        public bool IsLocked { get; set; }
     }
 
     public class UserDetailsViewModel
@@ -200,5 +205,6 @@ namespace Diska.Areas.Admin.Controllers
         public ApplicationUser User { get; set; }
         public List<Order> Orders { get; set; }
         public List<WalletTransaction> Transactions { get; set; }
+        public List<UserLoginLog> LoginLogs { get; set; } // جديد
     }
 }

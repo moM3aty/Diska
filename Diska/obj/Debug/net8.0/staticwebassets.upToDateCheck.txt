@@ -1,15 +1,10 @@
+wwwroot\css\admin-style.css
 wwwroot\css\style.css
 wwwroot\favicon.ico
-wwwroot\images\ChatGPT_Image_22_ديسمبر_2025__12_14_35_ص-removebg-preview.png
 wwwroot\images\hero.webp
 wwwroot\images\logo.png
+wwwroot\images\logo2.png
 wwwroot\images\pepsi.webp
-wwwroot\images\products\08906940-11eb-46e8-8adb-7bb916f6d52e.png
-wwwroot\images\products\2b8d809e-821f-44f7-99cf-9530cee5d62b.jpg
-wwwroot\images\products\549fdc11-fb72-4802-b0f2-66f372ca1b6d.jpg
-wwwroot\images\products\b338a4a2-65f9-45c5-9082-e8024efc9c6e.png
-wwwroot\images\products\b77f3f9d-24d1-475d-84b4-9a2500dd91b5.jpg
-wwwroot\images\products\c9753c84-00a4-448f-8364-2f7fb50d21ad.jpg
 wwwroot\images\حليب.webp
 wwwroot\images\زيت.webp
 wwwroot\images\شاى العروسه.webp
