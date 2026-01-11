@@ -26,7 +26,7 @@ namespace Diska.Data
             {
                 foreach (var user in usersWithNullFields)
                 {
-                    if (string.IsNullOrEmpty(user.ShopName)) user.ShopName = "متجر " + user.FullName;
+                    if (string.IsNullOrEmpty(user.ShopName)) user.ShopName = "متجر " + (user.FullName ?? "مستخدم");
                     if (string.IsNullOrEmpty(user.CommercialRegister)) user.CommercialRegister = "000000";
                     if (string.IsNullOrEmpty(user.TaxCard)) user.TaxCard = "000000";
                 }
@@ -141,23 +141,19 @@ namespace Diska.Data
 
             foreach (var cat in categoriesList)
             {
-                if (!await context.Categories.AnyAsync(c => c.Slug == cat.Slug))
+                var existingCat = await context.Categories.FirstOrDefaultAsync(c => c.Slug == cat.Slug);
+                if (existingCat == null)
                 {
                     context.Categories.Add(cat);
                 }
                 else
                 {
-                    // Self-healing: Update existing categories with missing fields
-                    var existingCat = await context.Categories.FirstOrDefaultAsync(c => c.Slug == cat.Slug);
-                    if (existingCat != null)
-                    {
-                        bool updated = false;
-                        if (string.IsNullOrEmpty(existingCat.ImageUrl)) { existingCat.ImageUrl = cat.ImageUrl; updated = true; }
-                        if (string.IsNullOrEmpty(existingCat.MetaDescription)) { existingCat.MetaDescription = cat.MetaDescription; updated = true; }
-                        if (string.IsNullOrEmpty(existingCat.MetaTitle)) { existingCat.MetaTitle = cat.MetaTitle; updated = true; }
+                    // Update missing fields
+                    bool updated = false;
+                    if (string.IsNullOrEmpty(existingCat.ImageUrl)) { existingCat.ImageUrl = cat.ImageUrl; updated = true; }
+                    if (string.IsNullOrEmpty(existingCat.MetaDescription)) { existingCat.MetaDescription = cat.MetaDescription; updated = true; }
 
-                        if (updated) context.Update(existingCat);
-                    }
+                    if (updated) context.Update(existingCat);
                 }
             }
             await context.SaveChangesAsync();
@@ -166,17 +162,17 @@ namespace Diska.Data
             var elecCat = await context.Categories.FirstOrDefaultAsync(c => c.Slug == "electronics");
             var grocCat = await context.Categories.FirstOrDefaultAsync(c => c.Slug == "grocery");
             var catFash = await context.Categories.FirstOrDefaultAsync(c => c.Slug == "fashion");
+            var catHome = await context.Categories.FirstOrDefaultAsync(c => c.Slug == "home");
 
-            // Re-fetch users to get IDs
+            // Re-fetch users
             merch1 = await userManager.FindByNameAsync("01111111111");
             merch2 = await userManager.FindByNameAsync("01222222222");
-            cust = await userManager.FindByNameAsync("01099999999");
-            adminUser = await userManager.FindByEmailAsync("admin@diska.com");
 
-            if (elecCat != null && grocCat != null && merch1 != null && merch2 != null)
+            if (elecCat != null && grocCat != null && catFash != null && merch1 != null && merch2 != null)
             {
                 var products = new List<Product>
                 {
+                    // Electronics
                     new Product {
                         Name = "ايفون 15", NameEn = "iPhone 15", Price = 45000, StockQuantity = 20, SKU = "IP15",
                         CategoryId = elecCat.Id, MerchantId = merch1.Id, Status = "Active",
@@ -191,33 +187,47 @@ namespace Diska.Data
                         Slug = "dell-laptop", MetaTitle = "Dell", MetaDescription = "Dell Laptop", Brand = "Dell",
                         Barcode = "1234567890124", Color = "#C0C0C0"
                     },
+                    // Grocery
                     new Product {
                         Name = "أرز 5 كيلو", NameEn = "Rice 5KG", Price = 150, StockQuantity = 100, SKU = "RICE5",
                         CategoryId = grocCat.Id, MerchantId = merch2.Id, Status = "Active",
                         ImageUrl = "images/products/rice.png", Description = "أرز مصري", DescriptionEn = "Egyptian Rice",
                         Slug = "rice-5kg", MetaTitle = "Rice", MetaDescription = "Food", Brand = "Doha",
                         Barcode = "1234567890125", Color = "#FFFFFF"
+                    },
+                    // Fashion (New)
+                    new Product {
+                        Name = "تيشيرت بولو", NameEn = "Polo T-Shirt", Price = 350, StockQuantity = 50, SKU = "TSHIRT",
+                        CategoryId = catFash.Id, MerchantId = merch1.Id, Status = "Active",
+                        ImageUrl = "images/products/tshirt.png", Description = "قطن 100%", DescriptionEn = "100% Cotton",
+                        Slug = "polo-shirt", MetaTitle = "T-Shirt", MetaDescription = "Fashion", Brand = "Polo",
+                        Barcode = "1234567890126", Color = "#0000FF"
+                    },
+                    // Home (New)
+                    new Product {
+                        Name = "طقم أطباق", NameEn = "Dinner Set", Price = 2500, StockQuantity = 15, SKU = "DISHES",
+                        CategoryId = catHome.Id, MerchantId = merch2.Id, Status = "Active",
+                        ImageUrl = "images/products/dishes.png", Description = "بورسلين فاخر", DescriptionEn = "Fine Porcelain",
+                        Slug = "dinner-set", MetaTitle = "Dishes", MetaDescription = "Kitchenware", Brand = "Luminarc",
+                        Barcode = "1234567890127", Color = "#FFFFFF"
                     }
                 };
 
                 foreach (var p in products)
                 {
-                    if (!await context.Products.AnyAsync(x => x.SKU == p.SKU))
+                    var existingProd = await context.Products.FirstOrDefaultAsync(x => x.SKU == p.SKU);
+                    if (existingProd == null)
                     {
                         context.Products.Add(p);
                     }
                     else
                     {
-                        // Self-healing: Fix products with missing required fields
-                        var existingProd = await context.Products.FirstOrDefaultAsync(x => x.SKU == p.SKU);
-                        if (existingProd != null)
-                        {
-                            bool updated = false;
-                            if (string.IsNullOrEmpty(existingProd.Barcode)) { existingProd.Barcode = p.Barcode; updated = true; }
-                            if (string.IsNullOrEmpty(existingProd.Color)) { existingProd.Color = p.Color; updated = true; }
+                        // Update missing fields
+                        bool updated = false;
+                        if (string.IsNullOrEmpty(existingProd.Barcode)) { existingProd.Barcode = p.Barcode; updated = true; }
+                        if (string.IsNullOrEmpty(existingProd.Color)) { existingProd.Color = p.Color; updated = true; }
 
-                            if (updated) context.Update(existingProd);
-                        }
+                        if (updated) context.Update(existingProd);
                     }
                 }
                 await context.SaveChangesAsync();
@@ -226,29 +236,59 @@ namespace Diska.Data
             // 6. Create Banners
             if (!await context.Banners.AnyAsync())
             {
-                context.Banners.Add(new Banner
+                var banners = new List<Banner>
                 {
-                    Title = "عروض الصيف",
-                    ImageDesktop = "images/banners/summer.png",
-                    ImageMobile = "images/banners/summer_mob.png", // Added required field
-                    LinkType = "External",
-                    LinkId = "#",
-                    IsActive = true
-                });
+                    new Banner
+                    {
+                        Title = "عروض الصيف",
+                        TitleEn = "Summer Sale",
+                        Subtitle = "خصومات حصرية",
+                        SubtitleEn = "Exclusive Discounts",
+                        ButtonText = "تسوق الآن",
+                        ButtonTextEn = "Shop Now",
+                        ImageDesktop = "images/banners/summer.png",
+                        ImageMobile = "images/banners/summer_mob.png",
+                        LinkType = "External",
+                        LinkId = "#",
+                        Priority = 1,
+                        IsActive = true,
+                        StartDate = DateTime.Now,
+                        EndDate = DateTime.Now.AddDays(30)
+                    },
+                    new Banner
+                    {
+                        Title = "إلكترونيات حديثة",
+                        TitleEn = "Modern Electronics",
+                        Subtitle = "أحدث الأجهزة",
+                        SubtitleEn = "Latest Gadgets",
+                        ButtonText = "اكتشف المزيد",
+                        ButtonTextEn = "Discover More",
+                        ImageDesktop = "images/banners/electronics.png",
+                        ImageMobile = "images/banners/electronics_mob.png",
+                        LinkType = "Category",
+                        LinkId = elecCat?.Id.ToString(),
+                        Priority = 2,
+                        IsActive = true,
+                        StartDate = DateTime.Now,
+                        EndDate = DateTime.Now.AddDays(30)
+                    }
+                };
+
+                context.Banners.AddRange(banners);
                 await context.SaveChangesAsync();
             }
             else
             {
-                // Self-healing: Update banners with missing ImageMobile
-                var banners = await context.Banners.Where(b => b.ImageMobile == null).ToListAsync();
+                // Self-healing for banners
+                var banners = await context.Banners.Where(b => b.ImageMobile == null || b.Subtitle == null).ToListAsync();
                 foreach (var b in banners)
                 {
-                    b.ImageMobile = b.ImageDesktop ?? "images/banners/default.png";
+                    if (b.ImageMobile == null) b.ImageMobile = b.ImageDesktop ?? "images/default.png";
+                    if (b.Subtitle == null) b.Subtitle = "";
                 }
                 if (banners.Any()) await context.SaveChangesAsync();
             }
 
-            // ... (Rest of the seeding logic remains the same for other tables) ...
             // 7. Group Deals
             if (!await context.GroupDeals.AnyAsync())
             {
@@ -272,7 +312,40 @@ namespace Diska.Data
                 }
             }
 
-            // 8. PendingMerchantActions (Approvals)
+            // 8. Create Orders (Missing in previous version!)
+            cust = await userManager.FindByNameAsync("01099999999");
+            if (cust != null && !await context.Orders.AnyAsync(o => o.UserId == cust.Id))
+            {
+                var prod1 = await context.Products.FirstOrDefaultAsync(p => p.SKU == "IP15");
+                var prod2 = await context.Products.FirstOrDefaultAsync(p => p.SKU == "RICE5");
+
+                if (prod1 != null && prod2 != null)
+                {
+                    var orders = new List<Order>
+                    {
+                        // Order 1: Completed
+                        new Order {
+                            UserId = cust.Id, CustomerName = cust.FullName, Phone = cust.PhoneNumber,
+                            Governorate = "Cairo", City = "Nasr City", Address = "123 Main St",
+                            PaymentMethod = "Cash", Status = "Delivered", OrderDate = DateTime.Now.AddDays(-5),
+                            TotalAmount = prod1.Price + 50, ShippingCost = 50,
+                            OrderItems = new List<OrderItem> { new OrderItem { ProductId = prod1.Id, Quantity = 1, UnitPrice = prod1.Price } }
+                        },
+                        // Order 2: Pending
+                        new Order {
+                            UserId = cust.Id, CustomerName = cust.FullName, Phone = cust.PhoneNumber,
+                            Governorate = "Giza", City = "Dokki", Address = "456 Side St",
+                            PaymentMethod = "Wallet", Status = "Pending", OrderDate = DateTime.Now.AddHours(-2),
+                            TotalAmount = prod2.Price * 5 + 50, ShippingCost = 50,
+                            OrderItems = new List<OrderItem> { new OrderItem { ProductId = prod2.Id, Quantity = 5, UnitPrice = prod2.Price } }
+                        }
+                    };
+                    context.Orders.AddRange(orders);
+                    await context.SaveChangesAsync();
+                }
+            }
+
+            // 9. PendingMerchantActions
             if (!await context.PendingMerchantActions.AnyAsync() && merch1 != null)
             {
                 var prod = await context.Products.FirstOrDefaultAsync(p => p.MerchantId == merch1.Id);
@@ -288,21 +361,16 @@ namespace Diska.Data
                         NewValueJson = JsonSerializer.Serialize(new { Price = prod.Price + 500 }),
                         Status = "Pending",
                         RequestDate = DateTime.Now.AddHours(-2),
-                        ActionByAdminId = "System" // Placeholder required value
+                        ActionByAdminId = "System"
                     });
                     await context.SaveChangesAsync();
                 }
             }
-            // Self-healing for PendingMerchantActions
-            var pendingActions = await context.PendingMerchantActions.Where(p => p.ActionByAdminId == null).ToListAsync();
-            foreach (var p in pendingActions) { p.ActionByAdminId = "System"; }
-            if (pendingActions.Any()) await context.SaveChangesAsync();
 
-
-            // 9. RestockSubscriptions
+            // 10. RestockSubscriptions
             if (!await context.RestockSubscriptions.AnyAsync() && cust != null && merch2 != null)
             {
-                var prod = await context.Products.FirstOrDefaultAsync(p => p.MerchantId == merch2.Id); // Rice
+                var prod = await context.Products.FirstOrDefaultAsync(p => p.MerchantId == merch2.Id);
                 if (prod != null)
                 {
                     context.RestockSubscriptions.Add(new RestockSubscription
@@ -317,7 +385,7 @@ namespace Diska.Data
                 }
             }
 
-            // 10. DealRequests (Requests)
+            // 11. DealRequests
             if (!await context.DealRequests.AnyAsync() && cust != null)
             {
                 context.DealRequests.AddRange(new List<DealRequest>
@@ -328,7 +396,7 @@ namespace Diska.Data
                 await context.SaveChangesAsync();
             }
 
-            // 11. ProductReviews
+            // 12. ProductReviews
             if (!await context.ProductReviews.AnyAsync() && cust != null)
             {
                 var prod = await context.Products.FirstOrDefaultAsync(p => p.SKU == "IP15");
@@ -347,7 +415,7 @@ namespace Diska.Data
                 }
             }
 
-            // 12. WalletTransactions
+            // 13. WalletTransactions
             if (!await context.WalletTransactions.AnyAsync() && merch1 != null && cust != null)
             {
                 context.WalletTransactions.AddRange(new List<WalletTransaction>
@@ -359,7 +427,7 @@ namespace Diska.Data
                 await context.SaveChangesAsync();
             }
 
-            // 13. Surveys
+            // 14. Surveys
             if (!await context.Surveys.AnyAsync())
             {
                 var survey = new Survey
@@ -384,7 +452,7 @@ namespace Diska.Data
                 await context.SaveChangesAsync();
             }
 
-            // 14. ContactMessages
+            // 15. ContactMessages
             if (!await context.ContactMessages.AnyAsync())
             {
                 context.ContactMessages.AddRange(new List<ContactMessage>
@@ -395,7 +463,7 @@ namespace Diska.Data
                 await context.SaveChangesAsync();
             }
 
-            // 15. AuditLogs
+            // 16. AuditLogs
             if (!await context.AuditLogs.AnyAsync() && adminUser != null)
             {
                 context.AuditLogs.AddRange(new List<AuditLog>

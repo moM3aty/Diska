@@ -1,68 +1,167 @@
-﻿@model IEnumerable<Diska.Models.Order>
+﻿@using System.Globalization
+@model IEnumerable<Diska.Models.Order>
 @{
     ViewData["Title"] = "إدارة الطلبات";
     Layout = "_AdminLayout";
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
 }
 
-<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-    <h2 style="margin:0;">إدارة الطلبات</h2>
-    <div class="filters">
-        <a asp-action="Orders" asp-route-status="All" class="btn btn-outline @(Context.Request.Query["status"] == "All" ? "active" : "")">الكل</a>
-        <a asp-action="Orders" asp-route-status="Pending" class="btn btn-outline @(Context.Request.Query["status"] == "Pending" ? "active" : "")">قيد الانتظار</a>
-        <a asp-action="Orders" asp-route-status="Confirmed" class="btn btn-outline @(Context.Request.Query["status"] == "Confirmed" ? "active" : "")">مؤكد</a>
+<div class="d-flex justify-content-between align-items-center mb-4 fade-up">
+    <div>
+        <h2 class="text-main fw-bold mb-0">@(isAr ? "إدارة الطلبات" : "Order Management")</h2>
+        <p class="text-muted small">@(isAr ? "متابعة وفلترة جميع طلبات المتجر" : "Track and manage all store orders")</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+            <i class="fas fa-print me-2"></i> @(isAr ? "طباعة تقرير" : "Print Report")
+        </button>
+        <button class="btn btn-primary btn-sm shadow-sm">
+            <i class="fas fa-file-export me-2"></i> @(isAr ? "تصدير Excel" : "Export Excel")
+        </button>
     </div>
 </div>
 
-<div class="card">
-    <table>
-        <thead>
-            <tr>
-                <th>رقم الطلب</th>
-                <th>العميل</th>
-                <th>التاريخ</th>
-                <th>الإجمالي</th>
-                <th>طريقة الدفع</th>
-                <th>الحالة</th>
-                <th>إجراءات</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var order in Model)
-            {
+<!-- Filters Bar -->
+<div class="filter-bar fade-up" style="animation-delay: 0.1s;">
+    <form method="get" action="/Admin/Dashboard/Orders" class="d-flex flex-wrap gap-3 w-100 align-items-end">
+        <div class="flex-grow-1" style="min-width: 200px;">
+            <label class="form-label small text-muted">@(isAr ? "بحث" : "Search")</label>
+            <div class="position-relative">
+                <input type="text" name="q" class="form-control ps-5" placeholder="@(isAr ? "رقم الطلب، اسم العميل..." : "Order ID, Customer Name...")" value="@Context.Request.Query["q"]">
+                <i class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+            </div>
+        </div>
+
+        <div style="width: 180px;">
+            <label class="form-label small text-muted">@(isAr ? "الحالة" : "Status")</label>
+            <select name="status" class="form-select">
+                <option value="">@(isAr ? "الكل" : "All Status")</option>
+                <option value="Pending" selected="@(Context.Request.Query["status"] == "Pending")">Pending</option>
+                <option value="Confirmed" selected="@(Context.Request.Query["status"] == "Confirmed")">Confirmed</option>
+                <option value="Shipped" selected="@(Context.Request.Query["status"] == "Shipped")">Shipped</option>
+                <option value="Delivered" selected="@(Context.Request.Query["status"] == "Delivered")">Delivered</option>
+                <option value="Cancelled" selected="@(Context.Request.Query["status"] == "Cancelled")">Cancelled</option>
+            </select>
+        </div>
+
+        <div style="width: 180px;">
+            <label class="form-label small text-muted">@(isAr ? "التاريخ" : "Date")</label>
+            <input type="date" name="date" class="form-control" value="@Context.Request.Query["date"]">
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-filter"></i> @(isAr ? "تصفية" : "Filter")
+        </button>
+    </form>
+</div>
+
+<!-- Orders Table -->
+<div class="card border-0 shadow-sm fade-up" style="animation-delay: 0.2s;">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light">
                 <tr>
-                    <td>#@order.Id</td>
-                    <td>
-                        <strong>@order.CustomerName</strong>
-                        <div style="font-size:0.8rem; color:#666;">@order.Phone</div>
-                    </td>
-                    <td>@order.OrderDate.ToString("yyyy/MM/dd")</td>
-                    <td><strong>@order.TotalAmount.ToString("N0")</strong></td>
-                    <td>@order.PaymentMethod</td>
-                    <td>
-                        @{
-                            string bg = order.Status == "Pending" ? "#fffbeb" : (order.Status == "Confirmed" ? "#dbeafe" : (order.Status == "Cancelled" ? "#fee2e2" : "#dcfce7"));
-                            string color = order.Status == "Pending" ? "#d97706" : (order.Status == "Confirmed" ? "#2563eb" : (order.Status == "Cancelled" ? "#dc2626" : "#16a34a"));
-                        }
-                        <span class="badge" style="background:@bg; color:@color;">@order.Status</span>
-                    </td>
-                    <td>
-                        <div style="display:flex; gap:5px;">
-                            <form asp-action="UpdateOrderStatus" method="post" style="display:inline;">
-                                <input type="hidden" name="id" value="@order.Id" />
-                                @if (order.Status == "Pending")
-                                {
-                                    <button type="submit" name="status" value="Confirmed" class="btn btn-primary" style="padding:5px 10px; font-size:0.8rem;">قبول</button>
-                                }
-                                else if (order.Status == "Confirmed")
-                                {
-                                    <button type="submit" name="status" value="Shipped" class="btn btn-primary" style="padding:5px 10px; font-size:0.8rem; background:#7c3aed;">شحن</button>
-                                }
-                            </form>
-                            <a asp-action="OrderDetails" asp-route-id="@order.Id" class="btn btn-outline" style="padding:5px 10px; font-size:0.8rem;">تفاصيل</a>
-                        </div>
-                    </td>
+                    <th class="ps-4">@(isAr ? "رقم الطلب" : "Order ID")</th>
+                    <th>@(isAr ? "العميل" : "Customer")</th>
+                    <th>@(isAr ? "التاريخ" : "Date")</th>
+                    <th>@(isAr ? "الإجمالي" : "Total")</th>
+                    <th>@(isAr ? "الدفع" : "Payment")</th>
+                    <th>@(isAr ? "الحالة" : "Status")</th>
+                    <th class="text-end pe-4">@(isAr ? "إجراءات" : "Actions")</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="fas fa-inbox fa-3x mb-3 opacity-25"></i>
+                            <p>@(isAr ? "لا توجد طلبات مطابقة" : "No orders found")</p>
+                        </td>
+                    </tr>
+                }
+                @foreach (var order in Model)
+                {
+                    <tr>
+                        <td class="ps-4">
+                            <!-- تم تعديل الرابط ليشير إلى Dashboard/OrderDetails -->
+                            <a href="/Admin/Dashboard/OrderDetails/@order.Id" class="fw-bold text-primary text-decoration-none">
+                                #@order.Id
+                            </a>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="avatar-circle bg-primary-subtle text-primary" style="width:32px; height:32px; font-size:0.8rem; box-shadow:none;">
+                                    @(order.CustomerName?.FirstOrDefault())
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-main" style="font-size:0.9rem;">@order.CustomerName</div>
+                                    <small class="text-muted" style="font-size:0.75rem;">@order.Phone</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-muted small">
+                            <i class="far fa-calendar-alt me-1"></i> @order.OrderDate.ToString("dd MMM yyyy")
+                            <br>
+                            <i class="far fa-clock me-1"></i> @order.OrderDate.ToString("hh:mm tt")
+                        </td>
+                        <td class="fw-bold text-main">@order.TotalAmount.ToString("N0")</td>
+                        <td>
+                            @if (order.PaymentMethod == "Wallet")
+                            {
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                                    <i class="fas fa-wallet me-1"></i> Wallet
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">
+                                    <i class="fas fa-money-bill me-1"></i> Cash
+                                </span>
+                            }
+                        </td>
+                        <td>
+                            @{
+                                var statusClass = order.Status switch
+                                {
+                                    "Pending" => "badge-order pending",
+                                    "Confirmed" => "badge-order confirmed",
+                                    "Shipped" => "badge-order shipped",
+                                    "Delivered" => "badge-order delivered",
+                                    "Cancelled" => "badge-order cancelled",
+                                    _ => "badge bg-secondary"
+                                };
+                            }
+                            <span class="@statusClass">@order.Status</span>
+                        </td>
+                        <td class="text-end pe-4">
+                            <div class="btn-group">
+                                <!-- تم تعديل الرابط هنا أيضاً -->
+                                <a href="/Admin/Dashboard/OrderDetails/@order.Id" class="btn btn-icon btn-sm btn-outline-secondary" title="@(isAr ? "التفاصيل" : "Details")">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <button type="button" class="btn btn-icon btn-sm btn-outline-primary" title="@(isAr ? "طباعة" : "Print")">
+                                    <i class="fas fa-print"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination (Placeholder) -->
+    <div class="card-footer bg-transparent border-top p-3 d-flex justify-content-between align-items-center">
+        <small class="text-muted">@(isAr ? "عرض 1-10 من 50 طلب" : "Showing 1-10 of 50 orders")</small>
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item disabled"><a class="page-link" href="#">&laquo;</a></li>
+                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                <li class="page-item"><a class="page-link" href="#">&raquo;</a></li>
+            </ul>
+        </nav>
+    </div>
 </div>

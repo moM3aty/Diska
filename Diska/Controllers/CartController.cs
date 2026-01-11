@@ -12,7 +12,6 @@ using System.Threading.Tasks;
 
 namespace Diska.Controllers
 {
-    // السلة متاحة للجميع (حتى الزوار) ولكن الدفع يتطلب تسجيل دخول
     public class CartController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -32,15 +31,16 @@ namespace Diska.Controllers
             return View();
         }
 
-        // 2. إضافة منتج للسلة (AddItem) - التحقق وإرجاع البيانات
+        // 2. التحقق من المنتج وإضافته (API)
+        // هذا الـ Action يستخدمه الـ JavaScript للتأكد من الكمية قبل الإضافة للـ LocalStorage
         [HttpPost]
         public async Task<IActionResult> AddItem(int productId, int quantity)
         {
             var product = await _context.Products.FindAsync(productId);
 
-            if (product == null || !product.IsActive)
+            if (product == null || product.Status != "Active")
             {
-                return Json(new { success = false, message = "المنتج غير متوفر حالياً." });
+                return Json(new { success = false, message = "عفواً، هذا المنتج غير متاح حالياً." });
             }
 
             if (product.StockQuantity < quantity)
@@ -48,44 +48,23 @@ namespace Diska.Controllers
                 return Json(new { success = false, message = $"الكمية المتاحة فقط {product.StockQuantity} قطعة." });
             }
 
-            // إرجاع بيانات المنتج لتخزينها في LocalStorage
+            // إرجاع بيانات المنتج ليستخدمها الـ Front-end
             return Json(new
             {
                 success = true,
-                message = "تمت الإضافة للسلة",
+                message = "تمت الإضافة للسلة بنجاح",
                 product = new
                 {
                     id = product.Id,
-                    name = Thread.CurrentThread.CurrentCulture.Name.StartsWith("ar") ? product.Name : product.NameEn,
-                    price = product.Price,
+                    name = System.Threading.Thread.CurrentThread.CurrentCulture.Name.StartsWith("ar") ? product.Name : product.NameEn,
+                    price = product.Price, // السعر الأساسي (يمكن تطبيق خصم الكميات لاحقاً)
                     image = product.ImageUrl,
                     stock = product.StockQuantity
                 }
             });
         }
 
-        // 3. التحقق من المخزون قبل الدفع (Validate Cart)
-        [HttpPost]
-        public async Task<IActionResult> ValidateCart([FromBody] List<CartItemDto> items)
-        {
-            if (items == null || !items.Any()) return Json(new { valid = true });
-
-            var ids = items.Select(i => int.Parse(i.Id)).ToList();
-            var products = await _context.Products.Where(p => ids.Contains(p.Id)).ToListAsync();
-
-            foreach (var item in items)
-            {
-                var product = products.FirstOrDefault(p => p.Id.ToString() == item.Id);
-                if (product == null || product.StockQuantity < item.Qty)
-                {
-                    return Json(new { valid = false, message = $"المنتج {product?.Name ?? "غير معروف"} نفذت كميته أو غير كافية." });
-                }
-            }
-
-            return Json(new { valid = true });
-        }
-
-        // --- Checkout Actions ---
+        // 3. صفحة الدفع (Checkout View)
         [Authorize]
         public async Task<IActionResult> Checkout()
         {
@@ -95,8 +74,11 @@ namespace Diska.Controllers
             ViewBag.Phone = user.PhoneNumber;
             ViewBag.ShopName = user.ShopName;
 
+            // جلب آخر عنوان تم استخدامه أو العنوان الافتراضي
             var defaultAddress = await _context.UserAddresses
-                .FirstOrDefaultAsync(a => a.UserId == user.Id && a.IsDefault);
+                .OrderByDescending(a => a.IsDefault)
+                .ThenByDescending(a => a.Id)
+                .FirstOrDefaultAsync(a => a.UserId == user.Id);
 
             if (defaultAddress != null)
             {
@@ -108,72 +90,122 @@ namespace Diska.Controllers
             return View();
         }
 
-        // ... (PlaceOrder and other actions remain same as previous) ...
-        [HttpPost]
+        // 4. تنفيذ الطلب (Place Order API) - العقل المدبر
         [Authorize]
+        [HttpPost]
         public async Task<IActionResult> PlaceOrder([FromBody] OrderSubmissionModel model)
         {
-            // ... (نفس كود PlaceOrder السابق) ...
-            // للتبسيط سأعيد كتابة الجزء الأساسي فقط لضمان عمل الملف
             if (model == null || !model.Items.Any())
-                return Json(new { success = false, message = "السلة فارغة" });
+                return Json(new { success = false, message = "السلة فارغة، لا يمكن إتمام الطلب." });
 
             var user = await _userManager.GetUserAsync(User);
+
+            // استخدام Transaction لضمان أن كل العمليات (خصم مخزون، خصم رصيد، إنشاء طلب) تتم معاً أو تفشل معاً
             using var transaction = _context.Database.BeginTransaction();
 
             try
             {
+                // 1. إنشاء كائن الطلب الأساسي
                 var order = new Order
                 {
                     UserId = user.Id,
-                    CustomerName = model.ShopName,
+                    CustomerName = !string.IsNullOrEmpty(model.ShopName) ? model.ShopName : user.FullName,
                     Phone = model.Phone,
                     Governorate = model.Governorate,
                     City = model.City,
                     Address = model.Address,
-                    PaymentMethod = model.PaymentMethod,
-                    Notes = model.Notes,
                     DeliverySlot = model.DeliverySlot,
+                    Notes = model.Notes,
+                    PaymentMethod = model.PaymentMethod,
                     Status = "Pending",
                     OrderDate = DateTime.Now,
-                    ShippingCost = model.ShippingCost
+                    ShippingCost = _shippingService.CalculateCost(model.Governorate, model.City) // إعادة حساب الشحن في السيرفر للأمان
                 };
 
                 decimal subTotal = 0;
                 var orderItems = new List<OrderItem>();
 
+                // 2. معالجة المنتجات (Validation & Calculation)
                 foreach (var itemDto in model.Items)
                 {
                     if (int.TryParse(itemDto.Id, out int pid))
                     {
-                        var product = await _context.Products.FindAsync(pid);
-                        if (product == null || product.StockQuantity < itemDto.Qty)
-                            return Json(new { success = false, message = $"الكمية غير متوفرة لمنتج: {product?.Name}" });
+                        // جلب المنتج مع قفل (اختياري، هنا نعتمد على Concurrency Check عند الحفظ)
+                        var product = await _context.Products
+                            .Include(p => p.PriceTiers)
+                            .FirstOrDefaultAsync(p => p.Id == pid);
 
+                        if (product == null || product.Status != "Active")
+                        {
+                            return Json(new { success = false, message = $"المنتج رقم {pid} لم يعد متاحاً." });
+                        }
+
+                        // التحقق من المخزون
+                        if (product.StockQuantity < itemDto.Qty)
+                        {
+                            return Json(new { success = false, message = $"عفواً، الكمية المطلوبة من '{product.Name}' غير متوفرة. المتاح: {product.StockQuantity}" });
+                        }
+
+                        // خصم المخزون
                         product.StockQuantity -= itemDto.Qty;
-                        _context.Update(product);
+                        _context.Update(product); // سيتم الحفظ في النهاية
 
-                        decimal price = product.Price;
-                        subTotal += price * itemDto.Qty;
+                        // تحديد السعر (تطبيق شرائح الجملة Server-Side)
+                        decimal finalPrice = product.Price;
+                        if (product.PriceTiers != null && product.PriceTiers.Any())
+                        {
+                            var tier = product.PriceTiers
+                                .Where(t => itemDto.Qty >= t.MinQuantity && itemDto.Qty <= t.MaxQuantity)
+                                .OrderBy(t => t.UnitPrice)
+                                .FirstOrDefault();
 
-                        orderItems.Add(new OrderItem { ProductId = pid, Quantity = itemDto.Qty, UnitPrice = price });
+                            // إذا كانت الكمية أكبر من أكبر شريحة، نطبق سعر أكبر شريحة (أرخص سعر)
+                            if (tier == null && itemDto.Qty > product.PriceTiers.Max(t => t.MaxQuantity))
+                            {
+                                tier = product.PriceTiers.OrderBy(t => t.UnitPrice).FirstOrDefault();
+                            }
+
+                            if (tier != null) finalPrice = tier.UnitPrice;
+                        }
+
+                        subTotal += finalPrice * itemDto.Qty;
+
+                        orderItems.Add(new OrderItem
+                        {
+                            ProductId = pid,
+                            Quantity = itemDto.Qty,
+                            UnitPrice = finalPrice
+                        });
                     }
                 }
 
-                order.TotalAmount = subTotal + model.ShippingCost;
+                order.TotalAmount = subTotal + order.ShippingCost;
                 order.OrderItems = orderItems;
 
+                // 3. معالجة الدفع (Wallet)
                 if (model.PaymentMethod == "Wallet")
                 {
                     if (user.WalletBalance < order.TotalAmount)
-                        return Json(new { success = false, message = "رصيد المحفظة لا يكفي." });
+                    {
+                        return Json(new { success = false, message = $"رصيد المحفظة ({user.WalletBalance}) لا يكفي لإتمام الطلب ({order.TotalAmount})." });
+                    }
 
                     user.WalletBalance -= order.TotalAmount;
-                    _context.WalletTransactions.Add(new WalletTransaction { UserId = user.Id, Amount = order.TotalAmount, Type = "Purchase", Description = "دفع طلب", TransactionDate = DateTime.Now });
+
+                    _context.WalletTransactions.Add(new WalletTransaction
+                    {
+                        UserId = user.Id,
+                        Amount = order.TotalAmount,
+                        Type = "Purchase",
+                        Description = $"شراء طلب جديد",
+                        TransactionDate = DateTime.Now
+                    });
+
                     await _userManager.UpdateAsync(user);
-                    order.Status = "Confirmed";
+                    order.Status = "Confirmed"; // الدفع تم، نؤكد الطلب مباشرة
                 }
 
+                // 4. الحفظ النهائي
                 _context.Orders.Add(order);
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
@@ -183,14 +215,17 @@ namespace Diska.Controllers
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                return Json(new { success = false, message = "حدث خطأ: " + ex.Message });
+                // في الإنتاج، سجل الخطأ في Logger ولا ترجع التفاصيل للعميل
+                return Json(new { success = false, message = "حدث خطأ غير متوقع أثناء معالجة الطلب. يرجى المحاولة مرة أخرى." });
             }
         }
 
+        // صفحات النجاح والفشل
         public IActionResult OrderSuccess(int id) { ViewBag.OrderId = id; return View(); }
+        public IActionResult OrderFailed(int id) { ViewBag.OrderId = id; return View(); }
     }
 
-    // DTO Classes
+    // نماذج استقبال البيانات (DTOs)
     public class OrderSubmissionModel
     {
         public string ShopName { get; set; }
@@ -201,8 +236,13 @@ namespace Diska.Controllers
         public string PaymentMethod { get; set; }
         public string DeliverySlot { get; set; }
         public string Notes { get; set; }
-        public decimal ShippingCost { get; set; }
+        public decimal ShippingCost { get; set; } // للمرجعية، لكن السيرفر يعيد حسابها
         public List<CartItemDto> Items { get; set; }
     }
-    public class CartItemDto { public string Id { get; set; } public int Qty { get; set; } }
+
+    public class CartItemDto
+    {
+        public string Id { get; set; }
+        public int Qty { get; set; }
+    }
 }
