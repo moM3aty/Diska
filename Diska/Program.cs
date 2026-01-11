@@ -61,8 +61,9 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
-        context.Database.Migrate();
-        await DbSeeder.SeedRolesAndAdminAsync(services);
+        context.Database.Migrate(); 
+
+        await DbSeeder.SeedData(services);
     }
     catch (Exception ex)
     {
@@ -97,12 +98,10 @@ app.UseAuthorization();
 
 app.UseSession();
 
-// مسار المناطق (Admin, Merchant)
 app.MapControllerRoute(
     name: "areas",
     pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}");
 
-// المسار الافتراضي
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");

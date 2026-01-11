@@ -2,66 +2,520 @@
 @{
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
     ViewData["Title"] = isAr ? "سلة المشتريات" : "Shopping Cart";
+    var dir = isAr ? "rtl" : "ltr";
 }
 
-<section class="cart-section section-padding">
+<!-- --- Premium Cart Styles --- -->
+<style>
+    .cart-page-wrapper {
+        background-color: #f8fafc;
+        min-height: 85vh;
+        padding: 50px 0;
+    }
+
+    .cart-grid {
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        gap: 40px;
+        align-items: start;
+    }
+
+    /* Section Headers */
+    .cart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 25px;
+        border-bottom: 2px solid #e2e8f0;
+        padding-bottom: 15px;
+    }
+
+        .cart-header h2 {
+            font-weight: 800;
+            color: var(--primary);
+            font-size: 1.8rem;
+            margin: 0;
+        }
+
+    .cart-count {
+        color: #64748b;
+        font-weight: 600;
+        font-size: 1rem;
+    }
+
+    /* Cart Item Card */
+    .item-card {
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+        padding: 25px;
+        display: flex;
+        gap: 25px;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+        position: relative;
+        border: 1px solid transparent;
+        align-items: center;
+    }
+
+        .item-card:hover {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.01);
+            transform: translateY(-3px);
+            border-color: #e2e8f0;
+        }
+
+    .item-img-wrapper {
+        width: 110px;
+        height: 110px;
+        flex-shrink: 0;
+        background: #fff;
+        border-radius: 12px;
+        border: 1px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .item-img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        transition: transform 0.3s;
+    }
+
+    .item-card:hover .item-img {
+        transform: scale(1.05);
+    }
+
+    .item-details {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .item-title {
+        font-weight: 700;
+        color: #1e293b;
+        font-size: 1.15rem;
+        text-decoration: none;
+        margin-bottom: 8px;
+        display: block;
+        line-height: 1.4;
+        transition: 0.2s;
+    }
+
+        .item-title:hover {
+            color: var(--primary);
+        }
+
+    .item-meta {
+        font-size: 0.85rem;
+        color: #64748b;
+        margin-bottom: 15px;
+    }
+
+    /* Price & Actions Row */
+    .item-actions-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: auto;
+    }
+
+    .item-price {
+        font-weight: 800;
+        color: var(--primary);
+        font-size: 1.3rem;
+    }
+
+    /* Quantity Selector */
+    .qty-selector {
+        display: inline-flex;
+        align-items: center;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 50px;
+        padding: 4px;
+    }
+
+    .qty-btn {
+        width: 32px;
+        height: 32px;
+        border: none;
+        background: #fff;
+        border-radius: 50%;
+        cursor: pointer;
+        font-weight: bold;
+        color: #1e293b;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        transition: 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .qty-btn:hover {
+            background: var(--accent);
+            color: #000;
+        }
+
+    .qty-input {
+        width: 45px;
+        text-align: center;
+        border: none;
+        background: transparent;
+        font-weight: 700;
+        color: #1e293b;
+        font-size: 1rem;
+        pointer-events: none;
+    }
+
+    /* Remove Button */
+    .remove-btn {
+        color: #94a3b8;
+        background: transparent;
+        border: none;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: 0.2s;
+        padding: 8px;
+        border-radius: 8px;
+    }
+
+        .remove-btn:hover {
+            color: #ef4444;
+            background: #fef2f2;
+        }
+
+    /* Summary Sidebar */
+    .summary-card {
+        background: #fff;
+        padding: 35px 30px;
+        border-radius: 16px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+        position: sticky;
+        top: 100px;
+        border: 1px solid #f1f5f9;
+    }
+
+    .summary-title {
+        font-weight: 800;
+        font-size: 1.3rem;
+        margin-bottom: 25px;
+        color: var(--primary);
+    }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 18px;
+        color: #475569;
+        font-size: 0.95rem;
+        font-weight: 500;
+    }
+
+        .summary-row.total {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 2px dashed #e2e8f0;
+            font-weight: 900;
+            color: #0f172a;
+            font-size: 1.4rem;
+            align-items: center;
+        }
+
+            .summary-row.total span:last-child {
+                color: var(--primary);
+            }
+
+    .checkout-btn {
+        background: var(--primary);
+        color: #fff;
+        width: 100%;
+        padding: 18px;
+        border-radius: 12px;
+        font-weight: 700;
+        border: none;
+        margin-top: 30px;
+        cursor: pointer;
+        transition: 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        text-decoration: none;
+        font-size: 1.05rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+        .checkout-btn:hover {
+            background: #1e293b;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            color: var(--accent);
+        }
+
+    .secure-badge {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 20px;
+        color: #64748b;
+        font-size: 0.85rem;
+        background: #f8fafc;
+        padding: 10px;
+        border-radius: 8px;
+    }
+
+    /* Empty State */
+    .empty-cart-state {
+        text-align: center;
+        padding: 100px 20px;
+        background: #fff;
+        border-radius: 20px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+    }
+
+    .empty-icon-box {
+        width: 120px;
+        height: 120px;
+        background: #f1f5f9;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 25px;
+        color: #94a3b8;
+    }
+
+    @@media (max-width: 992px) {
+        .cart-grid
+
+    {
+        grid-template-columns: 1fr;
+    }
+
+    .summary-card {
+        position: static;
+        margin-top: 30px;
+    }
+
+    .item-card {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .item-img-wrapper {
+        width: 100%;
+        height: 180px;
+    }
+
+    .item-actions-row {
+        width: 100%;
+        margin-top: 15px;
+    }
+
+    }
+</style>
+
+<div class="cart-page-wrapper">
     <div class="container">
-        <h2 class="page-title">@(isAr ? "سلة المشتريات" : "Shopping Cart") 🛒</h2>
 
-        <div class="cart-layout" style="display:grid; grid-template-columns: 2fr 1fr; gap:30px;">
-
-            <!-- Items Container -->
-            <div class="cart-items-container">
-                <div id="cartItemsList">
-                    <!-- سيتم ملؤه بواسطة JS (cart.js) بناءً على LocalStorage -->
-                    <div style="text-align:center; padding:40px;">
-                        <i class="fas fa-spinner fa-spin fa-2x" style="color:var(--primary);"></i>
-                        <p>@(isAr ? "جاري تحميل السلة..." : "Loading cart...")</p>
-                    </div>
-                </div>
+        <div id="cartContentWrapper">
+            <!-- Loading State -->
+            <div class="text-center py-5">
+                <i class="fas fa-spinner fa-spin fa-3x" style="color:var(--primary);"></i>
+                <p class="mt-4 text-muted fw-bold">@(isAr ? "جاري تحميل السلة..." : "Loading cart...")</p>
             </div>
-
-            <!-- Summary -->
-            <div class="cart-summary" style="height:fit-content; background:#f8fafc; padding:20px; border-radius:12px; border:1px solid #eee;">
-                <h3 style="margin-bottom:20px;">@(isAr ? "ملخص الطلب" : "Order Summary")</h3>
-
-                <div class="summary-row" style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                    <span>@(isAr ? "المجموع الفرعي" : "Subtotal")</span>
-                    <span id="cartSubtotal">0.00</span>
-                </div>
-                <div class="summary-row" style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                    <span>@(isAr ? "الضريبة (14%)" : "VAT (14%)")</span>
-                    <span style="color:#666; font-size:0.8rem;">@(isAr ? "مشمولة" : "Included")</span>
-                </div>
-
-                <hr style="border-top:1px solid #ddd; margin:15px 0;">
-
-                <div class="summary-row total" style="display:flex; justify-content:space-between; margin-bottom:20px; font-weight:bold; font-size:1.2rem;">
-                    <span>@(isAr ? "الإجمالي" : "Total")</span>
-                    <span id="cartTotal" style="color:var(--primary);">0.00</span>
-                </div>
-
-                <a asp-action="Checkout" class="btn primary w-100" style="text-align:center; display:block; padding:12px; border-radius:8px; text-decoration:none;">
-                    @(isAr ? "إتمام الشراء" : "Checkout") <i class="fas @(isAr ? "fa-arrow-left" : "fa-arrow-right")"></i>
-                </a>
-
-                <a asp-controller="Home" asp-action="Index" style="display:block; text-align:center; margin-top:15px; color:#666; text-decoration:none; font-size:0.9rem;">
-                    @(isAr ? "متابعة التسوق" : "Continue Shopping")
-                </a>
-            </div>
-
         </div>
+
     </div>
-</section>
+</div>
 
 @section Scripts {
-    <script src="~/js/cart.js"></script>
+    <!-- إضافة SweetAlert مباشرة هنا لضمان وجودها -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // استدعاء دالة الرسم الموجودة في cart.js
-            if(typeof renderCartPage === 'function') {
-                renderCartPage();
+        // تعريف المتغيرات المحلية لتجنب التضارب مع الملفات الخارجية
+        const CART_KEY_LOCAL = 'DISKA_CART';
+        const isArPage = '@isAr' === 'True';
+
+        function renderCartPageModern() {
+            const container = document.getElementById('cartContentWrapper');
+            // قراءة السلة من LocalStorage
+            const cart = JSON.parse(localStorage.getItem(CART_KEY_LOCAL)) || [];
+
+            if (cart.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-cart-state">
+                        <div class="empty-icon-box">
+                            <i class="fas fa-shopping-cart fa-4x"></i>
+                        </div>
+                        <h2 style="color:#1e293b; font-weight:800; margin-bottom:15px;">@(isAr ? "سلة المشتريات فارغة" : "Your Cart is Empty")</h2>
+                        <p style="color:#64748b; margin-bottom:35px; font-size:1.1rem;">@(isAr ? "يبدو أنك لم تضف أي منتجات بعد. تصفح المتجر واكتشف عروضنا." : "Looks like you haven't added anything yet. Browse our store and find great deals.")</p>
+                        <a href="/" class="btn primary" style="padding:15px 50px; font-size:1.1rem; border-radius:50px;">
+                            @(isAr ? "ابدأ التسوق" : "Start Shopping")
+                        </a>
+                    </div>
+                `;
+                return;
             }
-        });
+
+            let itemsHtml = '';
+            let subtotal = 0;
+
+            cart.forEach((item, index) => {
+                let itemTotal = item.price * item.qty;
+                subtotal += itemTotal;
+
+                itemsHtml += `
+                    <div class="item-card">
+                        <div class="item-img-wrapper">
+                            <img src="/${item.image}" onerror="this.src='/images/default.png'" class="item-img" alt="${item.name}">
+                        </div>
+
+                        <div class="item-details">
+                            <div style="display:flex; justify-content:space-between; align-items:start; width:100%;">
+                                <div>
+                                    <a href="/Product/Details/${item.id}" class="item-title">${item.name}</a>
+                                    <div class="item-meta">SKU: #${item.id}</div>
+                                </div>
+                                <button type="button" class="remove-btn" onclick="removeItemModern(${index})" title="@(isAr ? "حذف" : "Remove")">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+
+                            <div class="item-actions-row">
+                                <div class="qty-selector">
+                                    <button type="button" class="qty-btn" onclick="changeQtyModern(${index}, -1)"><i class="fas fa-minus" style="font-size:0.7rem;"></i></button>
+                                    <input type="text" class="qty-input" value="${item.qty}">
+                                    <button type="button" class="qty-btn" onclick="changeQtyModern(${index}, 1)"><i class="fas fa-plus" style="font-size:0.7rem;"></i></button>
+                                </div>
+
+                                <div class="item-price">
+                                    ${itemTotal.toLocaleString()} <small style="font-size:0.85rem; font-weight:600; color:#64748b;">@(isAr ? "ج.م" : "EGP")</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            const summaryHtml = `
+                <div class="summary-card">
+                    <h3 class="summary-title">@(isAr ? "ملخص الطلب" : "Order Summary")</h3>
+
+                    <div class="summary-row">
+                        <span>@(isAr ? "عدد المنتجات" : "Items Count")</span>
+                        <span class="fw-bold">${cart.length}</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>@(isAr ? "المجموع الفرعي" : "Subtotal")</span>
+                        <span>${subtotal.toLocaleString()} @(isAr ? "ج.م" : "EGP")</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>@(isAr ? "الضريبة" : "VAT (14%)")</span>
+                        <span style="color:var(--success); font-weight:bold; background:#dcfce7; padding:2px 8px; border-radius:4px; font-size:0.8rem;">@(isAr ? "شاملة" : "Included")</span>
+                    </div>
+
+                    <div class="summary-row total">
+                        <span>@(isAr ? "الإجمالي" : "Total")</span>
+                        <span>${subtotal.toLocaleString()} <small style="font-size:1rem; color:#64748b; font-weight:600;">@(isAr ? "ج.م" : "EGP")</small></span>
+                    </div>
+
+                    <a href="/Cart/Checkout" class="checkout-btn">
+                        @(isAr ? "إتمام الشراء" : "Checkout") <i class="fas @(isAr ? "fa-arrow-left" : "fa-arrow-right")"></i>
+                    </a>
+
+                    <div class="secure-badge">
+                        <i class="fas fa-lock text-success"></i> @(isAr ? "تسوق آمن ومحمي 100%" : "100% Secure Checkout")
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = `
+                <div class="cart-grid">
+                    <div>
+                        <div class="cart-header">
+                            <h2>@(isAr ? "عربة التسوق" : "My Cart")</h2>
+                            <span class="cart-count">${cart.length} @(isAr ? "عناصر" : "Items")</span>
+                        </div>
+                        ${itemsHtml}
+                    </div>
+                    <div>
+                        ${summaryHtml}
+                    </div>
+                </div>
+            `;
+
+            // محاولة تحديث عداد السلة في الهيدر إذا كانت الدالة متاحة
+            if(typeof updateCartBadge === 'function') updateCartBadge();
+        }
+
+        // Helper Functions
+        function changeQtyModern(index, change) {
+            let cart = JSON.parse(localStorage.getItem(CART_KEY_LOCAL)) || [];
+            let item = cart[index];
+            let newQty = parseInt(item.qty) + change;
+
+            if (item.maxStock && newQty > item.maxStock) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: isArPage ? 'عفواً' : 'Oops',
+                    text: isArPage ? 'لقد وصلت للحد الأقصى للمخزون' : 'Max stock reached'
+                });
+                return;
+            }
+
+            if (newQty < 1) {
+                removeItemModern(index);
+                return;
+            }
+
+            item.qty = newQty;
+            localStorage.setItem(CART_KEY_LOCAL, JSON.stringify(cart));
+            renderCartPageModern();
+        }
+
+        function removeItemModern(index) {
+            const confirmMsg = isArPage ? 'هل أنت متأكد من حذف هذا المنتج؟' : 'Are you sure you want to remove this item?';
+            const titleMsg = isArPage ? 'حذف المنتج؟' : 'Remove Item?';
+            const yesBtn = isArPage ? 'نعم، احذفه' : 'Yes, remove it';
+            const noBtn = isArPage ? 'إلغاء' : 'Cancel';
+
+            Swal.fire({
+                title: titleMsg,
+                text: confirmMsg,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: yesBtn,
+                cancelButtonText: noBtn
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    performRemove(index);
+                    Swal.fire(
+                        isArPage ? 'تم الحذف!' : 'Deleted!',
+                        isArPage ? 'تم حذف المنتج من السلة.' : 'Item has been removed.',
+                        'success'
+                    );
+                }
+            });
+        }
+
+        function performRemove(index) {
+            let cart = JSON.parse(localStorage.getItem(CART_KEY_LOCAL)) || [];
+            cart.splice(index, 1);
+            localStorage.setItem(CART_KEY_LOCAL, JSON.stringify(cart));
+            renderCartPageModern();
+        }
+
+        // Init
+        document.addEventListener('DOMContentLoaded', renderCartPageModern);
     </script>
 }

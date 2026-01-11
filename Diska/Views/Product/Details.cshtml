@@ -13,7 +13,7 @@
 
         <div class="breadcrumb">
             <a asp-controller="Home" asp-action="Index">@(isAr ? "الرئيسية" : "Home")</a> /
-            <a asp-action="Index" asp-route-categoryId="@Model.CategoryId">@(isAr? Model.Category.Name : Model.Category.NameEn)</a> /
+            <a asp-action="Index" asp-route-id="@Model.CategoryId">@(isAr? Model.Category.Name : Model.Category.NameEn)</a> /
             <span>@(isAr? Model.Name: Model.NameEn)</span>
         </div>
 
@@ -67,7 +67,6 @@
                     <span>@Model.Price.ToString("N0") <small>@(isAr ? "ج.م" : "EGP")</small></span>
                 </div>
 
-                <!-- Wholesale Table -->
                 @if (Model.PriceTiers != null && Model.PriceTiers.Any())
                 {
                     <div class="wholesale-table">
@@ -94,7 +93,6 @@
                     </div>
                 }
 
-                <!-- Stock & Unit Info -->
                 <div class="meta-info">
                     <p><i class="fas fa-box"></i> @(isAr ? $"الكرتونة تحتوي على {Model.UnitsPerCarton} قطعة" : $"Carton contains {Model.UnitsPerCarton} pcs")</p>
                     <p>
@@ -109,7 +107,6 @@
                     </p>
                 </div>
 
-                <!-- Actions -->
                 <div class="details-actions">
                     <div class="qty-control">
                         <button onclick="document.getElementById('pQty').stepDown()">-</button>
@@ -118,7 +115,8 @@
                     </div>
                     @if (Model.StockQuantity > 0)
                     {
-                        <button class="btn primary add-big-btn" onclick="addToCartSimple(@Model.Id)">
+                        // تم التحديث: تمرير this (الزر) للدالة
+                        <button class="btn primary add-big-btn" onclick="addToCartSimple(this, @Model.Id)">
                             <i class="fas fa-cart-plus"></i> @(isAr ? "إضافة للسلة" : "Add to Cart")
                         </button>
                     }
@@ -149,9 +147,10 @@
             img.style.borderColor = 'var(--primary)';
         }
 
-        function addToCartSimple(id) {
+        // تم التحديث: تمرير الزر (btn)
+        function addToCartSimple(btn, id) {
             let qty = document.getElementById('pQty').value;
-            if(typeof addItemToCart === 'function') addItemToCart(id, qty);
+            if(typeof addItemToCart === 'function') addItemToCart(id, qty, btn);
         }
     </script>
 }

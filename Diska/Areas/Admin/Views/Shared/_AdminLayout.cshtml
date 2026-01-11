@@ -355,68 +355,83 @@
     <div class="app-container">
 
         <!-- Sidebar -->
-        <nav class="sidebar flex-shrink-0" id="sidebar">
-            <div class="sidebar-header">
-                <h3>DISKA <span style="color:var(--accent); font-size:0.5em; vertical-align:middle;">PRO</span></h3>
-            </div>
+            <nav class="sidebar flex-shrink-0" id="sidebar">
+                <div class="sidebar-header">
+                    <h3>DISKA <span style="color:var(--accent); font-size:0.5em; vertical-align:middle;">Admin</span></h3>
+                </div>
 
-            <div class="sidebar-menu">
-                <div class="menu-label">@(isAr ? "الرئيسية" : "Main")</div>
+                <div class="sidebar-menu">
+                    <div class="menu-label">@(isAr ? "الرئيسية" : "Main")</div>
 
-                <a href="/Admin/Dashboard" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Dashboard" ? "active" : "")">
-                    <i class="fas fa-th-large"></i> <span>@(isAr ? "لوحة القيادة" : "Dashboard")</span>
-                </a>
+                    <a href="/Admin/Dashboard" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Dashboard" && ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")">
+                        <i class="fas fa-th-large"></i> <span>@(isAr ? "لوحة القيادة" : "Dashboard")</span>
+                    </a>
 
-                <a href="/Admin/Approvals" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Approvals" ? "active" : "")">
-                    <i class="fas fa-check-circle"></i> <span>@(isAr ? "الموافقات" : "Approvals")</span>
-                </a>
+                    <a href="/Admin/Approvals" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Approvals" ? "active" : "")">
+                        <i class="fas fa-check-double"></i> <span>@(isAr ? "الموافقات" : "Approvals")</span>
+                    </a>
 
-                <div class="menu-label">@(isAr ? "إدارة المتجر" : "Shop Management")</div>
+                    <div class="menu-label">@(isAr ? "إدارة المتجر" : "Shop Management")</div>
 
-                <a href="/Admin/Products" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Products" ? "active" : "")">
-                    <i class="fas fa-box"></i> <span>@(isAr ? "المنتجات" : "Products")</span>
-                </a>
-                <a href="/Admin/Dashboard/Orders" class="sidebar-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Orders" ? "active" : "")">
-                    <i class="fas fa-shopping-bag"></i> <span>@(isAr ? "الطلبات" : "Orders")</span>
-                </a>
-                <a href="/Admin/Categories" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Categories" ? "active" : "")">
-                    <i class="fas fa-layer-group"></i> <span>@(isAr ? "الأقسام" : "Categories")</span>
-                </a>
-                <a href="/Admin/Deals" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Deals" ? "active" : "")">
-                    <i class="fas fa-tags"></i> <span>@(isAr ? "العروض" : "Deals")</span>
-                </a>
+                    <a href="/Admin/Products" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Products" ? "active" : "")">
+                        <i class="fas fa-box"></i> <span>@(isAr ? "المنتجات" : "Products")</span>
+                    </a>
+                    <a href="/Admin/Categories" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Categories" ? "active" : "")">
+                        <i class="fas fa-layer-group"></i> <span>@(isAr ? "الأقسام" : "Categories")</span>
+                    </a>
+                    <a href="/Admin/Deals" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Deals" ? "active" : "")">
+                        <i class="fas fa-tags"></i> <span>@(isAr ? "العروض والصفقات" : "Deals")</span>
+                    </a>
+                    <a href="/Admin/Banners" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Banners" ? "active" : "")">
+                        <i class="fas fa-images"></i> <span>@(isAr ? "البنرات الإعلانية" : "Banners")</span>
+                    </a>
 
-                <div class="menu-label">@(isAr ? "المستخدمين والمالية" : "Users & Finance")</div>
+                    <div class="menu-label">@(isAr ? "العمليات" : "Operations")</div>
 
-                <a href="/Admin/Users" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Users" ? "active" : "")">
-                    <i class="fas fa-users"></i> <span>@(isAr ? "المستخدمين" : "Users")</span>
-                </a>
-                <a href="/Admin/Dashboard/Merchants" class="sidebar-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Merchants" ? "active" : "")">
-                    <i class="fas fa-store"></i> <span>@(isAr ? "التجار" : "Merchants")</span>
-                </a>
-                <a href="/Admin/Wallet" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Wallet" ? "active" : "")">
-                    <i class="fas fa-wallet"></i> <span>@(isAr ? "المحفظة" : "Wallet")</span>
-                </a>
-                <a href="/Admin/Requests" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Requests" ? "active" : "")">
-                    <i class="fas fa-bullhorn"></i> <span>@(isAr ? "طلبات خاصة" : "Special Requests")</span>
-                </a>
+                    <a href="/Admin/Dashboard/Orders" class="sidebar-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Orders" ? "active" : "")">
+                        <i class="fas fa-shopping-bag"></i> <span>@(isAr ? "إدارة الطلبات" : "Orders")</span>
+                    </a>
+                    <a href="/Admin/Restock" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Restock" ? "active" : "")">
+                        <i class="fas fa-cubes"></i> <span>@(isAr ? "نواقص المخزون" : "Stock Alerts")</span>
+                    </a>
+                    <a href="/Admin/Requests" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Requests" ? "active" : "")">
+                        <i class="fas fa-bullhorn"></i> <span>@(isAr ? "طلبات خاصة" : "Special Requests")</span>
+                    </a>
+                    <a href="/Admin/Reviews" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Reviews" ? "active" : "")">
+                        <i class="fas fa-star"></i> <span>@(isAr ? "التقييمات" : "Reviews")</span>
+                    </a>
 
-                <div class="menu-label">@(isAr ? "النظام" : "System")</div>
+                    <div class="menu-label">@(isAr ? "المستخدمين والمالية" : "Users & Finance")</div>
 
-                <a href="/Admin/Reports" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Reports" ? "active" : "")">
-                    <i class="fas fa-chart-pie"></i> <span>@(isAr ? "التقارير" : "Reports")</span>
-                </a>
-                <a href="/Admin/Audit" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Audit" ? "active" : "")">
-                    <i class="fas fa-fingerprint"></i> <span>@(isAr ? "سجل التدقيق" : "Audit Logs")</span>
-                </a>
-                <a href="/Admin/Dashboard/Messages" class="sidebar-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Messages" ? "active" : "")">
-                    <i class="fas fa-envelope"></i> <span>@(isAr ? "الرسائل" : "Messages")</span>
-                </a>
-                <a href="/Admin/Settings" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Settings" ? "active" : "")">
-                    <i class="fas fa-cog"></i> <span>@(isAr ? "الإعدادات" : "Settings")</span>
-                </a>
-            </div>
-        </nav>
+                    <a href="/Admin/Users" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Users" ? "active" : "")">
+                        <i class="fas fa-users"></i> <span>@(isAr ? "المستخدمين" : "Users")</span>
+                    </a>
+                    <a href="/Admin/Dashboard/Merchants" class="sidebar-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Merchants" ? "active" : "")">
+                        <i class="fas fa-store"></i> <span>@(isAr ? "التجار" : "Merchants")</span>
+                    </a>
+                    <a href="/Admin/Wallet" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Wallet" ? "active" : "")">
+                        <i class="fas fa-wallet"></i> <span>@(isAr ? "المحفظة المالية" : "Wallet")</span>
+                    </a>
+
+                    <div class="menu-label">@(isAr ? "النظام" : "System")</div>
+
+                    <a href="/Admin/Reports" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Reports" ? "active" : "")">
+                        <i class="fas fa-chart-pie"></i> <span>@(isAr ? "التقارير" : "Reports")</span>
+                    </a>
+                    <a href="/Admin/Survey" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Survey" ? "active" : "")">
+                        <i class="fas fa-poll"></i> <span>@(isAr ? "الاستبيانات" : "Surveys")</span>
+                    </a>
+                    <a href="/Admin/Audit" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Audit" ? "active" : "")">
+                        <i class="fas fa-fingerprint"></i> <span>@(isAr ? "سجل التدقيق" : "Audit Logs")</span>
+                    </a>
+                    <a href="/Admin/Dashboard/Messages" class="sidebar-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Messages" ? "active" : "")">
+                        <i class="fas fa-envelope"></i> <span>@(isAr ? "الرسائل والدعم" : "Messages")</span>
+                    </a>
+                    <a href="/Admin/Settings" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Settings" ? "active" : "")">
+                        <i class="fas fa-cog"></i> <span>@(isAr ? "الإعدادات" : "Settings")</span>
+                    </a>
+                </div>
+            </nav>
 
         <!-- Main Content -->
         <div class="main-content">

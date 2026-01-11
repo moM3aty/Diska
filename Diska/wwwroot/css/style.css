@@ -600,6 +600,7 @@ ul {
     background: var(--primary) !important;
     font-size: 0.9rem !important;
     gap: 10px;
+    color:#FFF !important;
 }
 
 /* Footer */
@@ -1731,12 +1732,12 @@ footer {
     height: 40px;
     border-radius: 8px;
     background: var(--primary);
-    color: #fff;
+    color: #fff !important;
     border: none;
     font-weight: bold;
     cursor: pointer;
     transition: 0.3s;
-    display: flex;
+    display: flex;  
     align-items: center;
     justify-content: center;
     gap: 5px;

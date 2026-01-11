@@ -11,160 +11,510 @@
     string defAddr = ViewBag.Address;
 }
 
-<section class="checkout-section section-padding">
+<style>
+    /* --- Checkout Styles (Website Theme) --- */
+    :root {
+        /* ألوان الموقع الأصلية */
+        --site-primary: #0F172A; /* الكحلي */
+        --site-accent: #FACC15; /* الأصفر */
+        --site-bg: #f8fafc;
+        --text-dark: #1e293b;
+        --text-gray: #64748b;
+        --border-color: #e2e8f0;
+    }
+
+    .checkout-section {
+        background-color: var(--site-bg);
+        min-height: 90vh;
+        padding: 60px 0;
+        font-family: 'Cairo', sans-serif;
+    }
+
+    .checkout-container {
+        display: grid;
+        grid-template-columns: 1.6fr 1fr;
+        gap: 40px;
+        align-items: start;
+    }
+
+    /* Cards */
+    .checkout-card {
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+        border: 1px solid var(--border-color);
+        padding: 30px;
+        margin-bottom: 25px;
+    }
+
+    .card-header-custom {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+        .card-header-custom i {
+            width: 35px;
+            height: 35px;
+            background: var(--site-primary); /* كحلي */
+            color: var(--site-accent); /* أصفر */
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .card-header-custom h3 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--site-primary);
+        }
+
+    /* Form Elements */
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 8px;
+        display: block;
+        font-size: 0.95rem;
+    }
+
+    .form-control, .form-select {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        background-color: #fff;
+        transition: all 0.2s ease;
+        font-size: 1rem;
+        color: var(--text-dark);
+    }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--site-accent);
+            box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.15); /* Yellow glow */
+            outline: none;
+        }
+
+    /* Payment Options */
+    .payment-options {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+
+    .payment-card {
+        border: 2px solid var(--border-color);
+        border-radius: 12px;
+        padding: 20px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        background: #fff;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .payment-card:hover {
+            border-color: #cbd5e1;
+            background: #f8fafc;
+        }
+
+        .payment-card.selected {
+            border-color: var(--site-accent);
+            background: #fffbeb; /* Light yellow bg */
+            color: var(--site-primary);
+        }
+
+            .payment-card.selected::after {
+                content: '\f00c'; /* FontAwesome check */
+                font-family: "Font Awesome 6 Free";
+                font-weight: 900;
+                position: absolute;
+                top: 5px;
+                @(isAr ? "left" : "right") : 5px;
+                font-size: 1rem;
+                color: var(--site-primary);
+            }
+
+    .payment-icon {
+        font-size: 1.8rem;
+        margin-bottom: 10px;
+        color: var(--text-gray);
+    }
+
+    .payment-card.selected .payment-icon {
+        color: var(--site-primary);
+    }
+
+    .payment-title {
+        font-weight: 700;
+        font-size: 0.95rem;
+    }
+
+    /* Order Summary (Sticky) */
+    .summary-sticky {
+        position: sticky;
+        top: 20px;
+        background: var(--site-primary); /* الكحلي للخلفية */
+        color: #fff;
+        border: none;
+    }
+
+        .summary-sticky .card-header-custom {
+            border-bottom-color: rgba(255,255,255,0.1);
+        }
+
+            .summary-sticky .card-header-custom h3 {
+                color: #fff;
+            }
+
+            .summary-sticky .card-header-custom i {
+                background: rgba(255,255,255,0.1);
+                color: var(--site-accent);
+            }
+
+    .order-item {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        align-items: center;
+    }
+
+        .order-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+    .item-img {
+        width: 60px;
+        height: 60px;
+        border-radius: 8px;
+        object-fit: cover;
+        border: 2px solid rgba(255,255,255,0.1);
+        background: #fff;
+    }
+
+    .item-info {
+        flex: 1;
+        overflow: hidden;
+    }
+
+    .item-name {
+        font-weight: 700;
+        color: #fff;
+        font-size: 0.95rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .item-meta {
+        color: rgba(255,255,255,0.7);
+        font-size: 0.85rem;
+    }
+
+    .item-price {
+        font-weight: 800;
+        color: var(--site-accent);
+    }
+
+    /* Totals Box inside Summary */
+    .pricing-box {
+        background: rgba(255,255,255,0.05);
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        color: rgba(255,255,255,0.7);
+        font-size: 0.95rem;
+    }
+
+        .summary-row.total {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px dashed rgba(255,255,255,0.2);
+            color: #fff;
+            font-weight: 800;
+            font-size: 1.2rem;
+            align-items: center;
+        }
+
+    .total-price {
+        color: var(--site-accent);
+        font-size: 1.5rem;
+    }
+
+    /* Button */
+    .btn-place-order {
+        background: var(--site-accent);
+        color: var(--site-primary);
+        width: 100%;
+        padding: 18px;
+        border-radius: 12px;
+        font-weight: 800;
+        border: none;
+        margin-top: 25px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        font-size: 1.1rem;
+        box-shadow: 0 4px 15px rgba(250, 204, 21, 0.3);
+    }
+
+        .btn-place-order:hover {
+            background: #fff;
+            color: var(--site-primary);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-place-order:disabled {
+            background: #cbd5e1;
+            color: #666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+    .secure-badge {
+        text-align: center;
+        margin-top: 20px;
+        color: rgba(255,255,255,0.6);
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    @@media (max-width: 992px) {
+        .checkout-container
+
+    {
+        grid-template-columns: 1fr;
+    }
+
+    .summary-sticky {
+        position: static;
+        margin-top: 30px;
+    }
+
+    .payment-options {
+        grid-template-columns: 1fr;
+    }
+
+    }
+</style>
+
+<section class="checkout-section">
     <div class="container">
-        <h2 class="page-title">@(isAr ? "بيانات الشحن والدفع" : "Shipping & Payment") 🚚</h2>
 
-        <div class="checkout-grid" style="display:grid; grid-template-columns: 1.5fr 1fr; gap:30px;">
+        <form id="checkoutForm" onsubmit="return false;">
+            <div class="checkout-container">
 
-            <!-- نموذج البيانات -->
-            <div class="checkout-form" style="background:#fff; padding:30px; border-radius:12px; border:1px solid #eee;">
-                <form id="checkoutForm">
-                    <h3 style="margin-bottom:20px; color:var(--primary); font-size:1.2rem;">
-                        <i class="fas fa-map-marker-alt"></i> @(isAr ? "عنوان التوصيل" : "Delivery Address")
-                    </h3>
+                <!-- Left Column: Shipping & Payment -->
+                <div class="details-column">
 
-                    <div class="form-group mb-3">
-                        <label class="fw-bold mb-2">@(isAr ? "الاسم / اسم المحل" : "Name / Shop Name")</label>
-                        <input type="text" id="shopName" class="form-control" required placeholder="@(isAr ? "اسم المستلم" : "Receiver Name")" value="@defName">
-                    </div>
-
-                    <div class="form-group mb-3">
-                        <label class="fw-bold mb-2">@(isAr ? "رقم الموبايل" : "Phone Number")</label>
-                        <input type="tel" id="phone" class="form-control" required placeholder="01xxxxxxxxx" value="@defPhone" style="direction:ltr; text-align:@(isAr ? "right" : "left")">
-                    </div>
-
-                    <div class="row mb-3" style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
-                        <div class="form-group">
-                            <label class="fw-bold mb-2">@(isAr ? "المحافظة" : "Governorate")</label>
-                            <!-- يتم تعبئتها بواسطة JS (checkout-data.js) -->
-                            <select id="govSelect" class="form-control" onchange="updateShippingCost()" required>
-                                <option value="" disabled selected>@(isAr ? "-- اختر --" : "-- Select --")</option>
-                            </select>
-                            <input type="hidden" id="savedGov" value="@defGov">
+                    <!-- 1. Shipping Info -->
+                    <div class="checkout-card">
+                        <div class="card-header-custom">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <h3>@(isAr ? "عنوان الشحن" : "Shipping Address")</h3>
                         </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6 form-group">
+                                <label class="form-label">@(isAr ? "الاسم / اسم المحل" : "Name / Shop Name")</label>
+                                <input type="text" id="shopName" class="form-control" value="@defName" required placeholder="@(isAr ? "مثال: سوبر ماركت الأمل" : "Ex: Al-Amal Market")">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label class="form-label">@(isAr ? "رقم الهاتف" : "Phone Number")</label>
+                                <input type="tel" id="phone" class="form-control" value="@defPhone" required placeholder="01xxxxxxxxx" style="direction:ltr; text-align:@(isAr ? "right" : "left")">
+                            </div>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6 form-group">
+                                <label class="form-label">@(isAr ? "المحافظة" : "Governorate")</label>
+                                <select id="govSelect" class="form-select" onchange="updateShippingCost()" required>
+                                    <option value="" disabled selected>@(isAr ? "-- اختر --" : "-- Select --")</option>
+                                </select>
+                                <input type="hidden" id="savedGov" value="@defGov">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label class="form-label">@(isAr ? "المدينة / المنطقة" : "City / Area")</label>
+                                <select id="citySelect" class="form-select" required disabled>
+                                    <option value="" disabled selected>@(isAr ? "-- اختر المحافظة أولاً --" : "-- Select Gov First --")</option>
+                                </select>
+                                <input type="hidden" id="savedCity" value="@defCity">
+                            </div>
+                        </div>
+
                         <div class="form-group">
-                            <label class="fw-bold mb-2">@(isAr ? "المدينة / المنطقة" : "City / Area")</label>
-                            <select id="citySelect" class="form-control" required disabled>
-                                <option value="" disabled selected>@(isAr ? "-- اختر المحافظة أولاً --" : "-- Select Gov First --")</option>
-                            </select>
-                            <input type="hidden" id="savedCity" value="@defCity">
+                            <label class="form-label">@(isAr ? "العنوان بالتفصيل" : "Detailed Address")</label>
+                            <input type="text" id="address" class="form-control" value="@defAddr" required placeholder="@(isAr ? "اسم الشارع، رقم العقار، علامة مميزة" : "Street name, building number...")">
+                        </div>
+
+                        <div class="form-group mb-0">
+                            <label class="form-label">@(isAr ? "ملاحظات للتوصيل (اختياري)" : "Delivery Notes (Optional)")</label>
+                            <textarea id="orderNotes" class="form-control" rows="2" placeholder="@(isAr ? "مثال: يرجى الاتصال قبل الوصول بساعة" : "Ex: Call 1 hour before arrival")"></textarea>
                         </div>
                     </div>
 
-                    <div class="form-group mb-4">
-                        <label class="fw-bold mb-2">@(isAr ? "العنوان بالتفصيل" : "Detailed Address")</label>
-                        <input type="text" id="address" class="form-control" required placeholder="@(isAr ? "اسم الشارع - رقم العقار - علامة مميزة" : "Street - Building - Landmark")" value="@defAddr">
+                    <!-- 2. Delivery Time -->
+                    <div class="checkout-card">
+                        <div class="card-header-custom">
+                            <i class="fas fa-clock"></i>
+                            <h3>@(isAr ? "وقت التوصيل المفضل" : "Delivery Time")</h3>
+                        </div>
+                        <div class="form-group mb-0">
+                            <select id="deliverySlot" class="form-select">
+                                <option value="Anytime">@(isAr ? "أي وقت (خلال اليوم)" : "Anytime (During Day)")</option>
+                                <option value="Morning">@(isAr ? "صباحاً (10ص - 4م)" : "Morning (10AM - 4PM)")</option>
+                                <option value="Evening">@(isAr ? "مساءً (4م - 10م)" : "Evening (4PM - 10PM)")</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <!-- وقت التوصيل -->
-                    <div class="form-group mb-3">
-                        <label class="fw-bold mb-2"><i class="fas fa-clock"></i> @(isAr ? "وقت التوصيل المفضل" : "Preferred Delivery Time")</label>
-                        <select id="deliverySlot" class="form-control">
-                            <option value="Anytime">@(isAr ? "أي وقت (خلال اليوم)" : "Anytime (During Day)")</option>
-                            <option value="Morning">@(isAr ? "صباحاً (10ص - 4م)" : "Morning (10AM - 4PM)")</option>
-                            <option value="Evening">@(isAr ? "مساءً (4م - 10م)" : "Evening (4PM - 10PM)")</option>
-                        </select>
+                    <!-- 3. Payment Method -->
+                    <div class="checkout-card">
+                        <div class="card-header-custom">
+                            <i class="fas fa-wallet"></i>
+                            <h3>@(isAr ? "طريقة الدفع" : "Payment Method")</h3>
+                        </div>
+
+                        <div class="payment-options">
+                            <label class="payment-card selected" onclick="selectPayment(this)">
+                                <input type="radio" name="payment" value="Cash" checked style="display:none;">
+                                <i class="fas fa-money-bill-wave payment-icon"></i>
+                                <span class="payment-title">@(isAr ? "دفع عند الاستلام" : "Cash on Delivery")</span>
+                            </label>
+
+                            <label class="payment-card" onclick="selectPayment(this)">
+                                <input type="radio" name="payment" value="Wallet" style="display:none;">
+                                <i class="fas fa-wallet payment-icon"></i>
+                                <span class="payment-title">@(isAr ? "خصم من المحفظة" : "Wallet Balance")</span>
+                            </label>
+                        </div>
                     </div>
 
-                    <!-- ملاحظات -->
-                    <div class="form-group mb-4">
-                        <label class="fw-bold mb-2"><i class="fas fa-sticky-note"></i> @(isAr ? "ملاحظات إضافية" : "Order Notes")</label>
-                        <textarea id="orderNotes" class="form-control" rows="2" placeholder="@(isAr ? "مثال: يرجى الاتصال قبل الوصول" : "Ex: Call before arrival")"></textarea>
-                    </div>
-
-                    <h3 style="margin:25px 0 15px; color:var(--primary); font-size:1.2rem;">
-                        <i class="fas fa-wallet"></i> @(isAr ? "طريقة الدفع" : "Payment Method")
-                    </h3>
-
-                    <div class="payment-options">
-                        <label class="payment-card selected" style="display:flex; align-items:center; gap:10px; padding:15px; border:1px solid #FACC15; background:#fffbeb; border-radius:8px; cursor:pointer; margin-bottom:10px;">
-                            <input type="radio" name="payment" value="Cash" checked style="accent-color:var(--primary);">
-                            <i class="fas fa-money-bill-wave" style="color:green;"></i>
-                            <span>@(isAr ? "دفع عند الاستلام (كاش)" : "Cash on Delivery")</span>
-                        </label>
-                        <label class="payment-card" style="display:flex; align-items:center; gap:10px; padding:15px; border:1px solid #ddd; border-radius:8px; cursor:pointer;">
-                            <input type="radio" name="payment" value="Wallet" style="accent-color:var(--primary);">
-                            <i class="fas fa-wallet" style="color:#3b82f6;"></i>
-                            <span>@(isAr ? "خصم من المحفظة" : "Wallet Balance")</span>
-                        </label>
-                    </div>
-                </form>
-            </div>
-
-            <!-- ملخص الطلب -->
-            <div class="order-summary-box new-design" style="background:#f8fafc; padding:25px; border-radius:12px; height:fit-content; border:1px solid #e2e8f0;">
-                <h3 style="margin-bottom:20px;">@(isAr ? "ملخص الطلب" : "Order Summary")</h3>
-
-                <div id="checkoutItems" class="checkout-items" style="max-height:250px; overflow-y:auto; margin-bottom:20px; border-bottom:1px solid #ddd;">
-                    <!-- Items Injected by JS -->
                 </div>
 
-                <div style="background:#f9f9f9; padding:15px; border-top:1px solid #eee;">
-                    <div class="cost-row" style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                        <span>@(isAr ? "المجموع" : "Subtotal")</span>
-                        <span id="subTotalDisplay">0.00</span>
-                    </div>
-                    <div class="cost-row" style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                        <span>@(isAr ? "الشحن" : "Shipping")</span>
-                        <span id="shippingDisplay">0.00</span>
-                    </div>
-                    <hr>
-                    <div class="total-row" style="display:flex; justify-content:space-between; font-weight:bold; font-size:1.2rem; color:var(--primary);">
-                        <span>@(isAr ? "الإجمالي" : "Total")</span>
-                        <span id="grandTotalDisplay">0.00</span>
+                <!-- Right Column: Order Summary (Sticky) -->
+                <div class="summary-column">
+                    <div class="checkout-card summary-sticky">
+                        <div class="card-header-custom" style="margin-bottom: 20px; border:none; padding:0;">
+                            <h3>@(isAr ? "ملخص الطلب" : "Order Summary")</h3>
+                        </div>
+
+                        <!-- Items List (Scrollable if too long) -->
+                        <div id="checkoutItems" style="max-height: 300px; overflow-y: auto; margin-bottom: 20px; padding-right: 5px;">
+                            <div class="text-center py-4" style="color:rgba(255,255,255,0.7)">
+                                <i class="fas fa-spinner fa-spin"></i> @(isAr ? "جاري التحميل..." : "Loading...")
+                            </div>
+                        </div>
+
+                        <!-- Pricing Breakdown -->
+                        <div class="pricing-box">
+                            <div class="summary-row">
+                                <span>@(isAr ? "المجموع الفرعي" : "Subtotal")</span>
+                                <span id="subTotalDisplay" style="color:#fff; font-weight:bold;">0.00</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>@(isAr ? "تكلفة الشحن" : "Shipping")</span>
+                                <span id="shippingDisplay" style="color:#fff; font-weight:bold;">0.00</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>@(isAr ? "الضريبة" : "Tax")</span>
+                                <span style="color:var(--site-accent); font-size:0.8rem; font-weight:bold;">@(isAr ? "شاملة" : "Included")</span>
+                            </div>
+
+                            <div class="summary-row total">
+                                <span>@(isAr ? "الإجمالي الكلي" : "Grand Total")</span>
+                                <span class="total-price">
+                                    <span id="grandTotalDisplay">0.00</span> <small style="font-size:0.9rem; font-weight:normal;">@(isAr ? "ج.م" : "EGP")</small>
+                                </span>
+                            </div>
+                        </div>
+
+                        <button type="button" onclick="submitOrder()" class="btn-place-order confirm-btn">
+                            @(isAr ? "تأكيد الطلب الآن" : "Place Order Now") <i class="fas @(isAr ? "fa-arrow-left" : "fa-arrow-right")"></i>
+                        </button>
+
+                        <div class="secure-badge">
+                            <i class="fas fa-shield-alt text-success"></i>
+                            <span>@(isAr ? "بياناتك محمية ومشفرة 100%" : "Your data is 100% secure")</span>
+                        </div>
                     </div>
                 </div>
 
-                <button type="button" onclick="submitOrder()" class="btn primary confirm-btn" style="width:100%; margin-top:20px; padding:12px; font-size:1.1rem; border-radius:8px;">
-                    @(isAr ? "تأكيد الطلب" : "Place Order") <i class="fas fa-check-circle"></i>
-                </button>
             </div>
-
-        </div>
+        </form>
     </div>
 </section>
 
 @section Scripts {
-    <script src="~/js/checkout-data.js"></script> <!-- بيانات المحافظات -->
+    <!-- Scripts for Logic -->
+    <script src="~/js/checkout-data.js"></script>
     <script src="~/js/cart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
+        const isAr = '@isAr' === 'True';
+
+        // Custom Payment Selection Logic
+        function selectPayment(card) {
+            document.querySelectorAll('.payment-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            const radio = card.querySelector('input[type="radio"]');
+            radio.checked = true;
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
-            // تهيئة السلة وعرض المنتجات
-            renderCheckoutPreview();
+            // Load items from cart
+            renderCheckoutPreviewNew();
 
-            // منطق تبديل ستايل كروت الدفع
-            const paymentInputs = document.querySelectorAll('input[name="payment"]');
-            paymentInputs.forEach(input => {
-                input.addEventListener('change', function() {
-                    document.querySelectorAll('.payment-card').forEach(c => {
-                        c.classList.remove('selected');
-                        c.style.borderColor = '#ddd';
-                        c.style.background = '#fff';
-                    });
-                    const parent = this.closest('.payment-card');
-                    parent.classList.add('selected');
-                    parent.style.borderColor = '#FACC15';
-                    parent.style.background = '#fffbeb';
-                });
-            });
-
-            // استرجاع العنوان المحفوظ (تأخير بسيط لضمان تحميل checkout-data.js)
+            // Load saved address
             setTimeout(() => {
                 const savedGov = document.getElementById('savedGov').value;
                 const savedCity = document.getElementById('savedCity').value;
                 const govSelect = document.getElementById('govSelect');
-                const citySelect = document.getElementById('citySelect');
 
                 if(savedGov && govSelect.querySelector(`option[value="${savedGov}"]`)) {
                     govSelect.value = savedGov;
-                    // تفعيل حدث التغيير لملء المدن
                     govSelect.dispatchEvent(new Event('change'));
 
                     if(savedCity) {
                         setTimeout(() => {
-                             if(citySelect.querySelector(`option[value="${savedCity}"]`)) {
-                                 citySelect.value = savedCity;
+                             const citySel = document.getElementById('citySelect');
+                             if(citySel.querySelector(`option[value="${savedCity}"]`)) {
+                                 citySel.value = savedCity;
+                                 // Trigger update cost
                                  if(typeof updateShippingCost === 'function') updateShippingCost();
                              }
                         }, 100);
@@ -173,18 +523,60 @@
             }, 500);
         });
 
-        // دالة إرسال الطلب (تستدعي الـ API في CartController)
-        async function submitOrder() {
-            const form = document.getElementById('checkoutForm');
-            if (!form.checkValidity()) { form.reportValidity(); return; }
-
+        // New Render Function for this specific design
+        function renderCheckoutPreviewNew() {
+            const container = document.getElementById('checkoutItems');
             const cart = JSON.parse(localStorage.getItem('DISKA_CART')) || [];
+
             if (cart.length === 0) {
-                Swal.fire({ icon: 'warning', title: '@(isAr ? "تنبيه" : "Warning")', text: '@(isAr ? "السلة فارغة!" : "Cart is empty!")' });
+                window.location.href = '/Cart/Index'; // Redirect if empty
                 return;
             }
 
-            const shippingText = document.getElementById('shippingDisplay').innerText;
+            let subtotal = 0;
+            let html = '';
+
+            cart.forEach(item => {
+                let itemTotal = item.price * item.qty;
+                subtotal += itemTotal;
+                html += `
+                    <div class="order-item">
+                        <img src="/${item.image}" onerror="this.src='/images/default.png'" class="item-img">
+                        <div class="item-info">
+                            <div class="item-name">${item.name}</div>
+                            <div class="item-meta">
+                                <span class="fw-bold text-white">${item.qty}</span> x ${item.price.toLocaleString()}
+                            </div>
+                        </div>
+                        <div class="item-price">${itemTotal.toLocaleString()}</div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+
+            // Update Totals (Initial)
+            document.getElementById('subTotalDisplay').innerText = subtotal.toLocaleString();
+            updateTotal(subtotal, 0); // Shipping added later via updateShippingCost
+        }
+
+        function updateTotal(sub, ship) {
+             const total = sub + ship;
+             document.getElementById('grandTotalDisplay').innerText = total.toLocaleString();
+        }
+
+        // Override Submit
+        async function submitOrder() {
+            const form = document.getElementById('checkoutForm');
+            if (!form.checkValidity()) {
+                // Trigger browser validation UI
+                form.reportValidity();
+                return;
+            }
+
+            const cart = JSON.parse(localStorage.getItem('DISKA_CART')) || [];
+            const shippingText = document.getElementById('shippingDisplay').innerText.replace(/,/g, '');
+            const subText = document.getElementById('subTotalDisplay').innerText.replace(/,/g, '');
 
             const orderData = {
                 shopName: document.getElementById('shopName').value,
@@ -192,11 +584,11 @@
                 governorate: document.getElementById('govSelect').value,
                 city: document.getElementById('citySelect').value,
                 address: document.getElementById('address').value,
-                deliverySlot: document.getElementById('deliverySlot')?.value || "Anytime",
-                notes: document.getElementById('orderNotes')?.value || "",
+                deliverySlot: document.getElementById('deliverySlot').value,
+                notes: document.getElementById('orderNotes').value,
                 paymentMethod: document.querySelector('input[name="payment"]:checked').value,
                 shippingCost: parseFloat(shippingText) || 0,
-                items: cart.map(i => ({ id: i.id, qty: i.qty }))
+                items: cart.map(i => ({ id: i.id.toString(), qty: parseInt(i.qty) }))
             };
 
             const btn = document.querySelector('.confirm-btn');
@@ -218,13 +610,18 @@
                     localStorage.removeItem('DISKA_CART');
                     window.location.href = `/Cart/OrderSuccess?id=${result.orderId}`;
                 } else {
-                    Swal.fire({ icon: 'error', title: '@(isAr ? "خطأ" : "Error")', text: result.message });
+                    Swal.fire({
+                        icon: 'error',
+                        title: '@(isAr ? "خطأ" : "Error")',
+                        text: result.message,
+                        confirmButtonColor: '#2563eb'
+                    });
                     btn.disabled = false;
                     btn.innerHTML = originalText;
                 }
             } catch (e) {
                 console.error(e);
-                Swal.fire({ icon: 'error', title: '@(isAr ? "خطأ" : "Error")', text: '@(isAr ? "فشل الاتصال بالخادم" : "Server Connection Failed")' });
+                Swal.fire({ icon: 'error', title: 'Error', text: 'Connection failed.' });
                 btn.disabled = false;
                 btn.innerHTML = originalText;
             }

@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Diska.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260109215612_initialCreate")]
-    partial class initialCreate
+    [Migration("20260111085928_iniialCreate")]
+    partial class iniialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
