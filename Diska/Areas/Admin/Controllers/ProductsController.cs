@@ -1,12 +1,19 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Diska.Data;
+﻿using Diska.Data;
 using Diska.Models;
-using Microsoft.EntityFrameworkCore;
+using Diska.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Diska.Services; // إضافة الـ Namespace للخدمات
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
-using System.Text; // هام للمستخدم
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Diska.Areas.Admin.Controllers
 {
@@ -17,241 +24,290 @@ namespace Diska.Areas.Admin.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly IAuditService _auditService; // حقن خدمة التدقيق
+        private readonly IAuditService _auditService;
 
-        public ProductsController(
-            ApplicationDbContext context,
-            IWebHostEnvironment webHostEnvironment,
-            UserManager<ApplicationUser> userManager,
-            IAuditService auditService) // الحقن هنا
+        public ProductsController(ApplicationDbContext context, IWebHostEnvironment webHostEnvironment, UserManager<ApplicationUser> userManager, IAuditService auditService)
         {
             _context = context;
             _webHostEnvironment = webHostEnvironment;
             _userManager = userManager;
             _auditService = auditService;
         }
-        public async Task<IActionResult> Index()
+
+        // 1. Index
+        public async Task<IActionResult> Index(string search, int? categoryId, string merchantId, string status, int page = 1)
         {
-            var products = await _context.Products
+            int pageSize = 10;
+            var query = _context.Products
+                .AsNoTracking()
                 .Include(p => p.Category)
                 .Include(p => p.Merchant)
+                .AsQueryable();
+
+            // الفلاتر
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(p => p.Name.Contains(search) || p.NameEn.Contains(search) || p.SKU.Contains(search));
+            }
+            if (categoryId.HasValue)
+            {
+                query = query.Where(p => p.CategoryId == categoryId);
+            }
+            if (!string.IsNullOrEmpty(merchantId))
+            {
+                query = query.Where(p => p.MerchantId == merchantId);
+            }
+            if (!string.IsNullOrEmpty(status))
+            {
+                if (status == "LowStock") query = query.Where(p => p.StockQuantity <= p.LowStockThreshold);
+                else if (status == "OutOfStock") query = query.Where(p => p.StockQuantity == 0);
+                else query = query.Where(p => p.Status == status);
+            }
+
+            // الترتيب والتقسيم
+            int totalItems = await query.CountAsync();
+            var products = await query
                 .OrderByDescending(p => p.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
+
+            // تمرير البيانات
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+            ViewBag.TotalItems = totalItems;
+
+            // الاحتفاظ بحالة الفلاتر
+            ViewBag.Search = search;
+            ViewBag.FilterCategoryId = categoryId;
+            ViewBag.FilterMerchantId = merchantId;
+            ViewBag.FilterStatus = status;
+
+            // تعبئة القوائم
+            await PrepareDropdownsAsync(categoryId, merchantId);
+
             return View(products);
         }
-
+        // 2. Create (GET)
         [HttpGet]
         public async Task<IActionResult> Create()
         {
-            await PrepareDropdowns();
-            return View(new Product
-            {
-                Status = "Draft",
-                ProductionDate = DateTime.Today,
-                ExpiryDate = DateTime.Today.AddMonths(6),
-                UnitsPerCarton = 1
-            });
+            await PrepareDropdownsAsync();
+            return View(new Product { Color = "#000000", Status = "Active", StockQuantity = 1, UnitsPerCarton = 1 });
         }
 
+        // 3. Create (POST)
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Product model, IFormFile mainImage, List<IFormFile> galleryImages, string[] productColorsHex, string[] productColorsName)
+        public async Task<IActionResult> Create(Product model, IFormFile mainImage, List<IFormFile> galleryImages, string[] productColorsHex, string[] productColorsName, string[] productColorsQty)
         {
-            // تنظيف التحقق للحقول الاختيارية أو التي تدار يدوياً
-            ModelState.Remove("Merchant");
-            ModelState.Remove("Category");
-            ModelState.Remove("ImageUrl");
-            foreach (var key in ModelState.Keys.Where(k => k.StartsWith("PriceTiers") || k.StartsWith("ProductColors"))) ModelState.Remove(key);
+            ModelState.Remove(nameof(model.Merchant));
+            ModelState.Remove(nameof(model.Category));
+            ModelState.Remove(nameof(model.ImageUrl));
+            ModelState.Remove("Color");
+            foreach (var key in ModelState.Keys.Where(k => k.Contains("PriceTiers") || k.Contains("ProductColors") || k.Contains("Images")))
+                ModelState.Remove(key);
 
             if (!ModelState.IsValid)
             {
-                await PrepareDropdowns();
+                await PrepareDropdownsAsync();
                 return View(model);
             }
 
-            // معالجة الـ Slug و SEO
-            if (string.IsNullOrEmpty(model.Slug)) model.Slug = model.NameEn.ToLower().Replace(" ", "-");
-            if (string.IsNullOrEmpty(model.MetaTitle)) model.MetaTitle = model.Name;
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                if (string.IsNullOrEmpty(model.Slug))
+                    model.Slug = (model.NameEn ?? model.Name).ToLower().Replace(" ", "-") + "-" + Guid.NewGuid().ToString().Substring(0, 4);
 
-            // حفظ الصورة
-            if (mainImage != null) model.ImageUrl = await SaveFile(mainImage);
-            else model.ImageUrl = "images/default-product.png";
+                if (string.IsNullOrEmpty(model.MetaTitle)) model.MetaTitle = model.Name;
+                if (string.IsNullOrEmpty(model.Color)) model.Color = "#000000";
+                if (string.IsNullOrEmpty(model.Barcode)) model.Barcode = "GEN-" + DateTime.Now.Ticks.ToString().Substring(8);
 
-            _context.Products.Add(model);
-            await _context.SaveChangesAsync();
+                model.ImageUrl = mainImage != null ? await SaveFile(mainImage) : "images/default-product.png";
 
-            // حفظ المعرض والألوان وشرائح الأسعار
-            await ProcessSubItems(model, galleryImages, productColorsHex, productColorsName);
+                _context.Products.Add(model);
+                await _context.SaveChangesAsync();
 
-            var userId = _userManager.GetUserId(User);
-            var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
-            await _auditService.LogAsync(userId, "Create", "Product", model.Id.ToString(), $"تم إضافة منتج جديد: {model.Name}", ip);
+                await ProcessSubItems(model.Id, galleryImages, productColorsHex, productColorsName, productColorsQty);
+                await _context.SaveChangesAsync();
 
-            TempData["Success"] = "تم إضافة المنتج بنجاح";
-            return RedirectToAction(nameof(Index));
+                var userId = _userManager.GetUserId(User);
+                await _auditService.LogAsync(userId, "Create", "Product", model.Id.ToString(), $"إضافة منتج: {model.Name}", HttpContext.Connection.RemoteIpAddress?.ToString());
+
+                await transaction.CommitAsync();
+
+                TempData["Success"] = "تم إضافة المنتج بنجاح";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                if (model.ImageUrl != null && !model.ImageUrl.Contains("default")) DeleteFile(model.ImageUrl);
+                ModelState.AddModelError("", "حدث خطأ: " + ex.Message);
+                await PrepareDropdownsAsync();
+                return View(model);
+            }
         }
 
+        // 4. Edit (GET)
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
             var product = await _context.Products
                 .Include(p => p.Images)
-                .Include(p => p.PriceTiers)
                 .Include(p => p.ProductColors)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
             if (product == null) return NotFound();
 
-            await PrepareDropdowns(product.MerchantId, product.CategoryId);
+            await PrepareDropdownsAsync(product.CategoryId, product.MerchantId);
             return View(product);
         }
 
+        // 5. Edit (POST)
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, Product model, IFormFile mainImage, List<IFormFile> galleryImages, string[] productColorsHex, string[] productColorsName)
+        public async Task<IActionResult> Edit(int id, Product model, IFormFile mainImage, List<IFormFile> galleryImages, string[] productColorsHex, string[] productColorsName, string[] productColorsQty, int[] existingImages)
         {
-
             if (id != model.Id) return NotFound();
 
-            var productToUpdate = await _context.Products.FirstOrDefaultAsync(p => p.Id == id);
-           
+            ModelState.Remove(nameof(model.Merchant));
+            ModelState.Remove(nameof(model.Category));
+            ModelState.Remove(nameof(model.ImageUrl));
+            ModelState.Remove("mainImage");
+            ModelState.Remove("Color");
 
-            if (productToUpdate == null) return NotFound();
+            foreach (var key in ModelState.Keys.Where(k => k.Contains("PriceTiers") || k.Contains("ProductColors") || k.Contains("Images")))
+                ModelState.Remove(key);
 
-            // تحديث البيانات
-            productToUpdate.Name = model.Name;
-            productToUpdate.NameEn = model.NameEn;
-            productToUpdate.Brand = model.Brand;
-            productToUpdate.SKU = model.SKU;
-            productToUpdate.Barcode = model.Barcode;
-            productToUpdate.Price = model.Price;
-            productToUpdate.OldPrice = model.OldPrice;
-            productToUpdate.CostPrice = model.CostPrice;
-            productToUpdate.StockQuantity = model.StockQuantity;
-            productToUpdate.LowStockThreshold = model.LowStockThreshold;
-            productToUpdate.UnitsPerCarton = model.UnitsPerCarton;
-            productToUpdate.Weight = model.Weight;
-            productToUpdate.Status = model.Status;
-            productToUpdate.Description = model.Description;
-            productToUpdate.DescriptionEn = model.DescriptionEn;
-            productToUpdate.Slug = model.Slug;
-            productToUpdate.MetaTitle = model.MetaTitle;
-            productToUpdate.MetaDescription = model.MetaDescription;
-            productToUpdate.CategoryId = model.CategoryId;
-            productToUpdate.MerchantId = model.MerchantId;
-            productToUpdate.ProductionDate = model.ProductionDate;
-            productToUpdate.ExpiryDate = model.ExpiryDate;
-
-            if (mainImage != null)
+            if (!ModelState.IsValid)
             {
-                productToUpdate.ImageUrl = await SaveFile(mainImage);
+                await PrepareDropdownsAsync(model.CategoryId, model.MerchantId);
+                return View(model);
             }
 
-            // تحديث العناصر الفرعية
-            await ProcessSubItems(productToUpdate, galleryImages, productColorsHex, productColorsName, model.PriceTiers, true);
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                var existingProduct = await _context.Products
+                    .Include(p => p.Images)
+                    .Include(p => p.ProductColors)
+                    .FirstOrDefaultAsync(p => p.Id == id);
 
-            await _context.SaveChangesAsync();
+                if (existingProduct == null) return NotFound();
 
-            var userId = _userManager.GetUserId(User);
-            var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
-            await _auditService.LogAsync(userId, "Update", "Product", id.ToString(), $"تم تعديل بيانات المنتج: {model.Name}. السعر الجديد: {model.Price}", ip);
+                // تحديث الحقول
+                existingProduct.Name = model.Name;
+                existingProduct.NameEn = model.NameEn;
+                existingProduct.Description = model.Description;
+                existingProduct.DescriptionEn = model.DescriptionEn;
+                existingProduct.Price = model.Price;
+                existingProduct.OldPrice = model.OldPrice;
+                existingProduct.CostPrice = model.CostPrice;
+                existingProduct.StockQuantity = model.StockQuantity;
+                existingProduct.CategoryId = model.CategoryId;
+                existingProduct.MerchantId = model.MerchantId;
+                existingProduct.Status = model.Status;
+                existingProduct.SKU = model.SKU;
+                existingProduct.Barcode = model.Barcode ?? existingProduct.Barcode;
+                existingProduct.Color = model.Color ?? "#000000";
+                existingProduct.Weight = model.Weight;
+                existingProduct.Slug = model.Slug;
+                existingProduct.MetaTitle = model.MetaTitle;
+                existingProduct.MetaDescription = model.MetaDescription;
+                existingProduct.UnitsPerCarton = model.UnitsPerCarton;
+                existingProduct.LowStockThreshold = model.LowStockThreshold;
 
+                // تحديث الماركة (Brand) إذا لم تكن موجودة
+                existingProduct.Brand = model.Brand;
 
-            TempData["Success"] = "تم تحديث المنتج بنجاح";
-            return RedirectToAction(nameof(Index));
+                if (mainImage != null)
+                {
+                    DeleteFile(existingProduct.ImageUrl);
+                    existingProduct.ImageUrl = await SaveFile(mainImage);
+                }
+
+                // إدارة الصور
+                if (existingImages != null)
+                {
+                    var imagesToDelete = existingProduct.Images.Where(img => !existingImages.Contains(img.Id)).ToList();
+                    foreach (var img in imagesToDelete)
+                    {
+                        DeleteFile(img.ImageUrl);
+                        _context.ProductImages.Remove(img);
+                    }
+                }
+
+                // إدارة الألوان
+                _context.ProductColors.RemoveRange(existingProduct.ProductColors);
+
+                await ProcessSubItems(existingProduct.Id, galleryImages, productColorsHex, productColorsName, productColorsQty);
+
+                _context.Update(existingProduct);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                TempData["Success"] = "تم تعديل المنتج بنجاح";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                ModelState.AddModelError("", "خطأ: " + ex.Message);
+                await PrepareDropdownsAsync(model.CategoryId, model.MerchantId);
+                return View(model);
+            }
         }
 
+        // 6. Delete
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
-            var product = await _context.Products.FindAsync(id);
+            var product = await _context.Products.Include(p => p.Images).FirstOrDefaultAsync(p => p.Id == id);
             if (product != null)
             {
-                string prodName = product.Name;
-
+                DeleteFile(product.ImageUrl);
+                foreach (var img in product.Images) DeleteFile(img.ImageUrl);
                 _context.Products.Remove(product);
                 await _context.SaveChangesAsync();
-                var userId = _userManager.GetUserId(User);
-                var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
-                await _auditService.LogAsync(userId, "Delete", "Product", id.ToString(), $"تم حذف المنتج: {prodName}", ip);
-                TempData["Success"] = "تم حذف المنتج.";
+                TempData["Success"] = "تم حذف المنتج";
             }
             return RedirectToAction(nameof(Index));
         }
 
-        [HttpPost]
-        public async Task<IActionResult> ExportToCsv()
+        // --- Helpers ---
+        private async Task ProcessSubItems(int productId, List<IFormFile> galleryImages, string[] colorsHex, string[] colorsName, string[] colorsQty)
         {
-            var products = await _context.Products.Include(p => p.Category).Include(p => p.Merchant).ToListAsync();
-            var builder = new StringBuilder();
-            builder.AppendLine("Id,Name,SKU,Price,Stock,Category,Merchant,Status");
-
-            foreach (var p in products)
+            if (galleryImages != null)
             {
-                builder.AppendLine($"{p.Id},{p.Name},{p.SKU},{p.Price},{p.StockQuantity},{p.Category?.Name},{p.Merchant?.ShopName},{p.Status}");
-            }
-
-            return File(Encoding.UTF8.GetBytes(builder.ToString()), "text/csv", $"products_{DateTime.Now:yyyyMMdd}.csv");
-        }
-
-        // Helpers
-        private async Task PrepareDropdowns(string selectedMerchant = null, int? selectedCategory = null)
-        {
-            var merchants = await _userManager.GetUsersInRoleAsync("Merchant");
-            ViewBag.Merchants = new SelectList(merchants, "Id", "ShopName", selectedMerchant);
-            ViewBag.Categories = new SelectList(_context.Categories, "Id", "Name", selectedCategory);
-        }
-
-        private async Task ProcessSubItems(Product product, List<IFormFile> gallery, string[] colorsHex, string[] colorsName, List<PriceTier> priceTiers = null, bool isEdit = false)
-        {
-            // Gallery
-            if (gallery != null)
-            {
-                foreach (var file in gallery)
+                foreach (var file in galleryImages)
                 {
                     if (file.Length > 0)
                     {
-                        string path = await SaveFile(file);
-                        _context.ProductImages.Add(new ProductImage { ProductId = product.Id, ImageUrl = path });
+                        var path = await SaveFile(file);
+                        _context.ProductImages.Add(new ProductImage { ProductId = productId, ImageUrl = path });
                     }
                 }
             }
 
-            // Colors
-            if (isEdit)
-            {
-                var oldColors = await _context.ProductColors.Where(c => c.ProductId == product.Id).ToListAsync();
-                _context.ProductColors.RemoveRange(oldColors);
-
-                var oldTiers = await _context.PriceTiers.Where(t => t.ProductId == product.Id).ToListAsync();
-                _context.PriceTiers.RemoveRange(oldTiers);
-            }
-
-            if (colorsHex != null)
+            if (colorsHex != null && colorsName != null)
             {
                 for (int i = 0; i < colorsHex.Length; i++)
                 {
                     if (!string.IsNullOrEmpty(colorsHex[i]))
                     {
+                        int qty = 0;
+                        if (colorsQty != null && i < colorsQty.Length) int.TryParse(colorsQty[i], out qty);
+
                         _context.ProductColors.Add(new ProductColor
                         {
-                            ProductId = product.Id,
+                            ProductId = productId,
                             ColorHex = colorsHex[i],
-                            ColorName = (colorsName != null && colorsName.Length > i) ? colorsName[i] : "Color"
+                            ColorName = (i < colorsName.Length && !string.IsNullOrEmpty(colorsName[i])) ? colorsName[i] : "لون",
+                            // Quantity = qty // تأكد من إضافة هذا الحقل للموديل لاحقاً إذا أردت تفعيله
                         });
-                    }
-                }
-            }
-
-            // Price Tiers (B2B)
-            if (priceTiers != null)
-            {
-                foreach (var tier in priceTiers)
-                {
-                    if (tier.MinQuantity > 0 && tier.UnitPrice > 0)
-                    {
-                        tier.ProductId = product.Id;
-                        _context.PriceTiers.Add(tier);
                     }
                 }
             }
@@ -266,6 +322,98 @@ namespace Diska.Areas.Admin.Controllers
             if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
             using (var stream = new FileStream(serverPath, FileMode.Create)) await file.CopyToAsync(stream);
             return folder + fileName;
+        }
+
+        private void DeleteFile(string path)
+        {
+            if (string.IsNullOrEmpty(path) || path.Contains("default")) return;
+            try
+            {
+                string fullPath = Path.Combine(_webHostEnvironment.WebRootPath, path);
+                if (System.IO.File.Exists(fullPath)) System.IO.File.Delete(fullPath);
+            }
+            catch { }
+        }
+        [HttpPost]
+        public async Task<IActionResult> ExportToExcel()
+        {
+            var products = await _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.Merchant)
+                .ToListAsync();
+
+            var builder = new StringBuilder();
+            builder.AppendLine("Id,Name,Price,Stock,Category,Merchant,Status,SKU");
+
+            foreach (var p in products)
+            {
+                builder.AppendLine($"{p.Id},{EscapeCsv(p.Name)},{p.Price},{p.StockQuantity},{EscapeCsv(p.Category?.Name)},{EscapeCsv(p.Merchant?.ShopName)},{p.Status},{p.SKU}");
+            }
+
+            return File(Encoding.UTF8.GetBytes(builder.ToString()), "text/csv", "products_export.csv");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ImportFromExcel(IFormFile excelFile)
+        {
+            if (excelFile == null || excelFile.Length == 0)
+            {
+                TempData["Error"] = "يرجى اختيار ملف صحيح.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            try
+            {
+                using (var reader = new StreamReader(excelFile.OpenReadStream()))
+                {
+                    // Skip header
+                    await reader.ReadLineAsync();
+
+                    while (!reader.EndOfStream)
+                    {
+                        var line = await reader.ReadLineAsync();
+                        var values = line.Split(',');
+
+                        if (values.Length >= 4) // الحد الأدنى من الأعمدة
+                        {
+                            var product = new Product
+                            {
+                                Name = values[1],
+                                Price = decimal.Parse(values[2]),
+                                StockQuantity = int.Parse(values[3]),
+                                Status = "Draft", // افتراضي
+                                Slug = Guid.NewGuid().ToString(),
+                                ImageUrl = "images/default-product.png"
+                                // يمكن توسيع المنطق لربط الأقسام والتجار
+                            };
+                            _context.Products.Add(product);
+                        }
+                    }
+                }
+                await _context.SaveChangesAsync();
+                TempData["Success"] = "تم استيراد المنتجات بنجاح.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "حدث خطأ أثناء الاستيراد: " + ex.Message;
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        private string EscapeCsv(string field)
+        {
+            if (string.IsNullOrEmpty(field)) return "";
+            return $"\"{field.Replace("\"", "\"\"")}\"";
+        }
+        private async Task PrepareDropdownsAsync(int? selectedCategory = null, string selectedMerchant = null)
+        {
+            var categories = await _context.Categories.OrderBy(c => c.Name).ToListAsync();
+            ViewBag.CategoryId = new SelectList(categories, "Id", "Name", selectedCategory);
+
+            var merchants = await _userManager.GetUsersInRoleAsync("Merchant");
+            var merchantList = merchants.Select(u => new { Id = u.Id, ShopName = u.ShopName ?? u.UserName }).ToList();
+            ViewBag.MerchantId = new SelectList(merchantList, "Id", "ShopName", selectedMerchant);
         }
     }
 }

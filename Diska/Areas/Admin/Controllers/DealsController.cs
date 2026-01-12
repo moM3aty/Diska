@@ -4,6 +4,9 @@ using Diska.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using System.Threading.Tasks;
+using System.Linq;
+using System;
 
 namespace Diska.Areas.Admin.Controllers
 {
@@ -18,78 +21,82 @@ namespace Diska.Areas.Admin.Controllers
             _context = context;
         }
 
+        // 1. Index
         public async Task<IActionResult> Index()
         {
             var deals = await _context.GroupDeals
                 .Include(d => d.Product)
-                .Include(d => d.Category)
                 .OrderByDescending(d => d.EndDate)
                 .ToListAsync();
             return View(deals);
         }
 
+        // 2. Create (GET)
         [HttpGet]
         public IActionResult Create()
         {
-            PrepareViewBags();
+            PrepareDropdowns();
             return View(new GroupDeal
             {
                 StartDate = DateTime.Now,
                 EndDate = DateTime.Now.AddDays(7),
-                TargetQuantity = 10,
                 IsActive = true
             });
         }
 
+        // 3. Create (POST)
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(GroupDeal deal, string ApplyTo)
+        public async Task<IActionResult> Create(GroupDeal model)
         {
-            // تنظيف الـ Validation بناءً على الاختيار
-            if (ApplyTo == "Category") ModelState.Remove("ProductId");
-            else ModelState.Remove("CategoryId");
-
+            // تنظيف التحقق للحقول الاختيارية
             ModelState.Remove("Product");
             ModelState.Remove("Category");
 
             if (ModelState.IsValid)
             {
-                // ضبط الحقول الفارغة
-                if (ApplyTo == "Category") deal.ProductId = null;
-                else deal.CategoryId = null;
+                // حساب السعر بعد الخصم للعرض (اختياري، يمكن حسابه ديناميكياً)
+                var product = await _context.Products.FindAsync(model.ProductId);
+                if (product != null)
+                {
+                    if (model.IsPercentage)
+                    {
+                        model.DealPrice = product.Price - (product.Price * (model.DiscountValue / 100));
+                    }
+                    else
+                    {
+                        model.DealPrice = product.Price - model.DiscountValue;
+                    }
+                }
 
-                // إذا كان خصم ثابت، نستخدم DiscountValue كـ DealPrice أو العكس حسب منطق العمل
-                // هنا سنفترض أن DealPrice هو السعر النهائي إذا كان منتج، و DiscountValue هي القيمة المدخلة
-
-                deal.ReservedQuantity = 0;
-                _context.GroupDeals.Add(deal);
+                _context.GroupDeals.Add(model);
                 await _context.SaveChangesAsync();
-                TempData["Success"] = "تم إنشاء الصفقة بنجاح";
+                TempData["Success"] = "تم إضافة العرض بنجاح";
                 return RedirectToAction(nameof(Index));
             }
 
-            PrepareViewBags();
-            return View(deal);
+            PrepareDropdowns();
+            return View(model);
         }
 
+        // 4. Edit (GET)
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
             var deal = await _context.GroupDeals.FindAsync(id);
             if (deal == null) return NotFound();
 
-            PrepareViewBags();
+            PrepareDropdowns(deal.ProductId);
             return View(deal);
         }
 
+        // 5. Edit (POST)
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, GroupDeal deal, string ApplyTo)
+        public async Task<IActionResult> Edit(int id, GroupDeal model)
         {
-            if (id != deal.Id) return NotFound();
+            if (id != model.Id) return NotFound();
 
-            if (ApplyTo == "Category") ModelState.Remove("ProductId");
-            else ModelState.Remove("CategoryId");
             ModelState.Remove("Product");
             ModelState.Remove("Category");
 
@@ -97,12 +104,23 @@ namespace Diska.Areas.Admin.Controllers
             {
                 try
                 {
-                    if (ApplyTo == "Category") deal.ProductId = null;
-                    else deal.CategoryId = null;
+                    // إعادة حساب السعر في حال تغير الخصم
+                    var product = await _context.Products.FindAsync(model.ProductId);
+                    if (product != null)
+                    {
+                        if (model.IsPercentage)
+                        {
+                            model.DealPrice = product.Price - (product.Price * (model.DiscountValue / 100));
+                        }
+                        else
+                        {
+                            model.DealPrice = product.Price - model.DiscountValue;
+                        }
+                    }
 
-                    _context.Update(deal);
+                    _context.Update(model);
                     await _context.SaveChangesAsync();
-                    TempData["Success"] = "تم تحديث الصفقة";
+                    TempData["Success"] = "تم تعديل العرض بنجاح";
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -111,11 +129,14 @@ namespace Diska.Areas.Admin.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            PrepareViewBags();
-            return View(deal);
+
+            PrepareDropdowns(model.ProductId);
+            return View(model);
         }
 
+        // 6. Delete
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
             var deal = await _context.GroupDeals.FindAsync(id);
@@ -123,15 +144,20 @@ namespace Diska.Areas.Admin.Controllers
             {
                 _context.GroupDeals.Remove(deal);
                 await _context.SaveChangesAsync();
-                TempData["Success"] = "تم حذف الصفقة";
+                TempData["Success"] = "تم حذف العرض";
             }
             return RedirectToAction(nameof(Index));
         }
 
-        private void PrepareViewBags()
+        private void PrepareDropdowns(int? selectedProduct = null)
         {
-            ViewBag.Products = new SelectList(_context.Products.Where(p => p.IsActive), "Id", "Name");
-            ViewBag.Categories = new SelectList(_context.Categories.Where(c => c.IsActive), "Id", "Name");
+            // جلب المنتجات النشطة فقط
+            var products = _context.Products
+                .Where(p => p.Status == "Active")
+                .Select(p => new { p.Id, Name = p.Name + " (" + p.Price + " ج.م)" })
+                .ToList();
+
+            ViewBag.ProductId = new SelectList(products, "Id", "Name", selectedProduct);
         }
     }
 }

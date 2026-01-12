@@ -7,218 +7,637 @@
 <!-- Quill CSS -->
 <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 
+<style>
+    /* --- Premium Edit Styles (Fixed) --- */
+
+    .edit-card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.06);
+        background: #fff;
+        /* Removed overflow:hidden to allow sticky header */
+    }
+
+    .card-header-actions {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 15px 30px;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 75px; /* Adjusted for Admin Navbar */
+        z-index: 999;
+        border-radius: 16px 16px 0 0;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+    }
+
+    /* Custom Tabs */
+    .custom-tabs-container {
+        background: #fff;
+        padding: 0 30px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .custom-tabs {
+        border-bottom: none;
+        gap: 30px;
+    }
+
+        .custom-tabs .nav-link {
+            border: none;
+            color: #64748b;
+            font-weight: 700;
+            padding: 20px 0;
+            position: relative;
+            transition: all 0.3s ease;
+            background: transparent;
+            font-size: 0.95rem;
+        }
+
+            .custom-tabs .nav-link i {
+                margin-inline-end: 8px;
+                font-size: 1.1em;
+            }
+
+            .custom-tabs .nav-link.active {
+                color: var(--primary);
+            }
+
+                .custom-tabs .nav-link.active::after {
+                    content: '';
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 3px;
+                    background: var(--primary);
+                    border-radius: 3px 3px 0 0;
+                    box-shadow: 0 -2px 10px rgba(79, 70, 229, 0.4);
+                }
+
+            .custom-tabs .nav-link:hover {
+                color: var(--primary);
+            }
+
+    /* Form Elements */
+    .form-section {
+        padding: 40px 30px;
+        animation: fadeIn 0.4s ease-out;
+    }
+
+    .form-label {
+        font-weight: 700;
+        color: #334155;
+        font-size: 0.9rem;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .form-control-lg-custom {
+        padding: 12px 15px;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+        font-size: 1rem;
+        transition: all 0.2s;
+    }
+
+        .form-control-lg-custom:focus {
+            background: #fff;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+
+    /* Upload Zones */
+    .image-upload-zone {
+        border: 2px dashed #cbd5e1;
+        border-radius: 16px;
+        padding: 20px;
+        text-align: center;
+        background: #f8fafc;
+        cursor: pointer;
+        transition: 0.3s;
+        position: relative;
+        min-height: 300px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .image-upload-zone:hover {
+            border-color: var(--primary);
+            background: #eff6ff;
+        }
+
+    #mainPreview {
+        max-width: 100%;
+        max-height: 260px;
+        border-radius: 12px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        object-fit: contain;
+    }
+
+    /* Gallery */
+    .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+
+    .gallery-thumb {
+        position: relative;
+        height: 110px;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+    }
+
+        .gallery-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: 0.3s;
+        }
+
+        .gallery-thumb:hover img {
+            transform: scale(1.05);
+        }
+
+    .gallery-remove {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        width: 26px;
+        height: 26px;
+        background: rgba(239, 68, 68, 0.9);
+        color: #fff;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        opacity: 0;
+        transition: 0.2s;
+        border: none;
+        z-index: 2;
+    }
+
+    .gallery-thumb:hover .gallery-remove {
+        opacity: 1;
+    }
+
+    /* Variants Table */
+    .variants-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 8px;
+    }
+
+        .variants-table th {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: #64748b;
+            font-weight: 700;
+            padding: 0 15px 10px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+    .variant-row td {
+        background: #fff;
+        padding: 10px 15px;
+        border-top: 1px solid #e2e8f0;
+        border-bottom: 1px solid #e2e8f0;
+        vertical-align: middle;
+    }
+
+        .variant-row td:first-child {
+            border-left: 1px solid #e2e8f0;
+            border-top-left-radius: 10px;
+            border-bottom-left-radius: 10px;
+        }
+
+        .variant-row td:last-child {
+            border-right: 1px solid #e2e8f0;
+            border-top-right-radius: 10px;
+            border-bottom-right-radius: 10px;
+        }
+
+    .color-picker-wrapper {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 2px solid #fff;
+        box-shadow: 0 0 0 1px #e2e8f0;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Editor */
+    .ql-toolbar {
+        background: #f8fafc;
+        border-color: #e2e8f0 !important;
+        border-radius: 12px 12px 0 0;
+    }
+
+    .ql-container {
+        border-color: #e2e8f0 !important;
+        border-radius: 0 0 12px 12px;
+        font-family: 'Cairo';
+        background: #fff;
+        min-height: 200px;
+        font-size: 1rem;
+    }
+
+    @@keyframes fadeIn {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+</style>
+
 <div class="row justify-content-center">
-    <div class="col-lg-10">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 text-primary">تعديل: @Model.Name</h5>
-                <a asp-action="Index" class="btn btn-sm btn-outline-secondary">إلغاء</a>
-            </div>
-            <div class="card-body p-4">
-                <form asp-action="Edit" enctype="multipart/form-data" id="productForm">
-                    <input type="hidden" asp-for="Id" />
-                    <input type="hidden" asp-for="ImageUrl" />
+    <div class="col-lg-11 col-xl-10">
 
-                    <ul class="nav nav-tabs mb-4" id="prodTab" role="tablist">
-                        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#basic" type="button">أساسي</button></li>
-                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#pricing" type="button">الأسعار والمخزون</button></li>
-                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#media" type="button">الصور والألوان</button></li>
-                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#seo" type="button">SEO والشحن</button></li>
+        <form asp-action="Edit" enctype="multipart/form-data" id="productForm">
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="ImageUrl" />
+
+            <div class="edit-card">
+                <!-- 1. Sticky Header Actions -->
+                <div class="card-header-actions">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-primary bg-opacity-10 text-primary rounded-circle p-3 d-flex align-items-center justify-content-center" style="width:50px; height:50px;">
+                            <i class="fas fa-edit fa-lg"></i>
+                        </div>
+                        <div>
+                            <h4 class="fw-bold text-main mb-0">@Model.Name</h4>
+                            <span class="badge bg-light text-muted border mt-1">SKU: @Model.SKU</span>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a asp-action="Index" class="btn btn-light border fw-bold text-muted px-4">إلغاء</a>
+                        <button type="submit" class="btn btn-primary fw-bold px-4 shadow-sm" onclick="prepareDescription()">
+                            <i class="fas fa-save me-2"></i> حفظ التغييرات
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2. Tabs Navigation -->
+                <div class="custom-tabs-container">
+                    <ul class="nav nav-tabs custom-tabs" id="prodTab" role="tablist">
+                        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#basic" type="button"><i class="fas fa-info-circle"></i> البيانات الأساسية</button></li>
+                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#pricing" type="button"><i class="fas fa-tags"></i> الأسعار والمخزون</button></li>
+                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#media" type="button"><i class="fas fa-images"></i> الصور والمتغيرات</button></li>
+                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#seo" type="button"><i class="fas fa-search"></i> SEO والشحن</button></li>
                     </ul>
+                </div>
 
-                    <div class="tab-content" id="myTabContent">
+                <!-- 3. Tab Content -->
+                <div class="tab-content" id="myTabContent">
 
-                        <!-- 1. Basic Info -->
-                        <div class="tab-pane fade show active" id="basic">
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label class="form-label">الاسم (عربي) <span class="text-danger">*</span></label>
-                                    <input asp-for="Name" class="form-control" required />
+                    <!-- Tab 1: Basic Info -->
+                    <div class="tab-pane fade show active" style="min-height:1200px;" id="basic">
+                        <div class="form-section">
+                            <div class="row g-4">
+                                <div class="col-md-8">
+                                    <div class="row g-3">
+                                        <div class="col-12">
+                                            <label class="form-label">الاسم (عربي) <span class="text-danger">*</span></label>
+                                            <input asp-for="Name" class="form-control form-control-lg-custom" required />
+                                            <span asp-validation-for="Name" class="text-danger small"></span>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label">الاسم (إنجليزي)</label>
+                                            <input asp-for="NameEn" class="form-control form-control-lg-custom" />
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">القسم</label>
+                                            <select asp-for="CategoryId" class="form-select form-control-lg-custom" asp-items="ViewBag.Categories"></select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">الماركة</label>
+                                            <input asp-for="Brand" class="form-control form-control-lg-custom" />
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">الاسم (إنجليزي) <span class="text-danger">*</span></label>
-                                    <input asp-for="NameEn" class="form-control" required />
+                                <div class="col-md-4">
+                                    <div class="p-4 bg-light rounded-4 border">
+                                        <h6 class="fw-bold mb-3 text-muted border-bottom pb-2">الإعدادات العامة</h6>
+                                        <div class="mb-3">
+                                            <label class="form-label">التاجر</label>
+                                            <select asp-for="MerchantId" class="form-select form-control-lg-custom" asp-items="ViewBag.Merchants"></select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">الحالة</label>
+                                            <select asp-for="Status" class="form-select form-control-lg-custom">
+                                                <option value="Active">🟢 نشط</option>
+                                                <option value="Draft">🟡 مسودة</option>
+                                                <option value="Hidden">🔴 مخفي</option>
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">التاجر</label>
-                                    <select asp-for="MerchantId" class="form-select" asp-items="ViewBag.Merchants"></select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">القسم</label>
-                                    <select asp-for="CategoryId" class="form-select" asp-items="ViewBag.Categories"></select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">الماركة</label>
-                                    <input asp-for="Brand" class="form-control" />
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">الحالة</label>
-                                    <select asp-for="Status" class="form-select">
-                                        <option value="Active" selected="@(Model.Status == "Active")">نشط</option>
-                                        <option value="Draft" selected="@(Model.Status == "Draft")">مسودة</option>
-                                        <option value="Archived" selected="@(Model.Status == "Archived")">مؤرشف</option>
-                                    </select>
-                                </div>
-                                <div class="col-12 mt-3">
+
+                                <div class="col-12 my-5">
                                     <label class="form-label">الوصف (عربي)</label>
                                     <div id="rawDescAr" style="display:none;">@Html.Raw(Model.Description)</div>
-                                    <div id="editor-ar" style="height:150px; background:#fff;"></div>
+                                    <div id="editor-ar"></div>
                                     <input type="hidden" asp-for="Description" id="DescriptionHidden" />
                                 </div>
-                                <div class="col-12 mt-3">
+
+                                <div class="col-12 mt-5">
                                     <label class="form-label">الوصف (إنجليزي)</label>
                                     <div id="rawDescEn" style="display:none;">@Html.Raw(Model.DescriptionEn)</div>
-                                    <div id="editor-en" style="height:150px; background:#fff;"></div>
+                                    <div id="editor-en"></div>
                                     <input type="hidden" asp-for="DescriptionEn" id="DescriptionEnHidden" />
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- 2. Pricing & Inventory -->
-                        <div class="tab-pane fade" id="pricing">
-                            <div class="row g-3">
+                    <!-- Tab 2: Pricing -->
+                    <div class="tab-pane fade" id="pricing">
+                        <div class="form-section">
+                            <h6 class="text-primary fw-bold mb-4 border-bottom pb-2">بيانات التسعير</h6>
+                            <div class="row g-4 mb-5">
                                 <div class="col-md-4">
-                                    <label class="form-label">السعر <span class="text-danger">*</span></label>
-                                    <input asp-for="Price" type="number" step="0.01" class="form-control fw-bold" required />
+                                    <label class="form-label">سعر البيع <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <input asp-for="Price" type="number" step="0.01" class="form-control form-control-lg-custom fw-bold text-success" required />
+                                        <span class="input-group-text bg-light border-start-0">ج.م</span>
+                                    </div>
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label">السعر قبل الخصم</label>
-                                    <input asp-for="OldPrice" type="number" step="0.01" class="form-control" />
+                                    <input asp-for="OldPrice" type="number" step="0.01" class="form-control form-control-lg-custom text-decoration-line-through text-muted" />
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label">سعر التكلفة</label>
-                                    <input asp-for="CostPrice" type="number" step="0.01" class="form-control bg-light" />
+                                    <input asp-for="CostPrice" type="number" step="0.01" class="form-control form-control-lg-custom" />
                                 </div>
+                            </div>
 
-                                <div class="col-12"><hr /></div>
-
-                                <div class="col-md-4">
-                                    <label class="form-label">الكمية <span class="text-danger">*</span></label>
-                                    <input asp-for="StockQuantity" type="number" class="form-control" required />
+                            <h6 class="text-primary fw-bold mb-4 border-bottom pb-2">بيانات المخزون الإجمالي</h6>
+                            <div class="row g-4">
+                                <div class="col-md-3">
+                                    <label class="form-label">الكمية الكلية</label>
+                                    <input asp-for="StockQuantity" type="number" class="form-control form-control-lg-custom bg-white fw-bold" required />
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <label class="form-label">حد النواقص</label>
-                                    <input asp-for="LowStockThreshold" type="number" class="form-control" />
+                                    <input asp-for="LowStockThreshold" type="number" class="form-control form-control-lg-custom" />
                                 </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">وحدات الكرتونة</label>
-                                    <input asp-for="UnitsPerCarton" type="number" class="form-control" />
-                                </div>
-
-                                <div class="col-12"><hr /></div>
-
-                                <div class="col-md-6">
+                                <div class="col-md-3">
                                     <label class="form-label">SKU</label>
-                                    <input asp-for="SKU" class="form-control" />
+                                    <input asp-for="SKU" class="form-control form-control-lg-custom" />
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-3">
                                     <label class="form-label">الباركود</label>
-                                    <input asp-for="Barcode" class="form-control" />
+                                    <input asp-for="Barcode" class="form-control form-control-lg-custom" />
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- 3. Media & Colors -->
-                        <div class="tab-pane fade" id="media">
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label class="form-label">الصورة الرئيسية</label>
-                                    <input type="file" name="mainImage" class="form-control" accept="image/*" onchange="previewSingle(this)">
-                                    <img id="mainPreview" src="~/@Model.ImageUrl" class="mt-2 border rounded" style="height:100px;">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">إضافة صور للمعرض</label>
-                                    <input type="file" name="galleryImages" class="form-control" accept="image/*" multiple>
-                                </div>
-
-                                <div class="col-12">
-                                    <label class="form-label">الصور الحالية</label>
-                                    <div class="d-flex gap-2 flex-wrap">
-                                        @foreach (var img in Model.Images)
+                    <!-- Tab 3: Media & Variants -->
+                    <div class="tab-pane fade" id="media">
+                        <div class="form-section">
+                            <div class="row g-5">
+                                <!-- Main Image -->
+                                <div class="col-md-4 border-end">
+                                    <label class="form-label mb-3">الصورة الرئيسية</label>
+                                    <div class="image-upload-zone" onclick="document.getElementById('mainImage').click()">
+                                        @if (!string.IsNullOrEmpty(Model.ImageUrl))
                                         {
-                                            <img src="~/@img.ImageUrl" style="width:60px; height:60px; object-fit:cover;" class="rounded border">
+                                            <img id="mainPreview" src="~/@Model.ImageUrl" onerror="this.style.display='none'">
                                         }
-                                    </div>
-                                </div>
-
-                                <div class="col-12 mt-4">
-                                    <h6 class="text-muted">الألوان</h6>
-                                    <div id="colorsContainer" class="mb-2">
-                                        @foreach (var color in Model.ProductColors)
+                                        else
                                         {
-                                            <div class="d-flex gap-2 mb-2 align-items-center">
-                                                <input type="color" name="productColorsHex" class="form-control form-control-color" value="@color.ColorHex">
-                                                <input type="text" name="productColorsName" class="form-control" value="@color.ColorName">
-                                                <button type="button" class="btn btn-sm btn-danger" onclick="this.parentElement.remove()">X</button>
+                                            <div class="text-center text-muted">
+                                                <i class="fas fa-cloud-upload-alt fa-3x mb-3"></i>
+                                                <div>اضغط لرفع الصورة</div>
                                             </div>
+                                            <img id="mainPreview" style="display:none;" />
                                         }
                                     </div>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addColorInput()">+ إضافة لون</button>
+                                    <input type="file" id="mainImage" name="mainImage" class="d-none" accept="image/*" onchange="previewSingle(this)">
+                                </div>
+
+                                <!-- Gallery & Variants -->
+                                <div class="col-md-8">
+                                    <!-- Gallery -->
+                                    <div class="mb-5">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <label class="form-label m-0">معرض الصور</label>
+                                            <button type="button" class="btn btn-sm btn-light border text-primary fw-bold" onclick="document.getElementById('galleryImages').click()">
+                                                <i class="fas fa-plus me-1"></i> إضافة
+                                            </button>
+                                            <input type="file" id="galleryImages" name="galleryImages" class="d-none" multiple accept="image/*" onchange="previewGallery(this)">
+                                        </div>
+
+                                        <div class="p-3 bg-f8 rounded border" style="min-height: 120px;">
+                                            <div class="gallery-grid" id="galleryContainer">
+                                                @if (Model.Images != null)
+                                                {
+                                                    foreach (var img in Model.Images)
+                                                    {
+                                                        <div class="gallery-thumb">
+                                                            <img src="~/@img.ImageUrl">
+                                                            <button type="button" class="gallery-remove" onclick="removeGalleryItem(this)">
+                                                                <i class="fas fa-times"></i>
+                                                            </button>
+                                                            <input type="hidden" name="existingImages" value="@img.Id">
+                                                        </div>
+                                                    }
+                                                }
+                                            </div>
+                                            <div id="newGalleryPreview" class="gallery-grid"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Variants -->
+                                    <div>
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <label class="form-label m-0 text-primary fw-bold">المتغيرات (الألوان)</label>
+                                            <button type="button" class="btn btn-sm btn-primary fw-bold" onclick="addVariantRow()">
+                                                <i class="fas fa-plus me-1"></i> إضافة لون
+                                            </button>
+                                        </div>
+
+                                        <div class="table-responsive border rounded bg-white">
+                                            <table class="variants-table">
+                                                <thead class="bg-light">
+                                                    <tr>
+                                                        <th class="ps-4">اللون</th>
+                                                        <th>الاسم</th>
+                                                        <th class="text-center">حذف</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="variantsBody">
+                                                    @if (Model.ProductColors != null && Model.ProductColors.Any())
+                                                    {
+                                                        foreach (var color in Model.ProductColors)
+                                                        {
+                                                            <tr class="variant-row">
+                                                                <td class="ps-4">
+                                                                    <div class="color-picker-wrapper" style="background-color: @color.ColorHex">
+                                                                        <input type="color" name="productColorsHex" class="color-picker-input" value="@color.ColorHex" onchange="this.parentElement.style.backgroundColor=this.value">
+                                                                    </div>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="text" name="productColorsName" class="form-control border-0 bg-transparent fw-bold" value="@color.ColorName" placeholder="اسم اللون" required>
+                                                                </td>
+                                                           
+                                                                <td class="text-center">
+                                                                    <button type="button" class="btn btn-sm text-danger" onclick="this.closest('tr').remove()"><i class="fas fa-trash-alt"></i></button>
+                                                                </td>
+                                                            </tr>
+                                                        }
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- 4. SEO & Shipping -->
-                        <div class="tab-pane fade" id="seo">
-                            <div class="row g-3">
+                    <!-- Tab 4: SEO -->
+                    <div class="tab-pane fade" id="seo">
+                        <div class="form-section">
+                            <div class="row g-4">
                                 <div class="col-md-6">
                                     <label class="form-label">الوزن (كجم)</label>
-                                    <input asp-for="Weight" type="number" step="0.01" class="form-control" />
+                                    <input asp-for="Weight" type="number" step="0.01" class="form-control form-control-lg-custom" />
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Slug</label>
-                                    <input asp-for="Slug" class="form-control" />
+                                    <label class="form-label">الرابط الدائم (Slug)</label>
+                                    <input asp-for="Slug" class="form-control form-control-lg-custom bg-light" />
                                 </div>
                                 <div class="col-12">
-                                    <label class="form-label">Meta Title</label>
-                                    <input asp-for="MetaTitle" class="form-control" />
+                                    <label class="form-label">عنوان الميتا (Meta Title)</label>
+                                    <input asp-for="MetaTitle" class="form-control form-control-lg-custom" />
                                 </div>
                                 <div class="col-12">
-                                    <label class="form-label">Meta Description</label>
-                                    <textarea asp-for="MetaDescription" class="form-control" rows="2"></textarea>
+                                    <label class="form-label">وصف الميتا (Meta Description)</label>
+                                    <textarea asp-for="MetaDescription" class="form-control form-control-lg-custom" rows="3"></textarea>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="mt-4 pt-3 border-top text-end">
-                        <button type="submit" class="btn btn-primary px-4 fw-bold" onclick="prepareDescription()">حفظ التعديلات</button>
-                    </div>
-                </form>
+                </div>
             </div>
-        </div>
+        </form>
     </div>
 </div>
 
-<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
-<script>
-    var quillAr = new Quill('#editor-ar', { theme: 'snow', modules: { toolbar: [ ['bold', 'italic'], [{ 'list': 'ordered'}, { 'list': 'bullet' }] ] } });
-    var quillEn = new Quill('#editor-en', { theme: 'snow', modules: { toolbar: [ ['bold', 'italic'], [{ 'list': 'ordered'}, { 'list': 'bullet' }] ] } });
+@section Scripts {
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <script>
+        // 1. Editors
+        var toolbarOptions = [
+            ['bold', 'italic', 'underline', 'strike'],
+            ['blockquote', 'code-block'],
+            [{ 'header': 1 }, { 'header': 2 }],
+            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+            [{ 'script': 'sub'}, { 'script': 'super' }],
+            [{ 'indent': '-1'}, { 'indent': '+1' }],
+            [{ 'direction': 'rtl' }],
+            [{ 'size': ['small', false, 'large', 'huge'] }],
+            [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+            [{ 'color': [] }, { 'background': [] }],
+            [{ 'font': [] }],
+            [{ 'align': [] }],
+            ['clean'],
+            ['link', 'image', 'video']
+        ];
 
-    quillAr.root.innerHTML = document.getElementById('rawDescAr').innerHTML;
-    quillEn.root.innerHTML = document.getElementById('rawDescEn').innerHTML;
+        var quillAr = new Quill('#editor-ar', { theme: 'snow', modules: { toolbar: toolbarOptions }, placeholder: 'تفاصيل المنتج بالعربية...' });
+        var quillEn = new Quill('#editor-en', { theme: 'snow', modules: { toolbar: toolbarOptions }, placeholder: 'Product details in English...' });
 
-    function prepareDescription() {
-        document.getElementById('DescriptionHidden').value = quillAr.root.innerHTML;
-        document.getElementById('DescriptionEnHidden').value = quillEn.root.innerHTML;
-    }
+        // Load existing content
+        quillAr.root.innerHTML = document.getElementById('rawDescAr').innerHTML;
+        quillEn.root.innerHTML = document.getElementById('rawDescEn').innerHTML;
 
-    function previewSingle(input) {
-        if (input.files && input.files[0]) {
-            var reader = new FileReader();
-            reader.onload = function(e) { document.getElementById('mainPreview').src = e.target.result; }
-            reader.readAsDataURL(input.files[0]);
+        // 2. Form Submission Handler
+        function prepareDescription() {
+            document.getElementById('DescriptionHidden').value = quillAr.root.innerHTML;
+            document.getElementById('DescriptionEnHidden').value = quillEn.root.innerHTML;
         }
-    }
 
-    function addColorInput() {
-        const div = document.createElement('div');
-        div.className = 'd-flex gap-2 mb-2 align-items-center';
-        div.innerHTML = `
-            <input type="color" name="productColorsHex" class="form-control form-control-color" value="#000000">
-            <input type="text" name="productColorsName" class="form-control" placeholder="اسم اللون">
-            <button type="button" class="btn btn-sm btn-danger" onclick="this.parentElement.remove()">X</button>
-        `;
-        document.getElementById('colorsContainer').appendChild(div);
-    }
-</script>
+        // 3. Image Preview Logic
+        function previewSingle(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var img = document.getElementById('mainPreview');
+                    img.src = e.target.result;
+                    img.style.display = 'block';
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function previewGallery(input) {
+            const container = document.getElementById('newGalleryPreview');
+            container.innerHTML = '';
+            if (input.files) {
+                Array.from(input.files).forEach(file => {
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        const div = document.createElement('div');
+                        div.className = 'gallery-thumb';
+                        div.innerHTML = `<img src="${e.target.result}"><button type="button" class="gallery-remove" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>`;
+                        container.appendChild(div);
+                    }
+                    reader.readAsDataURL(file);
+                });
+            }
+        }
+
+        function removeGalleryItem(btn) {
+            if(confirm('هل تريد حذف هذه الصورة؟')) {
+                const wrapper = btn.closest('.gallery-thumb');
+                wrapper.remove();
+            }
+        }
+
+        // 4. Variant Manager
+        function addVariantRow() {
+            const tbody = document.getElementById('variantsBody');
+            const tr = document.createElement('tr');
+            tr.className = 'variant-row';
+            tr.innerHTML = `
+                <td class="ps-4">
+                    <div class="color-picker-wrapper" style="width:36px; height:36px; border-radius:50%; background-color:#000; border:2px solid #fff; box-shadow:0 0 0 1px #e2e8f0; cursor:pointer; position:relative; overflow:hidden;">
+                        <input type="color" name="productColorsHex" class="color-picker-input" value="#000000" style="position:absolute; top:-50%; left:-50%; width:200%; height:200%; cursor:pointer; padding:0; margin:0; border:none;" onchange="this.parentElement.style.backgroundColor=this.value">
+                    </div>
+                </td>
+                <td>
+                    <input type="text" name="productColorsName" class="form-control border-0 bg-transparent fw-bold" placeholder="اسم اللون" required>
+                </td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-sm text-danger" onclick="this.closest('tr').remove()"><i class="fas fa-trash-alt"></i></button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        }
+    </script>
+}

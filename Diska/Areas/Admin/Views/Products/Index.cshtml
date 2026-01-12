@@ -2,162 +2,339 @@
 @{
     ViewData["Title"] = "إدارة المنتجات";
     Layout = "_AdminLayout";
+
+    int currentPage = ViewBag.CurrentPage ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    int totalItems = ViewBag.TotalItems ?? 0;
 }
 
-<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+<style>
+    /* Premium Table Styling */
+    .table-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        overflow: hidden;
+        background: #fff;
+    }
+
+    .table thead th {
+        background-color: #f8fafc;
+        color: #64748b;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        padding: 15px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .table tbody td {
+        padding: 15px;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 0.95rem;
+        color: #1e293b;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: #fcfcfd;
+    }
+
+    .product-img-box {
+        width: 50px;
+        height: 50px;
+        border-radius: 8px;
+        object-fit: cover;
+        border: 1px solid #e2e8f0;
+        padding: 2px;
+        background: #fff;
+    }
+
+    /* Action Buttons */
+    .btn-action {
+        width: 34px;
+        height: 34px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        transition: 0.2s;
+        border: 1px solid transparent;
+    }
+
+    .btn-edit {
+        background: #eff6ff;
+        color: #2563eb;
+    }
+
+        .btn-edit:hover {
+            background: #2563eb;
+            color: #fff;
+        }
+
+    .btn-delete {
+        background: #fef2f2;
+        color: #ef4444;
+    }
+
+        .btn-delete:hover {
+            background: #ef4444;
+            color: #fff;
+        }
+
+    /* Filter Bar */
+    .filter-bar {
+        background: #fff;
+        padding: 15px;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .search-input-group {
+        position: relative;
+        flex-grow: 1;
+        min-width: 250px;
+    }
+
+        .search-input-group input {
+            padding-left: 40px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+        }
+
+        .search-input-group i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+        }
+
+    /* Excel Buttons */
+    .btn-excel {
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+</style>
+
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4 fade-up">
     <div>
-        <h2 style="margin:0; color:var(--primary);">إدارة المنتجات والمخزون</h2>
-        <span class="badge" style="background:#e0f2fe; color:#0284c7;">إجمالي: <span id="prodCount">@Model.Count()</span></span>
+        <h2 class="text-dark fw-bold mb-1">إدارة المنتجات</h2>
+        <p class="text-muted small mb-0">عرض وإدارة مخزون المتجر</p>
     </div>
-    <div style="display:flex; gap:10px;">
-        <form asp-action="ExportToCsv" method="post">
-            <button type="submit" class="btn btn-outline-success"><i class="fas fa-file-csv"></i> تصدير CSV</button>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-success btn-excel shadow-sm bg-white" data-bs-toggle="modal" data-bs-target="#importModal">
+            <i class="fas fa-file-import"></i> استيراد
+        </button>
+        <form asp-action="ExportToExcel" method="post">
+            <button type="submit" class="btn btn-success btn-excel shadow-sm">
+                <i class="fas fa-file-excel"></i> تصدير Excel
+            </button>
         </form>
-        <a asp-action="Create" class="btn btn-primary"><i class="fas fa-plus"></i> إضافة منتج</a>
+        <a asp-action="Create" class="btn btn-primary fw-bold shadow-sm px-4">
+            <i class="fas fa-plus me-2"></i> منتج جديد
+        </a>
     </div>
 </div>
 
-<div class="card" style="margin-bottom:20px; padding:15px;">
-    <div style="display:flex; gap:15px; align-items:center; flex-wrap:wrap;">
-        <div style="flex:1; min-width:250px;">
-            <input type="text" id="prodSearch" class="form-control" placeholder="بحث بالاسم، SKU، التاجر..." onkeyup="filterProducts()">
-        </div>
-        <div style="width:180px;">
-            <select id="stockFilter" class="form-control" onchange="filterProducts()">
-                <option value="">كل المخزون</option>
-                <option value="Low">منخفض (نواقص)</option>
-                <option value="Out">نافذ (0)</option>
-                <option value="InStock">متوفر</option>
-            </select>
-        </div>
-        <div style="width:150px;">
-            <select id="stateFilter" class="form-control" onchange="filterProducts()">
-                <option value="">كل الحالات</option>
-                <option value="Active">نشط</option>
-                <option value="Draft">مسودة</option>
-                <option value="Archived">مؤرشف</option>
-            </select>
-        </div>
+<!-- Filters -->
+<form method="get" asp-action="Index" class="filter-bar fade-up" style="animation-delay: 0.1s;">
+    <div class="search-input-group">
+        <input type="text" name="search" class="form-control" placeholder="بحث بالاسم أو SKU..." value="@ViewBag.Search">
+        <i class="fas fa-search"></i>
     </div>
-</div>
 
-<div class="card">
-    @if (!Model.Any())
-    {
-        <div style="text-align:center; padding:50px; color:#666;">
-            <p>لا توجد منتجات مسجلة.</p>
-        </div>
-    }
-    else
-    {
-        <div class="table-responsive">
-            <table class="table align-middle" style="width:100%;">
-                <thead>
+    <div style="width: 180px;">
+        <select name="categoryId" class="form-select" asp-items="ViewBag.CategoryId">
+            <option value="">كل الأقسام</option>
+        </select>
+    </div>
+
+    <div style="width: 180px;">
+        <select name="merchantId" class="form-select" asp-items="ViewBag.MerchantId">
+            <option value="">كل التجار</option>
+        </select>
+    </div>
+
+    <div style="width: 150px;">
+        <select name="status" class="form-select">
+            <option value="">الحالة</option>
+            <option value="Active" selected="@(ViewBag.FilterStatus == "Active")">نشط</option>
+            <option value="LowStock" selected="@(ViewBag.FilterStatus == "LowStock")">منخفض</option>
+            <option value="OutOfStock" selected="@(ViewBag.FilterStatus == "OutOfStock")">نافذ</option>
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary px-3"><i class="fas fa-filter"></i></button>
+    <a asp-action="Index" class="btn btn-light border px-3"><i class="fas fa-undo"></i></a>
+</form>
+
+<!-- Table -->
+<div class="table-card fade-up" style="animation-delay: 0.2s;">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th class="ps-4">المنتج</th>
+                    <th>السعر</th>
+                    <th>المخزون</th>
+                    <th>القسم</th>
+                    <th>التاجر</th>
+                    <th>الحالة</th>
+                    <th class="text-end pe-4">إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
                     <tr>
-                        <th style="width:60px;">صورة</th>
-                        <th>المنتج</th>
-                        <th>التاجر</th>
-                        <th>السعر / التكلفة</th>
-                        <th>المخزون</th>
-                        <th>الحالة</th>
-                        <th>إجراءات</th>
+                        <td colspan="7" class="text-center py-5">
+                            <div class="text-muted">
+                                <i class="fas fa-box-open fa-3x mb-3 opacity-25"></i>
+                                <p>لا توجد منتجات مطابقة للبحث.</p>
+                            </div>
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in Model)
-                    {
-                        string stockStatus = item.StockQuantity == 0 ? "Out" : (item.StockQuantity <= item.LowStockThreshold ? "Low" : "InStock");
-                        string statusBadge = item.Status switch { "Active" => "bg-success", "Draft" => "bg-secondary", "Archived" => "bg-warning text-dark", _ => "bg-light text-dark" };
-
-                        <tr class="prod-row" data-stock="@stockStatus" data-state="@item.Status">
-                            <td>
-                                <img src="~/@item.ImageUrl" style="width:50px; height:50px; object-fit:contain; border-radius:8px; border:1px solid #eee;">
-                            </td>
-                            <td>
-                                <strong style="display:block; color:var(--primary);">@item.Name</strong>
-                                <small class="text-muted">SKU: @item.SKU</small>
-                                @if (!string.IsNullOrEmpty(item.Brand))
-                                {
-                                    <small class="d-block text-info">@item.Brand</small>
-                                }
-                            </td>
-                            <td>@(item.Merchant?.ShopName ?? "الإدارة")</td>
-                            <td>
-                                <div class="fw-bold">@item.Price.ToString("N0")</div>
-                                <small class="text-muted">ت: @item.CostPrice.ToString("N0")</small>
-                            </td>
-                            <td>
-                                @if (item.StockQuantity == 0)
-                                {
-                                    <span style="color:#dc2626; font-weight:bold;">0 (نافذ)</span>
-                                }
-                                else if (item.StockQuantity <= item.LowStockThreshold)
-                                {
-
-                                    <span style="color:#d97706; font-weight:bold;">@item.StockQuantity (منخفض)</span>
-                                }
-                                else
-                                {
-
-                                    <span style="color:#16a34a; font-weight:bold;">@item.StockQuantity</span>
-                                }
-                            </td>
-                            <td>
-                                <span class="badge @statusBadge">@item.Status</span>
-                            </td>
-                            <td>
-                                <div style="display:flex; gap:5px;">
-                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline small" style="padding:5px 10px;"><i class="fas fa-edit"></i></a>
-                                    <button onclick="confirmDeleteProduct(@item.Id, '@item.Name')" class="btn btn-danger small" style="padding:5px 10px;"><i class="fas fa-trash"></i></button>
-                                    <form id="deleteForm-@item.Id" asp-action="Delete" method="post" style="display:none;"><input type="hidden" name="id" value="@item.Id" /></form>
+                }
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="ps-4">
+                            <div class="d-flex align-items-center gap-3">
+                                <img src="~/@item.ImageUrl" class="product-img-box" onerror="this.src='/images/default.png'">
+                                <div>
+                                    <div class="fw-bold text-dark">@item.Name</div>
+                                    @if (!string.IsNullOrEmpty(item.SKU))
+                                    {
+                                        <small class="text-muted font-monospace bg-light px-1 rounded border">@item.SKU</small>
+                                    }
                                 </div>
-                            </td>
-                        </tr>
+                            </div>
+                        </td>
+                        <td class="fw-bold text-primary">@item.Price.ToString("N0")</td>
+                        <td>
+                            @if (item.StockQuantity == 0)
+                            {
+                                <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill">نافذ</span>
+                            }
+                            else if (item.StockQuantity <= item.LowStockThreshold)
+                            {
+
+                                <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill">منخفض (@item.StockQuantity)</span>
+                            }
+                            else
+                            {
+
+                                <span class="badge bg-success bg-opacity-10 text-success rounded-pill">@item.StockQuantity</span>
+                            }
+                        </td>
+                        <td><span class="badge bg-light text-dark border">@item.Category?.Name</span></td>
+                        <td><small class="fw-bold">@(item.Merchant?.ShopName ?? "الإدارة")</small></td>
+                        <td>
+                            @if (item.Status == "Active")
+                            {
+                                <span class="badge bg-success">نشط</span>
+                            }
+                            else
+                            {
+
+                                <span class="badge bg-secondary">@item.Status</span>
+                            }
+                        </td>
+                        <td class="text-end pe-4">
+                            <div class="d-flex justify-content-end gap-2">
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn-action btn-edit" title="تعديل">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button" class="btn-action btn-delete" onclick="confirmDelete(@item.Id, '@item.Name')" title="حذف">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                            <form id="deleteForm-@item.Id" asp-action="Delete" method="post" class="d-none">
+                                <input type="hidden" name="id" value="@item.Id" />
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    @if (totalPages > 1)
+    {
+        <div class="p-3 border-top d-flex justify-content-between align-items-center">
+            <span class="text-muted small">عرض @Model.Count() من أصل @totalItems منتج</span>
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                        <a class="page-link" href="@Url.Action("Index", new { page = currentPage - 1, search = ViewBag.Search, categoryId = ViewBag.FilterCategoryId, merchantId = ViewBag.FilterMerchantId, status = ViewBag.FilterStatus })">&laquo;</a>
+                    </li>
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        <li class="page-item @(i == currentPage ? "active" : "")">
+                            <a class="page-link" href="@Url.Action("Index", new { page = i, search = ViewBag.Search, categoryId = ViewBag.FilterCategoryId, merchantId = ViewBag.FilterMerchantId, status = ViewBag.FilterStatus })">@i</a>
+                        </li>
                     }
-                </tbody>
-            </table>
-            <div id="noProds" style="text-align:center; padding:30px; display:none; color:#666;">لا توجد نتائج.</div>
+                    <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                        <a class="page-link" href="@Url.Action("Index", new { page = currentPage + 1, search = ViewBag.Search, categoryId = ViewBag.FilterCategoryId, merchantId = ViewBag.FilterMerchantId, status = ViewBag.FilterStatus })">&raquo;</a>
+                    </li>
+                </ul>
+            </nav>
         </div>
     }
+</div>
+
+<!-- Import Modal -->
+<div class="modal fade" id="importModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom-0">
+                <h5 class="modal-title fw-bold">استيراد منتجات (Excel/CSV)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="ImportFromExcel" method="post" enctype="multipart/form-data">
+                <div class="modal-body text-center py-4">
+                    <div class="upload-zone border-dashed p-4 rounded bg-light mb-3" onclick="document.getElementById('excelFile').click()" style="cursor:pointer;">
+                        <i class="fas fa-file-csv fa-3x text-success mb-3"></i>
+                        <p class="mb-1 fw-bold">اضغط لاختيار الملف</p>
+                        <small class="text-muted">يقبل ملفات CSV فقط بالصيغة القياسية</small>
+                        <input type="file" name="excelFile" id="excelFile" class="d-none" accept=".csv" required onchange="document.getElementById('fileName').innerText = this.files[0].name">
+                    </div>
+                    <div id="fileName" class="text-primary fw-bold"></div>
+                </div>
+                <div class="modal-footer border-top-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary px-4">بدء الاستيراد</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <script>
-    function filterProducts() {
-        const input = document.getElementById('prodSearch').value.toLowerCase();
-        const stock = document.getElementById('stockFilter').value;
-        const state = document.getElementById('stateFilter').value;
-        const rows = document.querySelectorAll('.prod-row');
-        let count = 0;
-
-        rows.forEach(row => {
-            const text = row.innerText.toLowerCase();
-            const rStock = row.getAttribute('data-stock');
-            const rState = row.getAttribute('data-state');
-
-            const textMatch = text.includes(input);
-            const stockMatch = stock === "" || rStock === stock;
-            const stateMatch = state === "" || rState === state;
-
-            if (textMatch && stockMatch && stateMatch) {
-                row.style.display = "";
-                count++;
-            } else {
-                row.style.display = "none";
-            }
-        });
-        document.getElementById('prodCount').innerText = count;
-        document.getElementById('noProds').style.display = count === 0 ? 'block' : 'none';
-    }
-
-    function confirmDeleteProduct(id, name) {
+    function confirmDelete(id, name) {
         Swal.fire({
             title: 'حذف المنتج؟',
-            text: `سيتم حذف ${name} نهائياً!`,
+            text: `هل أنت متأكد من حذف "${name}"؟ لا يمكن التراجع عن هذا الإجراء.`,
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#d33',
-            confirmButtonText: 'حذف',
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'نعم، حذف',
             cancelButtonText: 'إلغاء'
-        }).then((res) => { if(res.isConfirmed) document.getElementById('deleteForm-'+id).submit(); });
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('deleteForm-' + id).submit();
+            }
+        });
     }
 </script>
