@@ -25,30 +25,28 @@ namespace Diska.Controllers
             _shippingService = shippingService;
         }
 
-        // 1. عرض صفحة السلة
         public IActionResult Index()
         {
             return View();
         }
 
-        // 2. التحقق من المنتج وإضافته (API)
-        // هذا الـ Action يستخدمه الـ JavaScript للتأكد من الكمية قبل الإضافة للـ LocalStorage
         [HttpPost]
-        public async Task<IActionResult> AddItem(int productId, int quantity)
+        public async Task<IActionResult> AddItem(int productId, int quantity, string colorHex = null, string colorName = null)
         {
-            var product = await _context.Products.FindAsync(productId);
+            var product = await _context.Products
+                .Include(p => p.ProductColors)
+                .FirstOrDefaultAsync(p => p.Id == productId);
 
             if (product == null || product.Status != "Active")
-            {
                 return Json(new { success = false, message = "عفواً، هذا المنتج غير متاح حالياً." });
-            }
 
             if (product.StockQuantity < quantity)
-            {
                 return Json(new { success = false, message = $"الكمية المتاحة فقط {product.StockQuantity} قطعة." });
-            }
 
-            // إرجاع بيانات المنتج ليستخدمها الـ Front-end
+            // Ensure non-null values for response
+            string finalColorName = !string.IsNullOrEmpty(colorName) ? colorName : (product.ProductColors.FirstOrDefault()?.ColorName ?? product.Color ?? "Default");
+            string finalColorHex = !string.IsNullOrEmpty(colorHex) ? colorHex : (product.ProductColors.FirstOrDefault()?.ColorHex ?? (product.Color != null && product.Color.StartsWith("#") ? product.Color : "#000000"));
+
             return Json(new
             {
                 success = true,
@@ -57,27 +55,25 @@ namespace Diska.Controllers
                 {
                     id = product.Id,
                     name = System.Threading.Thread.CurrentThread.CurrentCulture.Name.StartsWith("ar") ? product.Name : product.NameEn,
-                    price = product.Price, // السعر الأساسي (يمكن تطبيق خصم الكميات لاحقاً)
+                    price = product.Price,
                     image = product.ImageUrl,
-                    stock = product.StockQuantity
+                    stock = product.StockQuantity,
+                    colorName = finalColorName,
+                    colorHex = finalColorHex
                 }
             });
         }
 
-        // 3. صفحة الدفع (Checkout View)
         [Authorize]
         public async Task<IActionResult> Checkout()
         {
             var user = await _userManager.GetUserAsync(User);
-
             ViewBag.FullName = user.FullName;
             ViewBag.Phone = user.PhoneNumber;
             ViewBag.ShopName = user.ShopName;
 
-            // جلب آخر عنوان تم استخدامه أو العنوان الافتراضي
             var defaultAddress = await _context.UserAddresses
-                .OrderByDescending(a => a.IsDefault)
-                .ThenByDescending(a => a.Id)
+                .OrderByDescending(a => a.IsDefault).ThenByDescending(a => a.Id)
                 .FirstOrDefaultAsync(a => a.UserId == user.Id);
 
             if (defaultAddress != null)
@@ -86,11 +82,9 @@ namespace Diska.Controllers
                 ViewBag.Governorate = defaultAddress.Governorate;
                 ViewBag.City = defaultAddress.City;
             }
-
             return View();
         }
 
-        // 4. تنفيذ الطلب (Place Order API) - العقل المدبر
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> PlaceOrder([FromBody] OrderSubmissionModel model)
@@ -100,12 +94,10 @@ namespace Diska.Controllers
 
             var user = await _userManager.GetUserAsync(User);
 
-            // استخدام Transaction لضمان أن كل العمليات (خصم مخزون، خصم رصيد، إنشاء طلب) تتم معاً أو تفشل معاً
             using var transaction = _context.Database.BeginTransaction();
 
             try
             {
-                // 1. إنشاء كائن الطلب الأساسي
                 var order = new Order
                 {
                     UserId = user.Id,
@@ -119,62 +111,72 @@ namespace Diska.Controllers
                     PaymentMethod = model.PaymentMethod,
                     Status = "Pending",
                     OrderDate = DateTime.Now,
-                    ShippingCost = _shippingService.CalculateCost(model.Governorate, model.City) // إعادة حساب الشحن في السيرفر للأمان
+                    ShippingCost = _shippingService.CalculateCost(model.Governorate, model.City)
                 };
 
                 decimal subTotal = 0;
                 var orderItems = new List<OrderItem>();
 
-                // 2. معالجة المنتجات (Validation & Calculation)
                 foreach (var itemDto in model.Items)
                 {
                     if (int.TryParse(itemDto.Id, out int pid))
                     {
-                        // جلب المنتج مع قفل (اختياري، هنا نعتمد على Concurrency Check عند الحفظ)
-                        var product = await _context.Products
-                            .Include(p => p.PriceTiers)
-                            .FirstOrDefaultAsync(p => p.Id == pid);
+                        var product = await _context.Products.Include(p => p.PriceTiers).Include(p => p.ProductColors).FirstOrDefaultAsync(p => p.Id == pid);
 
                         if (product == null || product.Status != "Active")
-                        {
                             return Json(new { success = false, message = $"المنتج رقم {pid} لم يعد متاحاً." });
-                        }
 
-                        // التحقق من المخزون
                         if (product.StockQuantity < itemDto.Qty)
-                        {
-                            return Json(new { success = false, message = $"عفواً، الكمية المطلوبة من '{product.Name}' غير متوفرة. المتاح: {product.StockQuantity}" });
-                        }
+                            return Json(new { success = false, message = $"الكمية غير متوفرة لـ '{product.Name}'." });
 
-                        // خصم المخزون
                         product.StockQuantity -= itemDto.Qty;
-                        _context.Update(product); // سيتم الحفظ في النهاية
+                        _context.Update(product);
 
-                        // تحديد السعر (تطبيق شرائح الجملة Server-Side)
+                        // Calculate Price
                         decimal finalPrice = product.Price;
                         if (product.PriceTiers != null && product.PriceTiers.Any())
                         {
-                            var tier = product.PriceTiers
-                                .Where(t => itemDto.Qty >= t.MinQuantity && itemDto.Qty <= t.MaxQuantity)
-                                .OrderBy(t => t.UnitPrice)
-                                .FirstOrDefault();
-
-                            // إذا كانت الكمية أكبر من أكبر شريحة، نطبق سعر أكبر شريحة (أرخص سعر)
+                            var tier = product.PriceTiers.Where(t => itemDto.Qty >= t.MinQuantity && itemDto.Qty <= t.MaxQuantity).OrderBy(t => t.UnitPrice).FirstOrDefault();
                             if (tier == null && itemDto.Qty > product.PriceTiers.Max(t => t.MaxQuantity))
-                            {
                                 tier = product.PriceTiers.OrderBy(t => t.UnitPrice).FirstOrDefault();
-                            }
-
                             if (tier != null) finalPrice = tier.UnitPrice;
                         }
-
                         subTotal += finalPrice * itemDto.Qty;
+
+                        // --- Color Logic (Bulletproof) ---
+                        string selectedHex = itemDto.ColorHex;
+                        string selectedName = itemDto.ColorName;
+
+                        // Try to find matching color in DB if only partial info is sent
+                        if (string.IsNullOrEmpty(selectedHex) && !string.IsNullOrEmpty(selectedName))
+                        {
+                            var colorMatch = product.ProductColors.FirstOrDefault(c => c.ColorName == selectedName);
+                            if (colorMatch != null) selectedHex = colorMatch.ColorHex;
+                        }
+
+                        // Fallback 1: Use Product Default
+                        if (string.IsNullOrEmpty(selectedHex)) selectedHex = product.Color;
+
+                        // Fallback 2: Use First Available Color
+                        if (string.IsNullOrEmpty(selectedHex) && product.ProductColors.Any()) selectedHex = product.ProductColors.First().ColorHex;
+
+                        // Fallback 3: Hard Default (Never allow NULL)
+                        if (string.IsNullOrEmpty(selectedHex)) selectedHex = "#000000";
+
+                        // Similar logic for Name
+                        if (string.IsNullOrEmpty(selectedName))
+                        {
+                            var colorMatch = product.ProductColors.FirstOrDefault(c => c.ColorHex == selectedHex);
+                            selectedName = colorMatch?.ColorName ?? "Standard";
+                        }
 
                         orderItems.Add(new OrderItem
                         {
                             ProductId = pid,
                             Quantity = itemDto.Qty,
-                            UnitPrice = finalPrice
+                            UnitPrice = finalPrice,
+                            SelectedColorHex = selectedHex, // Guaranteed not null
+                            SelectedColorName = selectedName // Guaranteed not null
                         });
                     }
                 }
@@ -182,30 +184,17 @@ namespace Diska.Controllers
                 order.TotalAmount = subTotal + order.ShippingCost;
                 order.OrderItems = orderItems;
 
-                // 3. معالجة الدفع (Wallet)
                 if (model.PaymentMethod == "Wallet")
                 {
                     if (user.WalletBalance < order.TotalAmount)
-                    {
-                        return Json(new { success = false, message = $"رصيد المحفظة ({user.WalletBalance}) لا يكفي لإتمام الطلب ({order.TotalAmount})." });
-                    }
+                        return Json(new { success = false, message = "رصيد المحفظة لا يكفي." });
 
                     user.WalletBalance -= order.TotalAmount;
-
-                    _context.WalletTransactions.Add(new WalletTransaction
-                    {
-                        UserId = user.Id,
-                        Amount = order.TotalAmount,
-                        Type = "Purchase",
-                        Description = $"شراء طلب جديد",
-                        TransactionDate = DateTime.Now
-                    });
-
+                    _context.WalletTransactions.Add(new WalletTransaction { UserId = user.Id, Amount = order.TotalAmount, Type = "Purchase", Description = $"شراء طلب", TransactionDate = DateTime.Now });
                     await _userManager.UpdateAsync(user);
-                    order.Status = "Confirmed"; // الدفع تم، نؤكد الطلب مباشرة
+                    order.Status = "Confirmed";
                 }
 
-                // 4. الحفظ النهائي
                 _context.Orders.Add(order);
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
@@ -215,17 +204,14 @@ namespace Diska.Controllers
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                // في الإنتاج، سجل الخطأ في Logger ولا ترجع التفاصيل للعميل
-                return Json(new { success = false, message = "حدث خطأ غير متوقع أثناء معالجة الطلب. يرجى المحاولة مرة أخرى." });
+                return Json(new { success = false, message = "Error: " + ex.Message });
             }
         }
 
-        // صفحات النجاح والفشل
         public IActionResult OrderSuccess(int id) { ViewBag.OrderId = id; return View(); }
         public IActionResult OrderFailed(int id) { ViewBag.OrderId = id; return View(); }
     }
 
-    // نماذج استقبال البيانات (DTOs)
     public class OrderSubmissionModel
     {
         public string ShopName { get; set; }
@@ -236,7 +222,7 @@ namespace Diska.Controllers
         public string PaymentMethod { get; set; }
         public string DeliverySlot { get; set; }
         public string Notes { get; set; }
-        public decimal ShippingCost { get; set; } // للمرجعية، لكن السيرفر يعيد حسابها
+        public decimal ShippingCost { get; set; }
         public List<CartItemDto> Items { get; set; }
     }
 
@@ -244,5 +230,7 @@ namespace Diska.Controllers
     {
         public string Id { get; set; }
         public int Qty { get; set; }
+        public string ColorName { get; set; }
+        public string ColorHex { get; set; }
     }
 }

@@ -1,167 +1,402 @@
-﻿@using System.Globalization
-@model IEnumerable<Diska.Models.Order>
+﻿@model IEnumerable<Diska.Models.Order>
+@using System.Globalization
 @{
     ViewData["Title"] = "إدارة الطلبات";
     Layout = "_AdminLayout";
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4 fade-up">
-    <div>
-        <h2 class="text-main fw-bold mb-0">@(isAr ? "إدارة الطلبات" : "Order Management")</h2>
-        <p class="text-muted small">@(isAr ? "متابعة وفلترة جميع طلبات المتجر" : "Track and manage all store orders")</p>
-    </div>
-    <div class="d-flex gap-2">
-        <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
-            <i class="fas fa-print me-2"></i> @(isAr ? "طباعة تقرير" : "Print Report")
-        </button>
-        <button class="btn btn-primary btn-sm shadow-sm">
-            <i class="fas fa-file-export me-2"></i> @(isAr ? "تصدير Excel" : "Export Excel")
-        </button>
-    </div>
-</div>
+<style>
+    /* --- Theming Variables --- */
+    :root {
+        --card-bg: #ffffff;
+        --card-border: #f1f5f9;
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+        --table-head-bg: #f8fafc;
+        --table-row-hover: #f8fafc;
+        --border-color: #e2e8f0;
+        --input-bg: #ffffff;
+        --badge-pending-bg: #fffbeb;
+        --badge-pending-text: #b45309;
+        --badge-confirmed-bg: #eff6ff;
+        --badge-confirmed-text: #1d4ed8;
+        --badge-shipped-bg: #f0f9ff;
+        --badge-shipped-text: #0284c7;
+        --badge-delivered-bg: #dcfce7;
+        --badge-delivered-text: #15803d;
+        --badge-cancelled-bg: #fef2f2;
+        --badge-cancelled-text: #b91c1c;
+    }
 
-<!-- Filters Bar -->
-<div class="filter-bar fade-up" style="animation-delay: 0.1s;">
-    <form method="get" action="/Admin/Dashboard/Orders" class="d-flex flex-wrap gap-3 w-100 align-items-end">
-        <div class="flex-grow-1" style="min-width: 200px;">
-            <label class="form-label small text-muted">@(isAr ? "بحث" : "Search")</label>
-            <div class="position-relative">
-                <input type="text" name="q" class="form-control ps-5" placeholder="@(isAr ? "رقم الطلب، اسم العميل..." : "Order ID, Customer Name...")" value="@Context.Request.Query["q"]">
-                <i class="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+    [data-bs-theme="dark"] {
+        --card-bg: #1e293b;
+        --card-border: #334155;
+        --text-main: #f8fafc;
+        --text-muted: #94a3b8;
+        --table-head-bg: #0f172a;
+        --table-row-hover: #334155;
+        --border-color: #334155;
+        --input-bg: #0f172a;
+        --badge-pending-bg: rgba(245, 158, 11, 0.2);
+        --badge-pending-text: #fbbf24;
+        --badge-confirmed-bg: rgba(59, 130, 246, 0.2);
+        --badge-confirmed-text: #60a5fa;
+        --badge-shipped-bg: rgba(14, 165, 233, 0.2);
+        --badge-shipped-text: #38bdf8;
+        --badge-delivered-bg: rgba(34, 197, 94, 0.2);
+        --badge-delivered-text: #4ade80;
+        --badge-cancelled-bg: rgba(239, 68, 68, 0.2);
+        --badge-cancelled-text: #f87171;
+    }
+
+    /* --- Page Styles --- */
+    .orders-card {
+        border: 1px solid var(--card-border);
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        background: var(--card-bg);
+        overflow: hidden;
+        transition: background-color 0.3s ease;
+    }
+
+    .orders-header {
+        padding: 25px 30px;
+        background: var(--card-bg);
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+        .orders-header h4 {
+            color: var(--text-main);
+        }
+
+        .orders-header p {
+            color: var(--text-muted);
+        }
+
+    .filter-section {
+        background: var(--table-head-bg);
+        padding: 20px 30px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .form-control, .form-select {
+        background-color: var(--input-bg);
+        border-color: var(--border-color);
+        color: var(--text-main);
+    }
+
+        .form-control:focus, .form-select:focus {
+            background-color: var(--input-bg);
+            color: var(--text-main);
+            border-color: var(--primary);
+        }
+
+    /* Table */
+    .table {
+        margin-bottom: 0;
+        color: var(--text-main);
+        border-color: var(--border-color);
+    }
+
+        .table thead th {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 700;
+            padding: 18px 20px;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--table-head-bg);
+            letter-spacing: 0.5px;
+        }
+
+        .table tbody td {
+            padding: 18px 20px;
+            vertical-align: middle;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.95rem;
+        }
+
+    .table-hover tbody tr:hover {
+        background-color: var(--table-row-hover);
+    }
+
+    /* Avatar & Status */
+    .avatar-initials {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        background: rgba(79, 70, 229, 0.1);
+        color: #4f46e5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 1.1rem;
+        margin-inline-end: 15px;
+        transition: 0.2s;
+    }
+
+    [data-bs-theme="dark"] .avatar-initials {
+        background: rgba(99, 102, 241, 0.2);
+        color: #818cf8;
+    }
+
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 30px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+        .status-badge::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: currentColor;
+        }
+
+    .status-Pending {
+        background: var(--badge-pending-bg);
+        color: var(--badge-pending-text);
+    }
+
+    .status-Confirmed {
+        background: var(--badge-confirmed-bg);
+        color: var(--badge-confirmed-text);
+    }
+
+    .status-Shipped {
+        background: var(--badge-shipped-bg);
+        color: var(--badge-shipped-text);
+    }
+
+    .status-Delivered {
+        background: var(--badge-delivered-bg);
+        color: var(--badge-delivered-text);
+    }
+
+    .status-Cancelled {
+        background: var(--badge-cancelled-bg);
+        color: var(--badge-cancelled-text);
+    }
+
+    /* Actions */
+    .action-btn {
+        width: 36px;
+        height: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid var(--border-color);
+        color: var(--text-muted);
+        background: var(--card-bg);
+        text-decoration: none;
+    }
+
+        .action-btn:hover {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+
+    /* Print Styles */
+    @@media print {
+        .orders-card {
+            border: none;
+            box-shadow: none;
+        }
+
+        .filter-section, .action-btn, .btn-print-hide {
+            display: none !important;
+        }
+
+        .table thead th {
+            background-color: #f0f0f0 !important;
+            color: #000;
+        }
+
+        .status-badge {
+            border: 1px solid #000;
+            color: #000 !important;
+            background: none !important;
+        }
+
+        body {
+            background: #fff;
+            color: #000;
+        }
+    }
+</style>
+
+<div class="container-fluid px-0 fade-up">
+
+    <div class="orders-card">
+        <!-- Header -->
+        <div class="orders-header">
+            <div>
+                <h4 class="fw-bold mb-1">@(isAr ? "إدارة الطلبات" : "Orders Management")</h4>
+                <p class="text-muted small mb-0">@(isAr ? "عرض ومتابعة كافة طلبات المتجر" : "View and manage all store orders")</p>
+            </div>
+            <div class="d-flex gap-2 btn-print-hide">
+                <button class="btn btn-outline-secondary btn-sm fw-bold border" onclick="window.print()">
+                    <i class="fas fa-print me-2"></i> @(isAr ? "طباعة" : "Print")
+                </button>
+                <form asp-action="ExportOrdersToExcel" method="post" class="d-inline">
+                    <input type="hidden" name="status" value="@Context.Request.Query["status"]" />
+                    <input type="hidden" name="q" value="@Context.Request.Query["q"]" />
+                    <input type="hidden" name="date" value="@Context.Request.Query["date"]" />
+                    <button type="submit" class="btn btn-primary btn-sm shadow-sm fw-bold">
+                        <i class="fas fa-file-excel me-2"></i> @(isAr ? "تصدير Excel" : "Export Excel")
+                    </button>
+                </form>
             </div>
         </div>
 
-        <div style="width: 180px;">
-            <label class="form-label small text-muted">@(isAr ? "الحالة" : "Status")</label>
-            <select name="status" class="form-select">
-                <option value="">@(isAr ? "الكل" : "All Status")</option>
-                <option value="Pending" selected="@(Context.Request.Query["status"] == "Pending")">Pending</option>
-                <option value="Confirmed" selected="@(Context.Request.Query["status"] == "Confirmed")">Confirmed</option>
-                <option value="Shipped" selected="@(Context.Request.Query["status"] == "Shipped")">Shipped</option>
-                <option value="Delivered" selected="@(Context.Request.Query["status"] == "Delivered")">Delivered</option>
-                <option value="Cancelled" selected="@(Context.Request.Query["status"] == "Cancelled")">Cancelled</option>
-            </select>
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <form method="get" action="/Admin/Dashboard/Orders" class="row g-3 align-items-end">
+                <div class="col-md-5">
+                    <label class="form-label small fw-bold text-muted mb-1">@(isAr ? "بحث سريع" : "Quick Search")</label>
+                    <div class="input-group">
+                        <span class="input-group-text border-end-0" style="background:var(--input-bg); border-color:var(--border-color); color:var(--text-muted);">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" name="q" class="form-control border-start-0 ps-0" placeholder="@(isAr ? "رقم الطلب، اسم العميل، الهاتف..." : "Order #, Name, Phone...")" value="@Context.Request.Query["q"]">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold text-muted mb-1">@(isAr ? "تصفية بالحالة" : "Filter by Status")</label>
+                    <select name="status" class="form-select" onchange="this.form.submit()">
+                        <option value="">@(isAr ? "الكل" : "All Status")</option>
+                        <option value="Pending" selected="@(Context.Request.Query["status"] == "Pending")">⏳ Pending (معلق)</option>
+                        <option value="Confirmed" selected="@(Context.Request.Query["status"] == "Confirmed")">✅ Confirmed (مؤكد)</option>
+                        <option value="Shipped" selected="@(Context.Request.Query["status"] == "Shipped")">🚚 Shipped (مشحون)</option>
+                        <option value="Delivered" selected="@(Context.Request.Query["status"] == "Delivered")">📦 Delivered (مستلم)</option>
+                        <option value="Cancelled" selected="@(Context.Request.Query["status"] == "Cancelled")">❌ Cancelled (ملغي)</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold text-muted mb-1">@(isAr ? "تاريخ الطلب" : "Order Date")</label>
+                    <input type="date" name="date" class="form-control" value="@Context.Request.Query["date"]">
+                </div>
+                <div class="col-md-1">
+                    <button type="submit" class="btn btn-primary w-100"><i class="fas fa-filter"></i></button>
+                </div>
+            </form>
         </div>
 
-        <div style="width: 180px;">
-            <label class="form-label small text-muted">@(isAr ? "التاريخ" : "Date")</label>
-            <input type="date" name="date" class="form-control" value="@Context.Request.Query["date"]">
-        </div>
-
-        <button type="submit" class="btn btn-primary">
-            <i class="fas fa-filter"></i> @(isAr ? "تصفية" : "Filter")
-        </button>
-    </form>
-</div>
-
-<!-- Orders Table -->
-<div class="card border-0 shadow-sm fade-up" style="animation-delay: 0.2s;">
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="bg-light">
-                <tr>
-                    <th class="ps-4">@(isAr ? "رقم الطلب" : "Order ID")</th>
-                    <th>@(isAr ? "العميل" : "Customer")</th>
-                    <th>@(isAr ? "التاريخ" : "Date")</th>
-                    <th>@(isAr ? "الإجمالي" : "Total")</th>
-                    <th>@(isAr ? "الدفع" : "Payment")</th>
-                    <th>@(isAr ? "الحالة" : "Status")</th>
-                    <th class="text-end pe-4">@(isAr ? "إجراءات" : "Actions")</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (!Model.Any())
-                {
+        <!-- Table -->
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
                     <tr>
-                        <td colspan="7" class="text-center py-5 text-muted">
-                            <i class="fas fa-inbox fa-3x mb-3 opacity-25"></i>
-                            <p>@(isAr ? "لا توجد طلبات مطابقة" : "No orders found")</p>
-                        </td>
+                        <th class="ps-4">@(isAr ? "رقم الطلب" : "Order ID")</th>
+                        <th>@(isAr ? "العميل" : "Customer")</th>
+                        <th>@(isAr ? "التاريخ" : "Date")</th>
+                        <th>@(isAr ? "الإجمالي" : "Total")</th>
+                        <th>@(isAr ? "الدفع" : "Payment")</th>
+                        <th>@(isAr ? "الحالة" : "Status")</th>
+                        <th class="text-end pe-4">@(isAr ? "إجراءات" : "Actions")</th>
                     </tr>
-                }
-                @foreach (var order in Model)
-                {
-                    <tr>
-                        <td class="ps-4">
-                            <!-- تم تعديل الرابط ليشير إلى Dashboard/OrderDetails -->
-                            <a href="/Admin/Dashboard/OrderDetails/@order.Id" class="fw-bold text-primary text-decoration-none">
-                                #@order.Id
-                            </a>
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="avatar-circle bg-primary-subtle text-primary" style="width:32px; height:32px; font-size:0.8rem; box-shadow:none;">
-                                    @(order.CustomerName?.FirstOrDefault())
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center py-5">
+                                <div style="color: var(--text-muted);">
+                                    <i class="fas fa-box-open fa-3x mb-3 opacity-25"></i>
+                                    <p class="mb-0">@(isAr ? "لا توجد طلبات مطابقة" : "No orders found matching your criteria")</p>
                                 </div>
-                                <div>
-                                    <div class="fw-bold text-main" style="font-size:0.9rem;">@order.CustomerName</div>
-                                    <small class="text-muted" style="font-size:0.75rem;">@order.Phone</small>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="text-muted small">
-                            <i class="far fa-calendar-alt me-1"></i> @order.OrderDate.ToString("dd MMM yyyy")
-                            <br>
-                            <i class="far fa-clock me-1"></i> @order.OrderDate.ToString("hh:mm tt")
-                        </td>
-                        <td class="fw-bold text-main">@order.TotalAmount.ToString("N0")</td>
-                        <td>
-                            @if (order.PaymentMethod == "Wallet")
-                            {
-                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
-                                    <i class="fas fa-wallet me-1"></i> Wallet
-                                </span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">
-                                    <i class="fas fa-money-bill me-1"></i> Cash
-                                </span>
-                            }
-                        </td>
-                        <td>
-                            @{
-                                var statusClass = order.Status switch
-                                {
-                                    "Pending" => "badge-order pending",
-                                    "Confirmed" => "badge-order confirmed",
-                                    "Shipped" => "badge-order shipped",
-                                    "Delivered" => "badge-order delivered",
-                                    "Cancelled" => "badge-order cancelled",
-                                    _ => "badge bg-secondary"
-                                };
-                            }
-                            <span class="@statusClass">@order.Status</span>
-                        </td>
-                        <td class="text-end pe-4">
-                            <div class="btn-group">
-                                <!-- تم تعديل الرابط هنا أيضاً -->
-                                <a href="/Admin/Dashboard/OrderDetails/@order.Id" class="btn btn-icon btn-sm btn-outline-secondary" title="@(isAr ? "التفاصيل" : "Details")">
-                                    <i class="fas fa-eye"></i>
+                            </td>
+                        </tr>
+                    }
+                    @foreach (var order in Model)
+                    {
+                        <tr>
+                            <td class="ps-4">
+                                <a href="/Admin/Dashboard/OrderDetails/@order.Id" class="fw-bold text-primary text-decoration-none" style="font-family: monospace; font-size: 0.95rem;">
+                                    #@order.Id
                                 </a>
-                                <button type="button" class="btn btn-icon btn-sm btn-outline-primary" title="@(isAr ? "طباعة" : "Print")">
-                                    <i class="fas fa-print"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-initials">
+                                        @(order.CustomerName?.FirstOrDefault().ToString().ToUpper() ?? "?")
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold" style="color: var(--text-main);">@order.CustomerName</div>
+                                        <small style="color: var(--text-muted);">@order.Phone</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td style="color: var(--text-muted);">
+                                <div style="font-weight: 500;">@order.OrderDate.ToString("dd MMM yyyy")</div>
+                                <small class="opacity-75">@order.OrderDate.ToString("hh:mm tt")</small>
+                            </td>
+                            <td>
+                                <span class="fw-bold" style="color: var(--text-main);">@order.TotalAmount.ToString("N0")</span>
+                                <small class="text-muted">ج.م</small>
+                            </td>
+                            <td>
+                                @if (order.PaymentMethod == "Wallet")
+                                {
+                                    <div class="d-flex align-items-center gap-1 text-primary small fw-bold">
+                                        <i class="fas fa-wallet"></i> <span style="font-size:0.8rem">محفظة</span>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="d-flex align-items-center gap-1 text-success small fw-bold">
+                                        <i class="fas fa-money-bill-wave"></i> <span style="font-size:0.8rem">كاش</span>
+                                    </div>
+                                }
+                            </td>
+                            <td>
+                                <span class="status-badge status-@order.Status">
+                                    @order.Status
+                                </span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="d-flex justify-content-end gap-2">
+                                    <a href="/Admin/Dashboard/OrderDetails/@order.Id" class="action-btn" title="@(isAr ? "عرض التفاصيل" : "View Details")">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
 
-    <!-- Pagination (Placeholder) -->
-    <div class="card-footer bg-transparent border-top p-3 d-flex justify-content-between align-items-center">
-        <small class="text-muted">@(isAr ? "عرض 1-10 من 50 طلب" : "Showing 1-10 of 50 orders")</small>
-        <nav>
-            <ul class="pagination pagination-sm mb-0">
-                <li class="page-item disabled"><a class="page-link" href="#">&laquo;</a></li>
-                <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                <li class="page-item"><a class="page-link" href="#">2</a></li>
-                <li class="page-item"><a class="page-link" href="#">3</a></li>
-                <li class="page-item"><a class="page-link" href="#">&raquo;</a></li>
-            </ul>
-        </nav>
+        <!-- Footer / Pagination -->
+        <div class="card-footer bg-transparent border-top p-3 d-flex justify-content-between align-items-center">
+            <small style="color: var(--text-muted);">@(isAr ? $"إجمالي الطلبات: {Model.Count()}" : $"Total Orders: {Model.Count()}")</small>
+
+            <!-- Simple Pagination UI (Static for now) -->
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item disabled"><a class="page-link" href="#" style="background:var(--card-bg); border-color:var(--border-color); color:var(--text-muted);">&laquo;</a></li>
+                    <li class="page-item active"><a class="page-link" href="#" style="background:var(--primary); border-color:var(--primary);">1</a></li>
+                    <li class="page-item disabled"><a class="page-link" href="#" style="background:var(--card-bg); border-color:var(--border-color); color:var(--text-muted);">&raquo;</a></li>
+                </ul>
+            </nav>
+        </div>
     </div>
 </div>

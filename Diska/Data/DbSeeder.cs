@@ -323,21 +323,46 @@ namespace Diska.Data
                 {
                     var orders = new List<Order>
                     {
-                        // Order 1: Completed
+                        // Order 1: iPhone (Black Color)
                         new Order {
                             UserId = cust.Id, CustomerName = cust.FullName, Phone = cust.PhoneNumber,
                             Governorate = "Cairo", City = "Nasr City", Address = "123 Main St",
                             PaymentMethod = "Cash", Status = "Delivered", OrderDate = DateTime.Now.AddDays(-5),
                             TotalAmount = prod1.Price + 50, ShippingCost = 50,
-                            OrderItems = new List<OrderItem> { new OrderItem { ProductId = prod1.Id, Quantity = 1, UnitPrice = prod1.Price } }
+                            OrderItems = new List<OrderItem>
+                            {
+                                new OrderItem {
+                                    ProductId = prod1.Id,
+                                    Quantity = 1,
+                                    UnitPrice = prod1.Price,
+                                    SelectedColorName = "أسود فلكي",
+                                    SelectedColorHex = "#1a1a1a"
+                                }
+                            }
                         },
-                        // Order 2: Pending
+                        // Order 2: Rice (No specific color, maybe default) & iPhone (Blue)
                         new Order {
                             UserId = cust.Id, CustomerName = cust.FullName, Phone = cust.PhoneNumber,
                             Governorate = "Giza", City = "Dokki", Address = "456 Side St",
                             PaymentMethod = "Wallet", Status = "Pending", OrderDate = DateTime.Now.AddHours(-2),
-                            TotalAmount = prod2.Price * 5 + 50, ShippingCost = 50,
-                            OrderItems = new List<OrderItem> { new OrderItem { ProductId = prod2.Id, Quantity = 5, UnitPrice = prod2.Price } }
+                            TotalAmount = (prod2.Price * 5) + prod1.Price + 50, ShippingCost = 50,
+                            OrderItems = new List<OrderItem>
+                            {
+                                new OrderItem {
+                                    ProductId = prod2.Id,
+                                    Quantity = 5,
+                                    UnitPrice = prod2.Price,
+                                    SelectedColorName = "أبيض", // Rice bag color example
+                                    SelectedColorHex = "#ffffff"
+                                },
+                                new OrderItem {
+                                    ProductId = prod1.Id,
+                                    Quantity = 1,
+                                    UnitPrice = prod1.Price,
+                                    SelectedColorName = "أزرق تيتانيوم",
+                                    SelectedColorHex = "#2f3e59"
+                                }
+                            }
                         }
                     };
                     context.Orders.AddRange(orders);

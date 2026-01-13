@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Diska.Areas.Admin.Controllers
@@ -184,6 +185,7 @@ namespace Diska.Areas.Admin.Controllers
             if (!ModelState.IsValid)
             {
                 await PrepareDropdownsAsync(model.CategoryId, model.MerchantId);
+                await RestoreModelData(model, productColorsHex, productColorsName, productColorsQty);
                 return View(model);
             }
 
@@ -197,7 +199,6 @@ namespace Diska.Areas.Admin.Controllers
 
                 if (existingProduct == null) return NotFound();
 
-                // تحديث الحقول
                 existingProduct.Name = model.Name;
                 existingProduct.NameEn = model.NameEn;
                 existingProduct.Description = model.Description;
@@ -219,7 +220,6 @@ namespace Diska.Areas.Admin.Controllers
                 existingProduct.UnitsPerCarton = model.UnitsPerCarton;
                 existingProduct.LowStockThreshold = model.LowStockThreshold;
 
-                // تحديث الماركة (Brand) إذا لم تكن موجودة
                 existingProduct.Brand = model.Brand;
 
                 if (mainImage != null)
@@ -239,7 +239,6 @@ namespace Diska.Areas.Admin.Controllers
                     }
                 }
 
-                // إدارة الألوان
                 _context.ProductColors.RemoveRange(existingProduct.ProductColors);
 
                 await ProcessSubItems(existingProduct.Id, galleryImages, productColorsHex, productColorsName, productColorsQty);
@@ -277,7 +276,6 @@ namespace Diska.Areas.Admin.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // --- Helpers ---
         private async Task ProcessSubItems(int productId, List<IFormFile> galleryImages, string[] colorsHex, string[] colorsName, string[] colorsQty)
         {
             if (galleryImages != null)
@@ -306,7 +304,6 @@ namespace Diska.Areas.Admin.Controllers
                             ProductId = productId,
                             ColorHex = colorsHex[i],
                             ColorName = (i < colorsName.Length && !string.IsNullOrEmpty(colorsName[i])) ? colorsName[i] : "لون",
-                            // Quantity = qty // تأكد من إضافة هذا الحقل للموديل لاحقاً إذا أردت تفعيله
                         });
                     }
                 }
@@ -343,14 +340,41 @@ namespace Diska.Areas.Admin.Controllers
                 .ToListAsync();
 
             var builder = new StringBuilder();
-            builder.AppendLine("Id,Name,Price,Stock,Category,Merchant,Status,SKU");
+
+            builder.Append('\uFEFF');
+
+            builder.AppendLine("Id,Name,NameEn,Description,DescriptionEn,Price,OldPrice,CostPrice,StockQuantity,LowStockThreshold,UnitsPerCarton,SKU,Barcode,Color,Brand,Weight,Slug,MetaTitle,MetaDescription,Status,Category,Merchant");
 
             foreach (var p in products)
             {
-                builder.AppendLine($"{p.Id},{EscapeCsv(p.Name)},{p.Price},{p.StockQuantity},{EscapeCsv(p.Category?.Name)},{EscapeCsv(p.Merchant?.ShopName)},{p.Status},{p.SKU}");
+                var line = string.Join(",",
+                    p.Id,
+                    EscapeCsv(p.Name),
+                    EscapeCsv(p.NameEn),
+                    EscapeCsv(p.Description), 
+                    EscapeCsv(p.DescriptionEn),
+                    p.Price,
+                    p.OldPrice,
+                    p.CostPrice,
+                    p.StockQuantity,
+                    p.LowStockThreshold,
+                    p.UnitsPerCarton,
+                    EscapeCsv(p.SKU),
+                    EscapeCsv(p.Barcode),
+                    EscapeCsv(p.Color),
+                    EscapeCsv(p.Brand),
+                    p.Weight,
+                    EscapeCsv(p.Slug),
+                    EscapeCsv(p.MetaTitle),
+                    EscapeCsv(p.MetaDescription),
+                    p.Status,
+                    EscapeCsv(p.Category?.Name),
+                    EscapeCsv(p.Merchant?.ShopName)
+                );
+                builder.AppendLine(line);
             }
 
-            return File(Encoding.UTF8.GetBytes(builder.ToString()), "text/csv", "products_export.csv");
+            return File(Encoding.UTF8.GetBytes(builder.ToString()), "text/csv", $"products_export_{DateTime.Now:yyyyMMdd}.csv");
         }
 
         [HttpPost]
@@ -366,26 +390,60 @@ namespace Diska.Areas.Admin.Controllers
             {
                 using (var reader = new StreamReader(excelFile.OpenReadStream()))
                 {
-                    // Skip header
                     await reader.ReadLineAsync();
 
                     while (!reader.EndOfStream)
                     {
                         var line = await reader.ReadLineAsync();
-                        var values = line.Split(',');
 
-                        if (values.Length >= 4) // الحد الأدنى من الأعمدة
+                        var values = Regex.Split(line, ",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
+
+                        for (int i = 0; i < values.Length; i++) values[i] = values[i].Trim('"');
+
+                        if (values.Length >= 2)
                         {
-                            var product = new Product
+                            var product = new Product();
+
+                          
+                            product.Name = GetValue(values, 1);
+                            product.NameEn = GetValue(values, 2);
+                            product.Description = GetValue(values, 3);
+                            product.DescriptionEn = GetValue(values, 4);
+                            product.Price = ParseDecimal(GetValue(values, 5));
+                            product.OldPrice = ParseDecimal(GetValue(values, 6));
+                            product.CostPrice = ParseDecimal(GetValue(values, 7));
+                            product.StockQuantity = ParseInt(GetValue(values, 8));
+                            product.LowStockThreshold = ParseInt(GetValue(values, 9));
+                            product.UnitsPerCarton = ParseInt(GetValue(values, 10));
+                            product.SKU = GetValue(values, 11);
+                            product.Barcode = GetValue(values, 12);
+                            product.Color = GetValue(values, 13);
+                            product.Brand = GetValue(values, 14);
+                            product.Weight = ParseDecimal(GetValue(values, 15));
+                            product.Slug = GetValue(values, 16);
+                            product.MetaTitle = GetValue(values, 17);
+                            product.MetaDescription = GetValue(values, 18);
+                            product.Status = GetValue(values, 19) ?? "Draft";
+
+                            if (string.IsNullOrEmpty(product.Color)) product.Color = "#000000";
+                            if (string.IsNullOrEmpty(product.ImageUrl)) product.ImageUrl = "images/default-product.png";
+                            if (string.IsNullOrEmpty(product.Slug)) product.Slug = Guid.NewGuid().ToString();
+
+                            string catName = GetValue(values, 20);
+                            if (!string.IsNullOrEmpty(catName))
                             {
-                                Name = values[1],
-                                Price = decimal.Parse(values[2]),
-                                StockQuantity = int.Parse(values[3]),
-                                Status = "Draft", // افتراضي
-                                Slug = Guid.NewGuid().ToString(),
-                                ImageUrl = "images/default-product.png"
-                                // يمكن توسيع المنطق لربط الأقسام والتجار
-                            };
+                                var cat = await _context.Categories.FirstOrDefaultAsync(c => c.Name == catName || c.NameEn == catName);
+                                if (cat != null) product.CategoryId = cat.Id;
+                            }
+
+                            string merchName = GetValue(values, 21);
+                            if (!string.IsNullOrEmpty(merchName))
+                            {
+                                var merch = await _context.Users.FirstOrDefaultAsync(u => u.ShopName == merchName);
+                                if (merch != null) product.MerchantId = merch.Id;
+                            }
+                            if (product.MerchantId == null) product.MerchantId = _userManager.GetUserId(User);
+
                             _context.Products.Add(product);
                         }
                     }
@@ -404,16 +462,56 @@ namespace Diska.Areas.Admin.Controllers
         private string EscapeCsv(string field)
         {
             if (string.IsNullOrEmpty(field)) return "";
-            return $"\"{field.Replace("\"", "\"\"")}\"";
+            if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
+            {
+                return $"\"{field.Replace("\"", "\"\"")}\"";
+            }
+            return field;
         }
+
+        private string GetValue(string[] values, int index) => index < values.Length ? values[index] : null;
+        private decimal ParseDecimal(string val) => decimal.TryParse(val, out decimal res) ? res : 0;
+        private int ParseInt(string val) => int.TryParse(val, out int res) ? res : 0;
+        private double ParseDouble(string val) => double.TryParse(val, out double res) ? res : 0;
         private async Task PrepareDropdownsAsync(int? selectedCategory = null, string selectedMerchant = null)
         {
-            var categories = await _context.Categories.OrderBy(c => c.Name).ToListAsync();
-            ViewBag.CategoryId = new SelectList(categories, "Id", "Name", selectedCategory);
+            var categories = await _context.Categories
+                .Select(c => new { c.Id, c.Name })
+                .OrderBy(c => c.Name)
+                .ToListAsync();
 
-            var merchants = await _userManager.GetUsersInRoleAsync("Merchant");
-            var merchantList = merchants.Select(u => new { Id = u.Id, ShopName = u.ShopName ?? u.UserName }).ToList();
-            ViewBag.MerchantId = new SelectList(merchantList, "Id", "ShopName", selectedMerchant);
+            ViewBag.Categories = new SelectList(categories, "Id", "Name", selectedCategory);
+
+            
+            var merchants = await _context.Users
+                .Where(u => u.ShopName != null)
+                .Select(u => new { u.Id, u.ShopName })
+                .OrderBy(u => u.ShopName)
+                .ToListAsync();
+
+            ViewBag.Merchants = new SelectList(merchants, "Id", "ShopName", selectedMerchant);
+        }
+        private async Task RestoreModelData(Product model, string[] hex, string[] names, string[] qtys)
+        {
+            var dbItem = await _context.Products.Include(p => p.Images).AsNoTracking().FirstOrDefaultAsync(p => p.Id == model.Id);
+            if (dbItem != null)
+            {
+                model.ImageUrl = dbItem.ImageUrl;
+                model.Images = dbItem.Images;
+            }
+
+            model.ProductColors = new List<ProductColor>();
+            if (hex != null)
+            {
+                for (int i = 0; i < hex.Length; i++)
+                {
+                    model.ProductColors.Add(new ProductColor
+                    {
+                        ColorHex = hex[i],
+                        ColorName = (names != null && i < names.Length) ? names[i] : "",
+                    });
+                }
+            }
         }
     }
 }

@@ -6,235 +6,605 @@
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
 }
 
-<!-- Header Actions -->
-<div class="d-flex justify-content-between align-items-center mb-4 fade-up">
+<style>
+    /* --- Elite Admin Details Styles --- */
+    :root {
+        --card-bg: #ffffff;
+        --card-border: #f1f5f9;
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+        --border-color: #e2e8f0;
+        --primary: #4f46e5;
+    }
+
+    [data-bs-theme="dark"] {
+        --card-bg: #1e293b;
+        --card-border: #334155;
+        --text-main: #f8fafc;
+        --text-muted: #94a3b8;
+        --border-color: #334155;
+        --primary: #6366f1;
+    }
+
+    .details-card {
+        background: var(--card-bg);
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        border: 1px solid var(--card-border);
+        overflow: hidden;
+        margin-bottom: 24px;
+    }
+
+    .card-header-custom {
+        padding: 20px 25px;
+        border-bottom: 1px solid var(--border-color);
+        background-color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .card-title-text {
+        font-weight: 800;
+        color: var(--text-main);
+        margin: 0;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    /* Info Lists */
+    .info-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+        .info-list li {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 25px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+            .info-list li:last-child {
+                border-bottom: none;
+            }
+
+    .info-label {
+        color: var(--text-muted);
+        font-weight: 600;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .info-val {
+        font-weight: 700;
+    }
+
+    /* Products Table */
+    .prod-table {
+        width: 100%;
+    }
+
+        .prod-table thead th {
+            background: #f8fafc;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 15px 25px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .prod-table tbody td {
+            padding: 20px 25px;
+            vertical-align: top;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+    .prod-thumb {
+        width: 60px;
+        height: 60px;
+        border-radius: 8px;
+        object-fit: contain;
+        background: #fff;
+        border: 1px solid var(--border-color);
+        padding: 4px;
+    }
+
+    /* Product Specs Grid inside Table */
+    .specs-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 8px;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+    }
+
+    .spec-item {
+        background: #f8fafc;
+        border: 1px solid var(--border-color);
+        padding: 3px 8px;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        color: var(--text-main);
+        font-weight: 600;
+    }
+
+    /* Color Circle */
+    .color-circle-admin {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        border: 1px solid rgba(0,0,0,0.1);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    /* Badges */
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 30px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        text-transform: uppercase;
+    }
+
+    .status-Pending {
+        background: #fffbeb;
+        color: #b45309;
+    }
+
+    .status-Confirmed {
+        background: #eff6ff;
+        color: #1d4ed8;
+    }
+
+    .status-Shipped {
+        background: #f0f9ff;
+        color: #0284c7;
+    }
+
+    .status-Delivered {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+    .status-Cancelled {
+        background: #fef2f2;
+        color: #b91c1c;
+    }
+
+    /* Timeline */
+    .order-timeline {
+        padding: 30px;
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-bottom: 35px;
+        padding-left: 30px;
+        border-left: 2px solid var(--border-color);
+    }
+
+        .timeline-item:last-child {
+            border-left: 2px solid transparent;
+            padding-bottom: 0;
+        }
+
+    .timeline-dot {
+        position: absolute;
+        left: -9px;
+        top: 0;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--border-color);
+        border: 3px solid #fff;
+    }
+
+    .timeline-item.active .timeline-dot {
+        background: var(--primary);
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+        border-color: var(--primary);
+    }
+
+    html[dir="rtl"] .timeline-item {
+        padding-left: 0;
+        padding-right: 30px;
+        border-left: none;
+        border-right: 2px solid var(--border-color);
+    }
+
+        html[dir="rtl"] .timeline-item:last-child {
+            border-right: 2px solid transparent;
+        }
+
+    html[dir="rtl"] .timeline-dot {
+        left: auto;
+        right: -9px;
+    }
+
+    /* --- Print Specific Styles --- */
+    @@media print {
+        body * {
+            visibility: hidden;
+        }
+
+        .invoice-area, .invoice-area * {
+            visibility: visible;
+        }
+
+        .invoice-area {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            min-height: 100%;
+            background: #fff;
+            padding: 40px;
+            color: #000;
+            font-family: 'Cairo', sans-serif;
+            z-index: 9999;
+        }
+
+        .no-print {
+            display: none !important;
+        }
+
+        .details-card {
+            box-shadow: none;
+            border: 1px solid #000;
+            margin-bottom: 20px;
+            page-break-inside: avoid;
+        }
+
+        .card-header-custom {
+            background: #f0f0f0 !important;
+            border-bottom: 1px solid #000;
+        }
+
+        .prod-table th {
+            background: #eee !important;
+            color: #000 !important;
+            border-bottom: 1px solid #000;
+            font-weight: bold;
+        }
+
+        .prod-table td {
+            border-bottom: 1px solid #ccc;
+            color: #000;
+        }
+
+        .status-badge {
+            border: 1px solid #000;
+            color: #000 !important;
+            background: none !important;
+        }
+
+        .invoice-header-content {
+            display: block !important;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 20px;
+        }
+
+        .inv-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+        }
+
+        .inv-logo h1 {
+            font-size: 32px;
+            margin: 0;
+            font-weight: 900;
+            letter-spacing: 2px;
+        }
+
+        .inv-meta {
+            text-align: right;
+        }
+
+        .inv-footer {
+            display: block !important;
+            margin-top: 50px;
+            text-align: center;
+            font-size: 12px;
+            border-top: 1px solid #ccc;
+            padding-top: 20px;
+        }
+    }
+
+    .invoice-header-content, .inv-footer {
+        display: none;
+    }
+</style>
+
+<!-- Top Bar (Actions) -->
+<div class="d-flex justify-content-between align-items-center mb-4 fade-up no-print">
     <div class="d-flex align-items-center gap-3">
-        <a href="/Admin/Orders" class="btn btn-icon btn-outline-secondary rounded-circle">
+        <a href="/Admin/Dashboard/Orders" class="btn btn-light border shadow-sm rounded-circle p-2" title="@(isAr ? "عودة" : "Back")">
             <i class="fas @(isAr ? "fa-arrow-right" : "fa-arrow-left")"></i>
         </a>
         <div>
             <h2 class="text-main fw-bold mb-0">
-                @(isAr ? "طلب رقم" : "Order") #@Model.Id
-                @{
-                    var statusBadge = Model.Status switch
-                    {
-                        "Pending" => "badge-order pending",
-                        "Confirmed" => "badge-order confirmed",
-                        "Shipped" => "badge-order shipped",
-                        "Delivered" => "badge-order delivered",
-                        "Cancelled" => "badge-order cancelled",
-                        _ => "badge bg-secondary"
-                    };
-                }
-                <span class="@statusBadge ms-2" style="font-size: 0.5em; vertical-align: middle;">@Model.Status</span>
+                @(isAr ? "طلب رقم" : "Order") <span class="font-monospace">#@Model.Id</span>
+                <span class="status-badge status-@Model.Status ms-2" style="font-size: 0.5em; vertical-align: middle;">@Model.Status</span>
             </h2>
-            <div class="text-muted small">
-                <i class="far fa-calendar-alt me-1"></i> @Model.OrderDate.ToString("dd MMMM yyyy, hh:mm tt")
+            <div class="text-muted small mt-1">
+                <i class="far fa-clock me-1"></i> @Model.OrderDate.ToString("dd MMMM yyyy, hh:mm tt")
             </div>
         </div>
     </div>
 
     <div class="d-flex gap-2">
         <div class="dropdown">
-            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                <i class="fas fa-edit me-1"></i> @(isAr ? "تغيير الحالة" : "Change Status")
+            <button class="btn btn-outline-primary dropdown-toggle shadow-sm fw-bold px-4" type="button" data-bs-toggle="dropdown">
+                <i class="fas fa-edit me-2"></i> @(isAr ? "تحديث الحالة" : "Update Status")
             </button>
             <ul class="dropdown-menu shadow border-0">
-                <li><a class="dropdown-item" href="#">Confirm Order</a></li>
-                <li><a class="dropdown-item" href="#">Ship Order</a></li>
-                <li><a class="dropdown-item" href="#">Mark Delivered</a></li>
+                <li><form asp-action="UpdateOrderStatus" asp-route-id="@Model.Id" asp-route-status="Confirmed" method="post"><button class="dropdown-item"><i class="fas fa-check text-info me-2"></i> Confirm</button></form></li>
+                <li><form asp-action="UpdateOrderStatus" asp-route-id="@Model.Id" asp-route-status="Shipped" method="post"><button class="dropdown-item"><i class="fas fa-truck text-primary me-2"></i> Ship</button></form></li>
+                <li><form asp-action="UpdateOrderStatus" asp-route-id="@Model.Id" asp-route-status="Delivered" method="post"><button class="dropdown-item text-success"><i class="fas fa-box-open me-2"></i> Deliver</button></form></li>
                 <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item text-danger" href="#">Cancel Order</a></li>
+                <li><form asp-action="UpdateOrderStatus" asp-route-id="@Model.Id" asp-route-status="Cancelled" method="post" onsubmit="return confirm('تأكيد الإلغاء؟')"><button class="dropdown-item text-danger"><i class="fas fa-times me-2"></i> Cancel</button></form></li>
             </ul>
         </div>
-        <button class="btn btn-primary shadow-sm" onclick="window.print()">
+        <button class="btn btn-secondary shadow-sm fw-bold px-4" onclick="window.print()">
             <i class="fas fa-print me-2"></i> @(isAr ? "طباعة الفاتورة" : "Print Invoice")
         </button>
     </div>
 </div>
 
-<div class="row g-4 fade-up" style="animation-delay: 0.1s;">
-
-    <!-- Left Column: Items & Timeline -->
-    <div class="col-lg-8">
-
-        <!-- Order Items -->
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-transparent border-bottom">
-                <h5 class="mb-0 fw-bold"><i class="fas fa-box me-2 text-primary"></i> @(isAr ? "المنتجات" : "Order Items")</h5>
-                <span class="badge bg-light text-dark border">@Model.OrderItems.Count @(isAr ? "عنصر" : "Items")</span>
+<div class="invoice-area">
+    <!-- Invoice Header (Visible only in Print) -->
+    <div class="invoice-header-content d-print-block">
+        <div class="inv-flex">
+            <div class="inv-logo">
+                <h1>DISKA</h1>
+                <p class="text-muted mb-0">B2B Wholesale Platform</p>
             </div>
-            <div class="table-responsive">
-                <table class="table align-middle mb-0">
-                    <thead class="bg-light">
-                        <tr>
-                            <th class="ps-4">@(isAr ? "المنتج" : "Product")</th>
-                            <th class="text-center">@(isAr ? "الكمية" : "Quantity")</th>
-                            <th class="text-end">@(isAr ? "السعر" : "Unit Price")</th>
-                            <th class="text-end pe-4">@(isAr ? "الإجمالي" : "Total")</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var item in Model.OrderItems)
-                        {
-                            <tr>
-                                <td class="ps-4">
-                                    <div class="d-flex align-items-center gap-3">
-                                        <div class="product-image-thumb bg-white">
-                                            <img src="~/@item.Product?.ImageUrl" alt="" style="width:100%; height:100%; object-fit:contain;">
-                                        </div>
-                                        <div>
-                                            <h6 class="mb-0 text-main fw-bold">@(isAr? item.Product?.Name : item.Product?.NameEn)</h6>
-                                            <small class="text-muted">SKU: @item.Product?.SKU</small>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="text-center fw-bold">@item.Quantity</td>
-                                <td class="text-end">@item.UnitPrice.ToString("N0")</td>
-                                <td class="text-end pe-4 fw-bold">@((item.Quantity * item.UnitPrice).ToString("N0"))</td>
-                            </tr>
-                        }
-                    </tbody>
-                    <tfoot class="bg-light border-top">
-                        <tr>
-                            <td colspan="3" class="text-end fw-bold pt-3">@(isAr ? "المجموع الفرعي" : "Subtotal")</td>
-                            <td class="text-end pe-4 pt-3 fw-bold">@((Model.TotalAmount - Model.ShippingCost).ToString("N0"))</td>
-                        </tr>
-                        <tr>
-                            <td colspan="3" class="text-end fw-bold border-0">@(isAr ? "الشحن" : "Shipping")</td>
-                            <td class="text-end pe-4 border-0">@Model.ShippingCost.ToString("N0")</td>
-                        </tr>
-                        <tr>
-                            <td colspan="3" class="text-end fw-bold text-primary fs-5 border-0 pb-3">@(isAr ? "الإجمالي الكلي" : "Grand Total")</td>
-                            <td class="text-end pe-4 fw-bold text-primary fs-5 border-0 pb-3">@Model.TotalAmount.ToString("N0") @(isAr ? "ج.م" : "EGP")</td>
-                        </tr>
-                    </tfoot>
-                </table>
+            <div class="inv-meta">
+                <h3 class="m-0 fw-bold">INVOICE</h3>
+                <p class="mb-0"><strong>Ref:</strong> #@Model.Id</p>
+                <p class="mb-0"><strong>Date:</strong> @Model.OrderDate.ToString("yyyy-MM-dd")</p>
             </div>
         </div>
-
-        <!-- Order Timeline -->
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-transparent border-bottom">
-                <h5 class="mb-0 fw-bold"><i class="fas fa-history me-2 text-info"></i> @(isAr ? "تتبع الحالة" : "Order Activity")</h5>
+        <div class="inv-flex mt-4">
+            <div>
+                <h6 class="fw-bold border-bottom pb-1 mb-2">@(isAr ? "بيانات العميل" : "Bill To"):</h6>
+                <strong>@Model.CustomerName</strong><br>
+                @Model.Phone<br>
+                @Model.User?.Email
             </div>
-            <div class="card-body">
-                <div class="order-timeline">
-                    <!-- Timeline Items (Dynamic based on status) -->
-                    <div class="timeline-item">
-                        <div class="fw-bold">@(isAr ? "تم إنشاء الطلب" : "Order Placed")</div>
-                        <small class="text-muted">@Model.OrderDate.ToString("dd MMM yyyy, hh:mm tt")</small>
-                    </div>
-
-                    @if (Model.Status != "Pending")
-                    {
-                        <div class="timeline-item">
-                            <div class="fw-bold">@(isAr ? "تم تأكيد الطلب" : "Order Confirmed")</div>
-                            <small class="text-muted">@(isAr ? "بواسطة الأدمن" : "By Admin")</small>
-                        </div>
-                    }
-
-                    @if (Model.Status == "Shipped" || Model.Status == "Delivered")
-                    {
-                        <div class="timeline-item">
-                            <div class="fw-bold text-primary">@(isAr ? "تم الشحن" : "Order Shipped")</div>
-                            <small class="text-muted">@(isAr ? "جاري التوصيل..." : "Out for delivery...")</small>
-                        </div>
-                    }
-
-                    @if (Model.Status == "Delivered")
-                    {
-                        <div class="timeline-item">
-                            <div class="fw-bold text-success">@(isAr ? "تم التسليم" : "Delivered")</div>
-                            <small class="text-success"><i class="fas fa-check-circle"></i> @(isAr ? "اكتملت العملية" : "Completed")</small>
-                        </div>
-                    }
-
-                    @if (Model.Status == "Cancelled")
-                    {
-                        <div class="timeline-item">
-                            <div class="fw-bold text-danger">@(isAr ? "تم الإلغاء" : "Cancelled")</div>
-                            <small class="text-muted">@(isAr ? "توقف الطلب" : "Order stopped")</small>
-                        </div>
-                    }
-                </div>
+            <div class="text-end">
+                <h6 class="fw-bold border-bottom pb-1 mb-2">@(isAr ? "بيانات الشحن" : "Ship To"):</h6>
+                @Model.Address<br>
+                @Model.City, @Model.Governorate<br>
+                @(isAr ? "وقت التوصيل:" : "Slot:") @Model.DeliverySlot
             </div>
         </div>
     </div>
 
-    <!-- Right Column: Customer & Info -->
-    <div class="col-lg-4">
+    <div class="row g-4 fade-up">
 
-        <!-- Customer Info Card -->
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-transparent border-bottom">
-                <h5 class="mb-0 fw-bold"><i class="fas fa-user me-2 text-warning"></i> @(isAr ? "العميل" : "Customer")</h5>
-            </div>
-            <div class="card-body text-center">
-                <div class="avatar-circle mx-auto mb-3" style="width: 70px; height: 70px; font-size: 1.5rem;">
-                    @(Model.CustomerName?.FirstOrDefault())
+        <!-- Left: Items -->
+        <div class="col-lg-8">
+            <div class="details-card">
+                <div class="card-header-custom bg-light no-print">
+                    <div class="card-title-text"><i class="fas fa-box-open text-primary"></i> @(isAr ? "المنتجات المطلوبة" : "Order Items") <span class="badge bg-white text-dark border ms-2">@Model.OrderItems.Count</span></div>
                 </div>
-                <h5 class="fw-bold text-main mb-1">@Model.CustomerName</h5>
-                <p class="text-muted mb-3">@Model.User?.Email</p>
+                <div class="table-responsive">
+                    <table class="table mb-0 prod-table">
+                        <thead>
+                            <tr>
+                                <th class="ps-4">@(isAr ? "تفاصيل المنتج" : "Product Details")</th>
+                                <th class="text-center">@(isAr ? "الكمية" : "Qty")</th>
+                                <th class="text-end">@(isAr ? "سعر الوحدة" : "Unit Price")</th>
+                                <th class="text-end pe-4">@(isAr ? "الإجمالي" : "Total")</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.OrderItems)
+                            {
+                                <tr>
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-start gap-3">
+                                            <div class="prod-thumb no-print">
+                                                <img src="~/@item.Product?.ImageUrl" alt="" style="width:100%; height:100%; object-fit:contain;" onerror="this.src='/images/default.png'">
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold text-main mb-1">@(isAr? item.Product?.Name : item.Product?.NameEn)</div>
 
-                <div class="d-flex justify-content-center gap-2">
-                    <a href="tel:@Model.Phone" class="btn btn-sm btn-outline-primary rounded-pill">
-                        <i class="fas fa-phone me-1"></i> @Model.Phone
-                    </a>
-                    <a href="/Admin/Users/Details/@Model.UserId" class="btn btn-sm btn-light rounded-pill">
-                        <i class="fas fa-user me-1"></i> @(isAr ? "البروفايل" : "Profile")
-                    </a>
+                                                <div class="specs-grid">
+                                                    <span class="spec-item" title="SKU">
+                                                        <i class="fas fa-barcode text-muted"></i> @item.Product?.SKU
+                                                    </span>
+
+                                                    <!-- Color: Only show what is SAVED in the order item -->
+                                                    @if (!string.IsNullOrEmpty(item.SelectedColorHex))
+                                                    {
+                                                        <span class="spec-item" title="@(isAr ? "اللون المختار" : "Selected Color")">
+                                                            <i class="fas fa-palette text-muted"></i>
+                                                            <span class="color-circle-admin" style="background-color:@item.SelectedColorHex;"></span>
+                                                            @if (!string.IsNullOrEmpty(item.SelectedColorName) && item.SelectedColorName != "Standard")
+                                                            {
+                                                                <span class="small ms-1">@item.SelectedColorName</span>
+                                                            }
+                                                        </span>
+                                                    }
+
+                                                    <!-- Other static specs -->
+                                                    @if (item.Product?.Weight > 0)
+                                                    {
+                                                        <span class="spec-item" title="@(isAr ? "الوزن" : "Weight")">
+                                                            <i class="fas fa-weight-hanging text-muted"></i> @item.Product.Weight Kg
+                                                        </span>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center align-middle">
+                                        <span class="fw-bold fs-6">@item.Quantity</span>
+                                        @if (item.Product?.UnitsPerCarton > 1)
+                                        {
+                                            <div class="small text-muted no-print">x @item.Product.UnitsPerCarton = @(item.Quantity* item.Product.UnitsPerCarton) pcs</div>
+                                        }
+                                    </td>
+                                    <td class="text-end align-middle">@item.UnitPrice.ToString("N0")</td>
+                                    <td class="text-end pe-4 align-middle fw-bold">@((item.Quantity * item.UnitPrice).ToString("N0"))</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot class="bg-light">
+                            <tr>
+                                <td colspan="3" class="text-end text-muted pt-3">@(isAr ? "المجموع الفرعي" : "Subtotal")</td>
+                                <td class="text-end pe-4 pt-3 fw-bold">@((Model.TotalAmount - Model.ShippingCost).ToString("N0"))</td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" class="text-end text-muted border-0">@(isAr ? "تكلفة الشحن" : "Shipping")</td>
+                                <td class="text-end pe-4 border-0">@Model.ShippingCost.ToString("N0")</td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" class="text-end text-primary fw-bold fs-5 border-0 pb-3">@(isAr ? "الإجمالي الكلي" : "Grand Total")</td>
+                                <td class="text-end pe-4 text-primary fw-bold fs-5 border-0 pb-3">@Model.TotalAmount.ToString("N0") <small>@(isAr ? "ج.م" : "EGP")</small></td>
+                            </tr>
+                        </tfoot>
+                    </table>
                 </div>
             </div>
-            <div class="card-footer bg-light border-top">
-                <div class="row text-center">
-                    <div class="col-6 border-end">
-                        <small class="text-muted d-block">@(isAr ? "طلبات سابقة" : "Total Orders")</small>
-                        <span class="fw-bold">12</span>
+
+            <!-- Timeline (Screen Only) -->
+            <div class="details-card no-print">
+                <div class="card-header-custom">
+                    <div class="card-title-text"><i class="fas fa-history text-info"></i> @(isAr ? "سجل النشاط" : "Status Timeline")</div>
+                </div>
+                <div class="order-timeline">
+                    @{
+                        var statuses = new[] { "Pending", "Confirmed", "Shipped", "Delivered" };
+                        var currentStatusIndex = Array.IndexOf(statuses, Model.Status);
+                        if (Model.Status == "Cancelled") currentStatusIndex = -1;
+                    }
+
+                    <div class="timeline-item active">
+                        <div class="timeline-dot"></div>
+                        <div class="fw-bold">@(isAr ? "تم إنشاء الطلب" : "Order Placed")</div>
+                        <small class="text-muted">@Model.OrderDate.ToString("dd MMM yyyy, hh:mm tt")</small>
                     </div>
-                    <div class="col-6">
-                        <small class="text-muted d-block">@(isAr ? "إجمالي الإنفاق" : "Total Spent")</small>
-                        <span class="fw-bold text-success">54k</span>
-                    </div>
+
+                    @if (Model.Status == "Cancelled")
+                    {
+                        <div class="timeline-item active">
+                            <div class="timeline-dot" style="background:#ef4444; border-color:#fee2e2;"></div>
+                            <div class="fw-bold text-danger">@(isAr ? "تم إلغاء الطلب" : "Order Cancelled")</div>
+                            <small class="text-muted">@(isAr ? "توقف الطلب بواسطة" : "Stopped by") Admin/User</small>
+                        </div>
+                    }
+                    else
+                    {
+                        @for (int i = 1; i < statuses.Length; i++)
+                        {
+                            var s = statuses[i];
+                            var isActive = i <= currentStatusIndex;
+                            var className = isActive ? "active" : "";
+                            <div class="timeline-item @className">
+                                <div class="timeline-dot"></div>
+                                <div class="fw-bold @(isActive ? "text-dark" : "text-muted")">@s</div>
+                                @if (isActive)
+                                {
+                                    <small class="text-success"><i class="fas fa-check"></i></small>
+                                }
+                            </div>
+                        }
+                    }
                 </div>
             </div>
         </div>
 
-        <!-- Shipping Info -->
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-transparent border-bottom">
-                <h5 class="mb-0 fw-bold"><i class="fas fa-truck me-2 text-secondary"></i> @(isAr ? "الشحن" : "Shipping")</h5>
-            </div>
-            <div class="card-body">
-                <div class="d-flex mb-3">
-                    <i class="fas fa-map-marker-alt mt-1 me-3 text-danger"></i>
-                    <div>
-                        <strong class="d-block text-main">@(isAr ? "العنوان" : "Address")</strong>
-                        <p class="text-muted mb-0 small">@Model.Address</p>
-                        <p class="text-muted mb-0 small">@Model.City, @Model.Governorate</p>
-                    </div>
+        <!-- Right: Customer Info -->
+        <div class="col-lg-4">
+            <!-- Customer Card -->
+            <div class="details-card">
+                <div class="card-header-custom">
+                    <div class="card-title-text"><i class="fas fa-user-circle text-warning"></i> @(isAr ? "بيانات العميل" : "Customer Info")</div>
                 </div>
+                <div class="p-4 text-center border-bottom">
+                    <div style="width:70px; height:70px; background:#eff6ff; color:var(--primary); font-size:1.5rem; font-weight:bold; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 15px;">
+                        @(Model.CustomerName?.FirstOrDefault())
+                    </div>
+                    <h5 class="fw-bold text-main mb-1">@Model.CustomerName</h5>
+                    <p class="text-muted mb-0">@Model.User?.Email</p>
+                </div>
+                <ul class="info-list">
+                    <li>
+                        <span class="info-label"><i class="fas fa-phone"></i> @(isAr ? "الهاتف" : "Phone")</span>
+                        <span class="info-val"><a href="tel:@Model.Phone" class="text-decoration-none">@Model.Phone</a></span>
+                    </li>
+                    <li class="no-print">
+                        <span class="info-label"><i class="fas fa-id-badge"></i> ID</span>
+                        <span class="info-val text-truncate" style="max-width:150px;">@Model.UserId</span>
+                    </li>
+                </ul>
+                <div class="p-3 no-print">
+                    <a href="/Admin/Users/Details/@Model.UserId" class="btn btn-light w-100 fw-bold border text-muted">@(isAr ? "عرض ملف المستخدم" : "View Profile")</a>
+                </div>
+            </div>
 
-                <div class="d-flex">
-                    <i class="fas fa-clock mt-1 me-3 text-info"></i>
-                    <div>
-                        <strong class="d-block text-main">@(isAr ? "وقت التوصيل" : "Slot")</strong>
-                        <p class="text-muted mb-0 small">@Model.DeliverySlot</p>
+            <!-- Shipping & Payment -->
+            <div class="details-card">
+                <div class="card-header-custom">
+                    <div class="card-title-text"><i class="fas fa-truck text-secondary"></i> @(isAr ? "الشحن والدفع" : "Shipping & Payment")</div>
+                </div>
+                <ul class="info-list">
+                    <li>
+                        <div style="width:100%">
+                            <span class="info-label mb-2"><i class="fas fa-map-marker-alt text-danger"></i> @(isAr ? "العنوان" : "Address")</span>
+                            <div class="text-dark small lh-sm">
+                                @Model.Address<br>
+                                @Model.City, @Model.Governorate
+                            </div>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="info-label"><i class="fas fa-money-bill-wave text-success"></i> @(isAr ? "طريقة الدفع" : "Payment")</span>
+                        <span class="info-val">@(Model.PaymentMethod == "Wallet" ? "محفظة (Wallet)" : "كاش (COD)")</span>
+                    </li>
+                    <li>
+                        <span class="info-label"><i class="fas fa-clock text-primary"></i> @(isAr ? "وقت التوصيل" : "Slot")</span>
+                        <span class="info-val">@Model.DeliverySlot</span>
+                    </li>
+                </ul>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.Notes))
+            {
+                <div class="details-card bg-warning bg-opacity-10 border-warning border-opacity-25">
+                    <div class="p-3">
+                        <h6 class="fw-bold text-warning-emphasis mb-2"><i class="fas fa-sticky-note me-2"></i> @(isAr ? "ملاحظات" : "Notes")</h6>
+                        <p class="mb-0 small text-dark">@Model.Notes</p>
                     </div>
                 </div>
-            </div>
+            }
         </div>
+    </div>
 
-        <!-- Notes -->
-        @if (!string.IsNullOrEmpty(Model.Notes))
-        {
-            <div class="card border-0 shadow-sm bg-warning-subtle border-warning">
-                <div class="card-body">
-                    <h6 class="fw-bold text-warning-emphasis mb-2"><i class="fas fa-sticky-note me-2"></i> @(isAr ? "ملاحظات العميل" : "Customer Notes")</h6>
-                    <p class="mb-0 text-dark small">@Model.Notes</p>
-                </div>
-            </div>
-        }
-
+    <!-- Invoice Footer (Print Only) -->
+    <div class="d-none d-print-block inv-footer">
+        <p>Thank you for your business!</p>
+        <p>Diska B2B Platform - Cairo, Egypt - Support: +20 123 456 7890</p>
     </div>
 </div>
