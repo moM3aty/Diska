@@ -3,7 +3,6 @@
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
     ViewData["Title"] = isAr ? "إتمام الطلب" : "Checkout";
 
-    // بيانات افتراضية من الكنترولر
     string defName = ViewBag.ShopName ?? ViewBag.FullName;
     string defPhone = ViewBag.Phone;
     string defGov = ViewBag.Governorate;
@@ -14,9 +13,8 @@
 <style>
     /* --- Checkout Styles (Website Theme) --- */
     :root {
-        /* ألوان الموقع الأصلية */
-        --site-primary: #0F172A; /* الكحلي */
-        --site-accent: #FACC15; /* الأصفر */
+        --site-primary: #0F172A;
+        --site-accent: #FACC15;
         --site-bg: #f8fafc;
         --text-dark: #1e293b;
         --text-gray: #64748b;
@@ -59,8 +57,8 @@
         .card-header-custom i {
             width: 35px;
             height: 35px;
-            background: var(--site-primary); /* كحلي */
-            color: var(--site-accent); /* أصفر */
+            background: var(--site-primary);
+            color: var(--site-accent);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -101,7 +99,7 @@
 
         .form-control:focus, .form-select:focus {
             border-color: var(--site-accent);
-            box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.15); /* Yellow glow */
+            box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.15);
             outline: none;
         }
 
@@ -135,12 +133,12 @@
 
         .payment-card.selected {
             border-color: var(--site-accent);
-            background: #fffbeb; /* Light yellow bg */
+            background: #fffbeb;
             color: var(--site-primary);
         }
 
             .payment-card.selected::after {
-                content: '\f00c'; /* FontAwesome check */
+                content: '\f00c';
                 font-family: "Font Awesome 6 Free";
                 font-weight: 900;
                 position: absolute;
@@ -169,7 +167,7 @@
     .summary-sticky {
         position: sticky;
         top: 20px;
-        background: var(--site-primary); /* الكحلي للخلفية */
+        background: var(--site-primary);
         color: #fff;
         border: none;
     }
@@ -235,7 +233,7 @@
         color: var(--site-accent);
     }
 
-    /* Totals Box inside Summary */
+    /* Totals */
     .pricing-box {
         background: rgba(255,255,255,0.05);
         border-radius: 12px;
@@ -539,11 +537,18 @@
             cart.forEach(item => {
                 let itemTotal = item.price * item.qty;
                 subtotal += itemTotal;
+
+                // Color Badge Logic
+                let colorBadge = '';
+                if(item.colorHex && item.colorHex !== '#000000') {
+                    colorBadge = `<span style="display:inline-block; width:12px; height:12px; background:${item.colorHex}; border-radius:50%; margin-inline-start:5px; border:1px solid #fff;" title="${item.colorName}"></span>`;
+                }
+
                 html += `
                     <div class="order-item">
                         <img src="/${item.image}" onerror="this.src='/images/default.png'" class="item-img">
                         <div class="item-info">
-                            <div class="item-name">${item.name}</div>
+                            <div class="item-name">${item.name} ${colorBadge}</div>
                             <div class="item-meta">
                                 <span class="fw-bold text-white">${item.qty}</span> x ${item.price.toLocaleString()}
                             </div>
@@ -578,6 +583,7 @@
             const shippingText = document.getElementById('shippingDisplay').innerText.replace(/,/g, '');
             const subText = document.getElementById('subTotalDisplay').innerText.replace(/,/g, '');
 
+            // CORRECTION: Map colorName and colorHex correctly from localStorage items
             const orderData = {
                 shopName: document.getElementById('shopName').value,
                 phone: document.getElementById('phone').value,
@@ -588,7 +594,12 @@
                 notes: document.getElementById('orderNotes').value,
                 paymentMethod: document.querySelector('input[name="payment"]:checked').value,
                 shippingCost: parseFloat(shippingText) || 0,
-                items: cart.map(i => ({ id: i.id.toString(), qty: parseInt(i.qty) }))
+                items: cart.map(i => ({
+                    id: i.id.toString(),
+                    qty: parseInt(i.qty),
+                    colorName: i.colorName,  // Send Color Name
+                    colorHex: i.colorHex     // Send Color Hex
+                }))
             };
 
             const btn = document.querySelector('.confirm-btn');

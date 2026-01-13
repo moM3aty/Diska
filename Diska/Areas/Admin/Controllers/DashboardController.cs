@@ -85,12 +85,13 @@ namespace Diska.Areas.Admin.Controllers
             return View(orders);
         }
 
-        // 3. تفاصيل الطلب (تم التأكد من جلب OrderItems ببياناتها)
+        // 3. تفاصيل الطلب (تم التحديث لجلب ألوان المنتج أيضاً)
         public async Task<IActionResult> OrderDetails(int id)
         {
             var order = await _context.Orders
                 .Include(o => o.OrderItems)
-                .ThenInclude(oi => oi.Product) 
+                .ThenInclude(oi => oi.Product) // جلب المنتج
+                    .ThenInclude(p => p.ProductColors) // إضافة: جلب قائمة ألوان المنتج (للمرجع)
                 .Include(o => o.User)
                 .FirstOrDefaultAsync(o => o.Id == id);
 

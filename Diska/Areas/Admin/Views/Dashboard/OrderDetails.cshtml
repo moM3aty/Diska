@@ -7,7 +7,7 @@
 }
 
 <style>
-    /* --- Elite Admin Details Styles --- */
+    /* --- Shared Elite Styles --- */
     :root {
         --card-bg: #ffffff;
         --card-border: #f1f5f9;
@@ -38,299 +38,106 @@
     .card-header-custom {
         padding: 20px 25px;
         border-bottom: 1px solid var(--border-color);
-        background-color: #fff;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
+        background-color: var(--card-bg); /* Fixed bg issue */
+        display: flex; align-items: center; justify-content: space-between;
     }
-
-    .card-title-text {
-        font-weight: 800;
-        color: var(--text-main);
-        margin: 0;
-        font-size: 1.1rem;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
+    .card-title-text { font-weight: 800; color: var(--text-main); margin: 0; font-size: 1.1rem; display: flex; align-items: center; gap: 10px; }
 
     /* Info Lists */
-    .info-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
+    .info-list { list-style: none; padding: 0; margin: 0; }
+    .info-list li {
+        display: flex; justify-content: space-between; padding: 15px 25px;
+        border-bottom: 1px solid var(--border-color); color: var(--text-main);
     }
-
-        .info-list li {
-            display: flex;
-            justify-content: space-between;
-            padding: 15px 25px;
-            border-bottom: 1px solid var(--border-color);
-            color: var(--text-main);
-        }
-
-            .info-list li:last-child {
-                border-bottom: none;
-            }
-
-    .info-label {
-        color: var(--text-muted);
-        font-weight: 600;
-        font-size: 0.9rem;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .info-val {
-        font-weight: 700;
-    }
+    .info-list li:last-child { border-bottom: none; }
+    .info-label { color: var(--text-muted); font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }
+    .info-val { font-weight: 700; }
 
     /* Products Table */
-    .prod-table {
-        width: 100%;
+    .prod-table { width: 100%; }
+    .prod-table thead th {
+        background: #f8fafc; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;
+        padding: 15px 25px; border-bottom: 2px solid var(--border-color);
     }
-
-        .prod-table thead th {
-            background: #f8fafc;
-            color: var(--text-muted);
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding: 15px 25px;
-            border-bottom: 2px solid var(--border-color);
-        }
-
-        .prod-table tbody td {
-            padding: 20px 25px;
-            vertical-align: top;
-            border-bottom: 1px solid var(--border-color);
-            color: var(--text-main);
-        }
-
+    .prod-table tbody td {
+        padding: 20px 25px; vertical-align: top; border-bottom: 1px solid var(--border-color); color: var(--text-main);
+    }
     .prod-thumb {
-        width: 60px;
-        height: 60px;
-        border-radius: 8px;
-        object-fit: contain;
-        background: #fff;
-        border: 1px solid var(--border-color);
-        padding: 4px;
+        width: 60px; height: 60px; border-radius: 8px; object-fit: contain;
+        background: #fff; border: 1px solid var(--border-color); padding: 4px;
     }
 
     /* Product Specs Grid inside Table */
     .specs-grid {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-top: 8px;
-        font-size: 0.8rem;
-        color: var(--text-muted);
+        display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; font-size: 0.8rem; color: var(--text-muted);
     }
-
     .spec-item {
-        background: #f8fafc;
-        border: 1px solid var(--border-color);
-        padding: 3px 8px;
-        border-radius: 6px;
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        color: var(--text-main);
-        font-weight: 600;
+        background: #f8fafc; border: 1px solid var(--border-color);
+        padding: 3px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 5px;
+        color: var(--text-main); font-weight: 600;
     }
 
     /* Color Circle */
     .color-circle-admin {
-        display: inline-block;
-        width: 14px;
-        height: 14px;
-        border-radius: 50%;
-        border: 1px solid rgba(0,0,0,0.1);
+        display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1);
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
     /* Badges */
     .status-badge {
-        padding: 6px 12px;
-        border-radius: 30px;
-        font-size: 0.8rem;
-        font-weight: 700;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        text-transform: uppercase;
+        padding: 6px 12px; border-radius: 30px; font-size: 0.8rem; font-weight: 700;
+        display: inline-flex; align-items: center; gap: 6px; text-transform: uppercase;
     }
-
-    .status-Pending {
-        background: #fffbeb;
-        color: #b45309;
-    }
-
-    .status-Confirmed {
-        background: #eff6ff;
-        color: #1d4ed8;
-    }
-
-    .status-Shipped {
-        background: #f0f9ff;
-        color: #0284c7;
-    }
-
-    .status-Delivered {
-        background: #dcfce7;
-        color: #15803d;
-    }
-
-    .status-Cancelled {
-        background: #fef2f2;
-        color: #b91c1c;
-    }
+    .status-Pending { background: #fffbeb; color: #b45309; }
+    .status-Confirmed { background: #eff6ff; color: #1d4ed8; }
+    .status-Shipped { background: #f0f9ff; color: #0284c7; }
+    .status-Delivered { background: #dcfce7; color: #15803d; }
+    .status-Cancelled { background: #fef2f2; color: #b91c1c; }
 
     /* Timeline */
-    .order-timeline {
-        padding: 30px;
-    }
-
+    .order-timeline { padding: 30px; }
     .timeline-item {
-        position: relative;
-        padding-bottom: 35px;
-        padding-left: 30px;
-        border-left: 2px solid var(--border-color);
+        position: relative; padding-bottom: 35px; padding-left: 30px; border-left: 2px solid var(--border-color);
     }
-
-        .timeline-item:last-child {
-            border-left: 2px solid transparent;
-            padding-bottom: 0;
-        }
-
+    .timeline-item:last-child { border-left: 2px solid transparent; padding-bottom: 0; }
     .timeline-dot {
-        position: absolute;
-        left: -9px;
-        top: 0;
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        background: var(--border-color);
-        border: 3px solid #fff;
+        position: absolute; left: -9px; top: 0; width: 16px; height: 16px; border-radius: 50%;
+        background: var(--border-color); border: 3px solid #fff;
     }
+    .timeline-item.active .timeline-dot { background: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2); border-color: var(--primary); }
 
-    .timeline-item.active .timeline-dot {
-        background: var(--primary);
-        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
-        border-color: var(--primary);
-    }
-
-    html[dir="rtl"] .timeline-item {
-        padding-left: 0;
-        padding-right: 30px;
-        border-left: none;
-        border-right: 2px solid var(--border-color);
-    }
-
-        html[dir="rtl"] .timeline-item:last-child {
-            border-right: 2px solid transparent;
-        }
-
-    html[dir="rtl"] .timeline-dot {
-        left: auto;
-        right: -9px;
-    }
+    html[dir="rtl"] .timeline-item { padding-left: 0; padding-right: 30px; border-left: none; border-right: 2px solid var(--border-color); }
+    html[dir="rtl"] .timeline-item:last-child { border-right: 2px solid transparent; }
+    html[dir="rtl"] .timeline-dot { left: auto; right: -9px; }
 
     /* --- Print Specific Styles --- */
     @@media print {
-        body * {
-            visibility: hidden;
-        }
-
-        .invoice-area, .invoice-area * {
-            visibility: visible;
-        }
-
+        body * { visibility: hidden; }
+        .invoice-area, .invoice-area * { visibility: visible; }
         .invoice-area {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            min-height: 100%;
-            background: #fff;
-            padding: 40px;
-            color: #000;
-            font-family: 'Cairo', sans-serif;
+            position: absolute; left: 0; top: 0; width: 100%; min-height: 100%;
+            background: #fff; padding: 40px; color: #000; font-family: 'Cairo', sans-serif;
             z-index: 9999;
         }
+        .no-print { display: none !important; }
 
-        .no-print {
-            display: none !important;
-        }
+        .details-card { box-shadow: none; border: 1px solid #000; margin-bottom: 20px; page-break-inside: avoid; }
+        .card-header-custom { background: #f0f0f0 !important; border-bottom: 1px solid #000; }
 
-        .details-card {
-            box-shadow: none;
-            border: 1px solid #000;
-            margin-bottom: 20px;
-            page-break-inside: avoid;
-        }
+        .prod-table th { background: #eee !important; color: #000 !important; border-bottom: 1px solid #000; font-weight: bold; }
+        .prod-table td { border-bottom: 1px solid #ccc; color: #000; }
 
-        .card-header-custom {
-            background: #f0f0f0 !important;
-            border-bottom: 1px solid #000;
-        }
+        .status-badge { border: 1px solid #000; color: #000 !important; background: none !important; }
 
-        .prod-table th {
-            background: #eee !important;
-            color: #000 !important;
-            border-bottom: 1px solid #000;
-            font-weight: bold;
-        }
+        .invoice-header-content { display: block !important; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 20px; }
+        .inv-flex { display: flex; justify-content: space-between; align-items: start; }
+        .inv-logo h1 { font-size: 32px; margin: 0; font-weight: 900; letter-spacing: 2px; }
+        .inv-meta { text-align: right; }
 
-        .prod-table td {
-            border-bottom: 1px solid #ccc;
-            color: #000;
-        }
-
-        .status-badge {
-            border: 1px solid #000;
-            color: #000 !important;
-            background: none !important;
-        }
-
-        .invoice-header-content {
-            display: block !important;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #000;
-            padding-bottom: 20px;
-        }
-
-        .inv-flex {
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-        }
-
-        .inv-logo h1 {
-            font-size: 32px;
-            margin: 0;
-            font-weight: 900;
-            letter-spacing: 2px;
-        }
-
-        .inv-meta {
-            text-align: right;
-        }
-
-        .inv-footer {
-            display: block !important;
-            margin-top: 50px;
-            text-align: center;
-            font-size: 12px;
-            border-top: 1px solid #ccc;
-            padding-top: 20px;
-        }
+        .inv-footer { display: block !important; margin-top: 50px; text-align: center; font-size: 12px; border-top: 1px solid #ccc; padding-top: 20px; }
     }
 
-    .invoice-header-content, .inv-footer {
-        display: none;
-    }
+    .invoice-header-content, .inv-footer { display: none; }
 </style>
 
 <!-- Top Bar (Actions) -->
@@ -430,11 +237,12 @@
                                                 <div class="fw-bold text-main mb-1">@(isAr? item.Product?.Name : item.Product?.NameEn)</div>
 
                                                 <div class="specs-grid">
+                                                    <!-- SKU -->
                                                     <span class="spec-item" title="SKU">
                                                         <i class="fas fa-barcode text-muted"></i> @item.Product?.SKU
                                                     </span>
 
-                                                    <!-- Color: Only show what is SAVED in the order item -->
+                                                    <!-- Selected Color (Checking Nullable Fields) -->
                                                     @if (!string.IsNullOrEmpty(item.SelectedColorHex))
                                                     {
                                                         <span class="spec-item" title="@(isAr ? "اللون المختار" : "Selected Color")">
@@ -447,7 +255,7 @@
                                                         </span>
                                                     }
 
-                                                    <!-- Other static specs -->
+                                                    <!-- Weight -->
                                                     @if (item.Product?.Weight > 0)
                                                     {
                                                         <span class="spec-item" title="@(isAr ? "الوزن" : "Weight")">

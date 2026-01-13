@@ -25,11 +25,13 @@ namespace Diska.Controllers
             _shippingService = shippingService;
         }
 
+        // 1. عرض صفحة السلة
         public IActionResult Index()
         {
             return View();
         }
 
+        // 2. التحقق من المنتج وإضافته (API) - المصحح
         [HttpPost]
         public async Task<IActionResult> AddItem(int productId, int quantity, string colorHex = null, string colorName = null)
         {
@@ -38,14 +40,39 @@ namespace Diska.Controllers
                 .FirstOrDefaultAsync(p => p.Id == productId);
 
             if (product == null || product.Status != "Active")
+            {
                 return Json(new { success = false, message = "عفواً، هذا المنتج غير متاح حالياً." });
+            }
 
             if (product.StockQuantity < quantity)
+            {
                 return Json(new { success = false, message = $"الكمية المتاحة فقط {product.StockQuantity} قطعة." });
+            }
 
-            // Ensure non-null values for response
-            string finalColorName = !string.IsNullOrEmpty(colorName) ? colorName : (product.ProductColors.FirstOrDefault()?.ColorName ?? product.Color ?? "Default");
-            string finalColorHex = !string.IsNullOrEmpty(colorHex) ? colorHex : (product.ProductColors.FirstOrDefault()?.ColorHex ?? (product.Color != null && product.Color.StartsWith("#") ? product.Color : "#000000"));
+            // --- تصحيح منطق الألوان ---
+            // نعتمد القيم القادمة من الطلب أولاً (لأن المستخدم اختارها)
+            string finalColorName = colorName;
+            string finalColorHex = colorHex;
+
+            // إذا كانت القيم فارغة (لم يختر المستخدم شيئاً)، نستخدم الافتراضي للمنتج
+            if (string.IsNullOrEmpty(finalColorName) && string.IsNullOrEmpty(finalColorHex))
+            {
+                var firstColor = product.ProductColors.FirstOrDefault();
+                if (firstColor != null)
+                {
+                    finalColorName = firstColor.ColorName;
+                    finalColorHex = firstColor.ColorHex;
+                }
+                else
+                {
+                    finalColorName = product.Color ?? "Default";
+                    finalColorHex = product.Color ?? "#000000";
+                }
+            }
+
+            // ضمان عدم وجود Null
+            if (string.IsNullOrEmpty(finalColorHex)) finalColorHex = "#000000";
+            if (string.IsNullOrEmpty(finalColorName)) finalColorName = "Standard";
 
             return Json(new
             {
@@ -58,22 +85,26 @@ namespace Diska.Controllers
                     price = product.Price,
                     image = product.ImageUrl,
                     stock = product.StockQuantity,
+                    // إرجاع اللون المختار ليتم تخزينه في المتصفح
                     colorName = finalColorName,
                     colorHex = finalColorHex
                 }
             });
         }
 
+        // 3. صفحة الدفع
         [Authorize]
         public async Task<IActionResult> Checkout()
         {
             var user = await _userManager.GetUserAsync(User);
+
             ViewBag.FullName = user.FullName;
             ViewBag.Phone = user.PhoneNumber;
             ViewBag.ShopName = user.ShopName;
 
             var defaultAddress = await _context.UserAddresses
-                .OrderByDescending(a => a.IsDefault).ThenByDescending(a => a.Id)
+                .OrderByDescending(a => a.IsDefault)
+                .ThenByDescending(a => a.Id)
                 .FirstOrDefaultAsync(a => a.UserId == user.Id);
 
             if (defaultAddress != null)
@@ -82,15 +113,17 @@ namespace Diska.Controllers
                 ViewBag.Governorate = defaultAddress.Governorate;
                 ViewBag.City = defaultAddress.City;
             }
+
             return View();
         }
 
+        // 4. تنفيذ الطلب (PlaceOrder) - المصحح
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> PlaceOrder([FromBody] OrderSubmissionModel model)
         {
             if (model == null || !model.Items.Any())
-                return Json(new { success = false, message = "السلة فارغة، لا يمكن إتمام الطلب." });
+                return Json(new { success = false, message = "السلة فارغة." });
 
             var user = await _userManager.GetUserAsync(User);
 
@@ -121,62 +154,41 @@ namespace Diska.Controllers
                 {
                     if (int.TryParse(itemDto.Id, out int pid))
                     {
-                        var product = await _context.Products.Include(p => p.PriceTiers).Include(p => p.ProductColors).FirstOrDefaultAsync(p => p.Id == pid);
+                        var product = await _context.Products
+                            .Include(p => p.PriceTiers)
+                            .Include(p => p.ProductColors)
+                            .FirstOrDefaultAsync(p => p.Id == pid);
 
                         if (product == null || product.Status != "Active")
-                            return Json(new { success = false, message = $"المنتج رقم {pid} لم يعد متاحاً." });
+                            return Json(new { success = false, message = $"المنتج {pid} غير متاح." });
 
                         if (product.StockQuantity < itemDto.Qty)
-                            return Json(new { success = false, message = $"الكمية غير متوفرة لـ '{product.Name}'." });
+                            return Json(new { success = false, message = $"الكمية غير متوفرة لـ {product.Name}." });
 
                         product.StockQuantity -= itemDto.Qty;
                         _context.Update(product);
 
-                        // Calculate Price
                         decimal finalPrice = product.Price;
                         if (product.PriceTiers != null && product.PriceTiers.Any())
                         {
-                            var tier = product.PriceTiers.Where(t => itemDto.Qty >= t.MinQuantity && itemDto.Qty <= t.MaxQuantity).OrderBy(t => t.UnitPrice).FirstOrDefault();
-                            if (tier == null && itemDto.Qty > product.PriceTiers.Max(t => t.MaxQuantity))
-                                tier = product.PriceTiers.OrderBy(t => t.UnitPrice).FirstOrDefault();
+                            var tier = product.PriceTiers.OrderBy(t => t.UnitPrice).FirstOrDefault(t => itemDto.Qty >= t.MinQuantity && itemDto.Qty <= t.MaxQuantity);
                             if (tier != null) finalPrice = tier.UnitPrice;
                         }
+
                         subTotal += finalPrice * itemDto.Qty;
 
-                        // --- Color Logic (Bulletproof) ---
-                        string selectedHex = itemDto.ColorHex;
-                        string selectedName = itemDto.ColorName;
-
-                        // Try to find matching color in DB if only partial info is sent
-                        if (string.IsNullOrEmpty(selectedHex) && !string.IsNullOrEmpty(selectedName))
-                        {
-                            var colorMatch = product.ProductColors.FirstOrDefault(c => c.ColorName == selectedName);
-                            if (colorMatch != null) selectedHex = colorMatch.ColorHex;
-                        }
-
-                        // Fallback 1: Use Product Default
-                        if (string.IsNullOrEmpty(selectedHex)) selectedHex = product.Color;
-
-                        // Fallback 2: Use First Available Color
-                        if (string.IsNullOrEmpty(selectedHex) && product.ProductColors.Any()) selectedHex = product.ProductColors.First().ColorHex;
-
-                        // Fallback 3: Hard Default (Never allow NULL)
-                        if (string.IsNullOrEmpty(selectedHex)) selectedHex = "#000000";
-
-                        // Similar logic for Name
-                        if (string.IsNullOrEmpty(selectedName))
-                        {
-                            var colorMatch = product.ProductColors.FirstOrDefault(c => c.ColorHex == selectedHex);
-                            selectedName = colorMatch?.ColorName ?? "Standard";
-                        }
+                        // حفظ اللون المختار في الطلب
+                        // الأولوية لما جاء من الـ DTO (الواجهة)، وإلا نستخدم الافتراضي
+                        string cName = !string.IsNullOrEmpty(itemDto.ColorName) ? itemDto.ColorName : (product.ProductColors.FirstOrDefault()?.ColorName ?? "Standard");
+                        string cHex = !string.IsNullOrEmpty(itemDto.ColorHex) ? itemDto.ColorHex : (product.ProductColors.FirstOrDefault()?.ColorHex ?? "#000000");
 
                         orderItems.Add(new OrderItem
                         {
                             ProductId = pid,
                             Quantity = itemDto.Qty,
                             UnitPrice = finalPrice,
-                            SelectedColorHex = selectedHex, // Guaranteed not null
-                            SelectedColorName = selectedName // Guaranteed not null
+                            SelectedColorName = cName,
+                            SelectedColorHex = cHex
                         });
                     }
                 }
@@ -190,7 +202,7 @@ namespace Diska.Controllers
                         return Json(new { success = false, message = "رصيد المحفظة لا يكفي." });
 
                     user.WalletBalance -= order.TotalAmount;
-                    _context.WalletTransactions.Add(new WalletTransaction { UserId = user.Id, Amount = order.TotalAmount, Type = "Purchase", Description = $"شراء طلب", TransactionDate = DateTime.Now });
+                    _context.WalletTransactions.Add(new WalletTransaction { UserId = user.Id, Amount = order.TotalAmount, Type = "Purchase", Description = "شراء طلب", TransactionDate = DateTime.Now });
                     await _userManager.UpdateAsync(user);
                     order.Status = "Confirmed";
                 }
@@ -204,7 +216,7 @@ namespace Diska.Controllers
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                return Json(new { success = false, message = "Error: " + ex.Message });
+                return Json(new { success = false, message = "خطأ: " + ex.Message });
             }
         }
 
