@@ -4,106 +4,138 @@
     Layout = "_AdminLayout";
 }
 
-<div class="row justify-content-center">
-    <div class="col-lg-9">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 text-primary">تعديل: @Model.Name</h5>
-                <a asp-action="Index" class="btn btn-sm btn-outline-secondary">إلغاء</a>
+<style>
+    .icon-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+        gap: 10px;
+        max-height: 250px;
+        overflow-y: auto;
+        padding: 15px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+    }
+
+    .icon-option {
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 1.3rem;
+        color: #64748b;
+        transition: all 0.2s ease;
+    }
+
+        .icon-option:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .icon-option.active {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
+        }
+
+    .selected-icon-preview {
+        width: 90px;
+        height: 90px;
+        background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%);
+        color: var(--primary);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        margin: 0 auto 15px;
+        box-shadow: 0 10px 25px rgba(79, 70, 229, 0.15);
+        border: 4px solid #fff;
+    }
+</style>
+
+<div class="row justify-content-center fade-up">
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm" style="border-radius: 16px;">
+            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-primary fw-bold">تعديل: @Model.Name</h5>
+                <a asp-action="Index" class="btn btn-sm btn-light border fw-bold text-muted">عودة</a>
             </div>
+
             <div class="card-body p-4">
-                <form asp-action="Edit" enctype="multipart/form-data">
+                <form asp-action="Edit">
                     <input type="hidden" asp-for="Id" />
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-                    <ul class="nav nav-tabs mb-4" id="catTab" role="tablist">
-                        <li class="nav-item">
-                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#general" type="button">بيانات أساسية</button>
-                        </li>
-                        <li class="nav-item">
-                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#seo" type="button">SEO</button>
-                        </li>
-                        <li class="nav-item">
-                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#media" type="button">الصور</button>
-                        </li>
-                    </ul>
+                    <!-- Icon Preview -->
+                    <div class="text-center mb-4">
+                        <div class="selected-icon-preview">
+                            <i id="previewIcon" class="@(Model.IconClass ?? "fas fa-folder")"></i>
+                        </div>
+                        <p class="text-muted small fw-bold">الأيقونة المختارة</p>
+                    </div>
 
-                    <div class="tab-content" id="myTabContent">
-
-                        <!-- General -->
-                        <div class="tab-pane fade show active" id="general">
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label asp-for="Name" class="form-label">الاسم (عربي)</label>
-                                    <input asp-for="Name" class="form-control" required />
-                                </div>
-                                <div class="col-md-6">
-                                    <label asp-for="NameEn" class="form-label">الاسم (إنجليزي)</label>
-                                    <input asp-for="NameEn" class="form-control" required />
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">القسم الرئيسي</label>
-                                    <select asp-for="ParentId" class="form-select" asp-items="ViewBag.Parents">
-                                        <option value="">-- قسم رئيسي --</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <label asp-for="DisplayOrder" class="form-label">الترتيب</label>
-                                    <input asp-for="DisplayOrder" type="number" class="form-control" />
-                                </div>
-                                <div class="col-md-3 pt-4">
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" asp-for="IsActive">
-                                        <label class="form-check-label">تفعيل</label>
-                                    </div>
-                                </div>
-                            </div>
+                    <div class="row g-3">
+                        <!-- Names -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-muted">الاسم (عربي)</label>
+                            <input asp-for="Name" class="form-control" required />
+                            <span asp-validation-for="Name" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-muted">الاسم (إنجليزي)</label>
+                            <input asp-for="NameEn" class="form-control" />
                         </div>
 
-                        <!-- SEO -->
-                        <div class="tab-pane fade" id="seo">
-                            <div class="row g-3">
-                                <div class="col-12">
-                                    <label asp-for="Slug" class="form-label">Slug</label>
-                                    <input asp-for="Slug" class="form-control" />
-                                </div>
-                                <div class="col-12">
-                                    <label asp-for="MetaTitle" class="form-label">Meta Title</label>
-                                    <input asp-for="MetaTitle" class="form-control" />
-                                </div>
-                                <div class="col-12">
-                                    <label asp-for="MetaDescription" class="form-label">Meta Description</label>
-                                    <textarea asp-for="MetaDescription" class="form-control" rows="3"></textarea>
-                                </div>
-                            </div>
+                        <!-- Parent Category -->
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold small text-muted">القسم الرئيسي (Parent)</label>
+                            <select asp-for="ParentId" class="form-select" asp-items="ViewBag.Parents">
+                                <option value="">-- هذا قسم رئيسي --</option>
+                            </select>
+                            <small class="text-muted" style="font-size: 0.75rem;">اتركه فارغاً إذا كان هذا قسماً رئيسياً.</small>
                         </div>
 
-                        <!-- Media -->
-                        <div class="tab-pane fade" id="media">
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label class="form-label">صورة القسم</label>
-                                    <input type="file" name="imageFile" class="form-control" accept="image/*">
-                                    @if (!string.IsNullOrEmpty(Model.ImageUrl))
-                                    {
-                                        <div class="mt-2">
-                                            <img src="~/@Model.ImageUrl" class="rounded border p-1" style="height: 80px;">
-                                        </div>
-                                    }
-                                </div>
-                                <div class="col-md-6">
-                                    <label asp-for="IconClass" class="form-label">رمز الأيقونة</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i id="iconPreview" class="@(Model.IconClass ?? "fas fa-cube")"></i></span>
-                                        <input asp-for="IconClass" class="form-control" oninput="updateIcon(this.value)">
-                                    </div>
-                                </div>
-                            </div>
+                        <!-- Icon Picker -->
+                        <div class="col-12">
+                            <label class="form-label fw-bold small text-muted">تغيير الأيقونة</label>
+                            <input type="hidden" asp-for="IconClass" id="IconClassInput">
+                            <div class="icon-grid" id="iconGrid"></div>
                         </div>
 
+                        <!-- Other Fields -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-muted">Slug (رابط)</label>
+                            <input asp-for="Slug" class="form-control bg-light" placeholder="auto-generated" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold small text-muted">الترتيب</label>
+                            <input asp-for="DisplayOrder" type="number" class="form-control" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold small text-muted">الحالة</label>
+                            <select asp-for="IsActive" class="form-select">
+                                <option value="true">نشط</option>
+                                <option value="false">مخفي</option>
+                            </select>
+                        </div>
+
+                        <div class="col-12">
+                            <hr class="text-muted opacity-25">
+                            <label class="form-label fw-bold small text-muted">وصف الميتا (SEO)</label>
+                            <textarea asp-for="MetaDescription" class="form-control" rows="2"></textarea>
+                        </div>
                     </div>
 
                     <div class="mt-4 pt-3 border-top text-end">
-                        <button type="submit" class="btn btn-primary px-4 fw-bold">حفظ التعديلات</button>
+                        <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm">حفظ التغييرات</button>
                     </div>
                 </form>
             </div>
@@ -113,8 +145,60 @@
 
 @section Scripts {
     <script>
-        function updateIcon(val) {
-            document.getElementById('iconPreview').className = val;
-        }
+        const icons = [
+            // Electronics
+            'fas fa-laptop', 'fas fa-mobile-alt', 'fas fa-tv', 'fas fa-camera', 'fas fa-headphones',
+            'fas fa-print', 'fas fa-microchip', 'fas fa-gamepad', 'fas fa-plug', 'fas fa-battery-full',
+            'fas fa-keyboard', 'fas fa-mouse', 'fas fa-tablet-alt', 'fas fa-server', 'fas fa-wifi',
+
+            // Fashion
+            'fas fa-tshirt', 'fas fa-user-tie', 'fas fa-shoe-prints', 'fas fa-hat-cowboy', 'fas fa-socks',
+            'fas fa-glasses', 'fas fa-gem', 'fas fa-vest', 'fas fa-shopping-bag', 'fas fa-mask',
+
+            // Home & Furniture
+            'fas fa-couch', 'fas fa-bed', 'fas fa-chair', 'fas fa-lightbulb', 'fas fa-door-open',
+            'fas fa-bath', 'fas fa-shower', 'fas fa-toilet', 'fas fa-blender', 'fas fa-fan',
+            'fas fa-utensils', 'fas fa-mug-hot', 'fas fa-seedling', 'fas fa-box-open',
+
+            // Grocery
+            'fas fa-carrot', 'fas fa-apple-alt', 'fas fa-pizza-slice', 'fas fa-coffee', 'fas fa-ice-cream',
+            'fas fa-hamburger', 'fas fa-drumstick-bite', 'fas fa-fish', 'fas fa-egg', 'fas fa-cheese',
+            'fas fa-bread-slice', 'fas fa-pepper-hot', 'fas fa-leaf', 'fas fa-shopping-basket',
+
+            // Health & Beauty
+            'fas fa-heartbeat', 'fas fa-pills', 'fas fa-first-aid', 'fas fa-stethoscope', 'fas fa-syringe',
+            'fas fa-tooth', 'fas fa-eye', 'fas fa-spa', 'fas fa-spray-can', 'fas fa-hand-sparkles',
+
+            // Sports & Automotive
+            'fas fa-dumbbell', 'fas fa-bicycle', 'fas fa-futbol', 'fas fa-running', 'fas fa-swimmer',
+            'fas fa-car', 'fas fa-motorcycle', 'fas fa-truck-pickup', 'fas fa-oil-can', 'fas fa-tools',
+            'fas fa-wrench', 'fas fa-gas-pump', 'fas fa-tachometer-alt',
+
+            // Others
+            'fas fa-baby', 'fas fa-book', 'fas fa-gift', 'fas fa-tag', 'fas fa-star', 'fas fa-folder'
+        ];
+
+        const grid = document.getElementById('iconGrid');
+        const input = document.getElementById('IconClassInput');
+        const preview = document.getElementById('previewIcon');
+        const currentIcon = '@(Model.IconClass ?? "fas fa-folder")';
+
+        // Render Icons
+        icons.forEach(iconClass => {
+            const div = document.createElement('div');
+            div.className = 'icon-option';
+            if (currentIcon === iconClass) div.classList.add('active');
+
+            div.innerHTML = `<i class="${iconClass}"></i>`;
+
+            div.onclick = function() {
+                document.querySelectorAll('.icon-option').forEach(el => el.classList.remove('active'));
+                this.classList.add('active');
+                input.value = iconClass;
+                preview.className = iconClass;
+            };
+
+            grid.appendChild(div);
+        });
     </script>
 }

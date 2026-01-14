@@ -1,10 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Diska.Data;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Diska.Models;
-using Diska.Services;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
+using System.Linq;
+using System.Threading.Tasks;
+using System;
 
 namespace Diska.Controllers
 {
@@ -13,108 +15,76 @@ namespace Diska.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly INotificationService _notificationService;
 
-        public OrderController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, INotificationService notificationService)
+        public OrderController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
             _userManager = userManager;
-            _notificationService = notificationService;
         }
 
-        // 1. سجل الطلبات (Order History)
-        public async Task<IActionResult> Index()
+        // عرض قائمة الطلبات مع الفلترة والتقسيم
+        public async Task<IActionResult> Index(string status = "all", int page = 1)
         {
             var user = await _userManager.GetUserAsync(User);
-            var orders = await _context.Orders
-                .Where(o => o.UserId == user.Id)
+            if (user == null) return RedirectToAction("Login", "Account");
+
+            int pageSize = 10; // عدد الطلبات في الصفحة
+            var query = _context.Orders
                 .Include(o => o.OrderItems)
-                .ThenInclude(oi => oi.Product)
+                .Where(o => o.UserId == user.Id)
+                .AsQueryable();
+
+            // 1. الفلترة
+            switch (status.ToLower())
+            {
+                case "active":
+                    query = query.Where(o => o.Status != "Delivered" && o.Status != "Cancelled");
+                    break;
+                case "completed":
+                    query = query.Where(o => o.Status == "Delivered");
+                    break;
+                case "cancelled":
+                    query = query.Where(o => o.Status == "Cancelled");
+                    break;
+                default: // "all"
+                    break;
+            }
+
+            // 2. الترتيب والتقسيم
+            int totalItems = await query.CountAsync();
+            var orders = await query
                 .OrderByDescending(o => o.OrderDate)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
+
+            // 3. تمرير بيانات التصفح للفيو
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+            ViewBag.CurrentStatus = status;
+
+            // إحصائيات سريعة للـ Header
+            var allUserOrders = _context.Orders.Where(o => o.UserId == user.Id);
+            ViewBag.TotalOrdersCount = await allUserOrders.CountAsync();
+            ViewBag.ActiveOrdersCount = await allUserOrders.CountAsync(o => o.Status != "Delivered" && o.Status != "Cancelled");
+            ViewBag.TotalSpent = await allUserOrders.Where(o => o.Status != "Cancelled").SumAsync(o => (decimal?)o.TotalAmount) ?? 0;
 
             return View(orders);
         }
 
-        // 2. إنشاء طلب (توجيه للدفع أو معالجة مباشرة)
-        [HttpGet]
-        public IActionResult Create()
-        {
-            // عادة يتم إنشاء الطلب عبر سلة المشتريات (Cart/Checkout)
-            // لذا سنقوم بالتوجيه لصفحة الدفع
-            return RedirectToAction("Checkout", "Cart");
-        }
-
-        // 3. تفاصيل الطلب وتتبعه (Details & Tracking)
+        // تفاصيل الطلب
         public async Task<IActionResult> Details(int id)
         {
             var user = await _userManager.GetUserAsync(User);
             var order = await _context.Orders
                 .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.Product)
+                .Include(o => o.User)
                 .FirstOrDefaultAsync(o => o.Id == id && o.UserId == user.Id);
 
             if (order == null) return NotFound();
 
             return View(order);
-        }
-
-        // 4. إلغاء الطلب (Cancel)
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Cancel(int id)
-        {
-            var user = await _userManager.GetUserAsync(User);
-            var order = await _context.Orders
-                .Include(o => o.OrderItems)
-                .FirstOrDefaultAsync(o => o.Id == id && o.UserId == user.Id);
-
-            if (order == null) return NotFound();
-
-            // السماح بالإلغاء فقط إذا كان الطلب "قيد الانتظار"
-            if (order.Status == "Pending")
-            {
-                // إرجاع الكميات للمخزون
-                foreach (var item in order.OrderItems)
-                {
-                    var product = await _context.Products.FindAsync(item.ProductId);
-                    if (product != null)
-                    {
-                        product.StockQuantity += item.Quantity;
-                    }
-                }
-
-                // إذا كان الدفع بالمحفظة، يتم استرداد المبلغ
-                if (order.PaymentMethod == "Wallet")
-                {
-                    user.WalletBalance += order.TotalAmount;
-
-                    _context.WalletTransactions.Add(new WalletTransaction
-                    {
-                        UserId = user.Id,
-                        Amount = order.TotalAmount,
-                        Type = "Refund",
-                        Description = $"استرداد قيمة الطلب الملغي #{id}",
-                        TransactionDate = DateTime.Now
-                    });
-
-                    await _userManager.UpdateAsync(user);
-                }
-
-                order.Status = "Cancelled";
-                await _context.SaveChangesAsync();
-
-                // إشعار للإدارة (اختياري)
-                // await _notificationService.NotifyAdminsAsync(...);
-
-                TempData["Message"] = "تم إلغاء الطلب بنجاح وتم استرداد المبلغ (إن وجد).";
-            }
-            else
-            {
-                TempData["Error"] = "عفواً، لا يمكن إلغاء الطلب في هذه المرحلة (قد يكون تم تأكيده أو شحنه).";
-            }
-
-            return RedirectToAction(nameof(Index)); // العودة لسجل الطلبات
         }
     }
 }

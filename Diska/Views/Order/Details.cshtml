@@ -1,102 +1,486 @@
 ﻿@model Diska.Models.Order
 @using System.Globalization
 @{
-    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
-    ViewData["Title"] = isAr ? "تفاصيل الطلب" : "Order Details";
     Layout = "_Layout";
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    ViewData["Title"] = isAr ? $"طلب #{Model.Id}" : $"Order #{Model.Id}";
 
-    // تحديد حالة التتبع
-    int step = 0;
-    if (Model.Status == "Pending") { step = 1; }
-    else if (Model.Status == "Confirmed") { step = 2; }
-    else if (Model.Status == "Shipped") { step = 3; }
-    else if (Model.Status == "Delivered") { step = 4; }
+    // Status Logic for Stepper
+    var statuses = new[] { "Pending", "Confirmed", "Shipped", "Delivered" };
+    int currentStep = Array.IndexOf(statuses, Model.Status);
+    if (Model.Status == "Cancelled") currentStep = -1;
 }
 
-<section class="section-padding" style="background-color: #f9fafb;">
+<style>
+    /* Premium Details Style */
+    :root {
+        --d-primary: #0F172A;
+        --d-accent: #FACC15;
+        --d-bg: #f8fafc;
+    }
+
+    .order-details-page {
+        background-color: var(--d-bg);
+        padding: 50px 0;
+        min-height: 90vh;
+        font-family: 'Cairo', sans-serif;
+    }
+
+    /* Top Navigation */
+    .nav-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .back-link {
+        color: #64748b;
+        text-decoration: none;
+        font-weight: 700;
+        transition: 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .back-link:hover {
+            color: var(--d-primary);
+            transform: translateX( @(isAr ? "5px" : "-5px") );
+        }
+
+    .page-head h1 {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: var(--d-primary);
+        margin: 0;
+    }
+
+    .page-head span {
+        color: #94a3b8;
+        font-size: 0.9rem;
+        margin-top: 5px;
+        display: block;
+    }
+
+    /* Layout */
+    .details-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 30px;
+    }
+
+    /* Cards */
+    .info-card {
+        background: #fff;
+        border-radius: 20px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        border: 1px solid #e2e8f0;
+        overflow: hidden;
+        margin-bottom: 30px;
+    }
+
+    .card-head {
+        padding: 20px 30px;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #fff;
+    }
+
+        .card-head h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--d-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+    /* Stepper */
+    .stepper-wrapper {
+        padding: 40px 20px;
+        position: relative;
+    }
+
+    .stepper {
+        display: flex;
+        justify-content: space-between;
+        position: relative;
+    }
+
+        .stepper::before {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: #f1f5f9;
+            z-index: 1;
+        }
+
+    .step-item {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        flex: 1;
+    }
+
+    .step-circle {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: #f1f5f9;
+        margin: 0 auto 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        color: #94a3b8;
+        border: 3px solid #fff;
+        box-shadow: 0 0 0 2px #f1f5f9;
+        transition: 0.3s;
+    }
+
+    .step-item.active .step-circle {
+        background: var(--d-primary);
+        color: var(--d-accent);
+        box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.1);
+    }
+
+    .step-item.completed .step-circle {
+        background: #16a34a;
+        color: #fff;
+        box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2);
+    }
+
+    .step-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #64748b;
+    }
+
+    .step-item.active .step-label {
+        color: var(--d-primary);
+        font-weight: 800;
+    }
+
+    /* Order Items */
+    .item-row {
+        display: flex;
+        gap: 20px;
+        padding: 20px 30px;
+        border-bottom: 1px solid #f1f5f9;
+        align-items: center;
+        transition: 0.2s;
+    }
+
+        .item-row:last-child {
+            border-bottom: none;
+        }
+
+        .item-row:hover {
+            background: #fcfcfd;
+        }
+
+    .item-img {
+        width: 80px;
+        height: 80px;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        padding: 5px;
+        background: #fff;
+        object-fit: contain;
+    }
+
+    .item-details {
+        flex: 1;
+    }
+
+    .item-name {
+        font-weight: 700;
+        color: var(--d-primary);
+        margin-bottom: 5px;
+        font-size: 1rem;
+    }
+
+    .item-meta {
+        font-size: 0.85rem;
+        color: #64748b;
+        display: flex;
+        gap: 15px;
+    }
+
+    .color-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        border: 1px solid #ddd;
+    }
+
+    .item-price {
+        text-align: end;
+    }
+
+    .price-val {
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: var(--d-primary);
+    }
+
+    .price-qty {
+        font-size: 0.85rem;
+        color: #94a3b8;
+    }
+
+    /* Summary & Sidebar */
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 0;
+        color: #475569;
+        font-size: 0.95rem;
+        border-bottom: 1px dashed #e2e8f0;
+    }
+
+        .summary-row.total {
+            border-top: 2px solid var(--d-primary);
+            border-bottom: none;
+            margin-top: 15px;
+            padding-top: 15px;
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--d-primary);
+            align-items: center;
+        }
+
+            .summary-row.total span:last-child {
+                color: var(--d-primary);
+            }
+
+    .sidebar-info {
+        padding: 25px;
+    }
+
+    .info-group {
+        margin-bottom: 25px;
+    }
+
+        .info-group h4 {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+    .info-text {
+        color: var(--d-primary);
+        font-weight: 600;
+        line-height: 1.6;
+        font-size: 0.95rem;
+    }
+
+    .btn-action {
+        display: block;
+        width: 100%;
+        padding: 15px;
+        border-radius: 12px;
+        text-align: center;
+        font-weight: 700;
+        text-decoration: none;
+        margin-bottom: 10px;
+        transition: 0.2s;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-reorder {
+        background: var(--d-primary);
+        color: #fff;
+        box-shadow: 0 4px 15px rgba(15, 23, 42, 0.3);
+    }
+
+        .btn-reorder:hover {
+            background: #1e293b;
+            transform: translateY(-2px);
+        }
+
+    .btn-invoice {
+        background: #fff;
+        color: var(--d-primary);
+        border: 2px solid var(--d-primary);
+    }
+
+        .btn-invoice:hover {
+            background: #f8fafc;
+        }
+
+    @@media (max-width: 992px) {
+        .details-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="order-details-page">
     <div class="container">
 
-        <div class="breadcrumb" style="margin-bottom:20px;">
-            <a asp-action="Index">@(isAr ? "سجل الطلبات" : "Order History")</a> / <span>#@Model.Id</span>
+        <div class="nav-bar fade-up">
+            <div class="page-head">
+                <h1>@(isAr ? "تفاصيل الطلب" : "Order Details") #@Model.Id</h1>
+                <span>@Model.OrderDate.ToString("dd MMMM yyyy - hh:mm tt")</span>
+            </div>
+            <a asp-action="Index" class="back-link">
+                <i class="fas @(isAr ? "fa-arrow-right" : "fa-arrow-left")"></i> @(isAr ? "العودة للطلبات" : "Back to Orders")
+            </a>
         </div>
 
-        <div class="order-summary-box new-design" style="margin-top:0; padding:0; overflow:hidden;">
-
-            <div style="padding:20px; border-bottom:1px solid #eee; background:#fff;">
-                <h3 style="margin:0; color:var(--primary);">@(isAr ? "تفاصيل الطلب" : "Order Details") #@Model.Id</h3>
-                <span style="color:#666; font-size:0.9rem;">@Model.OrderDate.ToString("dd MMMM yyyy, hh:mm tt")</span>
-            </div>
-
-            <!-- Tracking Bar (Custom Style for Client) -->
-            @if (Model.Status != "Cancelled")
-            {
-                <div style="padding:30px 20px; background:#fff; border-bottom:1px solid #eee;">
-                    <div style="display:flex; justify-content:space-between; position:relative; max-width:500px; margin:0 auto;">
-                        <div style="position:absolute; top:12px; left:0; width:100%; height:3px; background:#e2e8f0; z-index:0;"></div>
-                        <div style="position:absolute; top:12px; left:0; width:@((step - 1) * 33)%; height:3px; background:var(--success); z-index:0; transition:width 0.5s;"></div>
-
-                        <div style="z-index:1; text-align:center;">
-                            <div style="width:25px; height:25px; background:@(step >= 1 ? "var(--success)" : "#e2e8f0"); border-radius:50%; margin:0 auto 5px; color:#fff; display:flex; align-items:center; justify-content:center; font-size:0.7rem;"><i class="fas fa-check"></i></div>
-                            <span style="font-size:0.8rem; color:@(step >= 1 ? "#000" : "#999")">@(isAr ? "تم الطلب" : "Placed")</span>
-                        </div>
-                        <div style="z-index:1; text-align:center;">
-                            <div style="width:25px; height:25px; background:@(step >= 2 ? "var(--success)" : "#e2e8f0"); border-radius:50%; margin:0 auto 5px; color:#fff; display:flex; align-items:center; justify-content:center; font-size:0.7rem;"><i class="fas fa-box"></i></div>
-                            <span style="font-size:0.8rem; color:@(step >= 2 ? "#000" : "#999")">@(isAr ? "مؤكد" : "Confirmed")</span>
-                        </div>
-                        <div style="z-index:1; text-align:center;">
-                            <div style="width:25px; height:25px; background:@(step >= 3 ? "var(--success)" : "#e2e8f0"); border-radius:50%; margin:0 auto 5px; color:#fff; display:flex; align-items:center; justify-content:center; font-size:0.7rem;"><i class="fas fa-truck"></i></div>
-                            <span style="font-size:0.8rem; color:@(step >= 3 ? "#000" : "#999")">@(isAr ? "مشحون" : "Shipped")</span>
-                        </div>
-                        <div style="z-index:1; text-align:center;">
-                            <div style="width:25px; height:25px; background:@(step >= 4 ? "var(--success)" : "#e2e8f0"); border-radius:50%; margin:0 auto 5px; color:#fff; display:flex; align-items:center; justify-content:center; font-size:0.7rem;"><i class="fas fa-home"></i></div>
-                            <span style="font-size:0.8rem; color:@(step >= 4 ? "#000" : "#999")">@(isAr ? "مستلم" : "Delivered")</span>
-                        </div>
-                    </div>
-                </div>
-            }
-            else
-            {
-                <div style="padding:20px; background:#fee2e2; color:#dc2626; text-align:center; font-weight:bold;">
-                    <i class="fas fa-times-circle"></i> @(isAr ? "هذا الطلب ملغي" : "This order is cancelled")
-                </div>
-            }
-
-            <div class="checkout-items" style="max-height:none; padding:20px; background:#fff;">
-                @foreach (var item in Model.OrderItems)
+        <!-- Status Stepper -->
+        <div class="info-card fade-up">
+            <div class="stepper-wrapper">
+                @if (Model.Status == "Cancelled")
                 {
-                    <div class="c-item" style="border-bottom:1px solid #f5f5f5; padding-bottom:15px; margin-bottom:15px;">
-                        <img src="~/@item.Product?.ImageUrl" onerror="this.src='/images/default.png'" style="width:60px; height:60px; object-fit:contain; border:1px solid #eee; border-radius:8px;">
-                        <div>
-                            <h4 style="font-size:1rem; margin-bottom:5px;">@(isAr? item.Product?.Name : item.Product?.NameEn)</h4>
-                            <small style="color:#666;">@(isAr ? "الكمية" : "Qty"): <strong>@item.Quantity</strong> x @item.UnitPrice.ToString("N0")</small>
-                        </div>
-                        <span style="font-weight:bold; color:var(--primary);">@((item.Quantity * item.UnitPrice).ToString("N0"))</span>
+                    <div class="text-center text-danger">
+                        <i class="fas fa-times-circle fa-3x mb-3"></i>
+                        <h3>@(isAr ? "تم إلغاء هذا الطلب" : "This order has been cancelled")</h3>
+                    </div>
+                }
+                else
+                {
+                    <div class="stepper">
+                        @{
+                            string[] steps = { "Pending", "Confirmed", "Shipped", "Delivered" };
+                            string[] labelsAr = { "قيد المراجعة", "تم التأكيد", "تم الشحن", "تم التسليم" };
+                            string[] icons = { "fa-clock", "fa-check", "fa-truck", "fa-box-open" };
+
+                            for (int i = 0; i < steps.Length; i++)
+                            {
+                                var stepClass = "";
+                                if (i < currentStep) { stepClass = "completed"; }
+                                else if (i == currentStep) { stepClass = "active"; }
+
+                                <div class="step-item @stepClass">
+                                    <div class="step-circle"><i class="fas @icons[i]"></i></div>
+                                    <div class="step-label">@(isAr? labelsAr[i] : steps[i])</div>
+                                </div>
+                            }
+                        }
                     </div>
                 }
             </div>
+        </div>
 
-            <div style="background:#f9f9f9; padding:20px; border-top:1px solid #eee;">
-                <div class="cost-row">
-                    <span>@(isAr ? "عنوان التوصيل" : "Shipping Address")</span>
-                    <strong style="max-width:250px; text-align:@(isAr ? "left" : "right");">@Model.Governorate, @Model.City - @Model.Address</strong>
+        <div class="details-grid fade-up" style="animation-delay: 0.1s;">
+
+            <!-- Left: Items -->
+            <div class="left-col">
+                <div class="info-card">
+                    <div class="card-head">
+                        <h3><i class="fas fa-shopping-basket text-primary"></i> @(isAr ? "المنتجات" : "Items") <span class="badge bg-light text-dark ms-2">@Model.OrderItems.Count</span></h3>
+                    </div>
+                    <div>
+                        @foreach (var item in Model.OrderItems)
+                        {
+                            <div class="item-row">
+                                <img src="~/@item.Product?.ImageUrl" class="item-img" onerror="this.src='/images/default.png'">
+                                <div class="item-details">
+                                    <div class="item-name">@(isAr? item.Product?.Name : item.Product?.NameEn)</div>
+                                    <div class="item-meta">
+                                        <span>SKU: @item.Product?.SKU</span>
+                                        @if (!string.IsNullOrEmpty(item.SelectedColorHex))
+                                        {
+                                            <span class="d-flex align-items-center gap-1">
+                                                @(isAr ? "اللون:" : "Color:")
+                                                <span class="color-dot" style="background:@item.SelectedColorHex"></span>
+                                                @item.SelectedColorName
+                                            </span>
+                                        }
+                                        @if (item.Product?.UnitsPerCarton > 1)
+                                        {
+                                            <span class="text-warning"><i class="fas fa-box"></i> @item.Product.UnitsPerCarton pcs/carton</span>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="item-price">
+                                    <div class="price-val">@((item.UnitPrice * item.Quantity).ToString("N0")) <small>ج.م</small></div>
+                                    <div class="price-qty">@item.UnitPrice x @item.Quantity</div>
+                                </div>
+                            </div>
+                        }
+                    </div>
                 </div>
-                <div class="cost-row">
-                    <span>@(isAr ? "طريقة الدفع" : "Payment Method")</span>
-                    <strong>@(Model.PaymentMethod == "Cash" ? (isAr ? "دفع عند الاستلام" : "Cash") : (isAr ? "محفظة" : "Wallet"))</strong>
+            </div>
+
+            <!-- Right: Summary & Info -->
+            <div class="right-col">
+
+                <!-- Summary -->
+                <div class="info-card">
+                    <div class="card-head">
+                        <h3><i class="fas fa-file-invoice-dollar text-success"></i> @(isAr ? "ملخص الدفع" : "Payment Summary")</h3>
+                    </div>
+                    <div class="sidebar-info">
+                        <div class="summary-row">
+                            <span>@(isAr ? "المجموع الفرعي" : "Subtotal")</span>
+                            <span>@((Model.TotalAmount - Model.ShippingCost).ToString("N0"))</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>@(isAr ? "الشحن" : "Shipping")</span>
+                            <span>@Model.ShippingCost.ToString("N0")</span>
+                        </div>
+                        <div class="summary-row total">
+                            <span>@(isAr ? "الإجمالي" : "Total")</span>
+                            <span>@Model.TotalAmount.ToString("N0") <small style="font-size:0.9rem">@(isAr ? "ج.م" : "EGP")</small></span>
+                        </div>
+
+                        <div class="mt-4">
+                            <span class="badge @(Model.PaymentMethod == "Wallet" ? "bg-primary-subtle text-primary" : "bg-success-subtle text-success") w-100 py-2">
+                                <i class="fas @(Model.PaymentMethod == "Wallet" ? "fa-wallet" : "fa-money-bill") me-2"></i>
+                                @(isAr ? (Model.PaymentMethod == "Wallet" ? "تم الدفع بالمحفظة" : "دفع عند الاستلام") : Model.PaymentMethod)
+                            </span>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="summary-divider"></div>
+                <!-- Shipping Info -->
+                <div class="info-card">
+                    <div class="card-head">
+                        <h3><i class="fas fa-truck text-secondary"></i> @(isAr ? "معلومات التوصيل" : "Delivery Info")</h3>
+                    </div>
+                    <div class="sidebar-info">
+                        <div class="info-group">
+                            <h4>@(isAr ? "العنوان" : "Address")</h4>
+                            <div class="info-text">
+                                @Model.Address<br>
+                                @Model.City, @Model.Governorate
+                            </div>
+                        </div>
+                        <div class="info-group">
+                            <h4>@(isAr ? "المستلم" : "Receiver")</h4>
+                            <div class="info-text">
+                                <i class="fas fa-user me-1 text-muted"></i> @Model.CustomerName<br>
+                                <i class="fas fa-phone me-1 text-muted"></i> <a href="tel:@Model.Phone" class="text-decoration-none">@Model.Phone</a>
+                            </div>
+                        </div>
+                        @if (!string.IsNullOrEmpty(Model.Notes))
+                        {
+                            <div class="info-group">
+                                <h4>@(isAr ? "ملاحظات" : "Notes")</h4>
+                                <div class="info-text fst-italic text-muted">"@Model.Notes"</div>
+                            </div>
+                        }
+                    </div>
+                </div>
 
-                <div class="cost-row">
-                    <span>@(isAr ? "الشحن" : "Shipping")</span>
-                    <span>@Model.ShippingCost.ToString("N0")</span>
-                </div>
-                <div class="total-row" style="font-size:1.4rem;">
-                    <span>@(isAr ? "الإجمالي" : "Total")</span>
-                    <span>@Model.TotalAmount.ToString("N0") <small>@(isAr ? "ج.م" : "EGP")</small></span>
-                </div>
+                
+
             </div>
         </div>
 
     </div>
-</section>
+</div>
