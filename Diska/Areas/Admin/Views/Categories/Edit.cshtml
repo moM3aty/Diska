@@ -4,6 +4,7 @@
     Layout = "_AdminLayout";
 }
 
+<!-- نفس الستايل لتوحيد التصميم -->
 <style>
     .icon-grid {
         display: grid;
@@ -66,7 +67,7 @@
         <div class="card border-0 shadow-sm" style="border-radius: 16px;">
             <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 text-primary fw-bold">تعديل: @Model.Name</h5>
-                <a asp-action="Index" class="btn btn-sm btn-light border fw-bold text-muted">عودة</a>
+                <a asp-action="Index" class="btn btn-sm btn-light border fw-bold text-muted">إلغاء</a>
             </div>
 
             <div class="card-body p-4">
@@ -79,7 +80,7 @@
                         <div class="selected-icon-preview">
                             <i id="previewIcon" class="@(Model.IconClass ?? "fas fa-folder")"></i>
                         </div>
-                        <p class="text-muted small fw-bold">الأيقونة المختارة</p>
+                        <p class="text-muted small fw-bold">الأيقونة الحالية</p>
                     </div>
 
                     <div class="row g-3">
@@ -87,7 +88,6 @@
                         <div class="col-md-6">
                             <label class="form-label fw-bold small text-muted">الاسم (عربي)</label>
                             <input asp-for="Name" class="form-control" required />
-                            <span asp-validation-for="Name" class="text-danger small"></span>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold small text-muted">الاسم (إنجليزي)</label>
@@ -100,12 +100,14 @@
                             <select asp-for="ParentId" class="form-select" asp-items="ViewBag.Parents">
                                 <option value="">-- هذا قسم رئيسي --</option>
                             </select>
-                            <small class="text-muted" style="font-size: 0.75rem;">اتركه فارغاً إذا كان هذا قسماً رئيسياً.</small>
                         </div>
 
                         <!-- Icon Picker -->
                         <div class="col-12">
                             <label class="form-label fw-bold small text-muted">تغيير الأيقونة</label>
+                            <!-- Search Icons -->
+                            <input type="text" id="iconSearch" class="form-control mb-2 form-control-sm" placeholder="ابحث عن أيقونة..." onkeyup="filterIcons()">
+
                             <input type="hidden" asp-for="IconClass" id="IconClassInput">
                             <div class="icon-grid" id="iconGrid"></div>
                         </div>
@@ -113,7 +115,7 @@
                         <!-- Other Fields -->
                         <div class="col-md-6">
                             <label class="form-label fw-bold small text-muted">Slug (رابط)</label>
-                            <input asp-for="Slug" class="form-control bg-light" placeholder="auto-generated" />
+                            <input asp-for="Slug" class="form-control" />
                         </div>
                         <div class="col-md-3">
                             <label class="form-label fw-bold small text-muted">الترتيب</label>
@@ -145,60 +147,86 @@
 
 @section Scripts {
     <script>
+        // Expanded Icon List (Same as Create)
         const icons = [
-            // Electronics
-            'fas fa-laptop', 'fas fa-mobile-alt', 'fas fa-tv', 'fas fa-camera', 'fas fa-headphones',
-            'fas fa-print', 'fas fa-microchip', 'fas fa-gamepad', 'fas fa-plug', 'fas fa-battery-full',
-            'fas fa-keyboard', 'fas fa-mouse', 'fas fa-tablet-alt', 'fas fa-server', 'fas fa-wifi',
+             'fas fa-folder', 'fas fa-home', 'fas fa-bars', 'fas fa-star', 'fas fa-heart', 'fas fa-check',
+             'fas fa-cog', 'fas fa-user', 'fas fa-users', 'fas fa-search', 'fas fa-bell', 'fas fa-map-marker-alt',
 
-            // Fashion
-            'fas fa-tshirt', 'fas fa-user-tie', 'fas fa-shoe-prints', 'fas fa-hat-cowboy', 'fas fa-socks',
-            'fas fa-glasses', 'fas fa-gem', 'fas fa-vest', 'fas fa-shopping-bag', 'fas fa-mask',
+             'fas fa-laptop', 'fas fa-desktop', 'fas fa-mobile-alt', 'fas fa-tablet-alt', 'fas fa-tv',
+             'fas fa-camera', 'fas fa-video', 'fas fa-headphones', 'fas fa-microphone', 'fas fa-print',
+             'fas fa-plug', 'fas fa-battery-full', 'fas fa-microchip', 'fas fa-gamepad', 'fas fa-wifi',
+             'fas fa-server', 'fas fa-mouse', 'fas fa-keyboard', 'fas fa-hdd', 'fas fa-sd-card', 'fas fa-sim-card',
 
-            // Home & Furniture
-            'fas fa-couch', 'fas fa-bed', 'fas fa-chair', 'fas fa-lightbulb', 'fas fa-door-open',
-            'fas fa-bath', 'fas fa-shower', 'fas fa-toilet', 'fas fa-blender', 'fas fa-fan',
-            'fas fa-utensils', 'fas fa-mug-hot', 'fas fa-seedling', 'fas fa-box-open',
+             'fas fa-tshirt', 'fas fa-user-tie', 'fas fa-socks', 'fas fa-hat-cowboy', 'fas fa-hat-wizard',
+             'fas fa-glasses', 'fas fa-ring', 'fas fa-gem', 'fas fa-vest', 'fas fa-shopping-bag',
+             'fas fa-shoe-prints', 'fas fa-mask', 'fas fa-mitten', 'fas fa-stopwatch',
 
-            // Grocery
-            'fas fa-carrot', 'fas fa-apple-alt', 'fas fa-pizza-slice', 'fas fa-coffee', 'fas fa-ice-cream',
-            'fas fa-hamburger', 'fas fa-drumstick-bite', 'fas fa-fish', 'fas fa-egg', 'fas fa-cheese',
-            'fas fa-bread-slice', 'fas fa-pepper-hot', 'fas fa-leaf', 'fas fa-shopping-basket',
+             'fas fa-couch', 'fas fa-bed', 'fas fa-chair', 'fas fa-door-open', 'fas fa-door-closed',
+             'fas fa-bath', 'fas fa-shower', 'fas fa-toilet', 'fas fa-soap', 'fas fa-lightbulb',
+             'fas fa-fan', 'fas fa-blender', 'fas fa-utensils', 'fas fa-mug-hot', 'fas fa-glass-martini-alt',
+             'fas fa-box-open', 'fas fa-box', 'fas fa-seedling', 'fas fa-leaf', 'fas fa-fire',
 
-            // Health & Beauty
-            'fas fa-heartbeat', 'fas fa-pills', 'fas fa-first-aid', 'fas fa-stethoscope', 'fas fa-syringe',
-            'fas fa-tooth', 'fas fa-eye', 'fas fa-spa', 'fas fa-spray-can', 'fas fa-hand-sparkles',
+             'fas fa-shopping-basket', 'fas fa-cart-plus', 'fas fa-carrot', 'fas fa-apple-alt', 'fas fa-lemon',
+             'fas fa-pepper-hot', 'fas fa-pizza-slice', 'fas fa-hamburger', 'fas fa-hotdog', 'fas fa-drumstick-bite',
+             'fas fa-fish', 'fas fa-egg', 'fas fa-cheese', 'fas fa-bread-slice', 'fas fa-ice-cream',
+             'fas fa-cookie', 'fas fa-candy-cane', 'fas fa-coffee', 'fas fa-wine-bottle', 'fas fa-beer',
 
-            // Sports & Automotive
-            'fas fa-dumbbell', 'fas fa-bicycle', 'fas fa-futbol', 'fas fa-running', 'fas fa-swimmer',
-            'fas fa-car', 'fas fa-motorcycle', 'fas fa-truck-pickup', 'fas fa-oil-can', 'fas fa-tools',
-            'fas fa-wrench', 'fas fa-gas-pump', 'fas fa-tachometer-alt',
+             'fas fa-heartbeat', 'fas fa-stethoscope', 'fas fa-pills', 'fas fa-first-aid', 'fas fa-syringe',
+             'fas fa-thermometer', 'fas fa-eye', 'fas fa-tooth', 'fas fa-hand-holding-medical', 'fas fa-hospital',
+             'fas fa-spa', 'fas fa-cut', 'fas fa-spray-can', 'fas fa-pump-soap', 'fas fa-hand-sparkles',
 
-            // Others
-            'fas fa-baby', 'fas fa-book', 'fas fa-gift', 'fas fa-tag', 'fas fa-star', 'fas fa-folder'
-        ];
+             'fas fa-dumbbell', 'fas fa-bicycle', 'fas fa-futbol', 'fas fa-basketball-ball', 'fas fa-volleyball-ball',
+             'fas fa-football-ball', 'fas fa-golf-ball', 'fas fa-table-tennis', 'fas fa-running', 'fas fa-swimmer',
+             'fas fa-skating', 'fas fa-skiing', 'fas fa-snowboarding', 'fas fa-medal', 'fas fa-trophy',
+
+             'fas fa-car', 'fas fa-motorcycle', 'fas fa-truck', 'fas fa-bus', 'fas fa-taxi',
+             'fas fa-gas-pump', 'fas fa-oil-can', 'fas fa-tools', 'fas fa-wrench', 'fas fa-hammer',
+             'fas fa-screwdriver', 'fas fa-paint-roller', 'fas fa-brush', 'fas fa-ruler-combined', 'fas fa-tachometer-alt',
+
+             'fas fa-baby', 'fas fa-baby-carriage', 'fas fa-shapes', 'fas fa-puzzle-piece', 'fas fa-robot',
+             'fas fa-gamepad', 'fas fa-ghost', 'fas fa-dice', 'fas fa-chess-knight', 'fas fa-bicycle',
+
+             'fas fa-book', 'fas fa-pen', 'fas fa-pencil-alt', 'fas fa-eraser', 'fas fa-paperclip',
+             'fas fa-briefcase', 'fas fa-calculator', 'fas fa-calendar-alt', 'fas fa-envelope', 'fas fa-folder-open',
+
+             'fas fa-gift', 'fas fa-birthday-cake', 'fas fa-ribbon', 'fas fa-tags', 'fas fa-ticket-alt'
+         ];
 
         const grid = document.getElementById('iconGrid');
         const input = document.getElementById('IconClassInput');
         const preview = document.getElementById('previewIcon');
         const currentIcon = '@(Model.IconClass ?? "fas fa-folder")';
 
-        // Render Icons
-        icons.forEach(iconClass => {
-            const div = document.createElement('div');
-            div.className = 'icon-option';
-            if (currentIcon === iconClass) div.classList.add('active');
+        function renderIcons(filter = "") {
+            grid.innerHTML = "";
+            const current = input.value || currentIcon;
 
-            div.innerHTML = `<i class="${iconClass}"></i>`;
+            icons.forEach(iconClass => {
+                if (filter && !iconClass.includes(filter)) return;
 
-            div.onclick = function() {
-                document.querySelectorAll('.icon-option').forEach(el => el.classList.remove('active'));
-                this.classList.add('active');
-                input.value = iconClass;
-                preview.className = iconClass;
-            };
+                const div = document.createElement('div');
+                div.className = 'icon-option';
+                if (current === iconClass) div.classList.add('active');
 
-            grid.appendChild(div);
-        });
+                div.innerHTML = `<i class="${iconClass}"></i>`;
+                div.title = iconClass;
+
+                div.onclick = function() {
+                    document.querySelectorAll('.icon-option').forEach(el => el.classList.remove('active'));
+                    this.classList.add('active');
+                    input.value = iconClass;
+                    preview.className = iconClass;
+                };
+
+                grid.appendChild(div);
+            });
+        }
+
+        function filterIcons() {
+            const val = document.getElementById('iconSearch').value.toLowerCase();
+            renderIcons(val);
+        }
+
+        renderIcons();
     </script>
 }

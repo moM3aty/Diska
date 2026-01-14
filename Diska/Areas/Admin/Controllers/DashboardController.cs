@@ -1,12 +1,15 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Diska.Data;
+using Diska.Models;
+using Diska.Services;
 using Microsoft.AspNetCore.Authorization;
-using Diska.Data;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
-using System.Threading.Tasks;
 using System;
 using System.Collections.Generic;
-using Diska.Models;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Diska.Areas.Admin.Controllers
 {
@@ -15,10 +18,14 @@ namespace Diska.Areas.Admin.Controllers
     public class DashboardController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly INotificationService _notificationService;
 
-        public DashboardController(ApplicationDbContext context)
+        public DashboardController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, INotificationService notificationService)
         {
             _context = context;
+            _userManager = userManager;
+            _notificationService = notificationService;
         }
 
         // 1. الصفحة الرئيسية
@@ -85,7 +92,6 @@ namespace Diska.Areas.Admin.Controllers
             return View(orders);
         }
 
-        // 3. تفاصيل الطلب (تم التحديث لجلب ألوان المنتج أيضاً)
         public async Task<IActionResult> OrderDetails(int id)
         {
             var order = await _context.Orders
@@ -112,6 +118,90 @@ namespace Diska.Areas.Admin.Controllers
 
             TempData["Success"] = $"تم تحديث حالة الطلب #{id} إلى {status}";
             return RedirectToAction(nameof(OrderDetails), new { id = id });
+        }
+        [HttpPost]
+        public async Task<IActionResult> ExportOrdersToExcel(string status, string q, DateTime? date)
+        {
+            var query = _context.Orders.AsQueryable();
+            if (!string.IsNullOrEmpty(status)) query = query.Where(o => o.Status == status);
+            if (!string.IsNullOrEmpty(q)) query = query.Where(o => o.Id.ToString().Contains(q) || o.CustomerName.Contains(q));
+            if (date.HasValue) query = query.Where(o => o.OrderDate.Date == date.Value.Date);
+
+            var orders = await query.OrderByDescending(o => o.OrderDate).ToListAsync();
+            var builder = new StringBuilder();
+            builder.Append('\uFEFF');
+            builder.AppendLine("رقم الطلب,العميل,الهاتف,التاريخ,الحالة,طريقة الدفع,الإجمالي,العنوان");
+            foreach (var o in orders)
+            {
+                var line = string.Join(",", o.Id, EscapeCsv(o.CustomerName), EscapeCsv(o.Phone), o.OrderDate.ToString("yyyy-MM-dd HH:mm"), o.Status, o.PaymentMethod, o.TotalAmount, EscapeCsv($"{o.Governorate} - {o.City} - {o.Address}"));
+                builder.AppendLine(line);
+            }
+            return File(Encoding.UTF8.GetBytes(builder.ToString()), "text/csv", $"orders_report_{DateTime.Now:yyyyMMdd}.csv");
+        }
+
+        private string EscapeCsv(string field)
+        {
+            if (string.IsNullOrEmpty(field)) return "";
+            return $"\"{field.Replace("\"", "\"\"")}\"";
+        }
+        public async Task<IActionResult> Merchants(string q)
+        {
+
+
+            var merchants = await _userManager.GetUsersInRoleAsync("Merchant");
+
+            // تحويل لـ List للفلترة
+            var merchantsList = merchants.AsQueryable();
+
+            if (!string.IsNullOrEmpty(q))
+            {
+                merchantsList = merchantsList.Where(m =>
+                    (m.ShopName != null && m.ShopName.Contains(q)) ||
+                    (m.FullName != null && m.FullName.Contains(q)) ||
+                    (m.Email != null && m.Email.Contains(q)) ||
+                    (m.PhoneNumber != null && m.PhoneNumber.Contains(q))
+                );
+            }
+
+            // إحصائيات سريعة للصفحة
+            ViewBag.TotalCount = merchantsList.Count();
+            ViewBag.VerifiedCount = merchantsList.Count(m => m.IsVerifiedMerchant);
+            ViewBag.TotalBalance = merchantsList.Sum(m => m.WalletBalance);
+
+            return View(merchantsList.ToList());
+        }
+
+        // أكشن لتوثيق التاجر سريعاً
+        [HttpPost]
+        public async Task<IActionResult> VerifyMerchant(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user != null)
+            {
+                user.IsVerifiedMerchant = !user.IsVerifiedMerchant; // Toggle
+                await _userManager.UpdateAsync(user);
+                TempData["Success"] = user.IsVerifiedMerchant ? "تم توثيق التاجر بنجاح" : "تم إلغاء توثيق التاجر";
+            }
+            return RedirectToAction(nameof(Merchants));
+        }
+
+        public async Task<IActionResult> Messages()
+        {
+            var messages = await _context.ContactMessages.OrderByDescending(m => m.DateSent).ToListAsync();
+            return View(messages);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteMessage(int id)
+        {
+            var msg = await _context.ContactMessages.FindAsync(id);
+            if (msg != null)
+            {
+                _context.ContactMessages.Remove(msg);
+                await _context.SaveChangesAsync();
+                TempData["Success"] = "تم حذف الرسالة.";
+            }
+            return RedirectToAction(nameof(Messages));
         }
     }
 }

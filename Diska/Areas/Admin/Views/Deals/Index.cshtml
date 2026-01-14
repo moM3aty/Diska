@@ -1,104 +1,117 @@
 ﻿@model IEnumerable<Diska.Models.GroupDeal>
+@using System.Globalization
 @{
-    ViewData["Title"] = "إدارة الصفقات";
+    ViewData["Title"] = "إدارة العروض";
     Layout = "_AdminLayout";
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex justify-content-between align-items-center mb-4 fade-up">
     <div>
-        <h2 class="text-primary fw-bold mb-0">العروض والصفقات</h2>
-        <p class="text-muted small">إدارة الخصومات الجماعية وعروض الأقسام</p>
+        <h2 class="text-main fw-bold mb-0">إدارة العروض والصفقات</h2>
+        <p class="text-muted small">التحكم في الخصومات الجماعية وعروض المنتجات</p>
     </div>
-    <a asp-action="Create" class="btn btn-primary">
-        <i class="fas fa-plus"></i> إنشاء عرض جديد
+    <a asp-action="Create" class="btn btn-primary shadow-sm fw-bold px-4">
+        <i class="fas fa-plus me-2"></i> عرض جديد
     </a>
 </div>
 
-<div class="card border-0 shadow-sm">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light">
+<div class="card border-0 shadow-sm fade-up" style="animation-delay: 0.1s; border-radius: 16px; overflow: hidden;">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light">
+                <tr>
+                    <th class="ps-4 py-3 text-uppercase text-muted small fw-bold">العنوان</th>
+                    <th class="py-3 text-uppercase text-muted small fw-bold">ينطبق على</th>
+                    <th class="py-3 text-uppercase text-muted small fw-bold">قيمة الخصم</th>
+                    <th class="py-3 text-uppercase text-muted small fw-bold">التقدم (محجوز/هدف)</th>
+                    <th class="py-3 text-uppercase text-muted small fw-bold">التاريخ</th>
+                    <th class="py-3 text-uppercase text-muted small fw-bold">الحالة</th>
+                    <th class="text-end pe-4 py-3 text-uppercase text-muted small fw-bold">إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
                     <tr>
-                        <th class="ps-4">العنوان</th>
-                        <th>ينطبق على</th>
-                        <th>الخصم</th>
-                        <th>التقدم / الهدف</th>
-                        <th>الفترة</th>
-                        <th>الحالة</th>
-                        <th class="text-end pe-4">إجراءات</th>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="fas fa-tags fa-3x mb-3 opacity-25"></i>
+                            <p>لا توجد عروض نشطة حالياً.</p>
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-                    @if (!Model.Any())
-                    {
-                        <tr>
-                            <td colspan="7" class="text-center py-5 text-muted">
-                                <i class="fas fa-tags fa-3x mb-3 opacity-50"></i>
-                                <p>لا توجد صفقات نشطة حالياً</p>
-                            </td>
-                        </tr>
-                    }
-                    @foreach (var item in Model)
-                    {
-                        double progress = item.TargetQuantity > 0 ? (double)item.ReservedQuantity / item.TargetQuantity * 100 : 0;
-                        string statusBadge = item.Status switch { "Active" => "bg-success", "Scheduled" => "bg-info text-dark", "Expired" => "bg-warning text-dark", _ => "bg-secondary" };
+                }
+                @foreach (var item in Model)
+                {
+                    bool isActive = item.IsActive && item.EndDate >= DateTime.Now;
+                    double progress = item.TargetQuantity > 0 ? ((double)item.ReservedQuantity / item.TargetQuantity) * 100 : 0;
 
-                        <tr>
-                            <td class="ps-4 fw-bold">@item.Title</td>
-                            <td>
-                                @if (item.ProductId.HasValue)
-                                {
-                                    <div class="d-flex align-items-center">
-                                        <i class="fas fa-box text-primary me-2"></i>
-                                        <span>@(item.Product?.Name ?? "منتج محذوف")</span>
-                                    </div>
-                                }
-                                else if (item.CategoryId.HasValue)
-                                {
-                                    <div class="d-flex align-items-center">
-                                        <i class="fas fa-layer-group text-warning me-2"></i>
-                                        <span>@(item.Category?.Name ?? "قسم محذوف")</span>
-                                    </div>
-                                }
-                            </td>
-                            <td>
+                    <tr>
+                        <td class="ps-4 fw-bold text-main">@item.Title</td>
+                        <td>
+                            @if (item.ProductId.HasValue)
+                            {
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="bg-primary bg-opacity-10 text-primary rounded p-1"><i class="fas fa-box"></i></div>
+                                    <span class="small fw-bold">@(item.Product?.Name ?? "غير معروف")</span>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="bg-warning bg-opacity-10 text-warning rounded p-1"><i class="fas fa-layer-group"></i></div>
+                                    <span class="small fw-bold">@(item.Category?.Name ?? "غير معروف")</span>
+                                </div>
+                            }
+                        </td>
+                        <td>
+                            <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3">
                                 @if (item.IsPercentage)
                                 {
-                                    <span class="badge bg-danger">@item.DiscountValue.ToString("0")% خصم</span>
+                                    <span>%@item.DiscountValue</span>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-danger">@item.DiscountValue.ToString("N0") ج.م خصم</span>
-                                    <div class="small text-muted">السعر: @item.DealPrice.ToString("N0")</div>
+
+                                    <span>@item.DiscountValue.ToString("N0") ج.م</span>
                                 }
-                            </td>
-                            <td style="min-width: 150px;">
-                                <div class="d-flex justify-content-between small mb-1">
-                                    <span>@item.ReservedQuantity</span>
-                                    <span class="text-muted">/ @item.TargetQuantity</span>
-                                </div>
-                                <div class="progress" style="height: 6px;">
-                                    <div class="progress-bar bg-success" role="progressbar" style="width: @Math.Min(progress, 100)%;"></div>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="small"><i class="fas fa-calendar-alt text-muted me-1"></i> @item.EndDate.ToString("dd MMM")</div>
-                            </td>
-                            <td><span class="badge @statusBadge">@item.Status</span></td>
-                            <td class="text-end pe-4">
-                                <div class="btn-group">
-                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary"><i class="fas fa-edit"></i></a>
-                                    <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('حذف هذا العرض؟');">
-                                        <input type="hidden" name="id" value="@item.Id" />
-                                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
+                                OFF
+                            </span>
+                        </td>
+                        <td style="min-width: 140px;">
+                            <div class="d-flex justify-content-between small mb-1">
+                                <span class="fw-bold">@item.ReservedQuantity</span>
+                                <span class="text-muted">/ @item.TargetQuantity</span>
+                            </div>
+                            <div class="progress" style="height: 6px; border-radius: 3px;">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: @Math.Min(progress, 100)%;"></div>
+                            </div>
+                        </td>
+                        <td class="small text-muted">
+                            <div><i class="fas fa-calendar-alt me-1"></i> @item.StartDate.ToString("dd MMM")</div>
+                            <div><i class="fas fa-clock me-1"></i> @item.EndDate.ToString("dd MMM")</div>
+                        </td>
+                        <td>
+                            @if (isActive)
+                            {
+                                <span class="badge bg-success">نشط</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">منتهي</span>
+                            }
+                        </td>
+                        <td class="text-end pe-4">
+                            <div class="d-flex justify-content-end gap-2">
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-light border text-secondary"><i class="fas fa-edit"></i></a>
+                                <form asp-action="Delete" method="post" onsubmit="return confirm('حذف هذا العرض؟');" class="d-inline">
+                                    <input type="hidden" name="id" value="@item.Id" />
+                                    <button type="submit" class="btn btn-sm btn-light border text-danger"><i class="fas fa-trash"></i></button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     </div>
 </div>

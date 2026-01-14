@@ -1,118 +1,365 @@
 ﻿@model IEnumerable<Diska.Models.Banner>
+@using System.Globalization
 @{
     ViewData["Title"] = "إدارة البنرات";
     Layout = "_AdminLayout";
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h2 class="text-primary fw-bold mb-0">البنرات الإعلانية</h2>
-        <p class="text-muted small">التحكم في العروض والشرائح في الصفحة الرئيسية</p>
-    </div>
-    <a asp-action="Create" class="btn btn-primary">
-        <i class="fas fa-plus"></i> إضافة بنر جديد
-    </a>
-</div>
+<style>
+    /* --- Premium Banner Styles --- */
+    :root {
+        --b-card-bg: #ffffff;
+        --b-border: #f1f5f9;
+        --b-text: #0f172a;
+        --b-muted: #64748b;
+        --b-primary: #4f46e5;
+        --b-danger: #ef4444;
+        --b-success: #10b981;
+        --b-warning: #f59e0b;
+    }
 
-<div class="card border-0 shadow-sm">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light">
-                    <tr>
-                        <th class="ps-4">المعاينة</th>
-                        <th>العنوان</th>
-                        <th>الجدولة</th>
-                        <th>الربط</th>
-                        <th>الحالة</th>
-                        <th>الترتيب</th>
-                        <th class="text-end pe-4">إجراءات</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (!Model.Any())
-                    {
-                        <tr>
-                            <td colspan="7" class="text-center py-5 text-muted">
-                                <i class="fas fa-images fa-3x mb-3 opacity-50"></i>
-                                <p>لا توجد بنرات مضافة حتى الآن</p>
-                            </td>
-                        </tr>
-                    }
-                    @foreach (var item in Model)
-                    {
-                        string statusBadge = item.Status switch
-                        {
-                            "Active" => "bg-success",
-                            "Scheduled" => "bg-info text-dark",
-                            "Expired" => "bg-warning text-dark",
-                            _ => "bg-secondary"
-                        };
-                        string statusText = item.Status switch
-                        {
-                            "Active" => "نشط",
-                            "Scheduled" => "مجدول",
-                            "Expired" => "منتهي",
-                            _ => "معطل"
-                        };
+    [data-bs-theme="dark"] {
+        --b-card-bg: #1e293b;
+        --b-border: #334155;
+        --b-text: #f8fafc;
+        --b-muted: #94a3b8;
+    }
 
-                        <tr>
-                            <td class="ps-4">
-                                <div class="position-relative" style="width: 100px; height: 50px;">
-                                    <img src="~/@item.ImageDesktop" class="w-100 h-100 object-fit-cover rounded border" alt="Desktop">
-                                    <span class="position-absolute bottom-0 end-0 badge bg-dark opacity-75" style="font-size:0.6rem;">Desk</span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="fw-bold text-dark">@item.Title</div>
-                                <div class="small text-muted">@item.Subtitle</div>
-                            </td>
-                            <td>
-                                <div class="small"><i class="fas fa-play text-success me-1"></i> @item.StartDate.ToString("dd/MM/yy")</div>
-                                <div class="small"><i class="fas fa-stop text-danger me-1"></i> @item.EndDate.ToString("dd/MM/yy")</div>
-                            </td>
-                            <td>
-                                <span class="badge bg-light text-dark border">
-                                    @if (item.LinkType == "External")
-                                    {
-                                        <i class="fas fa-link"></i>
-                                    }
-                                    else if (item.LinkType == "Product")
-                                    {
+    .banner-card {
+        background: var(--b-card-bg);
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        border: 1px solid var(--b-border);
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
 
-                                        <i class="fas fa-box"></i>
-                                    }
-                                    else if (item.LinkType == "Category")
-                                    {
+        .banner-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px -5px rgba(0,0,0,0.08);
+            border-color: var(--b-primary);
+        }
 
-                                        <i class="fas fa-layer-group"></i>
-                                    }
-                                    @item.LinkType
-                                </span>
-                            </td>
-                            <td>
-                                <span class="badge @statusBadge">@statusText</span>
-                            </td>
-                            <td>
-                                <span class="fw-bold">@item.Priority</span>
-                            </td>
-                            <td class="text-end pe-4">
-                                <div class="btn-group">
-                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary" title="تعديل">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('هل أنت متأكد من حذف هذا البنر؟')">
-                                        <input type="hidden" name="id" value="@item.Id" />
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="حذف">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+    .banner-preview {
+        height: 100%;
+        background: #f8fafc;
+        position: relative;
+        overflow: hidden;
+        border-bottom: 1px solid var(--b-border);
+    }
+
+        .banner-preview img {
+            width: 100%;
+            height: 100%;
+            transition: transform 0.5s ease;
+        }
+
+    .banner-card:hover .banner-preview img {
+        transform: scale(1.05);
+    }
+
+    .banner-overlay {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        display: flex;
+        gap: 5px;
+    }
+
+    .device-badge {
+        background: rgba(0,0,0,0.6);
+        color: #fff;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .banner-body {
+        padding: 20px;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .banner-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--b-text);
+        margin-bottom: 5px;
+        line-height: 1.4;
+    }
+
+    .banner-subtitle {
+        font-size: 0.9rem;
+        color: var(--b-muted);
+        margin-bottom: 15px;
+        height: 20px; /* One line height */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .meta-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.8rem;
+        color: var(--b-muted);
+        margin-bottom: 15px;
+        padding-top: 15px;
+        border-top: 1px dashed var(--b-border);
+    }
+
+    .status-badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .st-Active {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--b-success);
+    }
+
+    .st-Scheduled {
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+    }
+
+    .st-Expired {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--b-warning);
+    }
+
+    .st-Inactive {
+        background: rgba(100, 116, 139, 0.1);
+        color: var(--b-muted);
+    }
+
+    .priority-badge {
+        background: #f1f5f9;
+        color: var(--b-text);
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 8px;
+        font-size: 0.8rem;
+    }
+
+    .banner-actions {
+        margin-top: auto;
+        display: flex;
+        gap: 10px;
+    }
+
+    .action-btn {
+        flex: 1;
+        padding: 10px;
+        border-radius: 10px;
+        border: 1px solid var(--b-border);
+        background: var(--b-card-bg);
+        color: var(--b-muted);
+        font-weight: 600;
+        text-align: center;
+        text-decoration: none;
+        transition: 0.2s;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    .btn-edit:hover {
+        background: var(--b-primary);
+        color: #fff;
+        border-color: var(--b-primary);
+    }
+
+    .btn-delete:hover {
+        background: #fef2f2;
+        color: var(--b-danger);
+        border-color: #fee2e2;
+    }
+
+    /* Grid Layout */
+    .banners-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 25px;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        color: var(--b-border);
+        margin-bottom: 20px;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .fade-up {
+        animation: fadeIn 0.4s ease-out;
+    }
+</style>
+
+<div class="container-fluid px-0">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 fade-up">
+        <div>
+            <h2 class="fw-bold mb-1 text-dark">@(isAr ? "إدارة البنرات" : "Banners Management")</h2>
+            <p class="text-muted small mb-0">@(isAr ? "التحكم في العروض والشرائح الإعلانية" : "Manage homepage sliders and promotional banners")</p>
         </div>
+        <a asp-action="Create" class="btn btn-primary shadow-sm fw-bold px-4 rounded-pill">
+            <i class="fas fa-plus me-2"></i> @(isAr ? "إضافة بنر" : "Add Banner")
+        </a>
     </div>
+
+    @if (!Model.Any())
+    {
+        <div class="card border-0 shadow-sm fade-up">
+            <div class="card-body empty-state">
+                <i class="fas fa-images empty-icon"></i>
+                <h4 class="fw-bold text-muted">@(isAr ? "لا توجد بنرات" : "No Banners Found")</h4>
+                <p class="text-muted mb-4">@(isAr ? "ابدأ بإضافة أول بنر إعلاني لمتجرك" : "Start by adding the first promotional banner to your store")</p>
+                <a asp-action="Create" class="btn btn-outline-primary rounded-pill px-4">
+                    @(isAr ? "إنشاء بنر جديد" : "Create New Banner")
+                </a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="banners-grid fade-up" style="animation-delay: 0.1s;">
+            @foreach (var item in Model.OrderBy(b => b.Priority))
+            {
+                string statusClass = "st-Inactive";
+                string statusLabel = isAr ? "معطل" : "Inactive";
+
+                if (item.IsActive)
+                {
+                    if (item.StartDate > DateTime.Now)
+                    {
+                        statusClass = "st-Scheduled";
+                        statusLabel = isAr ? "مجدول" : "Scheduled";
+                    }
+                    else if (item.EndDate < DateTime.Now)
+                    {
+                        statusClass = "st-Expired";
+                        statusLabel = isAr ? "منتهي" : "Expired";
+                    }
+                    else
+                    {
+                        statusClass = "st-Active";
+                        statusLabel = isAr ? "نشط" : "Active";
+                    }
+                }
+
+                <div class="banner-card">
+                    <div class="banner-preview">
+                        <img src="~/@item.ImageDesktop" onerror="this.src='/images/default-banner.png'" alt="@item.Title">
+                        <div class="banner-overlay">
+                            @if (!string.IsNullOrEmpty(item.ImageMobile))
+                            {
+                                <span class="device-badge"><i class="fas fa-mobile-alt"></i> Mobile</span>
+                            }
+                            <span class="device-badge"><i class="fas fa-desktop"></i> Desktop</span>
+                        </div>
+                    </div>
+
+                    <div class="banner-body">
+                        <h5 class="banner-title">@item.Title</h5>
+                        <p class="banner-subtitle">@item.Subtitle</p>
+
+                        <div class="meta-row">
+                            <span class="status-badge @statusClass">@statusLabel</span>
+                            <span class="priority-badge" title="@(isAr ? "الترتيب" : "Priority")">#@item.Priority</span>
+                        </div>
+
+                        <div class="small text-muted mb-3 d-flex align-items-center gap-2">
+                            <i class="fas fa-link text-primary"></i>
+                            <span class="text-truncate" style="max-width: 150px;">
+                                @(string.IsNullOrEmpty(item.LinkType) ? "No Link" : $"{item.LinkType}")
+                            </span>
+                        </div>
+
+                        <div class="small text-muted mb-3">
+                            <div><i class="far fa-calendar-check me-1 text-success"></i> @item.StartDate.ToString("dd MMM")</div>
+                            <div><i class="far fa-calendar-times me-1 text-danger"></i> @item.EndDate.ToString("dd MMM")</div>
+                        </div>
+
+                        <div class="banner-actions">
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="action-btn btn-edit">
+                                <i class="fas fa-edit"></i> @(isAr ? "تعديل" : "Edit")
+                            </a>
+                            <button type="button" class="action-btn btn-delete" onclick="confirmDelete(@item.Id, '@item.Title')">
+                                <i class="fas fa-trash"></i> @(isAr ? "حذف" : "Delete")
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
 </div>
+
+<!-- Hidden Form for Delete -->
+<form id="deleteBannerForm" asp-action="Delete" method="post" style="display:none;">
+    <input type="hidden" name="id" id="deleteBannerId" />
+</form>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        function confirmDelete(id, title) {
+            const isAr = '@isAr' === 'True';
+
+            Swal.fire({
+                title: isAr ? 'هل أنت متأكد؟' : 'Are you sure?',
+                text: isAr ? `سيتم حذف البنر "${title}" نهائياً!` : `Delete banner "${title}" permanently?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: isAr ? 'نعم، حذف' : 'Yes, delete',
+                cancelButtonText: isAr ? 'إلغاء' : 'Cancel',
+                reverseButtons: true,
+                customClass: {
+                    popup: 'rounded-4 shadow-lg'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('deleteBannerId').value = id;
+                    document.getElementById('deleteBannerForm').submit();
+                }
+            });
+        }
+    </script>
+}

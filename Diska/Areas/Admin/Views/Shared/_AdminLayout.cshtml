@@ -1,16 +1,30 @@
 ﻿@using Microsoft.AspNetCore.Identity
 @using System.Globalization
+@using System.Security.Claims
 @inject UserManager<Diska.Models.ApplicationUser> UserManager
 @{
-    var user = await UserManager.GetUserAsync(User);
-    var roles = user != null ? await UserManager.GetRolesAsync(user) : null;
-    var userRole = roles?.FirstOrDefault() ?? "Admin";
+    // Safer User Retrieval
+    Diska.Models.ApplicationUser user = null;
+    string userRole = "Admin";
+
+    if (User.Identity.IsAuthenticated)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId != null)
+        {
+            // Use FindById which is lighter than GetUserAsync usually
+            user = await UserManager.FindByIdAsync(userId);
+            if (user != null)
+            {
+                var roles = await UserManager.GetRolesAsync(user);
+                userRole = roles.FirstOrDefault() ?? "Admin";
+            }
+        }
+    }
 
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
     string dir = isAr ? "rtl" : "ltr";
     string lang = isAr ? "ar" : "en";
-
-    // قراءة الثيم المفضل من الكوكيز لتطبيقه فوراً عند التحميل
     string currentTheme = Context.Request.Cookies["theme"] ?? "light";
 }
 <!DOCTYPE html>
@@ -33,11 +47,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/admin-style.css" asp-append-version="true">
 
     <style>
         /* =========================================
-                   DISKA Admin Panel - Embedded Elite Styles
-                   ========================================= */
+                             DISKA Admin Panel - Embedded Elite Styles
+                             ========================================= */
         :root {
             --bg-body: #f8fafc;
             --bg-card: #ffffff;
@@ -128,7 +143,7 @@
             }
 
         .sidebar-menu {
-            padding: 15px 12px;
+            padding: 15px 12px 50px;
         }
 
         .menu-label {
@@ -299,19 +314,17 @@
             padding: 30px;
             animation: fadeInUp 0.5s ease-out;
         }
+
         @@keyframes fadeInUp {
-            from
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
 
-        {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         /* Cards */
@@ -322,126 +335,146 @@
             box-shadow: var(--shadow-sm);
         }
 
-        /* Mobile */
-        @@media (max-width: 992px) {
-            .sidebar
-
-        {
+        /* Sidebar Backdrop for Mobile */
+        .sidebar-backdrop {
             position: fixed;
-            left: 0;
             top: 0;
+            left: 0;
+            right: 0;
             bottom: 0;
-            transform: translateX(100%);
-        }
-        /* RTL Hidden */
-        html[dir="ltr"] .sidebar {
-            transform: translateX(-100%);
-        }
-
-        .sidebar.show {
-            transform: translateX(0);
+            background: rgba(0,0,0,0.5);
+            z-index: 1040;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
 
-        .top-navbar {
-            padding: 0 20px;
-        }
+            .sidebar-backdrop.show {
+                display: block;
+                opacity: 1;
+            }
 
+        /* Mobile Responsive Sidebar Fixes */
+        @@media (max-width: 992px) {
+            .sidebar {
+                position: fixed;
+                top: 0;
+                bottom: 0;
+                width: 260px;
+                z-index: 1050;
+                /* Anchor to the correct side based on language direction */
+                @(isAr ? "right: 0;" : "left: 0;")
+                /* Start hidden */
+                transform: translateX( @(isAr ? "100%" : "-100%") );
+            }
+
+                .sidebar.show {
+                    /* Slide in to view */
+                    transform: translateX(0);
+                    box-shadow: 0 0 50px rgba(0,0,0,0.5);
+                }
+
+            .top-navbar {
+                padding: 0 20px;
+            }
+
+            .content-body {
+                padding: 20px 15px;
+            }
+
+            .user-info {
+                display: none !important;
+            }
         }
     </style>
 </head>
 <body>
 
-    <!-- Main Wrapper -->
     <div class="app-container">
 
+        <!-- Sidebar Backdrop -->
+        <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar()"></div>
+
         <!-- Sidebar -->
-            <nav class="sidebar flex-shrink-0" id="sidebar">
-                <div class="sidebar-header">
-                    <h3>DISKA <span style="color:var(--accent); font-size:0.5em; vertical-align:middle;">Admin</span></h3>
-                </div>
+        <nav class="sidebar flex-shrink-0" id="sidebar">
+            <div class="sidebar-header">
+                <h3>DISKA <span style="color:var(--accent); font-size:0.5em; vertical-align:middle;">PRO</span></h3>
+            </div>
 
-                <div class="sidebar-menu">
-                    <div class="menu-label">@(isAr ? "الرئيسية" : "Main")</div>
+            <div class="sidebar-menu">
+                <div class="menu-label">@(isAr ? "الرئيسية" : "Main")</div>
+                <a href="/Admin/Dashboard" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Dashboard" && ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")">
+                    <i class="fas fa-th-large"></i> <span>@(isAr ? "لوحة القيادة" : "Dashboard")</span>
+                </a>
+                <a href="/Admin/Approvals" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Approvals" ? "active" : "")">
+                    <i class="fas fa-check-double"></i> <span>@(isAr ? "الموافقات" : "Approvals")</span>
+                </a>
 
-                    <a href="/Admin/Dashboard" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Dashboard" && ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")">
-                        <i class="fas fa-th-large"></i> <span>@(isAr ? "لوحة القيادة" : "Dashboard")</span>
-                    </a>
+                <div class="menu-label">@(isAr ? "إدارة المتجر" : "Shop Management")</div>
+                <a href="/Admin/Products" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Products" ? "active" : "")">
+                    <i class="fas fa-box"></i> <span>@(isAr ? "المنتجات" : "Products")</span>
+                </a>
+                <a href="/Admin/Categories" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Categories" ? "active" : "")">
+                    <i class="fas fa-layer-group"></i> <span>@(isAr ? "الأقسام" : "Categories")</span>
+                </a>
+                <a href="/Admin/Deals" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Deals" ? "active" : "")">
+                    <i class="fas fa-tags"></i> <span>@(isAr ? "العروض" : "Deals")</span>
+                </a>
+                <a href="/Admin/Banners" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Banners" ? "active" : "")">
+                    <i class="fas fa-images"></i> <span>@(isAr ? "البنرات" : "Banners")</span>
+                </a>
 
-                    <a href="/Admin/Approvals" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Approvals" ? "active" : "")">
-                        <i class="fas fa-check-double"></i> <span>@(isAr ? "الموافقات" : "Approvals")</span>
-                    </a>
+                <div class="menu-label">@(isAr ? "العمليات" : "Operations")</div>
+                <a href="/Admin/Dashboard/Orders" class="sidebar-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Orders" ? "active" : "")">
+                    <i class="fas fa-shopping-bag"></i> <span>@(isAr ? "إدارة الطلبات" : "Orders")</span>
+                </a>
+                <a href="/Admin/Restock" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Restock" ? "active" : "")">
+                    <i class="fas fa-cubes"></i> <span>@(isAr ? "نواقص المخزون" : "Stock Alerts")</span>
+                </a>
+                <a href="/Admin/Requests" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Requests" ? "active" : "")">
+                    <i class="fas fa-bullhorn"></i> <span>@(isAr ? "طلبات خاصة" : "Special Requests")</span>
+                </a>
+                <a href="/Admin/Reviews" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Reviews" ? "active" : "")">
+                    <i class="fas fa-star"></i> <span>@(isAr ? "التقييمات" : "Reviews")</span>
+                </a>
 
-                    <div class="menu-label">@(isAr ? "إدارة المتجر" : "Shop Management")</div>
+                <div class="menu-label">@(isAr ? "المستخدمين" : "Users")</div>
+                <a href="/Admin/Users" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Users" ? "active" : "")">
+                    <i class="fas fa-users"></i> <span>@(isAr ? "المستخدمين" : "Users")</span>
+                </a>
+                <a href="/Admin/Dashboard/Merchants" class="sidebar-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Merchants" ? "active" : "")">
+                    <i class="fas fa-store"></i> <span>@(isAr ? "التجار" : "Merchants")</span>
+                </a>
+                <a href="/Admin/Wallet" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Wallet" ? "active" : "")">
+                    <i class="fas fa-wallet"></i> <span>@(isAr ? "المحفظة" : "Wallet")</span>
+                </a>
 
-                    <a href="/Admin/Products" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Products" ? "active" : "")">
-                        <i class="fas fa-box"></i> <span>@(isAr ? "المنتجات" : "Products")</span>
-                    </a>
-                    <a href="/Admin/Categories" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Categories" ? "active" : "")">
-                        <i class="fas fa-layer-group"></i> <span>@(isAr ? "الأقسام" : "Categories")</span>
-                    </a>
-                    <a href="/Admin/Deals" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Deals" ? "active" : "")">
-                        <i class="fas fa-tags"></i> <span>@(isAr ? "العروض والصفقات" : "Deals")</span>
-                    </a>
-                    <a href="/Admin/Banners" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Banners" ? "active" : "")">
-                        <i class="fas fa-images"></i> <span>@(isAr ? "البنرات الإعلانية" : "Banners")</span>
-                    </a>
-
-                    <div class="menu-label">@(isAr ? "العمليات" : "Operations")</div>
-
-                    <a href="/Admin/Dashboard/Orders" class="sidebar-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Orders" ? "active" : "")">
-                        <i class="fas fa-shopping-bag"></i> <span>@(isAr ? "إدارة الطلبات" : "Orders")</span>
-                    </a>
-                    <a href="/Admin/Restock" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Restock" ? "active" : "")">
-                        <i class="fas fa-cubes"></i> <span>@(isAr ? "نواقص المخزون" : "Stock Alerts")</span>
-                    </a>
-                    <a href="/Admin/Requests" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Requests" ? "active" : "")">
-                        <i class="fas fa-bullhorn"></i> <span>@(isAr ? "طلبات خاصة" : "Special Requests")</span>
-                    </a>
-                    <a href="/Admin/Reviews" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Reviews" ? "active" : "")">
-                        <i class="fas fa-star"></i> <span>@(isAr ? "التقييمات" : "Reviews")</span>
-                    </a>
-
-                    <div class="menu-label">@(isAr ? "المستخدمين والمالية" : "Users & Finance")</div>
-
-                    <a href="/Admin/Users" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Users" ? "active" : "")">
-                        <i class="fas fa-users"></i> <span>@(isAr ? "المستخدمين" : "Users")</span>
-                    </a>
-                    <a href="/Admin/Dashboard/Merchants" class="sidebar-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Merchants" ? "active" : "")">
-                        <i class="fas fa-store"></i> <span>@(isAr ? "التجار" : "Merchants")</span>
-                    </a>
-                    <a href="/Admin/Wallet" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Wallet" ? "active" : "")">
-                        <i class="fas fa-wallet"></i> <span>@(isAr ? "المحفظة المالية" : "Wallet")</span>
-                    </a>
-
-                    <div class="menu-label">@(isAr ? "النظام" : "System")</div>
-
-                    <a href="/Admin/Reports" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Reports" ? "active" : "")">
-                        <i class="fas fa-chart-pie"></i> <span>@(isAr ? "التقارير" : "Reports")</span>
-                    </a>
-                    <a href="/Admin/Survey" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Survey" ? "active" : "")">
-                        <i class="fas fa-poll"></i> <span>@(isAr ? "الاستبيانات" : "Surveys")</span>
-                    </a>
-                    <a href="/Admin/Audit" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Audit" ? "active" : "")">
-                        <i class="fas fa-fingerprint"></i> <span>@(isAr ? "سجل التدقيق" : "Audit Logs")</span>
-                    </a>
-                    <a href="/Admin/Dashboard/Messages" class="sidebar-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Messages" ? "active" : "")">
-                        <i class="fas fa-envelope"></i> <span>@(isAr ? "الرسائل والدعم" : "Messages")</span>
-                    </a>
-                    <a href="/Admin/Settings" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Settings" ? "active" : "")">
-                        <i class="fas fa-cog"></i> <span>@(isAr ? "الإعدادات" : "Settings")</span>
-                    </a>
-                </div>
-            </nav>
+                <div class="menu-label">@(isAr ? "النظام" : "System")</div>
+                <a href="/Admin/Reports" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Reports" ? "active" : "")">
+                    <i class="fas fa-chart-pie"></i> <span>@(isAr ? "التقارير" : "Reports")</span>
+                </a>
+                <a href="/Admin/Survey" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Survey" ? "active" : "")">
+                    <i class="fas fa-poll"></i> <span>@(isAr ? "الاستبيانات" : "Surveys")</span>
+                </a>
+                <a href="/Admin/Audit" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Audit" ? "active" : "")">
+                    <i class="fas fa-fingerprint"></i> <span>@(isAr ? "سجل التدقيق" : "Audit Logs")</span>
+                </a>
+                <a href="/Admin/Dashboard/Messages" class="sidebar-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Messages" ? "active" : "")">
+                    <i class="fas fa-envelope"></i> <span>@(isAr ? "الرسائل" : "Messages")</span>
+                </a>
+                <a href="/Admin/Settings" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Settings" ? "active" : "")">
+                    <i class="fas fa-cog"></i> <span>@(isAr ? "الإعدادات" : "Settings")</span>
+                </a>
+            </div>
+        </nav>
 
         <!-- Main Content -->
-        <div class="main-content">
-            <!-- Top Navbar -->
+        <div class="main-content flex-grow-1 min-vw-0">
             <header class="top-navbar">
                 <div class="d-flex align-items-center gap-3">
-                    <button class="btn btn-icon btn-outline d-lg-none" onclick="document.getElementById('sidebar').classList.toggle('show')">
+                    <button class="btn btn-icon btn-outline d-lg-none" onclick="toggleSidebar()">
                         <i class="fas fa-bars"></i>
                     </button>
-
                     <form action="/Admin/Search" method="get" class="header-search d-none d-md-block">
                         <i class="fas fa-search"></i>
                         <input type="text" name="q" placeholder="@(isAr ? "بحث شامل..." : "Global Search...")">
@@ -449,36 +482,21 @@
                 </div>
 
                 <div class="d-flex align-items-center gap-3">
-                    <!-- Notifications -->
-                    <div class="dropdown">
-                        <button class="btn btn-icon btn-outline position-relative border-0 bg-transparent" data-bs-toggle="dropdown">
-                            <i class="far fa-bell"></i>
-                            <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-2" style="width: 280px;">
-                            <li><h6 class="dropdown-header">الإشعارات</h6></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-center small text-muted" href="#">لا توجد إشعارات جديدة</a></li>
-                        </ul>
-                    </div>
-
-                    <!-- Theme Toggle -->
                     <button class="btn btn-icon btn-outline border-0 bg-transparent" id="themeToggle" title="Theme">
                         <i class="fas @(currentTheme == "dark" ? "fa-sun" : "fa-moon")"></i>
                     </button>
 
-                    <!-- Profile -->
                     <div class="dropdown">
                         <div class="user-profile" data-bs-toggle="dropdown">
-                            <div class="avatar-circle">@user?.FullName?.FirstOrDefault()</div>
+                            <div class="avatar-circle">@(user?.FullName?.FirstOrDefault() ?? 'U')</div>
                             <div class="user-info d-none d-md-block">
-                                <span class="d-block fw-bold" style="font-size:0.9rem">@user?.FullName?.Split(' ')[0]</span>
+                                <span class="d-block fw-bold" style="font-size:0.9rem">@(user?.FullName?.Split(' ')[0] ?? "User")</span>
                                 <span class="d-block text-muted" style="font-size:0.75rem">@userRole</span>
                             </div>
                             <i class="fas fa-chevron-down small text-muted ms-2"></i>
                         </div>
                         <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
-                            <li><a class="dropdown-item py-2" href="/Profile/Index"><i class="far fa-user me-2"></i> الملف الشخصي</a></li>
+                            <li><a class="dropdown-item py-2" href="/Account/Profile"><i class="far fa-user me-2"></i> الملف الشخصي</a></li>
                             <li><a class="dropdown-item py-2" href="/"><i class="fas fa-globe me-2"></i> عرض الموقع</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item py-2 text-danger" href="/Account/Logout"><i class="fas fa-sign-out-alt me-2"></i> خروج</a></li>
@@ -487,9 +505,7 @@
                 </div>
             </header>
 
-            <!-- Content Body -->
             <div class="content-body">
-                <!-- Alerts -->
                 @if (TempData["Success"] != null)
                 {
                     <div class="alert alert-success fade show" role="alert">
@@ -506,28 +522,32 @@
                         <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
                     </div>
                 }
-
                 @RenderBody()
             </div>
         </div>
     </div>
 
-    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        // Dark Mode Logic
         const toggleBtn = document.getElementById('themeToggle');
         const html = document.documentElement;
 
         toggleBtn.addEventListener('click', () => {
             const currentTheme = html.getAttribute('data-bs-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-
             html.setAttribute('data-bs-theme', newTheme);
             toggleBtn.innerHTML = newTheme === 'dark' ? '<i class="fas fa-sun text-warning"></i>' : '<i class="far fa-moon"></i>';
             document.cookie = `theme=${newTheme}; path=/; max-age=31536000`;
         });
+
+        // Mobile Sidebar Toggle Logic
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            sidebar.classList.toggle('show');
+            backdrop.classList.toggle('show');
+        }
     </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

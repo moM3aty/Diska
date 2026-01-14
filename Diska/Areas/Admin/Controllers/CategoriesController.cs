@@ -24,7 +24,7 @@ namespace Diska.Areas.Admin.Controllers
         public async Task<IActionResult> Index()
         {
             var categories = await _context.Categories
-                .Include(c => c.Parent) // Corrected from ParentCategory
+                .Include(c => c.Parent)
                 .OrderBy(c => c.ParentId)
                 .ThenBy(c => c.DisplayOrder)
                 .ToListAsync();
@@ -44,21 +44,24 @@ namespace Diska.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Category model)
         {
-            // Remove validation for navigation properties
             ModelState.Remove(nameof(model.Parent));
             ModelState.Remove(nameof(model.Children));
             ModelState.Remove(nameof(model.Products));
+            ModelState.Remove(nameof(model.ImageUrl));
+            ModelState.Remove(nameof(model.MetaTitle));
 
             if (ModelState.IsValid)
             {
+                // القيم الافتراضية
                 if (string.IsNullOrEmpty(model.IconClass)) model.IconClass = "fas fa-folder";
-
-                // Fix: Set default ImageUrl to satisfy DB NOT NULL constraint
-                // Since images are removed from UI, we store a placeholder path
-                model.ImageUrl = "images/default-category.png";
+                if (string.IsNullOrEmpty(model.ImageUrl)) model.ImageUrl = "images/default-category.png";
 
                 if (string.IsNullOrEmpty(model.Slug))
                     model.Slug = (model.NameEn ?? model.Name).ToLower().Replace(" ", "-");
+
+                // حل مشكلة الحقول الإلزامية الفارغة (SEO)
+                if (string.IsNullOrEmpty(model.MetaTitle)) model.MetaTitle = model.Name;
+                if (string.IsNullOrEmpty(model.MetaDescription)) model.MetaDescription = model.Name;
 
                 _context.Categories.Add(model);
                 await _context.SaveChangesAsync();
@@ -77,7 +80,6 @@ namespace Diska.Areas.Admin.Controllers
             var category = await _context.Categories.FindAsync(id);
             if (category == null) return NotFound();
 
-            // Pass ID to exclude it from parent list (category cannot be its own parent)
             PrepareParentDropdown(category.ParentId, id);
             return View(category);
         }
@@ -89,16 +91,16 @@ namespace Diska.Areas.Admin.Controllers
         {
             if (id != model.Id) return NotFound();
 
-            // Remove validation for navigation properties
             ModelState.Remove(nameof(model.Parent));
             ModelState.Remove(nameof(model.Children));
             ModelState.Remove(nameof(model.Products));
+            ModelState.Remove("ImageUrl");
+            ModelState.Remove("MetaTitle");
 
             if (ModelState.IsValid)
             {
                 try
                 {
-                    // Check that parent is not the category itself
                     if (model.ParentId == model.Id)
                     {
                         ModelState.AddModelError("ParentId", "لا يمكن للقسم أن يكون أباً لنفسه");
@@ -106,12 +108,16 @@ namespace Diska.Areas.Admin.Controllers
                         return View(model);
                     }
 
-                    // Fix: Ensure ImageUrl is not null during update
-                    // We set it to placeholder if it comes null from the form
-                    if (string.IsNullOrEmpty(model.ImageUrl))
-                    {
-                        model.ImageUrl = "images/default-category.png";
-                    }
+                    
+                    if (string.IsNullOrEmpty(model.IconClass)) model.IconClass = "fas fa-folder";
+                    if (string.IsNullOrEmpty(model.ImageUrl)) model.ImageUrl = "images/default-category.png";
+
+                    if (string.IsNullOrEmpty(model.Slug))
+                        model.Slug = (model.NameEn ?? model.Name).ToLower().Replace(" ", "-");
+
+                    
+                    if (string.IsNullOrEmpty(model.MetaTitle)) model.MetaTitle = model.Name;
+                    if (string.IsNullOrEmpty(model.MetaDescription)) model.MetaDescription = model.Name;
 
                     _context.Update(model);
                     await _context.SaveChangesAsync();
@@ -137,7 +143,6 @@ namespace Diska.Areas.Admin.Controllers
             var category = await _context.Categories.FindAsync(id);
             if (category != null)
             {
-                // Note: Database cascade delete or SetNull behavior applies here for subcategories/products
                 _context.Categories.Remove(category);
                 await _context.SaveChangesAsync();
                 TempData["Success"] = "تم حذف القسم";
@@ -145,20 +150,16 @@ namespace Diska.Areas.Admin.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // Helper: Prepare Parent Category Dropdown
         private void PrepareParentDropdown(int? selectedId = null, int? excludeId = null)
         {
             var query = _context.Categories.AsQueryable();
 
-            // Exclude current category when editing to prevent circular reference
             if (excludeId.HasValue)
             {
                 query = query.Where(c => c.Id != excludeId.Value);
             }
 
             var parents = query.OrderBy(c => c.Name).ToList();
-
-            // Add "Main Category" option (no parent)
             ViewBag.Parents = new SelectList(parents, "Id", "Name", selectedId);
         }
     }

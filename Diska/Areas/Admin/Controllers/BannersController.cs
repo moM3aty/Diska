@@ -42,6 +42,8 @@ namespace Diska.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Banner banner, IFormFile desktopFile, IFormFile mobileFile)
         {
+            ModelState.Remove("ImageMobile");
+            ModelState.Remove("ImageDesktop");
             if (ModelState.IsValid)
             {
                 // رفع الصور
@@ -75,7 +77,8 @@ namespace Diska.Areas.Admin.Controllers
         public async Task<IActionResult> Edit(int id, Banner banner, IFormFile desktopFile, IFormFile mobileFile)
         {
             if (id != banner.Id) return NotFound();
-
+            ModelState.Remove("ImageMobile");
+            ModelState.Remove("ImageDesktop");
             if (ModelState.IsValid)
             {
                 try

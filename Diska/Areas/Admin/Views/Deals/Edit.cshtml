@@ -1,95 +1,173 @@
 ﻿@model Diska.Models.GroupDeal
 @{
-    ViewData["Title"] = "تعديل الصفقة";
+    ViewData["Title"] = "تعديل العرض";
     Layout = "_AdminLayout";
-    string applyTo = Model.CategoryId.HasValue ? "Category" : "Product";
+    string scope = Model.CategoryId.HasValue ? "Category" : "Product";
 }
 
-<div class="row justify-content-center">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    /* Same styles as Create */
+    .select2-container .select2-selection--single {
+        height: 45px;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        background-color: #f8fafc;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 43px;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        color: #334155;
+        font-weight: 600;
+        padding-left: 15px;
+    }
+
+    .select2-dropdown {
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    .form-label {
+        font-weight: 700;
+        color: #334155;
+        font-size: 0.9rem;
+    }
+
+    .form-control, .form-select {
+        padding: 12px;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+    }
+
+        .form-control:focus, .form-select:focus {
+            background: #fff;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+
+    .scope-btn {
+        width: 100%;
+        padding: 15px;
+        border-radius: 12px;
+        font-weight: 700;
+        border: 2px solid #e2e8f0;
+        background: #fff;
+        color: #64748b;
+        transition: 0.2s;
+    }
+
+        .scope-btn.active {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: #eff6ff;
+        }
+
+        .scope-btn i {
+            font-size: 1.5rem;
+            display: block;
+            margin-bottom: 5px;
+        }
+</style>
+
+<div class="row justify-content-center fade-up">
     <div class="col-lg-8">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 text-primary">تعديل: @Model.Title</h5>
-                <a asp-action="Index" class="btn btn-sm btn-outline-secondary">إلغاء</a>
+        <div class="card border-0 shadow-sm" style="border-radius: 16px;">
+            <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-primary fw-bold">تعديل: @Model.Title</h5>
+                <a asp-action="Index" class="btn btn-sm btn-light border fw-bold text-muted">إلغاء</a>
             </div>
+
             <div class="card-body p-4">
-                <form asp-action="Edit" method="post">
+                <form asp-controller="Deals" asp-action="Edit" method="post">
                     <input type="hidden" asp-for="Id" />
                     <input type="hidden" asp-for="ReservedQuantity" />
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-                    <div class="form-group mb-4">
-                        <label asp-for="Title" class="form-label">عنوان العرض</label>
-                        <input asp-for="Title" class="form-control" required />
+                    <div class="mb-4">
+                        <label class="form-label mb-2">ينطبق على:</label>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <button type="button" class="scope-btn @(scope == "Product" ? "active" : "")" id="btnProduct" onclick="setScope('Product')">
+                                    <i class="fas fa-box"></i> منتج محدد
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button type="button" class="scope-btn @(scope == "Category" ? "active" : "")" id="btnCategory" onclick="setScope('Category')">
+                                    <i class="fas fa-layer-group"></i> قسم كامل
+                                </button>
+                            </div>
+                        </div>
+                        <input type="hidden" name="ApplyTo" id="ApplyToInput" value="@scope">
+                    </div>
+
+                    <div class="mb-4" id="divProduct" style="display:@(scope == "Product" ? "block" : "none");">
+                        <label class="form-label">اختر المنتج</label>
+                        <select asp-for="ProductId" class="form-control select2-search" asp-items="ViewBag.ProductId" style="width:100%;">
+                            <option value="">-- ابحث واختر المنتج --</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4" id="divCategory" style="display:@(scope == "Category" ? "block" : "none");">
+                        <label class="form-label">اختر القسم</label>
+                        <select asp-for="CategoryId" class="form-control select2-search" asp-items="ViewBag.CategoryId" style="width:100%;">
+                            <option value="">-- ابحث واختر القسم --</option>
+                        </select>
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label fw-bold d-block mb-2">ينطبق على:</label>
-                        <div class="btn-group w-100" role="group">
-                            <input type="radio" class="btn-check" name="ApplyTo" id="applyProduct" value="Product" @(applyTo == "Product" ? "checked" : "") onchange="toggleScope()">
-                            <label class="btn btn-outline-primary" for="applyProduct"><i class="fas fa-box me-2"></i> منتج</label>
-
-                            <input type="radio" class="btn-check" name="ApplyTo" id="applyCategory" value="Category" @(applyTo == "Category" ? "checked" : "") onchange="toggleScope()">
-                            <label class="btn btn-outline-primary" for="applyCategory"><i class="fas fa-layer-group me-2"></i> قسم</label>
-                        </div>
-                    </div>
-
-                    <div id="productSelectDiv" class="mb-4" style="@(applyTo == "Product" ? "" : "display:none;")">
-                        <label class="form-label">اختر المنتج</label>
-                        <select asp-for="ProductId" class="form-select" asp-items="ViewBag.Products">
-                            <option value="">-- اختر --</option>
-                        </select>
-                    </div>
-
-                    <div id="categorySelectDiv" class="mb-4" style="@(applyTo == "Category" ? "" : "display:none;")">
-                        <label class="form-label">اختر القسم</label>
-                        <select asp-for="CategoryId" class="form-select" asp-items="ViewBag.Categories">
-                            <option value="">-- اختر --</option>
-                        </select>
+                        <label asp-for="Title" class="form-label">عنوان العرض</label>
+                        <input asp-for="Title" class="form-control" required />
                     </div>
 
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
                             <label class="form-label">نوع الخصم</label>
-                            <select asp-for="IsPercentage" class="form-select" onchange="updatePriceLabel()">
-                                <option value="false">مبلغ ثابت (ج.م)</option>
+                            <select asp-for="IsPercentage" class="form-select form-control" onchange="toggleDiscountLabel()">
                                 <option value="true">نسبة مئوية (%)</option>
+                                <option value="false">مبلغ ثابت (ج.م)</option>
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label" id="priceLabel">@(Model.IsPercentage ? "نسبة الخصم (%)" : "قيمة الخصم (ج.م)")</label>
-                            <input asp-for="DiscountValue" type="number" step="0.01" class="form-control" required />
-                        </div>
-                        <input type="hidden" asp-for="DealPrice" />
-                    </div>
-
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-6">
-                            <label class="form-label">الهدف (Target)</label>
-                            <input asp-for="TargetQuantity" type="number" class="form-control" required />
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">حد الاستخدام</label>
-                            <input asp-for="UsageLimit" type="number" class="form-control" />
+                            <label class="form-label" id="lblDiscount">@(Model.IsPercentage ? "قيمة الخصم (%)" : "قيمة الخصم (ج.م)")</label>
+                            <input asp-for="DiscountValue" type="number" step="0.01" class="form-control fw-bold" required />
                         </div>
                     </div>
 
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
-                            <label class="form-label">تاريخ البدء</label>
-                            <input asp-for="StartDate" type="datetime-local" class="form-control" />
+                            <label asp-for="StartDate" class="form-label">تاريخ البدء</label>
+                            <input asp-for="StartDate" class="form-control" type="datetime-local" />
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">تاريخ الانتهاء</label>
-                            <input asp-for="EndDate" type="datetime-local" class="form-control" />
+                            <label asp-for="EndDate" class="form-label">تاريخ الانتهاء</label>
+                            <input asp-for="EndDate" class="form-control" type="datetime-local" />
                         </div>
                     </div>
 
-                    <div class="form-check form-switch mb-4">
-                        <input class="form-check-input" type="checkbox" asp-for="IsActive">
-                        <label class="form-check-label">تفعيل</label>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label asp-for="TargetQuantity" class="form-label">الهدف (Target)</label>
+                            <input asp-for="TargetQuantity" type="number" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">الحالة</label>
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" asp-for="IsActive">
+                                <label class="form-check-label">نشط</label>
+                            </div>
+                        </div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">حفظ التعديلات</button>
+                    <div class="text-end border-top pt-3">
+                        <button type="submit" class="btn btn-primary px-5 fw-bold shadow-sm">حفظ التغييرات</button>
+                    </div>
                 </form>
             </div>
         </div>
@@ -97,16 +175,27 @@
 </div>
 
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
-        function toggleScope() {
-            const isProduct = document.getElementById('applyProduct').checked;
-            document.getElementById('productSelectDiv').style.display = isProduct ? 'block' : 'none';
-            document.getElementById('categorySelectDiv').style.display = isProduct ? 'none' : 'block';
+        $(document).ready(function() {
+            $('.select2-search').select2({
+                dir: "rtl",
+                placeholder: "اختر...",
+                allowClear: true
+            });
+        });
+
+        function setScope(scope) {
+            document.getElementById('ApplyToInput').value = scope;
+            document.getElementById('btnProduct').classList.toggle('active', scope === 'Product');
+            document.getElementById('btnCategory').classList.toggle('active', scope === 'Category');
+            document.getElementById('divProduct').style.display = scope === 'Product' ? 'block' : 'none';
+            document.getElementById('divCategory').style.display = scope === 'Category' ? 'block' : 'none';
         }
 
-        function updatePriceLabel() {
+        function toggleDiscountLabel() {
             const isPercent = document.querySelector('select[name="IsPercentage"]').value === 'true';
-            document.getElementById('priceLabel').innerText = isPercent ? 'نسبة الخصم (%)' : 'قيمة الخصم (ج.م)';
+            document.getElementById('lblDiscount').innerText = isPercent ? 'قيمة الخصم (%)' : 'قيمة الخصم (ج.م)';
         }
     </script>
 }

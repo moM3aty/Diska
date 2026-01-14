@@ -2,15 +2,23 @@
 @using System.Globalization
 @using Diska.Data
 @using Microsoft.AspNetCore.Identity
-@inject ApplicationDbContext _context
 @inject UserManager<Diska.Models.ApplicationUser> UserManager
+@inject ApplicationDbContext _context
 
 @{
+    Layout = "_Layout";
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
-    ViewData["Title"] = isAr ? "تصفح المنتجات" : "Browse Products";
+    var categoryName = ViewBag.CategoryName as string ?? (isAr ? "كل المنتجات" : "All Products");
+    ViewData["Title"] = categoryName;
 
     var categories = ViewBag.Categories as IEnumerable<Diska.Models.Category>;
     var merchants = ViewBag.AvailableMerchants as List<string>;
+
+    int discount = 0;
+
+    // Pagination Data
+    int currentPage = ViewBag.CurrentPage ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
 
     // Wishlist Logic
     var user = await UserManager.GetUserAsync(User);
@@ -19,107 +27,323 @@
         : new List<int>();
 }
 
-<div class="category-section section-padding">
+<style>
+    :root {
+        --m-primary: #0F172A;
+        --m-accent: #FACC15;
+        --m-bg: #f8fafc;
+        --m-text: #334155;
+        --m-border: #e2e8f0;
+    }
+
+    .catalog-wrapper {
+        background-color: var(--m-bg);
+        padding: 40px 0;
+        font-family: 'Cairo', sans-serif;
+        color: var(--m-text);
+        min-height: 100vh;
+    }
+
+    /* Header */
+    .catalog-header {
+        display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 15px;
+        background: #fff; padding: 20px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); border: 1px solid var(--m-border);
+    }
+    .page-title { margin: 0; font-size: 1.5rem; font-weight: 800; color: var(--m-primary); }
+    .result-count { color: #64748b; font-size: 0.9rem; margin-top: 5px; display: block; }
+    .sort-select { padding: 10px 20px; border-radius: 30px; border: 1px solid var(--m-border); background: #f8fafc; color: var(--m-text); font-weight: 600; cursor: pointer; outline: none; transition: 0.2s; }
+    .sort-select:hover { border-color: var(--m-primary); background: #fff; }
+
+    /* Layout */
+    .catalog-grid { display: grid; grid-template-columns: 260px 1fr; gap: 30px; align-items: start; }
+
+    /* Sidebar */
+    .filter-sidebar { background: #fff; padding: 25px; border-radius: 16px; border: 1px solid var(--m-border); box-shadow: 0 4px 20px rgba(0,0,0,0.02); position: sticky; top: 20px; }
+    .filter-group { margin-bottom: 25px; border-bottom: 1px dashed var(--m-border); padding-bottom: 20px; }
+    .filter-group:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    .filter-title { font-size: 1rem; font-weight: 700; color: var(--m-primary); margin-bottom: 15px; display: flex; justify-content: space-between; }
+
+    /* Category Tree */
+    .cat-item { margin-bottom: 5px; }
+    
+    .category-link {
+        display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; color: #64748b; text-decoration: none;
+        transition: all 0.2s ease; font-size: 0.95rem; border-radius: 8px; font-weight: 600;
+    }
+    .category-link:hover { color: var(--m-primary); background-color: #f1f5f9; }
+    .category-link.active { color: var(--m-primary); background-color: #eff6ff; font-weight: 700; }
+    .category-link i.cat-icon { font-size: 1rem; margin-inline-end: 10px; width: 20px; text-align: center; color: #cbd5e1; }
+    .category-link.active i.cat-icon { color: var(--m-accent); }
+
+    .sub-cats { padding-inline-start: 15px; margin-inline-start: 18px; border-inline-start: 2px solid #f1f5f9; margin-top: 5px; margin-bottom: 10px; display: none; }
+    .sub-cats.open { display: block; }
+    
+    .sub-link {
+        display: flex; align-items: center; padding: 8px 12px; color: #94a3b8; text-decoration: none; font-size: 0.9rem; border-radius: 6px; transition: 0.2s; position: relative;
+    }
+    .sub-link i { font-size: 0.8rem; margin-inline-end: 8px; color: #cbd5e1; transition: 0.2s; }
+    .sub-link:hover { color: var(--m-primary); background-color: #f8fafc; }
+    .sub-link:hover i { color: var(--m-primary); }
+    .sub-link.active { color: var(--m-primary); font-weight: 700; background: #eff6ff; }
+    .sub-link.active i { color: var(--m-accent); }
+
+    /* Price Range */
+    .price-inputs { display: flex; gap: 10px; align-items: center; }
+    .price-input { width: 100%; padding: 8px; border: 1px solid var(--m-border); border-radius: 8px; text-align: center; font-size: 0.9rem; outline: none; }
+    .price-input:focus { border-color: var(--m-accent); }
+
+    /* Checkbox */
+    .checkbox-label { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; cursor: pointer; color: #475569; font-size: 0.95rem; }
+    .checkbox-input { width: 18px; height: 18px; accent-color: var(--m-primary); border-radius: 4px; cursor: pointer; }
+
+    /* Buttons */
+    .btn-filter { width: 100%; background: var(--m-primary); color: #fff; padding: 12px; border-radius: 10px; font-weight: 700; border: none; cursor: pointer; transition: 0.2s; }
+    .btn-filter:hover { background: #1e293b; }
+    .btn-reset { display: block; text-align: center; margin-top: 10px; color: #94a3b8; text-decoration: none; font-size: 0.9rem; transition: 0.2s; }
+    .btn-reset:hover { color: var(--m-primary); text-decoration: underline; }
+
+    /* --- Premium Product Cards --- */
+    .products-grid { 
+        display: grid; 
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); 
+        gap: 20px; 
+    }
+
+    .product-card {
+        background: #fff; border-radius: 20px; border: 1px solid transparent; 
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden; 
+        display: flex; flex-direction: column; height: fit-content;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    }
+    .product-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px -5px rgba(0,0,0,0.1); border-color: var(--m-primary); }
+
+    .product-img {
+        height: 220px; padding: 25px; background: radial-gradient(circle, #fff 100%, #f8fafc 100%);
+        display: flex; align-items: center; justify-content: center; position: relative;
+    }
+    .prod-img{
+        height:250px !important;
+    }
+    .product-img img { width:250px; max-width: 100%; max-height: 100%; object-fit: contain; transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+    .product-card:hover .product-img img { transform: scale(1.1); }
+
+    .badge-container { pointer-events: none; }
+    
+    /* Missing Badges CSS Fixed Here */
+    .badge-bestseller {
+        display: inline-block;
+        background: linear-gradient(135deg, #FFD700, #FDB931);
+        color: #fff;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 800;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        text-transform: uppercase;
+    }
+
+    .badge-discount {
+        display: inline-block;
+        background: #ef4444;
+        color: #fff;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 800;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .fav-btn { transition: 0.3s; }
+    .fav-btn:hover { background: var(--m-primary) !important; border-color: var(--m-primary) !important; color: #fff !important; }
+    .fav-btn.active { background: #fee2e2 !important; border-color: #ef4444 !important; color: #ef4444 !important; }
+
+    .product-info { padding: 15px; text-align: center; flex-grow: 1; display: flex; flex-direction: column; border-top: 1px solid #f8fafc; }
+    
+    .pro-cat { font-size: 0.75rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 0.5px; }
+    
+    .product-info h4 {
+        font-size: 0.95rem; font-weight: 700; color: var(--m-text); margin: 0 0 10px;
+        line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 38px;
+    }
+    .product-card:hover h4 { color: var(--m-primary); }
+
+    .pricing { font-size: 1.1rem; font-weight: 800; color: var(--m-primary); margin-top: auto; display: flex; align-items: baseline; justify-content: center; gap: 6px; }
+    .pricing small { font-size: 0.75rem; font-weight: 600; }
+    .old-price { text-decoration: line-through; color: #cbd5e1; font-size: 0.8rem; }
+
+    .product-meta { 
+        display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e2e8f0; font-size: 0.75rem; 
+    }
+    .unit { color: #64748b; font-weight: 600; }
+    .stock-info { font-weight: 700; color: #16a34a; background: #dcfce7; padding: 2px 6px; border-radius: 4px; }
+    .stock-info.low { color: #dc2626; background: #fee2e2; }
+
+    .add-to-cart { 
+        margin-top: 15px; opacity: 0; transform: translateY(10px); transition: 0.3s;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .product-card:hover .add-to-cart { opacity: 1; transform: translateY(0); }
+
+    .qty-control-card {
+        display: flex; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: #f8fafc; height: 32px;
+    }
+    .qty-control-card button { width: 25px; height: 100%; border: none; background: #fff; cursor: pointer; color: var(--m-primary); font-weight: bold; transition: 0.2s; font-size: 0.9rem; padding: 0; }
+    .qty-control-card button:hover { background: #e2e8f0; }
+    .qty-control-card input { width: 35px; border: none; text-align: center; font-weight: 700; color: var(--m-primary); outline: none; background: transparent; font-size: 0.85rem; }
+
+    .add-btn { 
+        flex: 1; background: var(--m-primary); color: #fff; border: none; padding: 0 10px; height: 32px; border-radius: 8px; 
+        font-weight: 700; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 0.85rem;
+    }
+    .add-btn:hover { background: #1e293b; }
+
+    /* Pagination */
+    .pagination-bar { margin-top: 50px; display: flex; justify-content: center; gap: 5px; }
+    .page-btn {
+        width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+        border-radius: 10px; border: 1px solid var(--m-border); background: #fff;
+        color: var(--m-text); text-decoration: none; font-weight: 700; transition: 0.2s;
+    }
+    .page-btn:hover { border-color: var(--m-primary); color: var(--m-primary); }
+    .page-btn.active { background: var(--m-primary); color: #fff; border-color: var(--m-primary); }
+    .page-btn.disabled { opacity: 0.5; pointer-events: none; background: #f1f5f9; }
+
+    .empty-state { text-align: center; padding: 60px; grid-column: 1 / -1; }
+    .empty-icon { font-size: 4rem; color: #e2e8f0; margin-bottom: 20px; }
+
+    @@media (max-width: 992px) { .catalog-grid { grid-template-columns: 1fr; } .filter-sidebar { position: static; margin-bottom: 30px; } }
+</style>
+
+<div class="catalog-wrapper">
     <div class="container">
-
-        <!-- Header -->
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
-            <div>
-                <h2 style="margin:0; color:var(--primary);">
-                    @if (!string.IsNullOrEmpty(ViewBag.SearchQuery))
-                    {
-                        <span>@(isAr ? "نتائج البحث عن:" : "Search Results for:") "@ViewBag.SearchQuery"</span>
-                    }
-                    else if (ViewBag.CategoryId != null)
-                    {
-                        <span>@ViewBag.CategoryName</span>
-                    }
-                    else
-                    {
-                        <span>@(isAr ? "كل المنتجات" : "All Products")</span>
-                    }
-                </h2>
-                <span style="color:#666; font-size:0.9rem;">@Model.Count() @(isAr ? "منتج" : "items found")</span>
-            </div>
-
-            <div class="sort-box">
-                <form id="sortForm" method="get" asp-action="Index">
-                    <!-- Keep current filters -->
-                    <input type="hidden" name="query" value="@Context.Request.Query["query"]" />
-                    <input type="hidden" name="categoryId" value="@Context.Request.Query["categoryId"]" />
-                    <input type="hidden" name="minPrice" value="@Context.Request.Query["minPrice"]" />
-                    <input type="hidden" name="maxPrice" value="@Context.Request.Query["maxPrice"]" />
-
-                    <select name="sort" onchange="this.form.submit()" style="padding:8px 15px; border-radius:20px; border:1px solid #ddd; outline:none; cursor:pointer;">
-                        <option value="">@(isAr ? "ترتيب حسب" : "Sort By")</option>
-                        <option value="newest" selected="@(ViewBag.CurrentSort == "newest")">@(isAr ? "الأحدث" : "Newest")</option>
-                        <option value="price_asc" selected="@(ViewBag.CurrentSort == "price_asc")">@(isAr ? "الأقل سعراً" : "Lowest Price")</option>
-                        <option value="price_desc" selected="@(ViewBag.CurrentSort == "price_desc")">@(isAr ? "الأعلى سعراً" : "Highest Price")</option>
-                    </select>
-                </form>
-            </div>
+        
+        <!-- Breadcrumb -->
+        <div style="margin-bottom: 20px; font-size: 0.9rem;">
+            <a href="/" style="text-decoration:none; color:var(--m-text);">@(isAr?"الرئيسية":"Home")</a> 
+            <span style="color:#cbd5e1; margin:0 10px;">/</span> 
+            <span style="font-weight:bold; color:var(--m-primary);">@categoryName</span>
         </div>
 
-        <div class="category-layout">
-            <!-- Sidebar Filters -->
-            <aside class="sidebar">
-                <form method="get" asp-action="Index">
-                    <input type="hidden" name="query" value="@Context.Request.Query["query"]" />
-                    <input type="hidden" name="categoryId" value="@Context.Request.Query["categoryId"]" />
+        <!-- Header -->
+        <div class="catalog-header">
+            <div>
+                <h1 class="page-title">@categoryName</h1>
+                <span class="result-count">@Model.Count() @(isAr?"منتج":"products")</span>
+            </div>
+            
+            <form id="sortForm" method="get" asp-action="Index">
+                <input type="hidden" name="categoryId" value="@Context.Request.Query["categoryId"]" />
+                <input type="hidden" name="query" value="@Context.Request.Query["query"]" />
+                <input type="hidden" name="minPrice" value="@Context.Request.Query["minPrice"]" />
+                <input type="hidden" name="maxPrice" value="@Context.Request.Query["maxPrice"]" />
+                
+                <select name="sort" class="sort-select" onchange="this.form.submit()">
+                    <option value="">@(isAr?"ترتيب حسب":"Sort By")</option>
+                    <option value="newest" selected="@(ViewBag.CurrentSort == "newest")">@(isAr?"الأحدث":"Newest")</option>
+                    <option value="price_asc" selected="@(ViewBag.CurrentSort == "price_asc")">@(isAr?"السعر: الأقل للأعلى":"Price: Low to High")</option>
+                    <option value="price_desc" selected="@(ViewBag.CurrentSort == "price_desc")">@(isAr?"السعر: الأعلى للأقل":"Price: High to Low")</option>
+                </select>
+            </form>
+        </div>
 
-                    <!-- Filter: Categories (If not selected) -->
-                    @if (ViewBag.CategoryId == null && categories != null)
+        <div class="catalog-grid">
+            
+            <!-- Sidebar -->
+            <aside class="filter-sidebar">
+                <form method="get" asp-action="Index">
+                    <input type="hidden" name="sort" value="@ViewBag.CurrentSort" />
+                    <input type="hidden" name="query" value="@Context.Request.Query["query"]" />
+
+                    <!-- Categories Tree -->
+                    @if (categories != null && categories.Any())
                     {
                         <div class="filter-group">
-                            <h3>@(isAr ? "الأقسام" : "Categories")</h3>
-                            <div style="display:flex; flex-direction:column; gap:5px;">
-                                @foreach (var cat in categories)
+                            <div class="filter-title">@(isAr?"الأقسام":"Categories")</div>
+                            <div class="category-tree">
+                                <a href="@Url.Action("Index", new { sort = ViewBag.CurrentSort })" 
+                                   class="category-link @(ViewBag.CategoryId == null ? "active" : "")">
+                                   <span><i class="fas fa-th-large cat-icon"></i> @(isAr ? "الكل" : "All")</span>
+                                </a>
+
+                                @foreach (var cat in categories.Where(c => c.ParentId == null))
                                 {
-                                    <a href="@Url.Action("Index", new { categoryId = cat.Id })" style="color:#555; text-decoration:none; font-size:0.9rem;">
-                                        <i class="@(cat.IconClass ?? "fas fa-angle-right")" style="width:20px;"></i> @(isAr? cat.Name: cat.NameEn)
-                                    </a>
+                                    bool isParentActive = (ViewBag.CategoryId == cat.Id);
+                                    bool isChildActive = (cat.Children != null && cat.Children.Any(c => c.Id == ViewBag.CategoryId));
+                                    bool isOpen = isParentActive || isChildActive; 
+
+                                    <div class="cat-item">
+                                        <a href="@Url.Action("Index", new { categoryId = cat.Id, sort = ViewBag.CurrentSort })" 
+                                           class="category-link @(isParentActive ? "active" : "")"
+                                           style="@(isChildActive ? "color:var(--m-primary); font-weight:700;" : "")">
+                                            <span>
+                                                <i class="@(cat.IconClass ?? "fas fa-folder") cat-icon"></i> 
+                                                @(isAr ? cat.Name : cat.NameEn)
+                                            </span>
+                                            @if(cat.Children != null && cat.Children.Any()) { 
+                                                <i class="fas @(isOpen ? "fa-angle-up" : "fa-angle-down") small text-muted"></i> 
+                                            }
+                                        </a>
+
+                                        @if(cat.Children != null && cat.Children.Any())
+                                        {
+                                            <div class="sub-cats @(isOpen ? "open" : "")">
+                                                @foreach(var sub in cat.Children)
+                                                {
+                                                    <a href="@Url.Action("Index", new { categoryId = sub.Id, sort = ViewBag.CurrentSort })" 
+                                                       class="sub-link @(ViewBag.CategoryId == sub.Id ? "active" : "")">
+                                                        <i class="@(sub.IconClass ?? "fas fa-caret-right")"></i>
+                                                        @(isAr ? sub.Name : sub.NameEn)
+                                                    </a>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
                                 }
                             </div>
                         </div>
                     }
 
-                    <!-- Filter: Price -->
+                    <!-- Price -->
                     <div class="filter-group">
-                        <h3>@(isAr ? "نطاق السعر" : "Price Range")</h3>
-                        <div class="price-range">
-                            <input type="number" name="minPrice" placeholder="@(isAr ? "من" : "Min")" value="@Context.Request.Query["minPrice"]">
-                            <input type="number" name="maxPrice" placeholder="@(isAr ? "إلى" : "Max")" value="@Context.Request.Query["maxPrice"]">
+                        <div class="filter-title">@(isAr?"السعر":"Price")</div>
+                        <div class="price-inputs">
+                            <input type="number" name="minPrice" class="price-input" placeholder="@(isAr?"من":"Min")" value="@Context.Request.Query["minPrice"]">
+                            <span>-</span>
+                            <input type="number" name="maxPrice" class="price-input" placeholder="@(isAr?"إلى":"Max")" value="@Context.Request.Query["maxPrice"]">
                         </div>
                     </div>
 
-                    <!-- Filter: Merchants -->
+                    <!-- Merchants -->
                     @if (merchants != null && merchants.Any())
                     {
                         <div class="filter-group">
-                            <h3>@(isAr ? "التجار" : "Merchants")</h3>
-                            @foreach (var m in merchants)
-                            {
-                                <label style="display:flex; align-items:center; gap:8px; margin-bottom:8px; cursor:pointer;">
-                                    <input type="checkbox" name="merchants" value="@m" @(Context.Request.Query["merchants"].Contains(m) ? "checked" : "") style="width:16px; height:16px;">
-                                    <span>@m</span>
-                                </label>
-                            }
+                            <div class="filter-title">@(isAr?"التجار":"Merchants")</div>
+                            <div style="max-height:200px; overflow-y:auto;">
+                                @foreach (var m in merchants)
+                                {
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="merchants" value="@m" class="checkbox-input" @(Context.Request.Query["merchants"].Contains(m) ? "checked" : "")>
+                                        @m
+                                    </label>
+                                }
+                            </div>
                         </div>
                     }
 
-                    <button type="submit" class="btn primary" style="width:100%; margin-top:10px;">@(isAr ? "تصفية النتائج" : "Apply Filters")</button>
-                    <a asp-action="Index" class="btn" style="width:100%; margin-top:10px; border:1px solid #ddd; text-align:center; display:block;">@(isAr ? "مسح الكل" : "Reset")</a>
+                    <button type="submit" class="btn-filter">@(isAr?"تصفية النتائج":"Apply Filters")</button>
+                    <a asp-action="Index" class="btn-reset">@(isAr?"إعادة تعيين":"Reset")</a>
                 </form>
             </aside>
 
-            <!-- Products Grid -->
+            <!-- Products -->
             <main>
                 @if (!Model.Any())
                 {
-                    <div style="text-align:center; padding:80px; background:#fff; border-radius:12px; border:1px solid #eee;">
-                        <i class="fas fa-search fa-3x" style="color:#e2e8f0; margin-bottom:20px;"></i>
-                        <p style="color:#666; font-size:1.1rem;">@(isAr ? "لم يتم العثور على منتجات تطابق بحثك." : "No products match your search.")</p>
-                        <a asp-action="Index" class="btn primary small" style="margin-top:15px;">@(isAr ? "عرض كل المنتجات" : "View All Products")</a>
+                    <div class="empty-state">
+                        <i class="fas fa-search empty-icon"></i>
+                        <h3>@(isAr?"لا توجد نتائج":"No products found")</h3>
+                        <p>@(isAr?"جرب تغيير خيارات البحث أو الفلترة":"Try adjusting your filters")</p>
+                        <a href="/" class="btn-reset" style="color:var(--m-primary);">@(isAr?"العودة للرئيسية":"Back Home")</a>
                     </div>
                 }
                 else
@@ -127,66 +351,120 @@
                     <div class="products-grid">
                         @foreach (var item in Model)
                         {
+                           bool isBestSeller = item.StockQuantity > 0 && item.StockQuantity < 20;
                             bool isLiked = wishlistIds.Contains(item.Id);
 
                             <div class="product-card" data-id="@item.Id" data-stock="@item.StockQuantity">
 
-                                @if (item.OldPrice.HasValue && item.OldPrice > item.Price)
+                                <!-- Badges & Wishlist -->
+                                <div class="badge-container" style="position:absolute; top:15px; @(isAr ? "right" : "left"):15px; z-index:2; display:flex; flex-direction:column; gap:5px;">
+                                    @if (isBestSeller)
+                                    {
+                                        <span class="badge-bestseller" style="text-align:center;">
+                                            <i class="fas fa-crown"></i> @(isAr ? "الأكثر مبيعاً" : "Best Seller")
+                                        </span>
+                                    }
+                                    @if (item.OldPrice.HasValue && item.OldPrice > item.Price)
+                            {
+                                
+                                if (item.OldPrice.HasValue && item.OldPrice > item.Price)
                                 {
-                                    <div class="flash-badge">@(isAr ? "خصم" : "Sale")</div>
+                                    discount = (int)Math.Round(((item.OldPrice.Value - item.Price) / item.OldPrice.Value) * 100);
                                 }
-
-                                <button class="fav-btn @(isLiked ? "active" : "")" onclick="toggleWishlist(@item.Id, this)">
+                                <span class="badge-discount" style="background:#ef4444; color:#fff; padding:4px 10px; border-radius:20px; font-size:0.7rem; font-weight:800;">
+                                    @(isAr ? "خصم" : "Sale") %@discount
+                                </span>
+                            }
+                                </div>
+                                
+                                <!-- Wishlist Button -->
+                                <button class="fav-btn @(isLiked ? "active" : "")" onclick="toggleWishlist(@item.Id, this)"
+                                        style="position:absolute; top:15px; @(isAr ? "left" : "right"):15px; width:35px; height:35px; background:rgba(255,255,255,0.9); border-radius:50%; border:1px solid #e2e8f0; color:@(isLiked ? "#ef4444" : "#94a3b8"); display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:3; box-shadow:0 4px 6px rgba(0,0,0,0.05); transition:0.3s;">
                                     <i class="@(isLiked ? "fas" : "far") fa-heart"></i>
                                 </button>
 
-                                <a asp-action="Details" asp-route-id="@item.Id" class="product-img">
-                                    <img src="~/@item.ImageUrl" alt="@item.Name" onerror="this.src='/images/default.png'">
+                                <!-- Product Image -->
+                                <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id" class="prod-img-box">
+                                    <img src="~/@item.ImageUrl" class="prod-img" onerror="this.src='/images/default.png'" alt="@item.Name">
                                 </a>
 
+                                <!-- Product Info -->
                                 <div class="product-info">
-                                    <span class="pro-cat" style="font-size:0.75rem; color:#64748b; display:block; margin-bottom:5px;">@(isAr? item.Category?.Name : item.Category?.NameEn)</span>
+                                    <span class="pro-cat">@(isAr? item.Category?.Name : item.Category?.NameEn)</span>
 
-                                    <a asp-action="Details" asp-route-id="@item.Id" style="text-decoration:none; color:inherit;">
-                                        <h4>@(isAr? item.Name: item.NameEn)</h4>
+                                    <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id" style="text-decoration:none; color:inherit;">
+                                        <h4 class="prod-title">@(isAr? item.Name: item.NameEn)</h4>
                                     </a>
 
                                     <div class="pricing">
                                         <span class="current-price">@item.Price.ToString("N0") <small>@(isAr ? "ج.م" : "EGP")</small></span>
-                                        @if (item.OldPrice > item.Price)
+                                        @if (item.OldPrice.HasValue)
                                         {
-                                            <span class="old-price">@item.OldPrice</span>
+                                            <span class="old-price">@item.OldPrice.Value.ToString("N0")</span>
                                         }
                                     </div>
 
+                                    <!-- Meta -->
                                     <div class="product-meta">
                                         <span class="unit"><i class="fas fa-box"></i> @item.UnitsPerCarton</span>
-                                        <span class="@(item.StockQuantity > 0 ? "stock-info" : "stock-info low")">
-                                            @(item.StockQuantity > 0 ? (isAr ? "متوفر" : "In Stock") : (isAr ? "نفذت الكمية" : "Out of Stock"))
-                                        </span>
+                                        @if (item.StockQuantity > 0)
+                                        {
+                                            <span class="stock-info">@(isAr ? "متوفر" : "In Stock")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="stock-info low">@(isAr ? "نافذ" : "Out of Stock")</span>
+                                        }
                                     </div>
 
+                                    <!-- Actions -->
                                     <div class="add-to-cart">
                                         <div class="qty-control-card">
                                             <button onclick="updateCardQty(this, -1)">-</button>
                                             <input type="number" id="qty-@item.Id" value="1" min="1" max="@item.StockQuantity" readonly>
                                             <button onclick="updateCardQty(this, 1)">+</button>
                                         </div>
-                                        <button class="add-btn" onclick="addToCart(this, @item.Id)">
-                                            <i class="fas fa-cart-plus"></i>
+                                        <button class="add-btn" onclick="addToCart(@item.Id, this)">
+                                            @(isAr ? "أضف" : "Add") <i class="fas fa-cart-plus"></i>
                                         </button>
                                     </div>
                                 </div>
                             </div>
                         }
                     </div>
+
+                    <!-- Pagination -->
+                    @if (totalPages > 1)
+                    {
+                        <div class="pagination-bar">
+                            <a href="@Url.Action("Index", new { page = currentPage - 1, query = ViewBag.SearchQuery, categoryId = ViewBag.CategoryId, sort = ViewBag.CurrentSort })" 
+                               class="page-btn @(currentPage == 1 ? "disabled" : "")">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+
+                            @for (int i = 1; i <= totalPages; i++)
+                            {
+                                <a href="@Url.Action("Index", new { page = i, query = ViewBag.SearchQuery, categoryId = ViewBag.CategoryId, sort = ViewBag.CurrentSort })" 
+                                   class="page-btn @(i == currentPage ? "active" : "")">
+                                   @i
+                                </a>
+                            }
+
+                            <a href="@Url.Action("Index", new { page = currentPage + 1, query = ViewBag.SearchQuery, categoryId = ViewBag.CategoryId, sort = ViewBag.CurrentSort })" 
+                               class="page-btn @(currentPage == totalPages ? "disabled" : "")">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        </div>
+                    }
                 }
             </main>
         </div>
+
     </div>
 </div>
 
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         function updateCardQty(btn, change) {
             let input = btn.parentElement.querySelector('input');
@@ -195,48 +473,67 @@
             if (val >= 1 && val <= max) input.value = val;
         }
 
-        function addToCart(btn, id) {
+        function addToCart(id, btn) {
             let qty = document.getElementById('qty-' + id).value;
-            if(typeof addItemToCart === 'function') {
-                addItemToCart(id, qty, btn);
-            }
+            let original = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btn.disabled = true;
+
+            let formData = new FormData();
+            formData.append('productId', id);
+            formData.append('quantity', qty);
+
+            fetch('/Cart/AddItem', { method: 'POST', body: formData })
+            .then(r => r.json())
+            .then(res => {
+                if(res.success) {
+                    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: res.message, showConfirmButton: false, timer: 1500 });
+                    
+                    let cart = JSON.parse(localStorage.getItem('DISKA_CART')) || [];
+                    let uniqueId = id + '_' + (res.product.colorHex || 'def');
+                    let existing = cart.find(i => i.uniqueId === uniqueId);
+                    
+                    if(existing) existing.qty += parseInt(qty);
+                    else cart.push({
+                         id: res.product.id, uniqueId: uniqueId, qty: parseInt(qty),
+                         name: res.product.name, price: res.product.price, image: res.product.image,
+                         maxStock: res.product.stock, colorName: res.product.colorName, colorHex: res.product.colorHex
+                    });
+                    
+                    localStorage.setItem('DISKA_CART', JSON.stringify(cart));
+                    if(typeof updateCartBadge === 'function') updateCartBadge();
+                } else {
+                    Swal.fire({ icon: 'warning', title: 'تنبيه', text: res.message });
+                }
+            })
+            .catch(e => console.error(e))
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = original;
+            });
         }
 
-        async function toggleWishlist(productId, btn) {
+        async function toggleWishlist(id, btn) {
             try {
                 const icon = btn.querySelector('i');
-                const response = await fetch('/Wishlist/Toggle', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: `productId=${productId}`
+                const response = await fetch('/Wishlist/Toggle', { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'}, 
+                    body: `productId=${id}` 
                 });
-
-                if (response.status === 401) {
-                    Swal.fire({
-                        title: '@(isAr ? "تنبيه" : "Alert")',
-                        text: '@(isAr ? "يجب عليك تسجيل الدخول أولاً." : "Please login first.")',
-                        icon: 'warning',
-                        confirmButtonText: '@(isAr ? "دخول" : "Login")'
-                    }).then((r) => { if(r.isConfirmed) window.location.href='/Account/Login'; });
-                    return;
-                }
-
-                const result = await response.json();
-
-                if (result.success) {
-                    if (result.status === 'added') {
-                        icon.classList.remove('far');
-                        icon.classList.add('fas');
-                        btn.classList.add('active');
-                        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: '@(isAr ? "تمت الإضافة للمفضلة" : "Added to Wishlist")', showConfirmButton: false, timer: 1500 });
+                
+                if(response.status === 401) { window.location.href = '/Account/Login'; return; }
+                const res = await response.json();
+                if(res.success) {
+                    if(res.status === 'added') {
+                        icon.classList.remove('far'); icon.classList.add('fas'); btn.classList.add('active');
+                        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'تمت الإضافة للمفضلة', showConfirmButton: false, timer: 1500 });
                     } else {
-                        icon.classList.remove('fas');
-                        icon.classList.add('far');
-                        btn.classList.remove('active');
-                        Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: '@(isAr ? "تم الحذف من المفضلة" : "Removed from Wishlist")', showConfirmButton: false, timer: 1500 });
+                        icon.classList.remove('fas'); icon.classList.add('far'); btn.classList.remove('active');
+                        Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: 'تم الحذف من المفضلة', showConfirmButton: false, timer: 1500 });
                     }
                 }
-            } catch (error) { console.error(error); }
+            } catch(e) { console.error(e); }
         }
     </script>
 }

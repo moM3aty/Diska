@@ -1,68 +1,285 @@
 ﻿@model IEnumerable<Diska.Models.ApplicationUser>
+@using System.Globalization
 @{
     ViewData["Title"] = "إدارة التجار";
     Layout = "_AdminLayout";
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
 }
 
-<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-    <h2 style="margin:0; color:var(--primary);">التجار المسجلين</h2>
-    <span class="badge" style="background:#e0f2fe; color:#0284c7; font-size:0.9rem;">العدد: @Model.Count()</span>
-</div>
+<style>
+    /* Premium Table Styling */
+    .table-card {
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        border: 1px solid #f1f5f9;
+        overflow: hidden;
+    }
 
-<div class="card">
-    <div class="table-responsive">
-        <table class="table" style="width:100%;">
-            <thead>
-                <tr>
-                    <th>اسم التاجر</th>
-                    <th>اسم المحل</th>
-                    <th>رقم الهاتف</th>
-                    <th>السجل التجاري</th>
-                    <th>الحالة</th>
-                    <th>إجراءات</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var merchant in Model)
-                {
+    .table thead th {
+        background: #f8fafc;
+        color: #64748b;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        padding: 15px 20px;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .table tbody td {
+        padding: 15px 20px;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f5f9;
+        color: #1e293b;
+    }
+
+    .merchant-avatar {
+        width: 45px;
+        height: 45px;
+        border-radius: 12px;
+        background: #eff6ff;
+        color: #4f46e5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 1.2rem;
+        margin-inline-end: 15px;
+    }
+
+    .status-badge {
+        padding: 5px 12px;
+        border-radius: 30px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .status-verified {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .status-pending {
+        background: #fffbeb;
+        color: #b45309;
+    }
+
+    .action-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: 0.2s;
+        border: 1px solid #e2e8f0;
+        background: #fff;
+        color: #64748b;
+        text-decoration: none;
+    }
+
+        .action-btn:hover {
+            background: #f8fafc;
+            color: #0f172a;
+            border-color: #cbd5e1;
+        }
+
+    .wallet-val {
+        font-family: monospace;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: #fff;
+        padding: 20px;
+        border-radius: 16px;
+        border: 1px solid #f1f5f9;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .st-blue {
+        background: #eff6ff;
+        color: #4f46e5;
+    }
+
+    .st-green {
+        background: #f0fdf4;
+        color: #16a34a;
+    }
+
+    .st-purple {
+        background: #f5f3ff;
+        color: #7c3aed;
+    }
+</style>
+
+<div class="container-fluid px-0 fade-up">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1 text-dark">@(isAr ? "إدارة التجار" : "Merchants Management")</h2>
+            <p class="text-muted small mb-0">@(isAr ? "متابعة الحسابات التجارية والمحفظة" : "Manage merchant accounts and wallets")</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary btn-sm shadow-sm" onclick="window.print()">
+                <i class="fas fa-print me-2"></i> @(isAr ? "طباعة" : "Print")
+            </button>
+            <a href="/Admin/Users/Create?role=Merchant" class="btn btn-primary btn-sm shadow-sm fw-bold px-4">
+                <i class="fas fa-user-plus me-2"></i> @(isAr ? "تاجر جديد" : "Add Merchant")
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon st-blue"><i class="fas fa-store"></i></div>
+            <div>
+                <small class="text-muted d-block">@(isAr ? "إجمالي التجار" : "Total Merchants")</small>
+                <h4 class="fw-bold mb-0">@ViewBag.TotalCount</h4>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon st-green"><i class="fas fa-check-circle"></i></div>
+            <div>
+                <small class="text-muted d-block">@(isAr ? "موثقين" : "Verified")</small>
+                <h4 class="fw-bold mb-0">@ViewBag.VerifiedCount</h4>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon st-purple"><i class="fas fa-wallet"></i></div>
+            <div>
+                <small class="text-muted d-block">@(isAr ? "إجمالي المحافظ" : "Total Wallet Balance")</small>
+                <h4 class="fw-bold mb-0">@(((decimal)ViewBag.TotalBalance).ToString("N0")) <small class="fs-6 text-muted">LE</small></h4>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card border-0 shadow-sm mb-4 p-3 bg-white">
+        <form method="get" class="d-flex gap-3">
+            <div class="input-group">
+                <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
+                <input type="text" name="q" class="form-control border-start-0 ps-0" placeholder="@(isAr ? "بحث باسم التاجر، المتجر، الهاتف..." : "Search name, shop, phone...")" value="@Context.Request.Query["q"]">
+            </div>
+            <button type="submit" class="btn btn-primary px-4">@(isAr ? "بحث" : "Search")</button>
+        </form>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
                     <tr>
-                        <td>
-                            <strong>@merchant.FullName</strong>
-                        </td>
-                        <td>
-                            <span style="color:var(--primary); font-weight:bold;">
-                                <i class="fas fa-store"></i> @merchant.ShopName
-                            </span>
-                        </td>
-                        <td>@merchant.PhoneNumber</td>
-                        <td>@merchant.CommercialRegister</td>
-                        <td>
-                            @if (merchant.IsVerifiedMerchant)
-                            {
-                                <span class="badge" style="background:#dcfce7; color:#16a34a;">موثق <i class="fas fa-check-circle"></i></span>
-                            }
-                            else
-                            {
-                                <span class="badge" style="background:#fffbeb; color:#d97706;">قيد المراجعة <i class="fas fa-clock"></i></span>
-                            }
-                        </td>
-                        <td>
-                            <form asp-controller="Users" asp-action="ToggleVerification" method="post">
-                                <input type="hidden" name="id" value="@merchant.Id" />
-                                @if (merchant.IsVerifiedMerchant)
+                        <th class="ps-4">@(isAr ? "التاجر" : "Merchant")</th>
+                        <th>@(isAr ? "بيانات الاتصال" : "Contact Info")</th>
+                        <th>@(isAr ? "السجل الضريبي" : "Tax Info")</th>
+                        <th>@(isAr ? "المحفظة" : "Wallet")</th>
+                        <th>@(isAr ? "الحالة" : "Status")</th>
+                        <th class="text-end pe-4">@(isAr ? "إجراءات" : "Actions")</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <i class="fas fa-store-slash fa-3x mb-3 opacity-25"></i>
+                                <p>@(isAr ? "لا يوجد تجار مطابقين" : "No merchants found")</p>
+                            </td>
+                        </tr>
+                    }
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="merchant-avatar">
+                                        @(item.ShopName?.FirstOrDefault().ToString().ToUpper() ?? item.FullName?.FirstOrDefault().ToString().ToUpper() ?? "U")
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold text-dark">@(item.ShopName ?? "No Shop Name")</div>
+                                        <div class="small text-muted">@item.FullName</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column small">
+                                    <span><i class="fas fa-phone me-1 text-muted"></i> @item.PhoneNumber</span>
+                                    <span><i class="fas fa-envelope me-1 text-muted"></i> @item.Email</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="small">
+                                    <div class="text-muted">S.R: <span class="text-dark fw-bold">@item.CommercialRegister</span></div>
+                                    <div class="text-muted">Tax: <span class="text-dark fw-bold">@item.TaxCard</span></div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="wallet-val text-success">@item.WalletBalance.ToString("N0")</span>
+                                <small class="text-muted">ج.م</small>
+                            </td>
+                            <td>
+                                @if (item.IsVerifiedMerchant)
                                 {
-                                    <button type="submit" class="btn small" style="background:#fee2e2; color:#dc2626; font-size:0.8rem; padding:6px 12px; width:100%;">إلغاء التوثيق</button>
+                                    <span class="status-badge status-verified">
+                                        <i class="fas fa-check-circle"></i> @(isAr ? "موثق" : "Verified")
+                                    </span>
                                 }
                                 else
                                 {
-                                    <button type="submit" class="btn small" style="background:#10b981; color:#fff; font-size:0.8rem; padding:6px 12px; width:100%;">توثيق الحساب</button>
+                                    <span class="status-badge status-pending">
+                                        <i class="fas fa-clock"></i> @(isAr ? "قيد المراجعة" : "Pending")
+                                    </span>
                                 }
-                            </form>
-                            <a asp-controller="Users" asp-action="Details" asp-route-id="@merchant.Id" class="btn btn-outline small" style="margin-top:5px; width:100%; justify-content:center;">التفاصيل</a>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="d-flex justify-content-end gap-2">
+                                    <form asp-action="VerifyMerchant" method="post" class="d-inline">
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <button type="submit" class="action-btn" title="@(item.IsVerifiedMerchant ? "إلغاء التوثيق" : "توثيق")" onclick="return confirm('تغيير حالة التوثيق؟')">
+                                            <i class="fas @(item.IsVerifiedMerchant ? "fa-times text-danger" : "fa-check text-success")"></i>
+                                        </button>
+                                    </form>
+                                    <a href="/Admin/Users/Details/@item.Id" class="action-btn" title="التفاصيل">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer bg-white border-top p-3 text-center">
+            <small class="text-muted">@(isAr ? $"عدد النتائج: {Model.Count()}" : $"Total Results: {Model.Count()}")</small>
+        </div>
     </div>
 </div>

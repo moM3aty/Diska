@@ -15,7 +15,7 @@
     // ألوان خلفيات وأيقونات للأقسام (للتصميم)
     string[] catColors = { "#e0f2fe", "#fef3c7", "#dcfce7", "#fee2e2", "#f3e8ff", "#ffedd5" };
     string[] iconColors = { "#0284c7", "#d97706", "#16a34a", "#dc2626", "#9333ea", "#ea580c" };
-
+    int discount = 0;
     // جلب قائمة المفضلة للمستخدم الحالي لتلوين القلب
     var user = await UserManager.GetUserAsync(User);
     var wishlistIds = user != null
@@ -100,6 +100,7 @@
         border-radius: 50%;
         cursor: pointer;
         transition: 0.3s;
+        margin-top: -30px;
     }
 
         .dot.active {
@@ -229,7 +230,7 @@
     <div class="container">
         <div class="section-header">
             <h3>@(isAr ? "أحدث المنتجات" : "New Arrivals")</h3>
-            <a href="#" class="view-all">@(isAr ? "عرض الكل" : "View All") <i class="fas @(isAr ? "fa-arrow-left" : "fa-arrow-right")"></i></a>
+            <a asp-area="" asp-controller="Product" asp-action="index" class="view-all">@(isAr ? "عرض الكل" : "View All") <i class="fas @(isAr ? "fa-arrow-left" : "fa-arrow-right")"></i></a>
         </div>
 
         <div class="products-grid">
@@ -237,7 +238,7 @@
             {
                 foreach (var item in Model)
                 {
-                    bool isBestSeller = item.Id % 2 == 0; // محاكاة للأكثر مبيعاً
+                    bool isBestSeller = item.StockQuantity > 0 && item.StockQuantity < 20;
                     bool isLiked = wishlistIds.Contains(item.Id);
 
                     <div class="product-card" data-id="@item.Id" data-stock="@item.StockQuantity">
@@ -250,10 +251,16 @@
                                     <i class="fas fa-crown"></i> @(isAr ? "الأكثر مبيعاً" : "Best Seller")
                                 </span>
                             }
+                            
                             @if (item.OldPrice.HasValue && item.OldPrice > item.Price)
                             {
-                                <span class="badge-discount" style="background:#ef4444; color:#fff; padding:4px 10px; border-radius:20px; font-size:0.7rem; font-weight:800;">
-                                    @(isAr ? "خصم" : "Sale")
+                                
+                                if (item.OldPrice.HasValue && item.OldPrice > item.Price)
+                                {
+                                    discount = (int)Math.Round(((item.OldPrice.Value - item.Price) / item.OldPrice.Value) * 100);
+                                }
+                                <span class="badge-discount" style="text-align:center;background:#ef4444; color:#fff; padding:4px 10px; border-radius:20px; font-size:0.7rem; font-weight:800;">
+                                    @(isAr ? "خصم" : "Sale") %@discount
                                 </span>
                             }
                         </div>

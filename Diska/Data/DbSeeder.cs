@@ -17,7 +17,7 @@ namespace Diska.Data
             var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
             var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
-            // 1. Self-Healing: Fix existing users with null required fields
+            // 1. Self-Healing: Fix existing users
             var usersWithNullFields = await context.Users
                 .Where(u => u.ShopName == null || u.CommercialRegister == null || u.TaxCard == null)
                 .ToListAsync();
@@ -141,19 +141,9 @@ namespace Diska.Data
 
             foreach (var cat in categoriesList)
             {
-                var existingCat = await context.Categories.FirstOrDefaultAsync(c => c.Slug == cat.Slug);
-                if (existingCat == null)
+                if (!await context.Categories.AnyAsync(c => c.Slug == cat.Slug))
                 {
                     context.Categories.Add(cat);
-                }
-                else
-                {
-                    // Update missing fields
-                    bool updated = false;
-                    if (string.IsNullOrEmpty(existingCat.ImageUrl)) { existingCat.ImageUrl = cat.ImageUrl; updated = true; }
-                    if (string.IsNullOrEmpty(existingCat.MetaDescription)) { existingCat.MetaDescription = cat.MetaDescription; updated = true; }
-
-                    if (updated) context.Update(existingCat);
                 }
             }
             await context.SaveChangesAsync();
@@ -164,7 +154,6 @@ namespace Diska.Data
             var catFash = await context.Categories.FirstOrDefaultAsync(c => c.Slug == "fashion");
             var catHome = await context.Categories.FirstOrDefaultAsync(c => c.Slug == "home");
 
-            // Re-fetch users
             merch1 = await userManager.FindByNameAsync("01111111111");
             merch2 = await userManager.FindByNameAsync("01222222222");
 
@@ -172,13 +161,12 @@ namespace Diska.Data
             {
                 var products = new List<Product>
                 {
-                    // Electronics
                     new Product {
                         Name = "ايفون 15", NameEn = "iPhone 15", Price = 45000, StockQuantity = 20, SKU = "IP15",
                         CategoryId = elecCat.Id, MerchantId = merch1.Id, Status = "Active",
                         ImageUrl = "images/products/iphone.png", Description = "موبايل ايفون", DescriptionEn = "iPhone Mobile",
                         Slug = "iphone-15", MetaTitle = "iPhone", MetaDescription = "Apple iPhone", Brand = "Apple",
-                        Barcode = "1234567890123", Color = "#000000"
+                        Barcode = "1234567890123", Color = "#1a1a1a"
                     },
                     new Product {
                         Name = "لابتوب ديل", NameEn = "Dell Laptop", Price = 35000, StockQuantity = 10, SKU = "DELL",
@@ -187,7 +175,6 @@ namespace Diska.Data
                         Slug = "dell-laptop", MetaTitle = "Dell", MetaDescription = "Dell Laptop", Brand = "Dell",
                         Barcode = "1234567890124", Color = "#C0C0C0"
                     },
-                    // Grocery
                     new Product {
                         Name = "أرز 5 كيلو", NameEn = "Rice 5KG", Price = 150, StockQuantity = 100, SKU = "RICE5",
                         CategoryId = grocCat.Id, MerchantId = merch2.Id, Status = "Active",
@@ -195,7 +182,6 @@ namespace Diska.Data
                         Slug = "rice-5kg", MetaTitle = "Rice", MetaDescription = "Food", Brand = "Doha",
                         Barcode = "1234567890125", Color = "#FFFFFF"
                     },
-                    // Fashion (New)
                     new Product {
                         Name = "تيشيرت بولو", NameEn = "Polo T-Shirt", Price = 350, StockQuantity = 50, SKU = "TSHIRT",
                         CategoryId = catFash.Id, MerchantId = merch1.Id, Status = "Active",
@@ -203,7 +189,6 @@ namespace Diska.Data
                         Slug = "polo-shirt", MetaTitle = "T-Shirt", MetaDescription = "Fashion", Brand = "Polo",
                         Barcode = "1234567890126", Color = "#0000FF"
                     },
-                    // Home (New)
                     new Product {
                         Name = "طقم أطباق", NameEn = "Dinner Set", Price = 2500, StockQuantity = 15, SKU = "DISHES",
                         CategoryId = catHome.Id, MerchantId = merch2.Id, Status = "Active",
@@ -215,78 +200,23 @@ namespace Diska.Data
 
                 foreach (var p in products)
                 {
-                    var existingProd = await context.Products.FirstOrDefaultAsync(x => x.SKU == p.SKU);
-                    if (existingProd == null)
+                    if (!await context.Products.AnyAsync(x => x.SKU == p.SKU))
                     {
                         context.Products.Add(p);
                     }
-                    else
-                    {
-                        // Update missing fields
-                        bool updated = false;
-                        if (string.IsNullOrEmpty(existingProd.Barcode)) { existingProd.Barcode = p.Barcode; updated = true; }
-                        if (string.IsNullOrEmpty(existingProd.Color)) { existingProd.Color = p.Color; updated = true; }
-
-                        if (updated) context.Update(existingProd);
-                    }
                 }
                 await context.SaveChangesAsync();
             }
 
-            // 6. Create Banners
+            // 6. Banners
             if (!await context.Banners.AnyAsync())
             {
-                var banners = new List<Banner>
+                context.Banners.AddRange(new List<Banner>
                 {
-                    new Banner
-                    {
-                        Title = "عروض الصيف",
-                        TitleEn = "Summer Sale",
-                        Subtitle = "خصومات حصرية",
-                        SubtitleEn = "Exclusive Discounts",
-                        ButtonText = "تسوق الآن",
-                        ButtonTextEn = "Shop Now",
-                        ImageDesktop = "images/banners/summer.png",
-                        ImageMobile = "images/banners/summer_mob.png",
-                        LinkType = "External",
-                        LinkId = "#",
-                        Priority = 1,
-                        IsActive = true,
-                        StartDate = DateTime.Now,
-                        EndDate = DateTime.Now.AddDays(30)
-                    },
-                    new Banner
-                    {
-                        Title = "إلكترونيات حديثة",
-                        TitleEn = "Modern Electronics",
-                        Subtitle = "أحدث الأجهزة",
-                        SubtitleEn = "Latest Gadgets",
-                        ButtonText = "اكتشف المزيد",
-                        ButtonTextEn = "Discover More",
-                        ImageDesktop = "images/banners/electronics.png",
-                        ImageMobile = "images/banners/electronics_mob.png",
-                        LinkType = "Category",
-                        LinkId = elecCat?.Id.ToString(),
-                        Priority = 2,
-                        IsActive = true,
-                        StartDate = DateTime.Now,
-                        EndDate = DateTime.Now.AddDays(30)
-                    }
-                };
-
-                context.Banners.AddRange(banners);
+                    new Banner { Title = "عروض الصيف", TitleEn = "Summer Sale", Subtitle = "خصم 50%", ImageDesktop = "images/banners/summer.png", LinkType = "External", StartDate = DateTime.Now, EndDate = DateTime.Now.AddDays(30), IsActive = true, Priority = 1 },
+                    new Banner { Title = "إلكترونيات", TitleEn = "Electronics", Subtitle = "أحدث التقنيات", ImageDesktop = "images/banners/electronics.png", LinkType = "Category", LinkId = elecCat?.Id.ToString() ?? "1", StartDate = DateTime.Now, EndDate = DateTime.Now.AddDays(30), IsActive = true, Priority = 2 }
+                });
                 await context.SaveChangesAsync();
-            }
-            else
-            {
-                // Self-healing for banners
-                var banners = await context.Banners.Where(b => b.ImageMobile == null || b.Subtitle == null).ToListAsync();
-                foreach (var b in banners)
-                {
-                    if (b.ImageMobile == null) b.ImageMobile = b.ImageDesktop ?? "images/default.png";
-                    if (b.Subtitle == null) b.Subtitle = "";
-                }
-                if (banners.Any()) await context.SaveChangesAsync();
             }
 
             // 7. Group Deals
@@ -312,7 +242,7 @@ namespace Diska.Data
                 }
             }
 
-            // 8. Create Orders (Missing in previous version!)
+            // 8. Create Orders (Fixed Notes, DeliverySlot, and Color Info)
             cust = await userManager.FindByNameAsync("01099999999");
             if (cust != null && !await context.Orders.AnyAsync(o => o.UserId == cust.Id))
             {
@@ -323,14 +253,14 @@ namespace Diska.Data
                 {
                     var orders = new List<Order>
                     {
-                        // Order 1: iPhone (Black Color)
                         new Order {
                             UserId = cust.Id, CustomerName = cust.FullName, Phone = cust.PhoneNumber,
                             Governorate = "Cairo", City = "Nasr City", Address = "123 Main St",
                             PaymentMethod = "Cash", Status = "Delivered", OrderDate = DateTime.Now.AddDays(-5),
                             TotalAmount = prod1.Price + 50, ShippingCost = 50,
-                            OrderItems = new List<OrderItem>
-                            {
+                            Notes = "تم الاستلام", // Added Note
+                            DeliverySlot = "Morning", // Added DeliverySlot
+                            OrderItems = new List<OrderItem> {
                                 new OrderItem {
                                     ProductId = prod1.Id,
                                     Quantity = 1,
@@ -340,27 +270,20 @@ namespace Diska.Data
                                 }
                             }
                         },
-                        // Order 2: Rice (No specific color, maybe default) & iPhone (Blue)
                         new Order {
                             UserId = cust.Id, CustomerName = cust.FullName, Phone = cust.PhoneNumber,
                             Governorate = "Giza", City = "Dokki", Address = "456 Side St",
                             PaymentMethod = "Wallet", Status = "Pending", OrderDate = DateTime.Now.AddHours(-2),
-                            TotalAmount = (prod2.Price * 5) + prod1.Price + 50, ShippingCost = 50,
-                            OrderItems = new List<OrderItem>
-                            {
+                            TotalAmount = (prod2.Price * 5) + 50, ShippingCost = 50,
+                            Notes = "بدون ملاحظات", // Added Note
+                            DeliverySlot = "Evening", // Added DeliverySlot
+                            OrderItems = new List<OrderItem> {
                                 new OrderItem {
                                     ProductId = prod2.Id,
                                     Quantity = 5,
                                     UnitPrice = prod2.Price,
-                                    SelectedColorName = "أبيض", // Rice bag color example
+                                    SelectedColorName = "Standard",
                                     SelectedColorHex = "#ffffff"
-                                },
-                                new OrderItem {
-                                    ProductId = prod1.Id,
-                                    Quantity = 1,
-                                    UnitPrice = prod1.Price,
-                                    SelectedColorName = "أزرق تيتانيوم",
-                                    SelectedColorHex = "#2f3e59"
                                 }
                             }
                         }
@@ -370,7 +293,7 @@ namespace Diska.Data
                 }
             }
 
-            // 9. PendingMerchantActions
+            // 9. PendingMerchantActions (Fixed AdminComment)
             if (!await context.PendingMerchantActions.AnyAsync() && merch1 != null)
             {
                 var prod = await context.Products.FirstOrDefaultAsync(p => p.MerchantId == merch1.Id);
@@ -386,7 +309,8 @@ namespace Diska.Data
                         NewValueJson = JsonSerializer.Serialize(new { Price = prod.Price + 500 }),
                         Status = "Pending",
                         RequestDate = DateTime.Now.AddHours(-2),
-                        ActionByAdminId = "System"
+                        ActionByAdminId = "System",
+                        AdminComment = "لا يوجد تعليق" // Added AdminComment
                     });
                     await context.SaveChangesAsync();
                 }

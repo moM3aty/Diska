@@ -4,61 +4,23 @@
     Layout = "_AdminLayout";
 }
 
-<!-- نفس الستايل لتوحيد التصميم -->
 <style>
     .icon-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-        gap: 10px;
-        max-height: 250px;
-        overflow-y: auto;
-        padding: 15px;
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 10px;
+        max-height: 250px; overflow-y: auto; padding: 15px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;
     }
-
     .icon-option {
-        height: 50px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #fff;
-        border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        cursor: pointer;
-        font-size: 1.3rem;
-        color: #64748b;
-        transition: all 0.2s ease;
+        height: 50px; display: flex; align-items: center; justify-content: center; background: #fff;
+        border: 1px solid #e2e8f0; border-radius: 10px; cursor: pointer; font-size: 1.3rem; color: #64748b; transition: all 0.2s ease;
     }
-
-        .icon-option:hover {
-            border-color: var(--primary);
-            color: var(--primary);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
-
-        .icon-option.active {
-            background: var(--primary);
-            color: #fff;
-            border-color: var(--primary);
-            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
-        }
+    .icon-option:hover { border-color: var(--primary); color: var(--primary); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .icon-option.active { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3); }
 
     .selected-icon-preview {
-        width: 90px;
-        height: 90px;
-        background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%);
-        color: var(--primary);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 2.5rem;
-        margin: 0 auto 15px;
-        box-shadow: 0 10px 25px rgba(79, 70, 229, 0.15);
-        border: 4px solid #fff;
+        width: 90px; height: 90px; background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%);
+        color: var(--primary); border-radius: 50%;
+        display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin: 0 auto 15px;
+        box-shadow: 0 10px 25px rgba(79, 70, 229, 0.15); border: 4px solid #fff;
     }
 </style>
 
@@ -103,7 +65,10 @@
 
                         <!-- Icon Picker -->
                         <div class="col-12">
-                            <label class="form-label fw-bold small text-muted">قائمة الأيقونات</label>
+                            <label class="form-label fw-bold small text-muted">قائمة الأيقونات (ابحث واختر)</label>
+                            <!-- Search Icons (Optional simple filter) -->
+                            <input type="text" id="iconSearch" class="form-control mb-2 form-control-sm" placeholder="ابحث عن أيقونة (مثال: car, home)..." onkeyup="filterIcons()">
+
                             <input type="hidden" asp-for="IconClass" id="IconClassInput" value="fas fa-folder">
                             <div class="icon-grid" id="iconGrid"></div>
                         </div>
@@ -143,56 +108,99 @@
 
 @section Scripts {
     <script>
+        // Expanded Icon List
         const icons = [
-            // Electronics
-            'fas fa-laptop', 'fas fa-mobile-alt', 'fas fa-tv', 'fas fa-camera', 'fas fa-headphones',
-            'fas fa-print', 'fas fa-microchip', 'fas fa-gamepad', 'fas fa-plug', 'fas fa-battery-full',
-            'fas fa-keyboard', 'fas fa-mouse', 'fas fa-tablet-alt', 'fas fa-server', 'fas fa-wifi',
+            // General & UI
+            'fas fa-folder', 'fas fa-home', 'fas fa-bars', 'fas fa-star', 'fas fa-heart', 'fas fa-check',
+            'fas fa-cog', 'fas fa-user', 'fas fa-users', 'fas fa-search', 'fas fa-bell', 'fas fa-map-marker-alt',
 
-            // Fashion
-            'fas fa-tshirt', 'fas fa-user-tie', 'fas fa-shoe-prints', 'fas fa-hat-cowboy', 'fas fa-socks',
-            'fas fa-glasses', 'fas fa-gem', 'fas fa-vest', 'fas fa-shopping-bag', 'fas fa-mask',
+            // Electronics & Gadgets
+            'fas fa-laptop', 'fas fa-desktop', 'fas fa-mobile-alt', 'fas fa-tablet-alt', 'fas fa-tv',
+            'fas fa-camera', 'fas fa-video', 'fas fa-headphones', 'fas fa-microphone', 'fas fa-print',
+            'fas fa-plug', 'fas fa-battery-full', 'fas fa-microchip', 'fas fa-gamepad', 'fas fa-wifi',
+            'fas fa-server', 'fas fa-mouse', 'fas fa-keyboard', 'fas fa-hdd', 'fas fa-sd-card', 'fas fa-sim-card',
 
-            // Home & Furniture
-            'fas fa-couch', 'fas fa-bed', 'fas fa-chair', 'fas fa-lightbulb', 'fas fa-door-open',
-            'fas fa-bath', 'fas fa-shower', 'fas fa-toilet', 'fas fa-blender', 'fas fa-fan',
-            'fas fa-utensils', 'fas fa-mug-hot', 'fas fa-seedling', 'fas fa-box-open',
+            // Fashion & Clothing
+            'fas fa-tshirt', 'fas fa-user-tie', 'fas fa-socks', 'fas fa-hat-cowboy', 'fas fa-hat-wizard',
+            'fas fa-glasses', 'fas fa-ring', 'fas fa-gem', 'fas fa-vest', 'fas fa-shopping-bag',
+            'fas fa-shoe-prints', 'fas fa-mask', 'fas fa-mitten', 'fas fa-stopwatch',
 
-            // Grocery
-            'fas fa-carrot', 'fas fa-apple-alt', 'fas fa-pizza-slice', 'fas fa-coffee', 'fas fa-ice-cream',
-            'fas fa-hamburger', 'fas fa-drumstick-bite', 'fas fa-fish', 'fas fa-egg', 'fas fa-cheese',
-            'fas fa-bread-slice', 'fas fa-pepper-hot', 'fas fa-leaf', 'fas fa-shopping-basket',
+            // Home, Furniture & Decor
+            'fas fa-couch', 'fas fa-bed', 'fas fa-chair', 'fas fa-door-open', 'fas fa-door-closed',
+            'fas fa-bath', 'fas fa-shower', 'fas fa-toilet', 'fas fa-soap', 'fas fa-lightbulb',
+            'fas fa-fan', 'fas fa-blender', 'fas fa-utensils', 'fas fa-mug-hot', 'fas fa-glass-martini-alt',
+            'fas fa-box-open', 'fas fa-box', 'fas fa-seedling', 'fas fa-leaf', 'fas fa-fire',
 
-            // Health & Beauty
-            'fas fa-heartbeat', 'fas fa-pills', 'fas fa-first-aid', 'fas fa-stethoscope', 'fas fa-syringe',
-            'fas fa-tooth', 'fas fa-eye', 'fas fa-spa', 'fas fa-spray-can', 'fas fa-hand-sparkles',
+            // Grocery & Food
+            'fas fa-shopping-basket', 'fas fa-cart-plus', 'fas fa-carrot', 'fas fa-apple-alt', 'fas fa-lemon',
+            'fas fa-pepper-hot', 'fas fa-pizza-slice', 'fas fa-hamburger', 'fas fa-hotdog', 'fas fa-drumstick-bite',
+            'fas fa-fish', 'fas fa-egg', 'fas fa-cheese', 'fas fa-bread-slice', 'fas fa-ice-cream',
+            'fas fa-cookie', 'fas fa-candy-cane', 'fas fa-coffee', 'fas fa-wine-bottle', 'fas fa-beer',
 
-            // Sports & Automotive
-            'fas fa-dumbbell', 'fas fa-bicycle', 'fas fa-futbol', 'fas fa-running', 'fas fa-swimmer',
-            'fas fa-car', 'fas fa-motorcycle', 'fas fa-truck-pickup', 'fas fa-oil-can', 'fas fa-tools',
-            'fas fa-wrench', 'fas fa-gas-pump', 'fas fa-tachometer-alt',
+            // Health, Beauty & Medical
+            'fas fa-heartbeat', 'fas fa-stethoscope', 'fas fa-pills', 'fas fa-first-aid', 'fas fa-syringe',
+            'fas fa-thermometer', 'fas fa-eye', 'fas fa-tooth', 'fas fa-hand-holding-medical', 'fas fa-hospital',
+            'fas fa-spa', 'fas fa-cut', 'fas fa-spray-can', 'fas fa-pump-soap', 'fas fa-hand-sparkles',
 
-            // Others
-            'fas fa-baby', 'fas fa-book', 'fas fa-gift', 'fas fa-tag', 'fas fa-star', 'fas fa-folder'
+            // Sports & Fitness
+            'fas fa-dumbbell', 'fas fa-bicycle', 'fas fa-futbol', 'fas fa-basketball-ball', 'fas fa-volleyball-ball',
+            'fas fa-football-ball', 'fas fa-golf-ball', 'fas fa-table-tennis', 'fas fa-running', 'fas fa-swimmer',
+            'fas fa-skating', 'fas fa-skiing', 'fas fa-snowboarding', 'fas fa-medal', 'fas fa-trophy',
+
+            // Automotive & Tools
+            'fas fa-car', 'fas fa-motorcycle', 'fas fa-truck', 'fas fa-bus', 'fas fa-taxi',
+            'fas fa-gas-pump', 'fas fa-oil-can', 'fas fa-tools', 'fas fa-wrench', 'fas fa-hammer',
+            'fas fa-screwdriver', 'fas fa-paint-roller', 'fas fa-brush', 'fas fa-ruler-combined', 'fas fa-tachometer-alt',
+
+            // Kids & Toys
+            'fas fa-baby', 'fas fa-baby-carriage', 'fas fa-shapes', 'fas fa-puzzle-piece', 'fas fa-robot',
+            'fas fa-gamepad', 'fas fa-ghost', 'fas fa-dice', 'fas fa-chess-knight', 'fas fa-bicycle',
+
+            // Office & School
+            'fas fa-book', 'fas fa-pen', 'fas fa-pencil-alt', 'fas fa-eraser', 'fas fa-paperclip',
+            'fas fa-briefcase', 'fas fa-calculator', 'fas fa-calendar-alt', 'fas fa-envelope', 'fas fa-folder-open',
+
+            // Gifts & Occasions
+            'fas fa-gift', 'fas fa-birthday-cake', 'fas fa-ribbon', 'fas fa-tags', 'fas fa-ticket-alt'
         ];
 
         const grid = document.getElementById('iconGrid');
         const input = document.getElementById('IconClassInput');
         const preview = document.getElementById('previewIcon');
 
-        icons.forEach(iconClass => {
-            const div = document.createElement('div');
-            div.className = 'icon-option';
-            div.innerHTML = `<i class="${iconClass}"></i>`;
+        // Function to render icons
+        function renderIcons(filter = "") {
+            grid.innerHTML = "";
+            const current = input.value;
 
-            div.onclick = function() {
-                document.querySelectorAll('.icon-option').forEach(el => el.classList.remove('active'));
-                this.classList.add('active');
-                input.value = iconClass;
-                preview.className = iconClass;
-            };
+            icons.forEach(iconClass => {
+                if (filter && !iconClass.includes(filter)) return;
 
-            grid.appendChild(div);
-        });
+                const div = document.createElement('div');
+                div.className = 'icon-option';
+                if (current === iconClass) div.classList.add('active');
+
+                div.innerHTML = `<i class="${iconClass}"></i>`;
+                div.title = iconClass; // Tooltip
+
+                div.onclick = function() {
+                    document.querySelectorAll('.icon-option').forEach(el => el.classList.remove('active'));
+                    this.classList.add('active');
+                    input.value = iconClass;
+                    preview.className = iconClass;
+                };
+
+                grid.appendChild(div);
+            });
+        }
+
+        // Search Filter
+        function filterIcons() {
+            const val = document.getElementById('iconSearch').value.toLowerCase();
+            renderIcons(val);
+        }
+
+        // Init
+        renderIcons();
     </script>
 }

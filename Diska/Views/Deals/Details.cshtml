@@ -1,51 +1,234 @@
 ﻿@model Diska.Models.GroupDeal
 @using System.Globalization
+@using Diska.Data
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<Diska.Models.ApplicationUser> UserManager
+@inject ApplicationDbContext _context
+
 @{
+    Layout = "_Layout";
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
     ViewData["Title"] = Model.Title;
+
     var products = ViewBag.IncludedProducts as List<Diska.Models.Product>;
     var timeLeft = Model.EndDate - DateTime.Now;
+
+    // Wishlist Logic
+    var user = await UserManager.GetUserAsync(User);
+    var wishlistIds = user != null
+        ? _context.WishlistItems.Where(w => w.UserId == user.Id).Select(w => w.ProductId).ToList()
+        : new List<int>();
 }
 
-<section class="section-padding" style="background:#f9fafb;">
+<style>
+    /* --- Deal Header Styles --- */
+    .deal-hero {
+        background: linear-gradient(135deg, #0F172A 0%, #1e293b 100%);
+        padding: 60px 0;
+        color: #fff;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        border-bottom: 4px solid #FACC15;
+    }
+
+    .deal-tag {
+        background: #FACC15;
+        color: #0F172A;
+        font-weight: 800;
+        padding: 8px 20px;
+        border-radius: 30px;
+        display: inline-block;
+        margin-bottom: 20px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        box-shadow: 0 4px 15px rgba(250, 204, 21, 0.4);
+    }
+
+    .deal-title {
+        font-size: 2.5rem;
+        font-weight: 900;
+        margin-bottom: 15px;
+    }
+
+    .deal-desc {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        max-width: 700px;
+        margin: 0 auto 30px;
+        line-height: 1.6;
+    }
+
+    /* Countdown Timer */
+    .countdown-box {
+        display: inline-flex;
+        gap: 15px;
+        background: rgba(255,255,255,0.1);
+        padding: 15px 30px;
+        border-radius: 12px;
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    .time-unit { text-align: center; }
+    .time-val { font-size: 1.5rem; font-weight: 800; color: #FACC15; line-height: 1; }
+    .time-label { font-size: 0.75rem; text-transform: uppercase; opacity: 0.7; }
+
+    /* --- Products Grid Styles (Requested Style) --- */
+    .deal-products-section {
+        background-color: #f8fafc;
+        padding: 50px 0;
+        min-height: 60vh;
+    }
+
+    .products-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 25px;
+    }
+
+    .product-card {
+        background: #fff;
+        border-radius: 20px;
+        border: 1px solid #f1f5f9;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+    
+    .product-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px -5px rgba(0,0,0,0.1);
+        border-color: #0F172A;
+    }
+
+    .product-img {
+        height: 220px;
+        padding: 25px;
+        background: radial-gradient(circle, #fff 40%, #f8fafc 100%);
+        display: flex; align-items: center; justify-content: center;
+        position: relative;
+    }
+    .product-img img {
+        max-width: 100%; max-height: 100%;
+        object-fit: contain;
+        transition: transform 0.5s;
+    }
+    .product-card:hover .product-img img { transform: scale(1.1); }
+
+    .product-info {
+        padding: 20px;
+        text-align: center;
+        flex-grow: 1;
+        display: flex; flex-direction: column;
+        border-top: 1px solid #f8fafc;
+    }
+
+    .pro-cat { font-size: 0.75rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-bottom: 5px; }
+    
+    .product-info h4 {
+        font-size: 1rem; font-weight: 700; color: #334155; margin: 0 0 10px;
+        height: 42px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+        transition: 0.2s;
+    }
+    .product-card:hover .product-info h4 { color: #0F172A; }
+
+    .pricing {
+        font-size: 1.2rem; font-weight: 800; color: #ef4444; /* Red for Deal Price */
+        margin-top: auto; display: flex; align-items: baseline; justify-content: center; gap: 8px;
+    }
+    .old-price { text-decoration: line-through; color: #cbd5e1; font-size: 0.9rem; font-weight: 500; }
+
+    .product-meta {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-top: 15px; padding-top: 15px; border-top: 1px dashed #e2e8f0; font-size: 0.8rem;
+    }
+    .stock-info { font-weight: 700; color: #16a34a; background: #dcfce7; padding: 2px 6px; border-radius: 4px; }
+    .stock-info.low { color: #dc2626; background: #fee2e2; }
+
+    /* Actions */
+    .add-to-cart {
+        margin-top: 15px; opacity: 0; transform: translateY(10px); transition: 0.3s;
+        display: flex; align-items: center; gap: 10px;
+    }
+    .product-card:hover .add-to-cart { opacity: 1; transform: translateY(0); }
+
+    .qty-control-card {
+        display: flex; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: #f8fafc; height: 35px;
+    }
+    .qty-control-card button { width: 25px; height: 100%; border: none; background: #fff; cursor: pointer; color: #0F172A; font-weight: bold; }
+    .qty-control-card button:hover { background: #e2e8f0; }
+    .qty-control-card input { width: 35px; border: none; text-align: center; font-weight: 700; color: #0F172A; background: transparent; outline: none; }
+
+    .add-btn {
+        flex: 1; background: #0F172A; color: #fff; border: none; height: 35px; border-radius: 8px;
+        font-weight: 700; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 5px;
+    }
+    .add-btn:hover { background: #FACC15; color: #0F172A; }
+
+    /* Badges */
+    .badge-bestseller {
+        background: linear-gradient(135deg, #FFD700, #FDB931); color: #fff; padding: 4px 10px;
+        border-radius: 20px; font-size: 0.7rem; font-weight: 800; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        display: flex; align-items: center; gap: 4px;
+    }
+    .badge-discount {
+        background: #ef4444; color: #fff; padding: 4px 10px;
+        border-radius: 20px; font-size: 0.7rem; font-weight: 800; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+</style>
+
+<!-- Hero Section -->
+<div class="deal-hero">
     <div class="container">
+        <span class="deal-tag"><i class="fas fa-bolt"></i> @(isAr ? "عرض خاص" : "Special Offer")</span>
+        <h1 class="deal-title">@Model.Title</h1>
+        
+        <p class="deal-desc">
+            @if (Model.IsPercentage)
+            {
+                @(isAr ? $"استمتع بخصم {Model.DiscountValue:0}% على المنتجات المختارة أدناه لفترة محدودة!" : $"Enjoy {Model.DiscountValue:0}% OFF on selected items below for a limited time!")
+            }
+            else
+            {
+                @(isAr ? $"خصم فوري {Model.DiscountValue:N0} جنيه على هذه المجموعة المميزة." : $"Instant {Model.DiscountValue:N0} EGP OFF on this exclusive collection.")
+            }
+        </p>
 
-        <div class="breadcrumb" style="margin-bottom:20px;">
-            <a asp-controller="Home" asp-action="Index">@(isAr ? "الرئيسية" : "Home")</a> /
-            <a asp-action="Index">@(isAr ? "العروض" : "Deals")</a> /
-            <span>@Model.Title</span>
-        </div>
-
-        <!-- Deal Header Card -->
-        <div class="card" style="border:none; border-radius:15px; overflow:hidden; box-shadow:0 5px 20px rgba(0,0,0,0.05); margin-bottom:30px;">
-            <div style="background:linear-gradient(135deg, var(--primary), #1e293b); padding:40px; color:#fff; text-align:center; position:relative;">
-                <span class="tag" style="background:var(--accent); color:#000; font-weight:bold; padding:5px 15px; border-radius:20px; display:inline-block; margin-bottom:15px;">
-                    @(isAr ? "عرض محدود" : "Limited Offer")
-                </span>
-
-                <h1 style="font-size:2.5rem; font-weight:800; margin-bottom:10px;">@Model.Title</h1>
-
-                <p style="font-size:1.2rem; opacity:0.9;">
-                    @if (Model.IsPercentage)
-                    {
-                        @(isAr ? $"خصم {Model.DiscountValue:0}% على المنتجات المختارة" : $"{Model.DiscountValue:0}% OFF on selected items")
-                    }
-                    else
-                    {
-                        @(isAr ? $"خصم {Model.DiscountValue:N0} جنيه على المنتجات المختارة" : $"{Model.DiscountValue:N0} EGP OFF on selected items")
-                    }
-                </p>
-
-                <div style="display:inline-flex; align-items:center; gap:10px; background:rgba(255,255,255,0.1); padding:10px 20px; border-radius:10px; margin-top:20px;">
-                    <i class="far fa-clock"></i>
-                    <span>@(isAr ? "ينتهي خلال:" : "Ends in:") <strong>@timeLeft.Days @(isAr ? "يوم" : "Days")</strong></span>
+        <!-- Countdown -->
+        @if (Model.EndDate > DateTime.Now)
+        {
+            <div class="countdown-box" id="countdown">
+                <div class="time-unit">
+                    <div class="time-val" id="days">00</div>
+                    <div class="time-label">@(isAr?"يوم":"Days")</div>
+                </div>
+                <div class="time-val">:</div>
+                <div class="time-unit">
+                    <div class="time-val" id="hours">00</div>
+                    <div class="time-label">@(isAr?"ساعة":"Hrs")</div>
+                </div>
+                <div class="time-val">:</div>
+                <div class="time-unit">
+                    <div class="time-val" id="minutes">00</div>
+                    <div class="time-label">@(isAr?"دقيقة":"Mins")</div>
                 </div>
             </div>
-        </div>
+        }
+    </div>
+</div>
 
-        <!-- Included Products -->
-        <div class="section-header">
-            <h3>@(isAr ? "المنتجات المشمولة في العرض" : "Products in this Deal")</h3>
+<!-- Products Section -->
+<div class="deal-products-section">
+    <div class="container">
+        
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 style="color:#0F172A; font-weight:800; margin:0;">
+                @(isAr ? "المنتجات المشمولة بالعرض" : "Deal Products") 
+                <span style="font-size:1rem; color:#64748b; font-weight:normal;">(@(products?.Count ?? 0))</span>
+            </h3>
         </div>
 
         @if (products != null && products.Any())
@@ -53,39 +236,79 @@
             <div class="products-grid">
                 @foreach (var item in products)
                 {
-                    decimal finalPrice = item.Price;
+                    // --- حساب سعر العرض للعرض فقط ---
+                    decimal dealPrice = item.Price;
                     if (Model.IsPercentage)
                     {
-                        finalPrice = item.Price - (item.Price * (Model.DiscountValue / 100));
+                        dealPrice = item.Price - (item.Price * (Model.DiscountValue / 100));
                     }
                     else
                     {
-                        finalPrice = item.Price - Model.DiscountValue;
+                        dealPrice = item.Price - Model.DiscountValue;
                     }
 
-                    <div class="product-card" data-id="@item.Id">
+                    bool isBestSeller = item.Id % 2 == 0; // محاكاة
+                    bool isLiked = wishlistIds.Contains(item.Id);
 
-                        <div class="flash-badge" style="background:var(--danger);">
-                            @(Model.IsPercentage ? $"{Model.DiscountValue:0}%" : $"-{Model.DiscountValue:N0}")
+                    <div class="product-card" data-id="@item.Id">
+                        
+                        <!-- Badges -->
+                        <div class="badge-container" style="position:absolute; top:15px; @(isAr ? "right" : "left"):15px; z-index:2; display:flex; flex-direction:column; gap:5px;">
+                            @if (isBestSeller)
+                            {
+                                <span class="badge-bestseller"><i class="fas fa-crown"></i> @(isAr ? "الأكثر مبيعاً" : "Best Seller")</span>
+                            }
+                            <span class="badge-discount">
+                                @(Model.IsPercentage ? $"{Model.DiscountValue:0}% OFF" : "SALE")
+                            </span>
                         </div>
 
+                        <!-- Wishlist -->
+                        <button class="fav-btn @(isLiked ? "active" : "")" onclick="toggleWishlist(@item.Id, this)"
+                                style="position:absolute; top:15px; @(isAr ? "left" : "right"):15px; width:35px; height:35px; background:rgba(255,255,255,0.9); border-radius:50%; border:1px solid #e2e8f0; color:@(isLiked ? "#ef4444" : "#94a3b8"); display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:3; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
+                            <i class="@(isLiked ? "fas" : "far") fa-heart"></i>
+                        </button>
+
+                        <!-- Image -->
                         <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id" class="product-img">
                             <img src="~/@item.ImageUrl" alt="@item.Name" onerror="this.src='/images/default.png'">
                         </a>
 
+                        <!-- Info -->
                         <div class="product-info">
+                            <span class="pro-cat">@(isAr? item.Category?.Name : item.Category?.NameEn)</span>
+
                             <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id" style="text-decoration:none; color:inherit;">
                                 <h4>@(isAr? item.Name: item.NameEn)</h4>
                             </a>
 
                             <div class="pricing">
-                                <span class="current-price" style="color:var(--danger);">@finalPrice.ToString("N0") <small>@(isAr ? "ج.م" : "EGP")</small></span>
+                                <span class="current-price">@dealPrice.ToString("N0") <small>@(isAr ? "ج.م" : "EGP")</small></span>
                                 <span class="old-price">@item.Price.ToString("N0")</span>
                             </div>
 
+                            <div class="product-meta">
+                                <span class="unit"><i class="fas fa-box"></i> @item.UnitsPerCarton</span>
+                                @if (item.StockQuantity > 0)
+                                {
+                                    <span class="stock-info">@(isAr ? "متوفر" : "In Stock")</span>
+                                }
+                                else
+                                {
+                                    <span class="stock-info low">@(isAr ? "نافذ" : "Out of Stock")</span>
+                                }
+                            </div>
+
+                            <!-- Actions -->
                             <div class="add-to-cart">
-                                <button onclick="addToCartSimple(@item.Id)" class="add-btn" style="width:100%;">
-                                    @(isAr ? "إضافة للسلة" : "Add to Cart") <i class="fas fa-cart-plus"></i>
+                                <div class="qty-control-card">
+                                    <button onclick="updateCardQty(this, -1)">-</button>
+                                    <input type="number" id="qty-@item.Id" value="1" min="1" max="@item.StockQuantity" readonly>
+                                    <button onclick="updateCardQty(this, 1)">+</button>
+                                </div>
+                                <!-- نمرر DealId هنا -->
+                                <button class="add-btn" onclick="addToCartDeal(@item.Id, @Model.Id, this)">
+                                    @(isAr ? "أضف" : "Add") <i class="fas fa-cart-plus"></i>
                                 </button>
                             </div>
                         </div>
@@ -95,20 +318,114 @@
         }
         else
         {
-            <div style="text-align:center; padding:50px; color:#666;">
-                <p>@(isAr ? "لا توجد منتجات متاحة في هذا العرض حالياً." : "No products available in this deal currently.")</p>
+            <div class="text-center py-5 text-muted">
+                <i class="fas fa-box-open fa-3x mb-3 opacity-25"></i>
+                <p>@(isAr ? "عفواً، انتهت المنتجات في هذا العرض." : "Sorry, products in this deal are out of stock.")</p>
+                <a asp-controller="Home" asp-action="Index" class="btn btn-outline-dark btn-sm mt-2">@(isAr ? "العودة للمتجر" : "Back to Shop")</a>
             </div>
         }
 
     </div>
-</section>
+</div>
 
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        function addToCartSimple(id) {
-            if(typeof addItemToCart === 'function') {
-                addItemToCart(id, 1);
+        // Countdown Logic
+        const endDate = new Date('@Model.EndDate.ToString("yyyy-MM-ddTHH:mm:ss")').getTime();
+        const timer = setInterval(() => {
+            const now = new Date().getTime();
+            const distance = endDate - now;
+
+            if (distance < 0) {
+                clearInterval(timer);
+                document.getElementById("countdown").innerHTML = "EXPIRED";
+                return;
             }
+
+            document.getElementById("days").innerText = Math.floor(distance / (1000 * 60 * 60 * 24));
+            document.getElementById("hours").innerText = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            document.getElementById("minutes").innerText = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        }, 1000);
+
+        function updateCardQty(btn, change) {
+            let input = btn.parentElement.querySelector('input');
+            let val = parseInt(input.value) + change;
+            let max = parseInt(input.getAttribute('max'));
+            if (val >= 1 && val <= max) input.value = val;
+        }
+
+        // Add To Cart with Deal Context
+        function addToCartDeal(productId, dealId, btn) {
+            let qty = document.getElementById('qty-' + productId).value;
+            let original = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btn.disabled = true;
+
+            let formData = new FormData();
+            formData.append('productId', productId);
+            formData.append('quantity', qty);
+            formData.append('dealId', dealId); // نرسل معرف العرض
+
+            fetch('/Cart/AddItem', { method: 'POST', body: formData })
+            .then(r => r.json())
+            .then(res => {
+                if(res.success) {
+                    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: res.message, showConfirmButton: false, timer: 1500 });
+                    
+                    let cart = JSON.parse(localStorage.getItem('DISKA_CART')) || [];
+                    // استخدام DealId في المعرف الفريد لتمييز المنتج
+                    let uniqueId = productId + '_deal_' + dealId;
+                    let existing = cart.find(i => i.uniqueId === uniqueId);
+                    
+                    if(existing) existing.qty += parseInt(qty);
+                    else cart.push({
+                         id: res.product.id, 
+                         uniqueId: uniqueId, 
+                         qty: parseInt(qty),
+                         name: res.product.name, 
+                         price: res.product.price, // السعر المخصوم سيأتي من الكنترولر (لو تم تحديثه) أو سنعتمد عليه
+                         image: res.product.image,
+                         maxStock: res.product.stock, 
+                         colorName: res.product.colorName, 
+                         colorHex: res.product.colorHex,
+                         isDeal: true,
+                         dealId: dealId
+                    });
+                    
+                    localStorage.setItem('DISKA_CART', JSON.stringify(cart));
+                    if(typeof updateCartBadge === 'function') updateCartBadge();
+                } else {
+                    Swal.fire({ icon: 'warning', title: 'تنبيه', text: res.message });
+                }
+            })
+            .catch(e => console.error(e))
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = original;
+            });
+        }
+
+        // Toggle Wishlist
+        async function toggleWishlist(id, btn) {
+            try {
+                const icon = btn.querySelector('i');
+                const response = await fetch('/Wishlist/Toggle', { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'}, 
+                    body: `productId=${id}` 
+                });
+                
+                if(response.status === 401) { window.location.href = '/Account/Login'; return; }
+                const res = await response.json();
+                if(res.success) {
+                    if(res.status === 'added') {
+                        icon.classList.remove('far'); icon.classList.add('fas'); btn.classList.add('active');
+                    } else {
+                        icon.classList.remove('fas'); icon.classList.add('far'); btn.classList.remove('active');
+                    }
+                }
+            } catch(e) { console.error(e); }
         }
     </script>
 }

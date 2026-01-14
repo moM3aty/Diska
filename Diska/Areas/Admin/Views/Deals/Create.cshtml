@@ -1,96 +1,180 @@
 ﻿@model Diska.Models.GroupDeal
 @{
-    ViewData["Title"] = "إنشاء صفقة";
+    ViewData["Title"] = "إضافة عرض";
     Layout = "_AdminLayout";
 }
 
-<div class="row justify-content-center">
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    /* Custom Select2 Styling to match theme */
+    .select2-container .select2-selection--single {
+        height: 45px;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        background-color: #f8fafc;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 43px;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        color: #334155;
+        font-weight: 600;
+        padding-left: 15px;
+    }
+
+    .select2-dropdown {
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    .select2-search__field {
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .form-label {
+        font-weight: 700;
+        color: #334155;
+        font-size: 0.9rem;
+    }
+
+    .form-control {
+        padding: 12px;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        background: #f8fafc;
+    }
+
+        .form-control:focus {
+            background: #fff;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+
+    .scope-btn {
+        width: 100%;
+        padding: 15px;
+        border-radius: 12px;
+        font-weight: 700;
+        border: 2px solid #e2e8f0;
+        background: #fff;
+        color: #64748b;
+        transition: 0.2s;
+    }
+
+        .scope-btn.active {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: #eff6ff;
+        }
+
+        .scope-btn i {
+            font-size: 1.5rem;
+            display: block;
+            margin-bottom: 5px;
+        }
+</style>
+
+<div class="row justify-content-center fade-up">
     <div class="col-lg-8">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 text-primary">إنشاء عرض جديد</h5>
-                <a asp-action="Index" class="btn btn-sm btn-outline-secondary">إلغاء</a>
+        <div class="card border-0 shadow-sm" style="border-radius: 16px;">
+            <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-primary fw-bold">إضافة عرض جديد</h5>
+                <a asp-action="Index" class="btn btn-sm btn-light border fw-bold text-muted">إلغاء</a>
             </div>
+
             <div class="card-body p-4">
-                <form asp-action="Create" method="post" id="dealForm">
+                <form asp-action="Create" method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-                    <div class="form-group mb-4">
-                        <label asp-for="Title" class="form-label">عنوان العرض</label>
-                        <input asp-for="Title" class="form-control" placeholder="مثال: خصومات الجمعة البيضاء" required />
-                        <span asp-validation-for="Title" class="text-danger"></span>
-                    </div>
-
-                    <!-- نطاق التطبيق -->
+                    <!-- Scope Selection -->
                     <div class="mb-4">
-                        <label class="form-label fw-bold d-block mb-2">ينطبق على:</label>
-                        <div class="btn-group w-100" role="group">
-                            <input type="radio" class="btn-check" name="ApplyTo" id="applyProduct" value="Product" checked onchange="toggleScope()">
-                            <label class="btn btn-outline-primary" for="applyProduct"><i class="fas fa-box me-2"></i> منتج محدد</label>
-
-                            <input type="radio" class="btn-check" name="ApplyTo" id="applyCategory" value="Category" onchange="toggleScope()">
-                            <label class="btn btn-outline-primary" for="applyCategory"><i class="fas fa-layer-group me-2"></i> قسم كامل</label>
+                        <label class="form-label mb-2">ينطبق على:</label>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <button type="button" class="scope-btn active" id="btnProduct" onclick="setScope('Product')">
+                                    <i class="fas fa-box"></i> منتج محدد
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button type="button" class="scope-btn" id="btnCategory" onclick="setScope('Category')">
+                                    <i class="fas fa-layer-group"></i> قسم كامل
+                                </button>
+                            </div>
                         </div>
+                        <input type="hidden" name="ApplyTo" id="ApplyToInput" value="Product">
                     </div>
 
-                    <div id="productSelectDiv" class="mb-4">
+                    <!-- Product Select (Searchable) -->
+                    <div class="mb-4" id="divProduct">
                         <label class="form-label">اختر المنتج</label>
-                        <select asp-for="ProductId" class="form-select" asp-items="ViewBag.Products">
-                            <option value="">-- اختر --</option>
+                        <select asp-for="ProductId" class="form-control select2-search" asp-items="ViewBag.ProductId" style="width: 100%;">
+                            <option value="">-- ابحث عن المنتج... --</option>
                         </select>
                     </div>
 
-                    <div id="categorySelectDiv" class="mb-4" style="display:none;">
+                    <!-- Category Select (Searchable) -->
+                    <div class="mb-4" id="divCategory" style="display:none;">
                         <label class="form-label">اختر القسم</label>
-                        <select asp-for="CategoryId" class="form-select" asp-items="ViewBag.Categories">
-                            <option value="">-- اختر --</option>
+                        <select asp-for="CategoryId" class="form-control select2-search" asp-items="ViewBag.CategoryId" style="width: 100%;">
+                            <option value="">-- ابحث عن القسم... --</option>
                         </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="Title" class="form-label">عنوان العرض</label>
+                        <input asp-for="Title" class="form-control" placeholder="مثال: خصم خاص على الايفون" required />
                     </div>
 
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
                             <label class="form-label">نوع الخصم</label>
-                            <select asp-for="IsPercentage" class="form-select" onchange="updatePriceLabel()">
-                                <option value="false">مبلغ ثابت (ج.م)</option>
+                            <select asp-for="IsPercentage" class="form-select form-control" onchange="toggleDiscountLabel()">
                                 <option value="true">نسبة مئوية (%)</option>
+                                <option value="false">مبلغ ثابت (ج.م)</option>
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label" id="priceLabel">قيمة الخصم</label>
-                            <input asp-for="DiscountValue" type="number" step="0.01" class="form-control" required />
+                            <label class="form-label" id="lblDiscount">قيمة الخصم (%)</label>
+                            <input asp-for="DiscountValue" type="number" step="0.01" class="form-control fw-bold" required />
                         </div>
-                        <!-- حقل مخفي للسعر النهائي (للتوافق مع GroupDeal القديم) يمكن حسابه لاحقاً -->
-                        <input type="hidden" asp-for="DealPrice" value="0" />
                     </div>
 
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
-                            <label class="form-label">الكمية المستهدفة (لإتمام الصفقة)</label>
+                            <label asp-for="StartDate" class="form-label">تاريخ البدء</label>
+                            <input asp-for="StartDate" class="form-control" type="datetime-local" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="EndDate" class="form-label">تاريخ الانتهاء</label>
+                            <input asp-for="EndDate" class="form-control" type="datetime-local" />
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label asp-for="TargetQuantity" class="form-label">الهدف (Target)</label>
                             <input asp-for="TargetQuantity" type="number" class="form-control" value="10" />
-                            <div class="form-text">اتركها 0 إذا كان عرضاً مباشراً</div>
+                            <small class="text-muted">الكمية المطلوبة لتفعيل الصفقة</small>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">الحد الأقصى للاستخدام (اختياري)</label>
-                            <input asp-for="UsageLimit" type="number" class="form-control" placeholder="لا يوجد حد" />
+                            <label class="form-label">الحالة</label>
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" asp-for="IsActive" checked>
+                                <label class="form-check-label">تفعيل العرض فوراً</label>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-6">
-                            <label class="form-label">تاريخ البدء</label>
-                            <input asp-for="StartDate" type="datetime-local" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" />
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">تاريخ الانتهاء</label>
-                            <input asp-for="EndDate" type="datetime-local" class="form-control" />
-                        </div>
+                    <div class="text-end border-top pt-3">
+                        <button type="submit" class="btn btn-primary px-5 fw-bold shadow-sm">حفظ العرض</button>
                     </div>
-
-                    <div class="form-check form-switch mb-4">
-                        <input class="form-check-input" type="checkbox" asp-for="IsActive" checked>
-                        <label class="form-check-label">تفعيل العرض فوراً</label>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">نشر العرض</button>
                 </form>
             </div>
         </div>
@@ -98,16 +182,30 @@
 </div>
 
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
-        function toggleScope() {
-            const isProduct = document.getElementById('applyProduct').checked;
-            document.getElementById('productSelectDiv').style.display = isProduct ? 'block' : 'none';
-            document.getElementById('categorySelectDiv').style.display = isProduct ? 'none' : 'block';
+        $(document).ready(function() {
+            // تفعيل Select2 للقوائم
+            $('.select2-search').select2({
+                dir: "rtl", // لدعم العربية
+                placeholder: "اختر...",
+                allowClear: true
+            });
+        });
+
+        function setScope(scope) {
+            document.getElementById('ApplyToInput').value = scope;
+
+            document.getElementById('btnProduct').classList.toggle('active', scope === 'Product');
+            document.getElementById('btnCategory').classList.toggle('active', scope === 'Category');
+
+            document.getElementById('divProduct').style.display = scope === 'Product' ? 'block' : 'none';
+            document.getElementById('divCategory').style.display = scope === 'Category' ? 'block' : 'none';
         }
 
-        function updatePriceLabel() {
+        function toggleDiscountLabel() {
             const isPercent = document.querySelector('select[name="IsPercentage"]').value === 'true';
-            document.getElementById('priceLabel').innerText = isPercent ? 'نسبة الخصم (%)' : 'قيمة الخصم (ج.م)';
+            document.getElementById('lblDiscount').innerText = isPercent ? 'قيمة الخصم (%)' : 'قيمة الخصم (ج.م)';
         }
     </script>
 }
