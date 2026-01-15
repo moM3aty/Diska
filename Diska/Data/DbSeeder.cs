@@ -242,7 +242,7 @@ namespace Diska.Data
                 }
             }
 
-            // 8. Create Orders (Fixed Notes, DeliverySlot, and Color Info)
+            // 8. Create Orders
             cust = await userManager.FindByNameAsync("01099999999");
             if (cust != null && !await context.Orders.AnyAsync(o => o.UserId == cust.Id))
             {
@@ -258,8 +258,8 @@ namespace Diska.Data
                             Governorate = "Cairo", City = "Nasr City", Address = "123 Main St",
                             PaymentMethod = "Cash", Status = "Delivered", OrderDate = DateTime.Now.AddDays(-5),
                             TotalAmount = prod1.Price + 50, ShippingCost = 50,
-                            Notes = "تم الاستلام", // Added Note
-                            DeliverySlot = "Morning", // Added DeliverySlot
+                            Notes = "تم التسليم بنجاح",
+                            DeliverySlot = "Morning",
                             OrderItems = new List<OrderItem> {
                                 new OrderItem {
                                     ProductId = prod1.Id,
@@ -275,8 +275,8 @@ namespace Diska.Data
                             Governorate = "Giza", City = "Dokki", Address = "456 Side St",
                             PaymentMethod = "Wallet", Status = "Pending", OrderDate = DateTime.Now.AddHours(-2),
                             TotalAmount = (prod2.Price * 5) + 50, ShippingCost = 50,
-                            Notes = "بدون ملاحظات", // Added Note
-                            DeliverySlot = "Evening", // Added DeliverySlot
+                            Notes = "يرجى الاتصال قبل الوصول",
+                            DeliverySlot = "Evening",
                             OrderItems = new List<OrderItem> {
                                 new OrderItem {
                                     ProductId = prod2.Id,
@@ -293,7 +293,7 @@ namespace Diska.Data
                 }
             }
 
-            // 9. PendingMerchantActions (Fixed AdminComment)
+            // 9. PendingMerchantActions
             if (!await context.PendingMerchantActions.AnyAsync() && merch1 != null)
             {
                 var prod = await context.Products.FirstOrDefaultAsync(p => p.MerchantId == merch1.Id);
@@ -310,7 +310,7 @@ namespace Diska.Data
                         Status = "Pending",
                         RequestDate = DateTime.Now.AddHours(-2),
                         ActionByAdminId = "System",
-                        AdminComment = "لا يوجد تعليق" // Added AdminComment
+                        AdminComment = "لا يوجد تعليق"
                     });
                     await context.SaveChangesAsync();
                 }
@@ -339,8 +339,16 @@ namespace Diska.Data
             {
                 context.DealRequests.AddRange(new List<DealRequest>
                 {
-                    new DealRequest { UserId = cust.Id, ProductName = "زيت عباد الشمس 50 لتر", TargetQuantity = 20, DealPrice = 8000, Location = "الجيزة", Status = "Pending", RequestDate = DateTime.Now.AddDays(-1) },
-                    new DealRequest { UserId = cust.Id, ProductName = "سكر أبيض 1 طن", TargetQuantity = 1, DealPrice = 25000, Location = "القاهرة", Status = "Approved", RequestDate = DateTime.Now.AddDays(-3) }
+                    new DealRequest {
+                        UserId = cust.Id, ProductName = "زيت عباد الشمس 50 لتر", TargetQuantity = 20, DealPrice = 8000,
+                        Location = "الجيزة", Status = "Pending", RequestDate = DateTime.Now.AddDays(-1),
+                        AdminNotes = "قيد المراجعة"
+                    },
+                    new DealRequest {
+                        UserId = cust.Id, ProductName = "سكر أبيض 1 طن", TargetQuantity = 1, DealPrice = 25000,
+                        Location = "القاهرة", Status = "Approved", RequestDate = DateTime.Now.AddDays(-3),
+                        AdminNotes = "تمت الموافقة"
+                    }
                 });
                 await context.SaveChangesAsync();
             }
@@ -401,7 +409,7 @@ namespace Diska.Data
                 await context.SaveChangesAsync();
             }
 
-            // 15. ContactMessages
+            // 15. ContactMessages (Fixed Status)
             if (!await context.ContactMessages.AnyAsync())
             {
                 context.ContactMessages.AddRange(new List<ContactMessage>
@@ -412,12 +420,12 @@ namespace Diska.Data
                 await context.SaveChangesAsync();
             }
 
-            // 16. AuditLogs
+            // 16. AuditLogs (Fixed EntityId)
             if (!await context.AuditLogs.AnyAsync() && adminUser != null)
             {
                 context.AuditLogs.AddRange(new List<AuditLog>
                 {
-                    new AuditLog { UserId = adminUser.Id, Action = "Login", EntityName = "System", Details = "تسجيل دخول ناجح", IpAddress = "127.0.0.1", Timestamp = DateTime.Now.AddHours(-1) },
+                    new AuditLog { UserId = adminUser.Id, Action = "Login", EntityName = "System", EntityId = "Sys-001", Details = "تسجيل دخول ناجح", IpAddress = "127.0.0.1", Timestamp = DateTime.Now.AddHours(-1) },
                     new AuditLog { UserId = adminUser.Id, Action = "Update", EntityName = "Product", EntityId = "1", Details = "تعديل سعر منتج ايفون", IpAddress = "127.0.0.1", Timestamp = DateTime.Now.AddMinutes(-30) }
                 });
                 await context.SaveChangesAsync();
