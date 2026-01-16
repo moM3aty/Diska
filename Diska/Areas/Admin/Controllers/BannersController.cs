@@ -42,14 +42,18 @@ namespace Diska.Areas.Admin.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Banner banner, IFormFile desktopFile, IFormFile mobileFile)
         {
+            // إزالة التحقق من الصور لأننا سنتعامل معها يدوياً
             ModelState.Remove("ImageMobile");
             ModelState.Remove("ImageDesktop");
+
             if (ModelState.IsValid)
             {
                 // رفع الصور
                 if (desktopFile != null) banner.ImageDesktop = await SaveFile(desktopFile);
+                else banner.ImageDesktop = "images/default-banner.png"; // صورة افتراضية في حال عدم الرفع
+
                 if (mobileFile != null) banner.ImageMobile = await SaveFile(mobileFile);
-                else banner.ImageMobile = banner.ImageDesktop; // Fallback
+                else banner.ImageMobile = banner.ImageDesktop; // استخدام صورة الديسكتوب للموبايل كبديل
 
                 _context.Banners.Add(banner);
                 await _context.SaveChangesAsync();
@@ -77,15 +81,28 @@ namespace Diska.Areas.Admin.Controllers
         public async Task<IActionResult> Edit(int id, Banner banner, IFormFile desktopFile, IFormFile mobileFile)
         {
             if (id != banner.Id) return NotFound();
+
+            // نتجاهل التحقق من الصور لأنها قد تكون موجودة مسبقاً ولا نحتاج لرفعها مجدداً
             ModelState.Remove("ImageMobile");
             ModelState.Remove("ImageDesktop");
+            ModelState.Remove("mobileFile");
+            ModelState.Remove("desktopFile");
+
             if (ModelState.IsValid)
             {
                 try
                 {
+                    // جلب البيانات القديمة (بدون تتبع لتجنب تعارض التحديث)
                     var existing = await _context.Banners.AsNoTracking().FirstOrDefaultAsync(b => b.Id == id);
 
-                    // الاحتفاظ بالصور القديمة إذا لم يتم رفع جديد
+                    if (existing == null)
+                    {
+                        return NotFound();
+                    }
+
+                    // المنطق للحفاظ على الصور القديمة:
+                    // إذا تم رفع ملف جديد (desktopFile != null)، نستخدمه.
+                    // وإلا، نستخدم المسار القديم المحفوظ في قاعدة البيانات (existing.ImageDesktop).
                     banner.ImageDesktop = desktopFile != null ? await SaveFile(desktopFile) : existing.ImageDesktop;
                     banner.ImageMobile = mobileFile != null ? await SaveFile(mobileFile) : existing.ImageMobile;
 
@@ -100,6 +117,7 @@ namespace Diska.Areas.Admin.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
+
             PrepareViewBags();
             return View(banner);
         }
@@ -111,7 +129,10 @@ namespace Diska.Areas.Admin.Controllers
             var banner = await _context.Banners.FindAsync(id);
             if (banner != null)
             {
-                // يمكن هنا إضافة كود لحذف الصور من السيرفر أيضاً
+                // خياري: حذف الصور الفعلية من السيرفر لتوفير المساحة
+                // DeleteFile(banner.ImageDesktop);
+                // DeleteFile(banner.ImageMobile);
+
                 _context.Banners.Remove(banner);
                 await _context.SaveChangesAsync();
                 TempData["Success"] = "تم حذف البنر";
@@ -138,10 +159,10 @@ namespace Diska.Areas.Admin.Controllers
 
         private void PrepareViewBags()
         {
-            // لتعبئة القوائم المنسدلة عند الربط
+            // لتعبئة القوائم المنسدلة عند الربط (للاقسام، المنتجات، الصفقات)
             ViewBag.Categories = new SelectList(_context.Categories, "Id", "Name");
-            ViewBag.Products = new SelectList(_context.Products.Take(100), "Id", "Name"); // Limit for perf
-            ViewBag.Deals = new SelectList(_context.GroupDeals.Where(d => d.IsActive), "Id", "Id"); // Or add a Title to Deal model
+            ViewBag.Products = new SelectList(_context.Products.Take(100), "Id", "Name");
+            ViewBag.Deals = new SelectList(_context.GroupDeals.Where(d => d.IsActive), "Id", "Id");
         }
     }
 }

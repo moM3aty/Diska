@@ -1,4 +1,4 @@
-﻿@using Microsoft.AspNetCore.Identity
+﻿﻿@using Microsoft.AspNetCore.Identity
 @using System.Globalization
 @using System.Security.Claims
 @inject UserManager<Diska.Models.ApplicationUser> UserManager
@@ -51,8 +51,8 @@
 
     <style>
         /* =========================================
-                             DISKA Admin Panel - Embedded Elite Styles
-                             ========================================= */
+                                     DISKA Admin Panel - Embedded Elite Styles
+                                     ========================================= */
         :root {
             --bg-body: #f8fafc;
             --bg-card: #ffffff;
@@ -398,7 +398,7 @@
         <!-- Sidebar -->
         <nav class="sidebar flex-shrink-0" id="sidebar">
             <div class="sidebar-header">
-                <h3>DISKA <span style="color:var(--accent); font-size:0.5em; vertical-align:middle;">PRO</span></h3>
+                <h3>DISKA <span style="color:var(--accent); font-size:0.5em; vertical-align:middle;">Admin</span></h3>
             </div>
 
             <div class="sidebar-menu">
@@ -496,7 +496,7 @@
                             <i class="fas fa-chevron-down small text-muted ms-2"></i>
                         </div>
                         <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
-                            <li><a class="dropdown-item py-2" href="/Account/Profile"><i class="far fa-user me-2"></i> الملف الشخصي</a></li>
+                            <li><a class="dropdown-item py-2" href="/Profile/index"><i class="far fa-user me-2"></i> الملف الشخصي</a></li>
                             <li><a class="dropdown-item py-2" href="/"><i class="fas fa-globe me-2"></i> عرض الموقع</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item py-2 text-danger" href="/Account/Logout"><i class="fas fa-sign-out-alt me-2"></i> خروج</a></li>

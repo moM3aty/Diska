@@ -2,6 +2,10 @@
 using Diska.Data;
 using Microsoft.EntityFrameworkCore;
 using Diska.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Diska.Controllers
 {
@@ -40,12 +44,12 @@ namespace Diska.Controllers
                 return NotFound();
             }
 
-            // جلب المنتجات المشمولة في العرض
+         
             var includedProducts = new List<Product>();
 
             if (deal.ProductId.HasValue)
             {
-                // عرض على منتج محدد
+                // حالة 1: عرض على منتج محدد
                 var product = await _context.Products
                     .Include(p => p.Merchant)
                     .Include(p => p.Category)
@@ -55,7 +59,7 @@ namespace Diska.Controllers
             }
             else if (deal.CategoryId.HasValue)
             {
-                // عرض على قسم كامل
+                // حالة 2: عرض على قسم كامل
                 includedProducts = await _context.Products
                     .Include(p => p.Merchant)
                     .Include(p => p.Category)
@@ -63,6 +67,8 @@ namespace Diska.Controllers
                     .ToListAsync();
             }
 
+            // تمرير المنتجات للـ View
+            // الـ View يجب أن تعرض item.Price كسعر حالي، و item.OldPrice كسعر سابق (إذا وجد)
             ViewBag.IncludedProducts = includedProducts;
 
             return View(deal);

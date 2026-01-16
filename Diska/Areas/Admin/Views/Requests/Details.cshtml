@@ -12,9 +12,11 @@
 
     <div class="d-flex gap-2">
         <!-- Delete Action -->
-        <form asp-action="Delete" method="post" onsubmit="return confirm('حذف هذا الطلب نهائياً؟');">
+        <form id="deleteForm" asp-action="Delete" method="post">
             <input type="hidden" name="id" value="@Model.Id" />
-            <button type="submit" class="btn btn-outline-danger"><i class="fas fa-trash"></i> حذف</button>
+            <button type="button" class="btn btn-outline-danger" onclick="confirmDelete()">
+                <i class="fas fa-trash"></i> حذف
+            </button>
         </form>
     </div>
 </div>
@@ -105,7 +107,6 @@
                                         }
                                         else
                                         {
-
                                             <span class="badge bg-light text-dark">انتظار</span>
                                         }
                                     </td>
@@ -165,3 +166,25 @@
 
     </div>
 </div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        function confirmDelete() {
+            Swal.fire({
+                title: 'هل أنت متأكد؟',
+                text: "لن تتمكن من التراجع عن هذا الإجراء، سيتم حذف الطلب نهائياً!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'نعم، احذفه',
+                cancelButtonText: 'إلغاء'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('deleteForm').submit();
+                }
+            })
+        }
+    </script>
+}

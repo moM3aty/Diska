@@ -7,240 +7,6 @@
 <!-- Quill CSS -->
 <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 
-<style>
-    /* --- Premium Styles (Matched with Edit) --- */
-
-    .edit-card {
-        border: none;
-        border-radius: 16px;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.06);
-        background: #fff;
-    }
-
-    .card-header-actions {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
-        padding: 15px 30px;
-        border-bottom: 1px solid #e2e8f0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        position: sticky;
-        top: 75px; /* Adjusted for Admin Navbar */
-        z-index: 999;
-        border-radius: 16px 16px 0 0;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.02);
-    }
-
-    /* Custom Tabs */
-    .custom-tabs-container {
-        background: #fff;
-        padding: 0 30px;
-        border-bottom: 1px solid #e2e8f0;
-    }
-
-    .custom-tabs {
-        border-bottom: none;
-        gap: 30px;
-    }
-
-        .custom-tabs .nav-link {
-            border: none;
-            color: #64748b;
-            font-weight: 700;
-            padding: 20px 0;
-            position: relative;
-            transition: all 0.3s ease;
-            background: transparent;
-            font-size: 0.95rem;
-        }
-
-            .custom-tabs .nav-link i {
-                margin-inline-end: 8px;
-                font-size: 1.1em;
-            }
-
-            .custom-tabs .nav-link.active {
-                color: var(--primary);
-            }
-
-                .custom-tabs .nav-link.active::after {
-                    content: '';
-                    position: absolute;
-                    bottom: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 3px;
-                    background: var(--primary);
-                    border-radius: 3px 3px 0 0;
-                    box-shadow: 0 -2px 10px rgba(79, 70, 229, 0.4);
-                }
-
-            .custom-tabs .nav-link:hover {
-                color: var(--primary);
-            }
-
-    /* Form Elements */
-    .form-section {
-        padding: 40px 30px;
-        animation: fadeIn 0.4s ease-out;
-    }
-
-    .form-label {
-        font-weight: 700;
-        color: #334155;
-        font-size: 0.9rem;
-        margin-bottom: 8px;
-        display: block;
-    }
-
-    .form-control-lg-custom {
-        padding: 12px 15px;
-        border-radius: 12px;
-        border: 1px solid #e2e8f0;
-        background: #f8fafc;
-        font-size: 1rem;
-        transition: all 0.2s;
-    }
-
-        .form-control-lg-custom:focus {
-            background: #fff;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
-        }
-
-    /* Upload Zones */
-    .image-upload-zone {
-        border: 2px dashed #cbd5e1;
-        border-radius: 16px;
-        padding: 20px;
-        text-align: center;
-        background: #f8fafc;
-        cursor: pointer;
-        transition: 0.3s;
-        position: relative;
-        min-height: 300px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-    }
-
-        .image-upload-zone:hover {
-            border-color: var(--primary);
-            background: #eff6ff;
-        }
-
-    /* Gallery */
-    .gallery-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-        gap: 15px;
-        margin-top: 15px;
-    }
-
-    .gallery-thumb {
-        position: relative;
-        height: 110px;
-        border-radius: 12px;
-        overflow: hidden;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.03);
-    }
-
-        .gallery-thumb img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-    /* Variants Table */
-    .variants-table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0 8px;
-    }
-
-        .variants-table th {
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            color: #64748b;
-            font-weight: 700;
-            padding: 0 15px 10px;
-            border-bottom: 2px solid #e2e8f0;
-        }
-
-    .variant-row td {
-        background: #fff;
-        padding: 10px 15px;
-        border-top: 1px solid #e2e8f0;
-        border-bottom: 1px solid #e2e8f0;
-        vertical-align: middle;
-    }
-
-        .variant-row td:first-child {
-            border-left: 1px solid #e2e8f0;
-            border-top-left-radius: 10px;
-            border-bottom-left-radius: 10px;
-        }
-
-        .variant-row td:last-child {
-            border-right: 1px solid #e2e8f0;
-            border-top-right-radius: 10px;
-            border-bottom-right-radius: 10px;
-        }
-
-    .color-picker-wrapper {
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        border: 2px solid #fff;
-        box-shadow: 0 0 0 1px #e2e8f0;
-        cursor: pointer;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .color-picker-input {
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        cursor: pointer;
-        padding: 0;
-        margin: 0;
-        border: none;
-    }
-
-    /* Editor */
-    .ql-toolbar {
-        background: #f8fafc;
-        border-color: #e2e8f0 !important;
-        border-radius: 12px 12px 0 0;
-    }
-
-    .ql-container {
-        border-color: #e2e8f0 !important;
-        border-radius: 0 0 12px 12px;
-        font-family: 'Cairo';
-        background: #fff;
-        min-height: 200px;
-        font-size: 1rem;
-    }
-
-    @@keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-</style>
 
 <form asp-action="Create" enctype="multipart/form-data" id="productForm">
     <div class="row justify-content-center">
@@ -328,14 +94,11 @@
 
                                 <div class="col-12 my-5">
                                     <label class="form-label">الوصف (عربي)</label>
-                                    <!-- Hidden Div to hold raw HTML if returning from error -->
-                                    <div id="rawDescAr" style="display:none;">@Html.Raw(Model?.Description)</div>
                                     <div id="editor-ar"></div>
                                     <input type="hidden" asp-for="Description" id="DescriptionHidden" />
                                 </div>
                                 <div class="col-12 my-5">
                                     <label class="form-label">الوصف (إنجليزي)</label>
-                                    <div id="rawDescEn" style="display:none;">@Html.Raw(Model?.DescriptionEn)</div>
                                     <div id="editor-en"></div>
                                     <input type="hidden" asp-for="DescriptionEn" id="DescriptionEnHidden" />
                                 </div>
@@ -369,7 +132,8 @@
                             <div class="row g-4">
                                 <div class="col-md-3">
                                     <label class="form-label">الكمية الكلية <span class="text-danger">*</span></label>
-                                    <input asp-for="StockQuantity" type="number" class="form-control form-control-lg-custom bg-white fw-bold" required />
+                                    <!-- 'bg-white' removed from class to let CSS override handle background -->
+                                    <input asp-for="StockQuantity" type="number" class="form-control form-control-lg-custom fw-bold" required />
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label">حد النواقص</label>
@@ -395,11 +159,11 @@
                                 <div class="col-md-4 border-end">
                                     <label class="form-label mb-3">الصورة الرئيسية</label>
                                     <div class="image-upload-zone" onclick="document.getElementById('mainImage').click()">
-                                        <div class="upload-placeholder" id="mainPlaceholder" style="@(string.IsNullOrEmpty(Model?.ImageUrl) ? "" : "display:none;")">
-                                            <i class="fas fa-cloud-upload-alt"></i>
-                                            <span class="fw-bold text-dark">اضغط لرفع الصورة</span>
+                                        <div class="upload-placeholder" id="mainPlaceholder">
+                                            <i class="fas fa-cloud-upload-alt fa-3x mb-3 text-muted"></i>
+                                            <span class="fw-bold text-muted">اضغط لرفع الصورة</span>
                                         </div>
-                                        <img id="mainPreview" src="@(string.IsNullOrEmpty(Model?.ImageUrl) ? "#" : Url.Content("~/" + Model.ImageUrl))" style="max-width:100%; max-height:220px; object-fit:contain; display:@(string.IsNullOrEmpty(Model?.ImageUrl) ? "none" : "block");" onerror="this.style.display='none'">
+                                        <img id="mainPreview" style="display:none; max-width:100%; max-height:220px; object-fit:contain;" />
                                     </div>
                                     <input type="file" id="mainImage" name="mainImage" class="d-none" accept="image/*" onchange="previewSingle(this, 'mainPreview', 'mainPlaceholder')">
                                 </div>
@@ -416,7 +180,7 @@
                                             <input type="file" id="galleryImages" name="galleryImages" class="d-none" multiple accept="image/*" onchange="previewGallery(this)">
                                         </div>
 
-                                        <div class="p-3 bg-f8 rounded border" style="min-height: 120px;">
+                                        <div class="p-3 bg-light rounded border" style="min-height: 120px;">
                                             <div id="newGalleryPreview" class="gallery-grid"></div>
                                         </div>
                                     </div>
@@ -436,40 +200,11 @@
                                                     <tr>
                                                         <th class="ps-4">اللون</th>
                                                         <th>اسم اللون</th>
-                                                        <th class="text-center">الكمية</th>
                                                         <th class="text-center">حذف</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody id="variantsBody">
-                                                    <!-- Default Row -->
-                                                    @if (Model != null && Model.ProductColors != null && Model.ProductColors.Any())
-                                                    {
-                                                        foreach (var color in Model.ProductColors)
-                                                        {
-                                                            <tr class="variant-row">
-                                                                <td class="ps-4">
-                                                                    <div class="color-picker-wrapper" style="background-color: @color.ColorHex">
-                                                                        <input type="color" name="productColorsHex" class="color-picker-input" value="@color.ColorHex" onchange="this.parentElement.style.backgroundColor=this.value">
-                                                                    </div>
-                                                                </td>
-                                                                <td><input type="text" name="productColorsName" class="form-control border-0 bg-transparent fw-bold" value="@color.ColorName" required></td>
-                                                                <td><input type="number" name="productColorsQty" class="form-control form-control-sm text-center fw-bold" value="0" min="0"></td>
-                                                                <td class="text-center"><button type="button" class="btn btn-sm text-danger" onclick="this.closest('tr').remove()"><i class="fas fa-trash-alt"></i></button></td>
-                                                            </tr>
-                                                        }
-                                                    }
-                                                    else
-                                                    {
-                                                        <tr class="variant-row">
-                                                            <td class="ps-4">
-                                                                <div class="color-picker-wrapper" style="background-color: #000000">
-                                                                    <input type="color" name="productColorsHex" class="color-picker-input" value="#000000" onchange="this.parentElement.style.backgroundColor=this.value">
-                                                                </div>
-                                                            </td>
-                                                            <td><input type="text" name="productColorsName" class="form-control border-0 bg-transparent fw-bold" placeholder="اسم اللون" required></td>
-                                                            <td class="text-center"><button type="button" class="btn btn-sm text-danger" onclick="this.closest('tr').remove()"><i class="fas fa-trash-alt"></i></button></td>
-                                                        </tr>
-                                                    }
+                                                    <!-- Dynamic Rows -->
                                                 </tbody>
                                             </table>
                                         </div>
@@ -504,10 +239,8 @@
                     </div>
 
                 </div>
-
-                
             </div>
-    </div>
+        </div>
     </div>
 </form>
 
@@ -534,13 +267,6 @@
 
         var quillAr = new Quill('#editor-ar', { theme: 'snow', modules: { toolbar: toolbarOptions }, placeholder: 'تفاصيل المنتج بالعربية...' });
         var quillEn = new Quill('#editor-en', { theme: 'snow', modules: { toolbar: toolbarOptions }, placeholder: 'Product details in English...' });
-
-        // Load existing content if needed (for create it might be empty or re-populated on error)
-        var rawAr = document.getElementById('rawDescAr');
-        if(rawAr) quillAr.root.innerHTML = rawAr.innerHTML;
-
-        var rawEn = document.getElementById('rawDescEn');
-        if(rawEn) quillEn.root.innerHTML = rawEn.innerHTML;
 
         // 2. Form Submission Handler
         function prepareDescription() {
@@ -572,7 +298,7 @@
                     reader.onload = function(e) {
                         const div = document.createElement('div');
                         div.className = 'gallery-thumb';
-                        div.innerHTML = `<img src="${e.target.result}"><button type="button" class="gallery-remove" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>`;
+                        div.innerHTML = `<img src="${e.target.result}"><button type="button" class="gallery-remove btn btn-danger btn-sm p-0 rounded-circle position-absolute top-0 end-0 m-1" style="width:24px;height:24px;" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>`;
                         container.appendChild(div);
                     }
                     reader.readAsDataURL(file);
@@ -594,12 +320,16 @@
                 <td>
                     <input type="text" name="productColorsName" class="form-control border-0 bg-transparent fw-bold" placeholder="اسم اللون" required>
                 </td>
-
                 <td class="text-center">
                     <button type="button" class="btn btn-sm text-danger" onclick="this.closest('tr').remove()"><i class="fas fa-trash-alt"></i></button>
                 </td>
             `;
             tbody.appendChild(tr);
         }
+
+        // Add one variant row by default
+        document.addEventListener('DOMContentLoaded', function() {
+             addVariantRow();
+        });
     </script>
 }

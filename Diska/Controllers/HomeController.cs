@@ -1,23 +1,44 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Diska.Data;
-using Microsoft.EntityFrameworkCore;
+﻿using Diska.Data;
 using Diska.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Diska.Controllers
 {
     public class HomeController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public HomeController(ApplicationDbContext context)
+        public HomeController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         public async Task<IActionResult> Index()
         {
+            if (User.Identity.IsAuthenticated)
+            {
+                var user = await _userManager.GetUserAsync(User);
+                var userRole = await _userManager.IsInRoleAsync(user, "Merchant") ? "Merchant" : "Customer";
+
+                // هل هناك استبيان نشط لم يقم المستخدم بحله؟
+                var pendingSurvey = await _context.Surveys
+                    .Where(s => s.IsActive && s.EndDate > DateTime.Now && (s.TargetAudience == "All" || s.TargetAudience == userRole))
+                    .Where(s => !_context.SurveyResponses.Any(r => r.SurveyId == s.Id && r.UserId == user.Id))
+                    .FirstOrDefaultAsync();
+
+                if (pendingSurvey != null)
+                {
+                    // إرسال ID الاستبيان للفيو ليتم عرضه في Popup
+                    ViewBag.PendingSurveyId = pendingSurvey.Id;
+                    ViewBag.PendingSurveyTitle = pendingSurvey.Title;
+                }
+            }
             ViewBag.Categories = await _context.Categories
                 .Where(c => c.IsActive && c.ParentId == null)
                 .OrderBy(c => c.DisplayOrder)

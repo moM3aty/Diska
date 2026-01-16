@@ -7,218 +7,371 @@
 }
 
 <style>
-    /* --- Shared Elite Styles --- */
+    /* =========================================
+       PREMIUM STYLES (Variables & Theming)
+       ========================================= */
     :root {
-        --card-bg: #ffffff;
-        --card-border: #f1f5f9;
-        --text-main: #0f172a;
-        --text-muted: #64748b;
-        --border-color: #e2e8f0;
-        --primary: #4f46e5;
+        --dt-card-bg: #ffffff;
+        --dt-text-main: #0f172a;
+        --dt-text-muted: #64748b;
+        --dt-border: #e2e8f0;
+        --dt-bg-body: #f8fafc;
+        --dt-header-bg: #f8fafc;
+        --dt-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.06);
+        --dt-radius: 16px;
     }
 
     [data-bs-theme="dark"] {
-        --card-bg: #1e293b;
-        --card-border: #334155;
-        --text-main: #f8fafc;
-        --text-muted: #94a3b8;
-        --border-color: #334155;
-        --primary: #6366f1;
+        --dt-card-bg: #1e293b;
+        --dt-text-main: #f8fafc;
+        --dt-text-muted: #94a3b8;
+        --dt-border: rgba(255, 255, 255, 0.08);
+        --dt-bg-body: #0f172a;
+        --dt-header-bg: #0f172a;
+        --dt-shadow: 0 10px 40px -5px rgba(0, 0, 0, 0.3);
     }
 
-    .details-card {
-        background: var(--card-bg);
-        border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-        border: 1px solid var(--card-border);
+    /* --- Cards --- */
+    .detail-card {
+        background-color: var(--dt-card-bg);
+        border-radius: var(--dt-radius);
+        box-shadow: var(--dt-shadow);
+        border: 1px solid var(--dt-border);
         overflow: hidden;
         margin-bottom: 24px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
 
-    .card-header-custom {
-        padding: 20px 25px;
-        border-bottom: 1px solid var(--border-color);
-        background-color: var(--card-bg); /* Fixed bg issue */
-        display: flex; align-items: center; justify-content: space-between;
-    }
-    .card-title-text { font-weight: 800; color: var(--text-main); margin: 0; font-size: 1.1rem; display: flex; align-items: center; gap: 10px; }
-
-    /* Info Lists */
-    .info-list { list-style: none; padding: 0; margin: 0; }
-    .info-list li {
-        display: flex; justify-content: space-between; padding: 15px 25px;
-        border-bottom: 1px solid var(--border-color); color: var(--text-main);
-    }
-    .info-list li:last-child { border-bottom: none; }
-    .info-label { color: var(--text-muted); font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }
-    .info-val { font-weight: 700; }
-
-    /* Products Table */
-    .prod-table { width: 100%; }
-    .prod-table thead th {
-        background: #f8fafc; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;
-        padding: 15px 25px; border-bottom: 2px solid var(--border-color);
-    }
-    .prod-table tbody td {
-        padding: 20px 25px; vertical-align: top; border-bottom: 1px solid var(--border-color); color: var(--text-main);
-    }
-    .prod-thumb {
-        width: 60px; height: 60px; border-radius: 8px; object-fit: contain;
-        background: #fff; border: 1px solid var(--border-color); padding: 4px;
+    .detail-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--dt-border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: rgba(255,255,255,0.02);
     }
 
-    /* Product Specs Grid inside Table */
-    .specs-grid {
-        display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; font-size: 0.8rem; color: var(--text-muted);
-    }
-    .spec-item {
-        background: #f8fafc; border: 1px solid var(--border-color);
-        padding: 3px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 5px;
-        color: var(--text-main); font-weight: 600;
-    }
-
-    /* Color Circle */
-    .color-circle-admin {
-        display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1);
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    .detail-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--dt-text-main);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0;
     }
 
-    /* Badges */
-    .status-badge {
-        padding: 6px 12px; border-radius: 30px; font-size: 0.8rem; font-weight: 700;
-        display: inline-flex; align-items: center; gap: 6px; text-transform: uppercase;
+    /* --- Order Items Table --- */
+    .order-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
     }
-    .status-Pending { background: #fffbeb; color: #b45309; }
-    .status-Confirmed { background: #eff6ff; color: #1d4ed8; }
-    .status-Shipped { background: #f0f9ff; color: #0284c7; }
-    .status-Delivered { background: #dcfce7; color: #15803d; }
-    .status-Cancelled { background: #fef2f2; color: #b91c1c; }
 
-    /* Timeline */
-    .order-timeline { padding: 30px; }
-    .timeline-item {
-        position: relative; padding-bottom: 35px; padding-left: 30px; border-left: 2px solid var(--border-color);
+    .order-table th {
+        background-color: var(--dt-header-bg);
+        color: var(--dt-text-muted);
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        padding: 16px 24px;
+        border-bottom: 1px solid var(--dt-border);
     }
-    .timeline-item:last-child { border-left: 2px solid transparent; padding-bottom: 0; }
-    .timeline-dot {
-        position: absolute; left: -9px; top: 0; width: 16px; height: 16px; border-radius: 50%;
-        background: var(--border-color); border: 3px solid #fff;
+
+    .order-table td {
+        padding: 20px 24px;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--dt-border);
+        color: var(--dt-text-main);
     }
-    .timeline-item.active .timeline-dot { background: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2); border-color: var(--primary); }
 
-    html[dir="rtl"] .timeline-item { padding-left: 0; padding-right: 30px; border-left: none; border-right: 2px solid var(--border-color); }
-    html[dir="rtl"] .timeline-item:last-child { border-right: 2px solid transparent; }
-    html[dir="rtl"] .timeline-dot { left: auto; right: -9px; }
+    .order-table tr:last-child td { border-bottom: none; }
 
-    /* --- Print Specific Styles --- */
+    .product-thumb {
+        width: 60px;
+        height: 60px;
+        border-radius: 10px;
+        border: 1px solid var(--dt-border);
+        object-fit: contain;
+        background: #fff;
+        padding: 2px;
+    }
+
+    /* --- Status Timeline --- */
+    .timeline {
+        padding: 30px;
+        position: relative;
+    }
+
+    .timeline-step {
+        position: relative;
+        padding-bottom: 40px;
+        padding-left: 40px; /* LTR default */
+        border-left: 2px solid var(--dt-border);
+    }
+
+    html[dir="rtl"] .timeline-step {
+        padding-left: 0;
+        padding-right: 40px;
+        border-left: none;
+        border-right: 2px solid var(--dt-border);
+    }
+
+    .timeline-step:last-child {
+        border-color: transparent;
+        padding-bottom: 0;
+    }
+
+    .timeline-icon {
+        position: absolute;
+        top: 0;
+        left: -11px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: var(--dt-card-bg);
+        border: 2px solid var(--dt-border);
+        z-index: 2;
+    }
+
+    html[dir="rtl"] .timeline-icon { left: auto; right: -11px; }
+
+    .timeline-step.completed .timeline-icon {
+        background: var(--color-primary);
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.2);
+    }
+
+    .timeline-step.completed { border-color: var(--color-primary); }
+
+    /* --- Customer & Info Lists --- */
+    .info-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 16px 24px;
+        border-bottom: 1px solid var(--dt-border);
+    }
+
+    .info-item:last-child { border-bottom: none; }
+
+    .info-label {
+        color: var(--dt-text-muted);
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .info-value {
+        color: var(--dt-text-main);
+        font-weight: 600;
+        text-align: end;
+    }
+
+    /* --- Status Badges --- */
+    .status-pill {
+        padding: 6px 14px;
+        border-radius: 30px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .status-Pending { background: #fff7ed; color: #c2410c; border: 1px solid #ffedd5; }
+    .status-Confirmed { background: #eff6ff; color: #1d4ed8; border: 1px solid #dbeafe; }
+    .status-Shipped { background: #f0f9ff; color: #0369a1; border: 1px solid #e0f2fe; }
+    .status-Delivered { background: #f0fdf4; color: #15803d; border: 1px solid #dcfce7; }
+    .status-Cancelled { background: #fef2f2; color: #b91c1c; border: 1px solid #fee2e2; }
+
+    [data-bs-theme="dark"] .status-pill { background: transparent !important; }
+    [data-bs-theme="dark"] .status-Pending { border-color: #c2410c; color: #fdba74; }
+    [data-bs-theme="dark"] .status-Delivered { border-color: #15803d; color: #86efac; }
+    [data-bs-theme="dark"] .status-Cancelled { border-color: #b91c1c; color: #fca5a5; }
+
+    /* =========================================
+       PROFESSIONAL PRINT STYLES (INVOICE)
+       ========================================= */
+    .invoice-section { display: none; }
+
     @@media print {
-        body * { visibility: hidden; }
-        .invoice-area, .invoice-area * { visibility: visible; }
-        .invoice-area {
-            position: absolute; left: 0; top: 0; width: 100%; min-height: 100%;
-            background: #fff; padding: 40px; color: #000; font-family: 'Cairo', sans-serif;
-            z-index: 9999;
+        @@page { margin: 0; size: A4; }
+        
+        /* Force White Background & Black Text globally for Print */
+        /* This overrides Dark Mode Variables */
+        :root, [data-bs-theme="dark"] {
+            --dt-card-bg: #ffffff !important;
+            --dt-text-main: #000000 !important;
+            --dt-text-muted: #333333 !important;
+            --dt-border: #000000 !important;
+            --dt-bg-body: #ffffff !important;
+            --dt-header-bg: #f0f0f0 !important;
         }
-        .no-print { display: none !important; }
 
-        .details-card { box-shadow: none; border: 1px solid #000; margin-bottom: 20px; page-break-inside: avoid; }
-        .card-header-custom { background: #f0f0f0 !important; border-bottom: 1px solid #000; }
+        /* Global Reset for Print */
+        body { 
+            background-color: #fff !important; 
+            color: #000 !important; 
+            font-family: 'Cairo', sans-serif;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            margin: 0;
+            padding: 0;
+        }
 
-        .prod-table th { background: #eee !important; color: #000 !important; border-bottom: 1px solid #000; font-weight: bold; }
-        .prod-table td { border-bottom: 1px solid #ccc; color: #000; }
+        /* 1. Hide Dashboard Elements */
+        .sidebar, .topbar, .no-print, .btn, .card-header-actions, .alert, .dropdown-menu { 
+            display: none !important; 
+        }
+        
+        /* 2. Reset Layout Containers for Dark Mode Compatibility */
+        .app-container, .main-content, .content-wrapper {
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            display: block !important;
+            background-color: #fff !important;
+            color: #000 !important;
+            position: static !important;
+            overflow: visible !important;
+            height: auto !important;
+            min-height: auto !important;
+        }
 
-        .status-badge { border: 1px solid #000; color: #000 !important; background: none !important; }
+        /* 3. Show & Style Invoice */
+        .invoice-section {
+            display: block !important;
+            padding: 20px;
+            width: 100%;
+            background-color: #fff !important;
+            color: #000 !important;
+            /* Force reset all children colors */
+        }
+        
+        /* 4. Force Elements Black & White */
+        .invoice-section * {
+            color: #000 !important;
+            border-color: #000 !important;
+            background-color: transparent !important;
+            box-shadow: none !important;
+        }
 
-        .invoice-header-content { display: block !important; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 20px; }
-        .inv-flex { display: flex; justify-content: space-between; align-items: start; }
-        .inv-logo h1 { font-size: 32px; margin: 0; font-weight: 900; letter-spacing: 2px; }
+        /* Invoice Layout Fixes */
+        .inv-header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            border-bottom: 2px solid #000 !important; padding-bottom: 20px; margin-bottom: 30px;
+        }
+        .inv-logo h1 { font-size: 36px; font-weight: 900; margin: 0; letter-spacing: 2px; text-transform: uppercase; }
+        .inv-logo p { margin: 0; font-size: 14px; }
+        
         .inv-meta { text-align: right; }
+        .inv-meta h2 { font-size: 24px; font-weight: bold; margin: 0 0 10px 0; }
+        .inv-meta p { margin: 2px 0; }
+        
+        .inv-grid { display: flex; gap: 40px; margin-bottom: 40px; }
+        .inv-box { flex: 1; }
+        .inv-box h5 { font-size: 14px; text-transform: uppercase; border-bottom: 1px solid #ccc !important; padding-bottom: 5px; margin-bottom: 10px; font-weight: bold; }
+        .inv-box p { font-size: 14px; line-height: 1.6; margin: 0; }
 
-        .inv-footer { display: block !important; margin-top: 50px; text-align: center; font-size: 12px; border-top: 1px solid #ccc; padding-top: 20px; }
+        .inv-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+        .inv-table th { background-color: #f3f3f3 !important; font-weight: bold; padding: 12px; border-bottom: 2px solid #000 !important; text-align: left; font-size: 12px; text-transform: uppercase; }
+        html[dir="rtl"] .inv-table th { text-align: right; }
+        .inv-table td { padding: 12px; border-bottom: 1px solid #ddd !important; font-size: 14px; }
+        
+        .inv-totals { display: flex; justify-content: flex-end; }
+        .inv-totals table { width: 300px; border-collapse: collapse; }
+        .inv-totals td { padding: 8px; font-size: 14px; }
+        .inv-totals .total-row td { font-weight: 900; font-size: 18px; border-top: 2px solid #000 !important; padding-top: 15px; }
+
+        .inv-footer {
+            position: fixed; bottom: 30px; left: 40px; right: 40px;
+            text-align: center; font-size: 12px; 
+            border-top: 1px solid #ddd !important; padding-top: 20px;
+        }
     }
-
-    .invoice-header-content, .inv-footer { display: none; }
 </style>
 
-<!-- Top Bar (Actions) -->
-<div class="d-flex justify-content-between align-items-center mb-4 fade-up no-print">
-    <div class="d-flex align-items-center gap-3">
-        <a href="/Admin/Dashboard/Orders" class="btn btn-light border shadow-sm rounded-circle p-2" title="@(isAr ? "عودة" : "Back")">
-            <i class="fas @(isAr ? "fa-arrow-right" : "fa-arrow-left")"></i>
-        </a>
-        <div>
-            <h2 class="text-main fw-bold mb-0">
-                @(isAr ? "طلب رقم" : "Order") <span class="font-monospace">#@Model.Id</span>
-                <span class="status-badge status-@Model.Status ms-2" style="font-size: 0.5em; vertical-align: middle;">@Model.Status</span>
-            </h2>
-            <div class="text-muted small mt-1">
-                <i class="far fa-clock me-1"></i> @Model.OrderDate.ToString("dd MMMM yyyy, hh:mm tt")
-            </div>
-        </div>
-    </div>
-
-    <div class="d-flex gap-2">
-        <div class="dropdown">
-            <button class="btn btn-outline-primary dropdown-toggle shadow-sm fw-bold px-4" type="button" data-bs-toggle="dropdown">
-                <i class="fas fa-edit me-2"></i> @(isAr ? "تحديث الحالة" : "Update Status")
-            </button>
-            <ul class="dropdown-menu shadow border-0">
-                <li><form asp-action="UpdateOrderStatus" asp-route-id="@Model.Id" asp-route-status="Confirmed" method="post"><button class="dropdown-item"><i class="fas fa-check text-info me-2"></i> Confirm</button></form></li>
-                <li><form asp-action="UpdateOrderStatus" asp-route-id="@Model.Id" asp-route-status="Shipped" method="post"><button class="dropdown-item"><i class="fas fa-truck text-primary me-2"></i> Ship</button></form></li>
-                <li><form asp-action="UpdateOrderStatus" asp-route-id="@Model.Id" asp-route-status="Delivered" method="post"><button class="dropdown-item text-success"><i class="fas fa-box-open me-2"></i> Deliver</button></form></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><form asp-action="UpdateOrderStatus" asp-route-id="@Model.Id" asp-route-status="Cancelled" method="post" onsubmit="return confirm('تأكيد الإلغاء؟')"><button class="dropdown-item text-danger"><i class="fas fa-times me-2"></i> Cancel</button></form></li>
-            </ul>
-        </div>
-        <button class="btn btn-secondary shadow-sm fw-bold px-4" onclick="window.print()">
-            <i class="fas fa-print me-2"></i> @(isAr ? "طباعة الفاتورة" : "Print Invoice")
-        </button>
-    </div>
-</div>
-
-<div class="invoice-area">
-    <!-- Invoice Header (Visible only in Print) -->
-    <div class="invoice-header-content d-print-block">
-        <div class="inv-flex">
-            <div class="inv-logo">
-                <h1>DISKA</h1>
-                <p class="text-muted mb-0">B2B Wholesale Platform</p>
-            </div>
-            <div class="inv-meta">
-                <h3 class="m-0 fw-bold">INVOICE</h3>
-                <p class="mb-0"><strong>Ref:</strong> #@Model.Id</p>
-                <p class="mb-0"><strong>Date:</strong> @Model.OrderDate.ToString("yyyy-MM-dd")</p>
-            </div>
-        </div>
-        <div class="inv-flex mt-4">
+<!-- =======================
+     Screen View (Dashboard)
+     ======================= -->
+<div class="container-fluid p-0 no-print fade-up">
+    <!-- Header Actions -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center gap-3">
+            <a href="/Admin/Dashboard/Orders" class="btn btn-light border rounded-circle p-2 shadow-sm" style="width: 45px; height: 45px; display: grid; place-items: center;">
+                <i class="fas @(isAr ? "fa-arrow-right" : "fa-arrow-left")"></i>
+            </a>
             <div>
-                <h6 class="fw-bold border-bottom pb-1 mb-2">@(isAr ? "بيانات العميل" : "Bill To"):</h6>
-                <strong>@Model.CustomerName</strong><br>
-                @Model.Phone<br>
-                @Model.User?.Email
+                <h2 class="fw-bold mb-0 text-main">
+                    @(isAr ? "طلب رقم" : "Order") <span class="font-monospace text-primary">#@Model.Id</span>
+                </h2>
+                <div class="d-flex align-items-center gap-2 mt-1">
+                    <span class="text-muted small"><i class="far fa-calendar me-1"></i> @Model.OrderDate.ToString("dd MMMM yyyy, hh:mm tt")</span>
+                    <span class="status-pill status-@Model.Status">@Model.Status</span>
+                </div>
             </div>
-            <div class="text-end">
-                <h6 class="fw-bold border-bottom pb-1 mb-2">@(isAr ? "بيانات الشحن" : "Ship To"):</h6>
-                @Model.Address<br>
-                @Model.City, @Model.Governorate<br>
-                @(isAr ? "وقت التوصيل:" : "Slot:") @Model.DeliverySlot
+        </div>
+
+        <div class="d-flex gap-2">
+            <!-- Update Status Dropdown -->
+            <div class="dropdown">
+                <button class="btn btn-primary shadow-lg fw-bold px-4 py-2 dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-tasks me-2"></i> @(isAr ? "تحديث الحالة" : "Actions")
+                </button>
+                <ul class="dropdown-menu shadow-lg border-0 p-2 rounded-3" style="min-width: 200px;">
+                    <li><h6 class="dropdown-header text-uppercase small fw-bold">تغيير حالة الطلب</h6></li>
+                    <li>
+                        <form asp-action="UpdateOrderStatus" asp-route-id="@Model.Id" asp-route-status="Confirmed" method="post">
+                            <button class="dropdown-item rounded-2 py-2"><i class="fas fa-check-circle text-info me-2"></i> تأكيد (Confirmed)</button>
+                        </form>
+                    </li>
+                    <li>
+                        <form asp-action="UpdateOrderStatus" asp-route-id="@Model.Id" asp-route-status="Shipped" method="post">
+                            <button class="dropdown-item rounded-2 py-2"><i class="fas fa-truck text-primary me-2"></i> جاري الشحن (Shipped)</button>
+                        </form>
+                    </li>
+                    <li>
+                        <form asp-action="UpdateOrderStatus" asp-route-id="@Model.Id" asp-route-status="Delivered" method="post">
+                            <button class="dropdown-item rounded-2 py-2"><i class="fas fa-box-open text-success me-2"></i> تم التوصيل (Delivered)</button>
+                        </form>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <form asp-action="UpdateOrderStatus" asp-route-id="@Model.Id" asp-route-status="Cancelled" method="post" onsubmit="return confirm('تأكيد الإلغاء؟')">
+                            <button class="dropdown-item rounded-2 py-2 text-danger"><i class="fas fa-ban me-2"></i> إلغاء الطلب (Cancel)</button>
+                        </form>
+                    </li>
+                </ul>
             </div>
+            
+            <!-- Print Button -->
+            <button class="btn btn-light border shadow-sm fw-bold px-4" onclick="window.print()">
+                <i class="fas fa-print me-2"></i> @(isAr ? "طباعة" : "Print")
+            </button>
         </div>
     </div>
 
-    <div class="row g-4 fade-up">
-
-        <!-- Left: Items -->
+    <div class="row g-4">
+        <!-- LEFT: Items & Timeline -->
         <div class="col-lg-8">
-            <div class="details-card">
-                <div class="card-header-custom bg-light no-print">
-                    <div class="card-title-text"><i class="fas fa-box-open text-primary"></i> @(isAr ? "المنتجات المطلوبة" : "Order Items") <span class="badge bg-white text-dark border ms-2">@Model.OrderItems.Count</span></div>
+            <!-- Order Items -->
+            <div class="detail-card">
+                <div class="detail-header">
+                    <h5 class="detail-title"><i class="fas fa-shopping-cart text-primary"></i> @(isAr ? "المنتجات" : "Items") <span class="badge bg-light text-dark border ms-2">@Model.OrderItems.Count</span></h5>
                 </div>
                 <div class="table-responsive">
-                    <table class="table mb-0 prod-table">
+                    <table class="order-table">
                         <thead>
                             <tr>
-                                <th class="ps-4">@(isAr ? "تفاصيل المنتج" : "Product Details")</th>
+                                <th class="ps-4">@(isAr ? "المنتج" : "Product")</th>
                                 <th class="text-center">@(isAr ? "الكمية" : "Qty")</th>
                                 <th class="text-end">@(isAr ? "سعر الوحدة" : "Unit Price")</th>
                                 <th class="text-end pe-4">@(isAr ? "الإجمالي" : "Total")</th>
@@ -229,113 +382,83 @@
                             {
                                 <tr>
                                     <td class="ps-4">
-                                        <div class="d-flex align-items-start gap-3">
-                                            <div class="prod-thumb no-print">
-                                                <img src="~/@item.Product?.ImageUrl" alt="" style="width:100%; height:100%; object-fit:contain;" onerror="this.src='/images/default.png'">
-                                            </div>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <img src="~/@item.Product?.ImageUrl" class="product-thumb" onerror="this.src='/images/default.png'">
                                             <div>
-                                                <div class="fw-bold text-main mb-1">@(isAr? item.Product?.Name : item.Product?.NameEn)</div>
-
-                                                <div class="specs-grid">
-                                                    <!-- SKU -->
-                                                    <span class="spec-item" title="SKU">
-                                                        <i class="fas fa-barcode text-muted"></i> @item.Product?.SKU
-                                                    </span>
-
-                                                    <!-- Selected Color (Checking Nullable Fields) -->
+                                                <div class="fw-bold text-main">@(isAr ? item.Product?.Name : item.Product?.NameEn)</div>
+                                                <div class="d-flex gap-2 mt-1">
+                                                    <span class="badge bg-light text-muted border fw-normal" style="font-size: 0.75rem;">SKU: @item.Product?.SKU</span>
                                                     @if (!string.IsNullOrEmpty(item.SelectedColorHex))
                                                     {
-                                                        <span class="spec-item" title="@(isAr ? "اللون المختار" : "Selected Color")">
-                                                            <i class="fas fa-palette text-muted"></i>
-                                                            <span class="color-circle-admin" style="background-color:@item.SelectedColorHex;"></span>
-                                                            @if (!string.IsNullOrEmpty(item.SelectedColorName) && item.SelectedColorName != "Standard")
-                                                            {
-                                                                <span class="small ms-1">@item.SelectedColorName</span>
-                                                            }
-                                                        </span>
-                                                    }
-
-                                                    <!-- Weight -->
-                                                    @if (item.Product?.Weight > 0)
-                                                    {
-                                                        <span class="spec-item" title="@(isAr ? "الوزن" : "Weight")">
-                                                            <i class="fas fa-weight-hanging text-muted"></i> @item.Product.Weight Kg
+                                                        <span class="badge border fw-normal d-flex align-items-center gap-1" style="background:#fff; color:#333; font-size: 0.75rem;">
+                                                            <span style="width:10px; height:10px; border-radius:50%; background-color:@item.SelectedColorHex; border:1px solid #ddd;"></span>
+                                                            @item.SelectedColorName
                                                         </span>
                                                     }
                                                 </div>
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="text-center align-middle">
-                                        <span class="fw-bold fs-6">@item.Quantity</span>
-                                        @if (item.Product?.UnitsPerCarton > 1)
-                                        {
-                                            <div class="small text-muted no-print">x @item.Product.UnitsPerCarton = @(item.Quantity* item.Product.UnitsPerCarton) pcs</div>
-                                        }
+                                    <td class="text-center">
+                                        <span class="fw-bold fs-6">x @item.Quantity</span>
                                     </td>
-                                    <td class="text-end align-middle">@item.UnitPrice.ToString("N0")</td>
-                                    <td class="text-end pe-4 align-middle fw-bold">@((item.Quantity * item.UnitPrice).ToString("N0"))</td>
+                                    <td class="text-end text-muted">@item.UnitPrice.ToString("N0")</td>
+                                    <td class="text-end pe-4 fw-bold text-main">@((item.Quantity * item.UnitPrice).ToString("N0"))</td>
                                 </tr>
                             }
                         </tbody>
-                        <tfoot class="bg-light">
-                            <tr>
-                                <td colspan="3" class="text-end text-muted pt-3">@(isAr ? "المجموع الفرعي" : "Subtotal")</td>
-                                <td class="text-end pe-4 pt-3 fw-bold">@((Model.TotalAmount - Model.ShippingCost).ToString("N0"))</td>
+                        <tfoot>
+                            <tr style="background-color: var(--dt-bg-body);">
+                                <td colspan="3" class="text-end text-muted border-0 pt-4">@(isAr ? "المجموع الفرعي" : "Subtotal")</td>
+                                <td class="text-end border-0 pt-4 fw-bold">@((Model.TotalAmount - Model.ShippingCost).ToString("N0"))</td>
                             </tr>
-                            <tr>
-                                <td colspan="3" class="text-end text-muted border-0">@(isAr ? "تكلفة الشحن" : "Shipping")</td>
-                                <td class="text-end pe-4 border-0">@Model.ShippingCost.ToString("N0")</td>
+                            <tr style="background-color: var(--dt-bg-body);">
+                                <td colspan="3" class="text-end text-muted border-0">@(isAr ? "الشحن" : "Shipping")</td>
+                                <td class="text-end border-0">@Model.ShippingCost.ToString("N0")</td>
                             </tr>
-                            <tr>
-                                <td colspan="3" class="text-end text-primary fw-bold fs-5 border-0 pb-3">@(isAr ? "الإجمالي الكلي" : "Grand Total")</td>
-                                <td class="text-end pe-4 text-primary fw-bold fs-5 border-0 pb-3">@Model.TotalAmount.ToString("N0") <small>@(isAr ? "ج.م" : "EGP")</small></td>
+                            <tr style="background-color: var(--dt-bg-body);">
+                                <td colspan="3" class="text-end text-primary fw-bold fs-5 border-0 pb-4">@(isAr ? "الإجمالي الكلي" : "Grand Total")</td>
+                                <td class="text-end text-primary fw-bold fs-5 border-0 pb-4">@Model.TotalAmount.ToString("N0") <small>@(isAr ? "ج.م" : "EGP")</small></td>
                             </tr>
                         </tfoot>
                     </table>
                 </div>
             </div>
 
-            <!-- Timeline (Screen Only) -->
-            <div class="details-card no-print">
-                <div class="card-header-custom">
-                    <div class="card-title-text"><i class="fas fa-history text-info"></i> @(isAr ? "سجل النشاط" : "Status Timeline")</div>
+            <!-- Timeline -->
+            <div class="detail-card">
+                <div class="detail-header">
+                    <h5 class="detail-title"><i class="fas fa-history text-info"></i> @(isAr ? "تتبع الطلب" : "Order History")</h5>
                 </div>
-                <div class="order-timeline">
+                <div class="timeline">
                     @{
                         var statuses = new[] { "Pending", "Confirmed", "Shipped", "Delivered" };
-                        var currentStatusIndex = Array.IndexOf(statuses, Model.Status);
-                        if (Model.Status == "Cancelled") currentStatusIndex = -1;
+                        var currentIdx = Model.Status == "Cancelled" ? -1 : Array.IndexOf(statuses, Model.Status);
                     }
 
-                    <div class="timeline-item active">
-                        <div class="timeline-dot"></div>
-                        <div class="fw-bold">@(isAr ? "تم إنشاء الطلب" : "Order Placed")</div>
-                        <small class="text-muted">@Model.OrderDate.ToString("dd MMM yyyy, hh:mm tt")</small>
-                    </div>
-
-                    @if (Model.Status == "Cancelled")
+                    @if(Model.Status == "Cancelled")
                     {
-                        <div class="timeline-item active">
-                            <div class="timeline-dot" style="background:#ef4444; border-color:#fee2e2;"></div>
-                            <div class="fw-bold text-danger">@(isAr ? "تم إلغاء الطلب" : "Order Cancelled")</div>
-                            <small class="text-muted">@(isAr ? "توقف الطلب بواسطة" : "Stopped by") Admin/User</small>
+                        <div class="timeline-step completed" style="border-color: #ef4444;">
+                            <div class="timeline-icon bg-danger border-danger"></div>
+                            <h6 class="fw-bold text-danger mb-1">تم الإلغاء (Cancelled)</h6>
+                            <p class="text-muted small mb-0">تم إلغاء هذا الطلب ولا يمكن استكماله.</p>
                         </div>
                     }
                     else
                     {
-                        @for (int i = 1; i < statuses.Length; i++)
+                        <div class="timeline-step completed">
+                            <div class="timeline-icon"></div>
+                            <h6 class="fw-bold mb-1">تم الطلب</h6>
+                            <p class="text-muted small mb-0">@Model.OrderDate.ToString("dd MMM yyyy, hh:mm tt")</p>
+                        </div>
+                        @foreach(var s in statuses.Skip(1))
                         {
-                            var s = statuses[i];
-                            var isActive = i <= currentStatusIndex;
-                            var className = isActive ? "active" : "";
-                            <div class="timeline-item @className">
-                                <div class="timeline-dot"></div>
-                                <div class="fw-bold @(isActive ? "text-dark" : "text-muted")">@s</div>
-                                @if (isActive)
-                                {
-                                    <small class="text-success"><i class="fas fa-check"></i></small>
-                                }
+                            var idx = Array.IndexOf(statuses, s);
+                            var isDone = idx <= currentIdx;
+                            <div class="timeline-step @(isDone ? "completed" : "")">
+                                <div class="timeline-icon"></div>
+                                <h6 class="fw-bold mb-1 @(isDone ? "text-main" : "text-muted")">@s</h6>
+                                <p class="text-muted small mb-0">@(isDone ? "تمت المرحلة" : "في الانتظار...")</p>
                             </div>
                         }
                     }
@@ -343,76 +466,157 @@
             </div>
         </div>
 
-        <!-- Right: Customer Info -->
+        <!-- RIGHT: Customer & Payment -->
         <div class="col-lg-4">
-            <!-- Customer Card -->
-            <div class="details-card">
-                <div class="card-header-custom">
-                    <div class="card-title-text"><i class="fas fa-user-circle text-warning"></i> @(isAr ? "بيانات العميل" : "Customer Info")</div>
+            <!-- Customer -->
+            <div class="detail-card">
+                <div class="detail-header">
+                    <h5 class="detail-title"><i class="fas fa-user-circle text-warning"></i> @(isAr ? "بيانات العميل" : "Customer")</h5>
                 </div>
-                <div class="p-4 text-center border-bottom">
-                    <div style="width:70px; height:70px; background:#eff6ff; color:var(--primary); font-size:1.5rem; font-weight:bold; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 15px;">
+                <div class="p-4 text-center border-bottom border-light">
+                    <div class="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-circle fw-bold fs-2 text-primary bg-primary bg-opacity-10" style="width:80px; height:80px;">
                         @(Model.CustomerName?.FirstOrDefault())
                     </div>
-                    <h5 class="fw-bold text-main mb-1">@Model.CustomerName</h5>
-                    <p class="text-muted mb-0">@Model.User?.Email</p>
+                    <h5 class="fw-bold mb-1">@Model.CustomerName</h5>
+                    <p class="text-muted mb-2">@Model.User?.Email</p>
+                    <a href="tel:@Model.Phone" class="btn btn-sm btn-outline-primary rounded-pill px-4"><i class="fas fa-phone me-2"></i> @Model.Phone</a>
                 </div>
                 <ul class="info-list">
-                    <li>
-                        <span class="info-label"><i class="fas fa-phone"></i> @(isAr ? "الهاتف" : "Phone")</span>
-                        <span class="info-val"><a href="tel:@Model.Phone" class="text-decoration-none">@Model.Phone</a></span>
+                    <li class="info-item">
+                        <span class="info-label"><i class="fas fa-map-marker-alt"></i> @(isAr ? "المدينة" : "City")</span>
+                        <span class="info-value">@Model.Governorate, @Model.City</span>
                     </li>
-                    <li class="no-print">
-                        <span class="info-label"><i class="fas fa-id-badge"></i> ID</span>
-                        <span class="info-val text-truncate" style="max-width:150px;">@Model.UserId</span>
+                    <li class="info-item">
+                        <span class="info-label"><i class="fas fa-home"></i> @(isAr ? "العنوان" : "Address")</span>
+                        <span class="info-value text-wrap" style="max-width: 60%;">@Model.Address</span>
                     </li>
                 </ul>
-                <div class="p-3 no-print">
-                    <a href="/Admin/Users/Details/@Model.UserId" class="btn btn-light w-100 fw-bold border text-muted">@(isAr ? "عرض ملف المستخدم" : "View Profile")</a>
+                <div class="p-3">
+                    <a href="/Admin/Users/Details/@Model.UserId" class="btn btn-light border w-100 fw-bold">@(isAr ? "ملف المستخدم" : "User Profile")</a>
                 </div>
             </div>
 
-            <!-- Shipping & Payment -->
-            <div class="details-card">
-                <div class="card-header-custom">
-                    <div class="card-title-text"><i class="fas fa-truck text-secondary"></i> @(isAr ? "الشحن والدفع" : "Shipping & Payment")</div>
+            <!-- Payment Info -->
+            <div class="detail-card">
+                <div class="detail-header">
+                    <h5 class="detail-title"><i class="fas fa-wallet text-success"></i> @(isAr ? "الدفع والشحن" : "Payment")</h5>
                 </div>
                 <ul class="info-list">
-                    <li>
-                        <div style="width:100%">
-                            <span class="info-label mb-2"><i class="fas fa-map-marker-alt text-danger"></i> @(isAr ? "العنوان" : "Address")</span>
-                            <div class="text-dark small lh-sm">
-                                @Model.Address<br>
-                                @Model.City, @Model.Governorate
-                            </div>
-                        </div>
+                    <li class="info-item">
+                        <span class="info-label">طريقة الدفع</span>
+                        <span class="info-value">
+                            @if(Model.PaymentMethod == "Wallet") { <span class="text-primary"><i class="fas fa-wallet"></i> محفظة</span> }
+                            else { <span class="text-success"><i class="fas fa-money-bill"></i> كاش</span> }
+                        </span>
                     </li>
-                    <li>
-                        <span class="info-label"><i class="fas fa-money-bill-wave text-success"></i> @(isAr ? "طريقة الدفع" : "Payment")</span>
-                        <span class="info-val">@(Model.PaymentMethod == "Wallet" ? "محفظة (Wallet)" : "كاش (COD)")</span>
-                    </li>
-                    <li>
-                        <span class="info-label"><i class="fas fa-clock text-primary"></i> @(isAr ? "وقت التوصيل" : "Slot")</span>
-                        <span class="info-val">@Model.DeliverySlot</span>
+                    <li class="info-item">
+                        <span class="info-label">وقت التوصيل</span>
+                        <span class="info-value">@Model.DeliverySlot</span>
                     </li>
                 </ul>
             </div>
 
-            @if (!string.IsNullOrEmpty(Model.Notes))
+            <!-- Notes -->
+            @if(!string.IsNullOrEmpty(Model.Notes))
             {
-                <div class="details-card bg-warning bg-opacity-10 border-warning border-opacity-25">
+                <div class="detail-card bg-warning bg-opacity-10 border-warning border-opacity-25">
                     <div class="p-3">
-                        <h6 class="fw-bold text-warning-emphasis mb-2"><i class="fas fa-sticky-note me-2"></i> @(isAr ? "ملاحظات" : "Notes")</h6>
+                        <h6 class="fw-bold text-warning-emphasis mb-2"><i class="fas fa-sticky-note me-2"></i> ملاحظات العميل</h6>
                         <p class="mb-0 small text-dark">@Model.Notes</p>
                     </div>
                 </div>
             }
         </div>
     </div>
+</div>
 
-    <!-- Invoice Footer (Print Only) -->
-    <div class="d-none d-print-block inv-footer">
-        <p>Thank you for your business!</p>
-        <p>Diska B2B Platform - Cairo, Egypt - Support: +20 123 456 7890</p>
+<!-- =======================
+     Print View (Invoice)
+     ======================= -->
+<div class="invoice-section">
+    <!-- Header -->
+    <div class="inv-header">
+        <div class="inv-logo">
+            <h1>DISKA</h1>
+            <p>B2B Wholesale Solutions</p>
+            <p>Cairo, Egypt | +20 100 000 0000</p>
+        </div>
+        <div class="inv-meta">
+            <h2>INVOICE</h2>
+            <p><strong>Invoice #:</strong> @Model.Id.ToString("D6")</p>
+            <p><strong>Date:</strong> @Model.OrderDate.ToString("dd/MM/yyyy")</p>
+            <p><strong>Status:</strong> @Model.Status</p>
+        </div>
+    </div>
+
+    <!-- Info Grid -->
+    <div class="inv-grid">
+        <div class="inv-box">
+            <h5>Bill To (العميل)</h5>
+            <p><strong>@Model.CustomerName</strong></p>
+            <p>@Model.Phone</p>
+            <p>@Model.User?.Email</p>
+        </div>
+        <div class="inv-box">
+            <h5>Ship To (العنوان)</h5>
+            <p>@Model.Address</p>
+            <p>@Model.City, @Model.Governorate</p>
+            <p><strong>Slot:</strong> @Model.DeliverySlot</p>
+        </div>
+        <div class="inv-box">
+            <h5>Payment (الدفع)</h5>
+            <p><strong>Method:</strong> @(Model.PaymentMethod == "Wallet" ? "Wallet Balance" : "Cash on Delivery")</p>
+            <p><strong>Currency:</strong> EGP (ج.م)</p>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <table class="inv-table">
+        <thead>
+            <tr>
+                <th style="width: 50%;">Item / Description</th>
+                <th style="width: 10%; text-align: center;">Qty</th>
+                <th style="width: 20%; text-align: end;">Unit Price</th>
+                <th style="width: 20%; text-align: end;">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.OrderItems)
+            {
+                <tr>
+                    <td>
+                        <strong>@(isAr ? item.Product?.Name : item.Product?.NameEn)</strong>
+                        @if(!string.IsNullOrEmpty(item.Product?.SKU)){ <div style="color:#666; font-size:12px;">SKU: @item.Product.SKU</div> }
+                    </td>
+                    <td style="text-align: center;">@item.Quantity</td>
+                    <td style="text-align: end;">@item.UnitPrice.ToString("N2")</td>
+                    <td style="text-align: end;">@((item.Quantity * item.UnitPrice).ToString("N2"))</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <!-- Totals -->
+    <div class="inv-totals">
+        <table>
+            <tr>
+                <td>Subtotal:</td>
+                <td style="text-align: end;">@((Model.TotalAmount - Model.ShippingCost).ToString("N2"))</td>
+            </tr>
+            <tr>
+                <td>Shipping:</td>
+                <td style="text-align: end;">@Model.ShippingCost.ToString("N2")</td>
+            </tr>
+            <tr class="total-row">
+                <td>Total (EGP):</td>
+                <td style="text-align: end;">@Model.TotalAmount.ToString("N2")</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Footer -->
+    <div class="inv-footer">
+        <p>Thank you for your business. For questions, contact support@diska.com</p>
+        <p>This invoice was generated automatically.</p>
     </div>
 </div>

@@ -8,121 +8,6 @@
     int totalItems = ViewBag.TotalItems ?? 0;
 }
 
-<style>
-    /* Premium Table Styling */
-    .table-card {
-        border: none;
-        border-radius: 12px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-        overflow: hidden;
-        background: #fff;
-    }
-
-    .table thead th {
-        background-color: #f8fafc;
-        color: #64748b;
-        font-weight: 700;
-        text-transform: uppercase;
-        font-size: 0.8rem;
-        padding: 15px;
-        border-bottom: 2px solid #e2e8f0;
-    }
-
-    .table tbody td {
-        padding: 15px;
-        vertical-align: middle;
-        border-bottom: 1px solid #f1f5f9;
-        font-size: 0.95rem;
-        color: #1e293b;
-    }
-
-    .table-hover tbody tr:hover {
-        background-color: #fcfcfd;
-    }
-
-    .product-img-box {
-        width: 50px;
-        height: 50px;
-        border-radius: 8px;
-        object-fit: cover;
-        border: 1px solid #e2e8f0;
-        padding: 2px;
-        background: #fff;
-    }
-
-    /* Action Buttons */
-    .btn-action {
-        width: 34px;
-        height: 34px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 8px;
-        transition: 0.2s;
-        border: 1px solid transparent;
-    }
-
-    .btn-edit {
-        background: #eff6ff;
-        color: #2563eb;
-    }
-
-        .btn-edit:hover {
-            background: #2563eb;
-            color: #fff;
-        }
-
-    .btn-delete {
-        background: #fef2f2;
-        color: #ef4444;
-    }
-
-        .btn-delete:hover {
-            background: #ef4444;
-            color: #fff;
-        }
-
-    /* Filter Bar */
-    .filter-bar {
-        background: #fff;
-        padding: 15px;
-        border-radius: 12px;
-        border: 1px solid #e2e8f0;
-        display: flex;
-        gap: 15px;
-        flex-wrap: wrap;
-        align-items: center;
-        margin-bottom: 20px;
-    }
-
-    .search-input-group {
-        position: relative;
-        flex-grow: 1;
-        min-width: 250px;
-    }
-
-        .search-input-group input {
-            padding-left: 40px;
-            border-radius: 8px;
-            border: 1px solid #cbd5e1;
-        }
-
-        .search-input-group i {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #94a3b8;
-        }
-
-    /* Excel Buttons */
-    .btn-excel {
-        font-weight: 600;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-    }
-</style>
 
 <!-- Header -->
 <div class="d-flex justify-content-between align-items-center mb-4 fade-up">
@@ -131,10 +16,10 @@
         <p class="text-muted small mb-0">عرض وإدارة مخزون المتجر</p>
     </div>
     <div class="d-flex gap-2">
-        <button class="btn btn-outline-success btn-excel shadow-sm bg-white" data-bs-toggle="modal" data-bs-target="#importModal">
+        <button class="btn btn-outline-success btn-excel export-Excel shadow-sm bg-white" data-bs-toggle="modal" data-bs-target="#importModal">
             <i class="fas fa-file-import"></i> استيراد
         </button>
-        <form asp-action="ExportToExcel" method="post">
+        <form asp-action="ExportToExcel" method="post" >
             <button type="submit" class="btn btn-success btn-excel shadow-sm">
                 <i class="fas fa-file-excel"></i> تصدير Excel
             </button>
@@ -227,12 +112,10 @@
                             }
                             else if (item.StockQuantity <= item.LowStockThreshold)
                             {
-
                                 <span class="badge bg-warning bg-opacity-10 text-warning rounded-pill">منخفض (@item.StockQuantity)</span>
                             }
                             else
                             {
-
                                 <span class="badge bg-success bg-opacity-10 text-success rounded-pill">@item.StockQuantity</span>
                             }
                         </td>
@@ -245,7 +128,6 @@
                             }
                             else
                             {
-
                                 <span class="badge bg-secondary">@item.Status</span>
                             }
                         </td>

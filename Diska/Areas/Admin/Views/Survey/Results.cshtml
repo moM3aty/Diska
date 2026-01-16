@@ -5,88 +5,264 @@
     int totalResponses = Model.Responses?.Count ?? 0;
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h2 class="text-primary fw-bold mb-1">نتائج: @Model.Title</h2>
-        <span class="text-muted">إجمالي المشاركات: <strong class="text-dark">@totalResponses</strong></span>
-    </div>
-    <a asp-action="Index" class="btn btn-outline-secondary">عودة</a>
-</div>
+<style>
+    /* =========================================
+           RESULTS PREMIUM STYLES
+           ========================================= */
 
-<div class="row g-4">
-    @foreach (var q in Model.Questions)
-    {
-        <div class="col-md-6">
-            <div class="card h-100 border-0 shadow-sm">
-                <div class="card-header bg-white border-bottom-0 pb-0 pt-3">
-                    <h6 class="fw-bold mb-0">@q.QuestionText</h6>
-                    <small class="text-muted">Type: @q.Type</small>
+    /* --- Stats Overview --- */
+    .results-header-card {
+        background: linear-gradient(135deg, var(--color-primary), #4338ca);
+        border-radius: 20px;
+        padding: 40px;
+        color: #fff;
+        margin-bottom: 30px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(79, 70, 229, 0.3);
+    }
+
+        .results-header-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            transform: translate(30%, 30%);
+        }
+
+    .stat-badge {
+        background: rgba(255,255,255,0.2);
+        backdrop-filter: blur(5px);
+        padding: 5px 15px;
+        border-radius: 30px;
+        font-size: 0.85rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    /* --- Question Card --- */
+    .result-card {
+        border-radius: 16px;
+        border: 1px solid;
+        transition: 0.3s;
+        height: 100%;
+    }
+
+    [data-bs-theme="light"] .result-card {
+        background: #fff;
+        border-color: #e2e8f0;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+    }
+
+    [data-bs-theme="dark"] .result-card {
+        background: #1e293b;
+        border-color: rgba(255,255,255,0.05);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    }
+
+    .result-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .result-header {
+        padding: 20px;
+        border-bottom: 1px solid;
+    }
+
+    [data-bs-theme="light"] .result-header {
+        border-color: #f1f5f9;
+        background: #f8fafc;
+    }
+
+    [data-bs-theme="dark"] .result-header {
+        border-color: rgba(255,255,255,0.05);
+        background: rgba(255,255,255,0.02);
+    }
+
+    /* --- Bars & Text --- */
+    .progress-custom {
+        height: 12px;
+        border-radius: 10px;
+        background-color: rgba(0,0,0,0.05);
+        overflow: hidden;
+        margin-top: 5px;
+    }
+
+    [data-bs-theme="dark"] .progress-custom {
+        background-color: rgba(255,255,255,0.05);
+    }
+
+    .progress-bar-custom {
+        height: 100%;
+        background: var(--color-primary);
+        border-radius: 10px;
+        position: relative;
+        transition: width 1s ease-out;
+    }
+
+    .text-box {
+        max-height: 200px;
+        overflow-y: auto;
+        padding: 15px;
+        border-radius: 12px;
+        border: 1px solid;
+    }
+
+    [data-bs-theme="light"] .text-box {
+        background: #f8fafc;
+        border-color: #e2e8f0;
+    }
+
+    [data-bs-theme="dark"] .text-box {
+        background: rgba(0,0,0,0.2);
+        border-color: rgba(255,255,255,0.05);
+    }
+
+    .text-item {
+        padding: 10px 0;
+        border-bottom: 1px solid;
+        font-size: 0.9rem;
+    }
+
+    [data-bs-theme="light"] .text-item {
+        border-color: #f1f5f9;
+        color: #475569;
+    }
+
+    [data-bs-theme="dark"] .text-item {
+        border-color: rgba(255,255,255,0.05);
+        color: #cbd5e1;
+    }
+
+    .text-item:last-child {
+        border-bottom: none;
+    }
+</style>
+
+<div class="container-fluid px-0 fade-up">
+
+    <!-- Header Overview -->
+    <div class="results-header-card">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <a asp-action="Index" class="btn btn-sm btn-outline-light rounded-pill mb-3 px-3">
+                    <i class="fas fa-arrow-right"></i> عودة للقائمة
+                </a>
+                <h2 class="fw-bold mb-1">@Model.Title</h2>
+                <p class="opacity-75 mb-4">@Model.Description</p>
+
+                <div class="d-flex gap-3">
+                    <span class="stat-badge">
+                        <i class="fas fa-users"></i> @totalResponses مشاركة
+                    </span>
+                    <span class="stat-badge">
+                        <i class="fas fa-calendar"></i> @Model.StartDate.ToString("dd MMM") - @Model.EndDate.ToString("dd MMM")
+                    </span>
                 </div>
-                <div class="card-body">
+            </div>
+            <div class="d-none d-md-block opacity-50">
+                <i class="fas fa-chart-pie fa-5x"></i>
+            </div>
+        </div>
+    </div>
 
-                    @if (totalResponses == 0)
-                    {
-                        <p class="text-muted small">لا توجد بيانات.</p>
-                    }
-                    else
-                    {
-                        var answers = new List<string>();
-                        foreach (var r in Model.Responses)
+    <!-- Questions Grid -->
+    <div class="row g-4">
+        @foreach (var q in Model.Questions)
+        {
+            <div class="col-md-6 col-xl-6">
+                <div class="result-card">
+                    <div class="result-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="fw-bold mb-0 text-main">@q.QuestionText</h6>
+                            <small class="text-muted">Type: @q.Type</small>
+                        </div>
+                    </div>
+                    <div class="card-body p-4">
+
+                        @if (totalResponses == 0)
                         {
-                            try
+                            <div class="text-center text-muted py-4">
+                                <i class="far fa-chart-bar fa-2x mb-2 opacity-50"></i>
+                                <p class="small mb-0">لا توجد إجابات حتى الآن</p>
+                            </div>
+                        }
+                        else
+                        {
+                            var answers = new List<string>();
+                            foreach (var r in Model.Responses)
                             {
-                                var json = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(r.AnswerJson);
-                                var key = $"q_{q.Id}"; // المفتاح المستخدم في الـ Form سابقاً
-                                // لاحظ: في الكنترولر حفظنا الـ Id في الـ Form كـ name="q_ID"
-                                // لذا نبحث عنه هنا
-
-                                // بما أننا لم نستخدم اسم ثابت في Create، سنفترض أننا حفظنا البيانات بصيغة معينة
-                                // للتبسيط، سنقوم بعمل Loop بسيط للوصول للبيانات
-                                if (json != null && json.ContainsKey(key))
+                                try
                                 {
-                                    answers.Add(json[key]);
+                                    var json = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(r.AnswerJson);
+                                    var key = $"q_{q.Id}";
+                                    if (json != null && json.ContainsKey(key))
+                                    {
+                                        answers.Add(json[key]);
+                                    }
+                                }
+                                catch { }
+                            }
+
+                            if (q.Type == "Star" || q.Type == "YesNo" || q.Type == "MCQ")
+                            {
+                                var groups = answers.GroupBy(x => x)
+                                .Select(g => new { Answer = g.Key, Count = g.Count(), Percent = (double)g.Count() * 100 / totalResponses })
+                                .OrderByDescending(g => g.Count);
+
+                                foreach (var g in groups)
+                                {
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between small mb-1">
+                                            <span class="fw-bold text-main">
+                                                @if (q.Type == "Star")
+                                                {
+                                                    <i class="fas fa-star text-warning"></i> 
+                                                    @g.Answer
+                                                }
+                                                else
+                                                {
+
+                                                    @g.Answer
+                                                }
+                                            </span>
+                                            <span class="text-muted">@g.Count (@g.Percent.ToString("0.0")%)</span>
+                                        </div>
+                                        <div class="progress-custom">
+                                            <div class="progress-bar-custom" style="width: @g.Percent%"></div>
+                                        </div>
+                                    </div>
                                 }
                             }
-                            catch { }
-                        }
-
-                        if (q.Type == "Star" || q.Type == "YesNo" || q.Type == "MCQ")
-                        {
-                            var groups = answers.GroupBy(x => x)
-                            .Select(g => new { Answer = g.Key, Count = g.Count(), Percent = (g.Count() * 100) / totalResponses })
-                            .OrderByDescending(g => g.Count);
-
-                            foreach (var g in groups)
+                            else // Text
                             {
-                                <div class="mb-2">
-                                    <div class="d-flex justify-content-between small mb-1">
-                                        <span>@g.Answer</span>
-                                        <span class="fw-bold">@g.Count (@g.Percent%)</span>
-                                    </div>
-                                    <div class="progress" style="height: 8px;">
-                                        <div class="progress-bar bg-primary" role="progressbar" style="width: @g.Percent%"></div>
-                                    </div>
+                                <div class="text-box">
+                                    @foreach (var txt in answers.Take(5))
+                                    {
+                                        <div class="text-item">@txt</div>
+                                    }
+                                    @if (answers.Count > 5)
+                                    {
+                                        <div class="text-center mt-2">
+                                            <span class="badge bg-light text-muted border">... و @(answers.Count - 5) إجابات أخرى</span>
+                                        </div>
+                                    }
+                                    @if (answers.Count == 0)
+                                    {
+                                        <div class="text-center text-muted small">لا توجد إجابات نصية.</div>
+                                    }
                                 </div>
                             }
                         }
-                        else // Text
-                        {
-                            <div class="bg-light p-2 rounded" style="max-height: 150px; overflow-y: auto;">
-                                <ul class="list-unstyled mb-0 small">
-                                    @foreach (var txt in answers.Take(10))
-                                    {
-                                        <li class="border-bottom py-1">@txt</li>
-                                    }
-                                </ul>
-                                @if (answers.Count > 10)
-                                {
-                                    <span class="text-muted x-small">... والمزيد</span>
-                                }
-                            </div>
-                        }
-                    }
+
+                    </div>
                 </div>
             </div>
-        </div>
-    }
+        }
+    </div>
 </div>

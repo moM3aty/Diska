@@ -1,288 +1,97 @@
-﻿@model Diska.Models.Survey
+﻿@using Microsoft.AspNetCore.Identity
 @using System.Globalization
-
+@inject UserManager<Diska.Models.ApplicationUser> UserManager
 @{
-    // نقل المنطق هنا لتجنب خطأ Razor داخل الـ if
-    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
-    string dir = isAr ? "rtl" : "ltr";
-    string title = "";
-
-    if (Model != null)
-    {
-        title = isAr ? Model.Title : (Model.TitleEn ?? Model.Title);
-    }
+    // هذا الكود يتحقق فقط إذا كان المستخدم مسجلاً
+    // التحقق الفعلي من الاستبيان يتم عبر AJAX لتجنب بطء تحميل الصفحة
+    bool isUserLoggedIn = User.Identity.IsAuthenticated;
 }
 
-@if (Model != null)
+@if (isUserLoggedIn)
 {
-    <div id="surveyPopup" class="survey-overlay" style="display:none;">
-        <div class="survey-card" dir="@dir">
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // تأخير بسيط لضمان تحميل الصفحة بالكامل قبل ظهور النافذة
+            setTimeout(checkPendingSurvey, 1500);
+        });
 
-            <button onclick="closeSurvey()" class="close-btn">&times;</button>
+        function checkPendingSurvey() {
+            // التحقق من الوضع الحالي (Dark/Light)
+            const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
 
-            <div class="survey-header">
-                <div class="icon-box">
-                    <i class="fas fa-poll-h"></i>
-                </div>
-                <h3>@title</h3>
-                <p>@(isAr ? "رأيك يهمنا لنقدم لك خدمة أفضل" : "We value your opinion to serve you better")</p>
-            </div>
+            // تعريف الألوان بناءً على الوضع لضمان التناسق (Premium Look)
+            const colors = isDark ? {
+                background: '#1e293b', // Slate 800 (Dark Card)
+                text: '#f8fafc',       // Slate 50 (Light Text)
+                confirmBtn: '#6366f1', // Indigo 500 (Brighter Primary)
+                cancelBtn: '#94a3b8'   // Slate 400 (Muted Text)
+            } : {
+                background: '#ffffff', // White
+                text: '#0f172a',       // Slate 900 (Dark Text)
+                confirmBtn: '#0F172A', // Slate 900 (Deep Primary)
+                cancelBtn: '#64748b'   // Slate 500
+            };
 
-            <form id="surveyForm" onsubmit="submitSurvey(event)">
-                <input type="hidden" name="surveyId" value="@Model.Id" />
+            // التحقق من وجود استبيان معلق عبر AJAX
+            fetch('/UserSurvey/CheckPending')
+                .then(response => {
+                    if (!response.ok) throw new Error("Network response was not ok");
+                    return response.json();
+                })
+                .then(data => {
+                    // إذا عاد السيرفر ببيانات (معناه يوجد استبيان لم يتم حله)
+                    if (data && data.id) {
+                        const isAr = document.documentElement.lang === 'ar' || document.documentElement.dir === 'rtl';
 
-                <div class="questions-list">
-                    @foreach (var q in Model.Questions)
-                    {
-                        string qText = isAr ? q.QuestionText : (q.QuestionTextEn ?? q.QuestionText);
+                        // تحديد النصوص بناءً على اللغة
+                        const title = isAr ? "شاركنا رأيك!" : "We Value Your Feedback!";
+                        const surveyTitle = isAr ? data.title : (data.titleEn || data.title);
+                        const text = isAr
+                            ? `نود تحسين خدماتنا لك. يرجى تخصيص لحظة للإجابة على استبيان: "${surveyTitle}"`
+                            : `Help us improve. Please take a moment to answer: "${surveyTitle}"`;
 
-                        <div class="survey-q">
-                            <label>@qText</label>
+                        const confirmBtn = isAr ? "ابدأ الآن" : "Start Now";
+                        const cancelBtn = isAr ? "ليس الآن" : "Not Now";
 
-                            @if (q.Type == "Text")
-                            {
-                                <textarea name="q_@q.Id" rows="2" placeholder="@(isAr ? "اكتب إجابتك هنا..." : "Type your answer here...")" required></textarea>
+                        // عرض SweetAlert بتصميم Premium متكيف مع الوضع
+                        Swal.fire({
+                            title: title,
+                            text: text,
+                            icon: 'question',
+                            showCancelButton: true,
+                            confirmButtonText: confirmBtn,
+                            cancelButtonText: cancelBtn,
+
+                            // تطبيق الألوان الديناميكية
+                            background: colors.background,
+                            color: colors.text,
+                            confirmButtonColor: colors.confirmBtn,
+                            cancelButtonColor: colors.cancelBtn,
+
+                            backdrop: `rgba(15, 23, 42, 0.6)`,
+                            padding: '2em',
+                            customClass: {
+                                popup: 'rounded-4 shadow-lg border ' + (isDark ? 'border-secondary' : 'border-light'),
+                                confirmButton: 'px-4 py-2 rounded-pill fw-bold',
+                                cancelButton: 'px-4 py-2 rounded-pill'
+                            },
+                            showClass: {
+                                popup: 'animate__animated animate__fadeInDown'
+                            },
+                            hideClass: {
+                                popup: 'animate__animated animate__fadeOutUp'
                             }
-                            else if (q.Type == "YesNo")
-                            {
-                                <div class="options-row">
-                                    <label class="option-pill">
-                                        <input type="radio" name="q_@q.Id" value="Yes" required>
-                                        <span>@(isAr ? "نعم" : "Yes")</span>
-                                    </label>
-                                    <label class="option-pill">
-                                        <input type="radio" name="q_@q.Id" value="No">
-                                        <span>@(isAr ? "لا" : "No")</span>
-                                    </label>
-                                </div>
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.location.href = '/UserSurvey/Take/' + data.id;
                             }
-                            else if (q.Type == "Star")
-                            {
-                                <div class="star-rating">
-                                    @for (int i = 5; i >= 1; i--)
-                                    {
-                                        <input type="radio" id="star_@(q.Id)_@i" name="q_@q.Id" value="@i" required>
-                                        <label for="star_@(q.Id)_@i" title="@i stars"><i class="fas fa-star"></i></label>
-                                    }
-                                </div>
-                            }
-                        </div>
+                        });
                     }
-                </div>
-
-                <button type="submit" class="submit-btn">@(isAr ? "إرسال الإجابات" : "Submit Answers")</button>
-            </form>
-        </div>
-    </div>
-
-    <style>
-        .survey-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(4px);
-            z-index: 9999;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            opacity: 0;
-            animation: fadeIn 0.3s forwards;
+                })
+                .catch(err => {
+                    // console.error('Survey check failed', err);
+                    // Silent fail is better for UX
+                });
         }
-
-        .survey-card {
-            background: #fff;
-            width: 90%;
-            max-width: 500px;
-            border-radius: 20px;
-            padding: 0;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
-            position: relative;
-            overflow: hidden;
-            transform: translateY(20px);
-            animation: slideUp 0.4s forwards 0.1s;
-        }
-
-        .close-btn {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            color: #94a3b8;
-            cursor: pointer;
-            z-index: 10;
-        }
-
-        [dir="ltr"] .close-btn {
-            right: 15px;
-            left: auto;
-        }
-
-        [dir="rtl"] .close-btn {
-            left: 15px;
-            right: auto;
-        }
-
-        .survey-header {
-            background: linear-gradient(135deg, #0F172A, #1e293b);
-            padding: 30px 20px;
-            text-align: center;
-            color: #fff;
-        }
-
-            .survey-header .icon-box {
-                width: 50px;
-                height: 50px;
-                background: rgba(255,255,255,0.1);
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 1.5rem;
-                color: #FACC15;
-                margin: 0 auto 15px;
-            }
-
-            .survey-header h3 {
-                margin: 0 0 5px;
-                font-size: 1.4rem;
-                font-weight: 800;
-            }
-
-            .survey-header p {
-                margin: 0;
-                font-size: 0.9rem;
-                color: #cbd5e1;
-            }
-
-        .questions-list {
-            padding: 25px;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-
-        .survey-q {
-            margin-bottom: 20px;
-        }
-
-            .survey-q label {
-                display: block;
-                font-weight: 700;
-                color: #334155;
-                margin-bottom: 10px;
-                font-size: 0.95rem;
-            }
-
-            .survey-q textarea {
-                width: 100%;
-                padding: 12px;
-                border: 1px solid #e2e8f0;
-                border-radius: 10px;
-                font-family: inherit;
-                resize: vertical;
-                outline: none;
-                transition: 0.3s;
-            }
-
-                .survey-q textarea:focus {
-                    border-color: #2563eb;
-                    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
-                }
-
-        /* Custom Options (Yes/No) */
-        .options-row {
-            display: flex;
-            gap: 10px;
-        }
-
-        .option-pill {
-            flex: 1;
-            cursor: pointer;
-            position: relative;
-        }
-
-            .option-pill input {
-                position: absolute;
-                opacity: 0;
-            }
-
-            .option-pill span {
-                display: block;
-                text-align: center;
-                padding: 10px;
-                border: 1px solid #e2e8f0;
-                border-radius: 8px;
-                color: #64748b;
-                transition: 0.2s;
-                font-weight: 600;
-            }
-
-            .option-pill input:checked + span {
-                background: #e0f2fe;
-                border-color: #2563eb;
-                color: #2563eb;
-            }
-
-        /* Star Rating */
-        .star-rating {
-            display: flex;
-            flex-direction: row-reverse;
-            justify-content: flex-end;
-            gap: 5px;
-        }
-
-            .star-rating input {
-                display: none;
-            }
-
-            .star-rating label {
-                color: #e2e8f0;
-                font-size: 1.5rem;
-                cursor: pointer;
-                transition: 0.2s;
-                margin: 0 !important;
-            }
-
-                .star-rating label:hover, .star-rating label:hover ~ label,
-                .star-rating input:checked ~ label {
-                    color: #FACC15;
-                }
-
-        .submit-btn {
-            display: block;
-            width: calc(100% - 50px);
-            margin: 0 auto 25px;
-            padding: 14px;
-            background: #2563eb;
-            color: #fff;
-            border: none;
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: 0.3s;
-            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
-        }
-
-            .submit-btn:hover {
-                background: #1d4ed8;
-                transform: translateY(-2px);
-            }
-
-        @@keyframes fadeIn {
-            to {
-                opacity: 1;
-            }
-        }
-
-        @@keyframes slideUp {
-            to {
-                transform: translateY(0);
-            }
-        }
-    </style>
+    </script>
 }

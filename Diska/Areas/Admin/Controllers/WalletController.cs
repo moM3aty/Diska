@@ -136,6 +136,8 @@ namespace Diska.Areas.Admin.Controllers
             var data = await query.OrderByDescending(t => t.TransactionDate).ToListAsync();
 
             var builder = new StringBuilder();
+
+            // إضافة عناوين الأعمدة
             builder.AppendLine("رقم العملية,المستخدم,نوع العملية,المبلغ,البيان,التاريخ");
 
             foreach (var item in data)
@@ -149,10 +151,21 @@ namespace Diska.Areas.Admin.Controllers
                     _ => item.Type
                 };
 
-                builder.AppendLine($"{item.Id},{item.User?.FullName},{operationName},{item.Amount},{item.Description},{item.TransactionDate}");
+                // تنظيف البيانات من الفواصل لتجنب تكسير ملف الـ CSV
+                string cleanDesc = item.Description?.Replace(",", " ") ?? "";
+                string cleanUser = item.User?.FullName?.Replace(",", " ") ?? "";
+
+                builder.AppendLine($"{item.Id},{cleanUser},{operationName},{item.Amount},{cleanDesc},{item.TransactionDate}");
             }
 
-            return File(Encoding.UTF8.GetBytes(builder.ToString()), "text/csv", $"Financial_Report_{DateTime.Now:yyyyMMdd}.csv");
+            // استخدام UTF8Encoding(true) لإضافة BOM (Byte Order Mark)
+            // هذا يجعل Excel يتعرف على الملف كـ UTF-8 ويظهر الحروف العربية بشكل صحيح
+            var encoding = new UTF8Encoding(true);
+            var preamble = encoding.GetPreamble();
+            var content = encoding.GetBytes(builder.ToString());
+            var result = preamble.Concat(content).ToArray();
+
+            return File(result, "text/csv", $"Financial_Report_{DateTime.Now:yyyyMMdd}.csv");
         }
     }
 }

@@ -3,44 +3,246 @@
 @{
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
     ViewData["Title"] = isAr ? "الاستبيانات" : "Surveys";
+    Layout = "_Layout";
 }
 
-<section class="section-padding">
+<style>
+    :root {
+        --color-primary: #0F172A;
+        --color-accent: #FACC15;
+        --color-bg: #F8FAFC;
+        --color-text: #334155;
+        --color-border: #E2E8F0;
+    }
+
+    body {
+        background-color: var(--color-bg);
+    }
+
+    .page-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding-top: 2rem;
+    }
+
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--color-primary);
+        margin-bottom: 0.5rem;
+    }
+
+    .page-subtitle {
+        color: #64748b;
+        font-size: 1.1rem;
+    }
+
+    .survey-card {
+        background: #fff;
+        border-radius: 20px;
+        border: 1px solid var(--color-border);
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+
+        .survey-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px -5px rgba(15, 23, 42, 0.1);
+            border-color: #cbd5e1;
+        }
+
+    .card-badge {
+        position: absolute;
+        top: 20px;
+        @(isAr ? "left" : "right") : 20px;
+        background: rgba(250, 204, 21, 0.15);
+        color: #b45309;
+        font-weight: 700;
+        padding: 6px 14px;
+        border-radius: 30px;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .card-body {
+        padding: 30px;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .survey-icon {
+        width: 60px;
+        height: 60px;
+        background: #f1f5f9;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--color-primary);
+        font-size: 1.75rem;
+        margin-bottom: 20px;
+        transition: 0.3s;
+    }
+
+    .survey-card:hover .survey-icon {
+        background: var(--color-primary);
+        color: #fff;
+        transform: scale(1.1) rotate(5deg);
+    }
+
+    .card-title {
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: var(--color-primary);
+        margin-bottom: 12px;
+        line-height: 1.4;
+    }
+
+    .card-text {
+        color: var(--color-text);
+        font-size: 0.95rem;
+        line-height: 1.6;
+        margin-bottom: 20px;
+        opacity: 0.9;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .card-footer-custom {
+        margin-top: auto;
+        padding-top: 20px;
+        border-top: 1px solid var(--color-border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .date-info {
+        font-size: 0.85rem;
+        color: #94a3b8;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .btn-start {
+        background: var(--color-primary);
+        color: #fff;
+        padding: 10px 24px;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        text-decoration: none;
+        transition: all 0.2s;
+        box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .btn-start:hover {
+            background: #1e293b;
+            transform: scale(1.05);
+            color: #fff;
+        }
+
+    .empty-state-card {
+        background: #fff;
+        border-radius: 24px;
+        padding: 60px 20px;
+        text-align: center;
+        border: 2px dashed var(--color-border);
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .empty-icon {
+        color: #cbd5e1;
+        font-size: 5rem;
+        margin-bottom: 20px;
+    }
+
+    .count-badge {
+        background: var(--color-primary);
+        color: #fff;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        vertical-align: middle;
+        margin-inline-start: 10px;
+    }
+</style>
+
+<section class="section-padding" style="min-height: 80vh;">
     <div class="container">
-        <h2 class="page-title">@(isAr ? "استطلاعات الرأي المتاحة" : "Available Surveys") 📋</h2>
+
+        <!-- Header -->
+        <div class="page-header fade-up">
+            <h2 class="page-title">
+                @(isAr ? "استطلاعات الرأي المتاحة" : "Available Surveys")
+                <span class="count-badge">@Model.Count()</span>
+            </h2>
+            <p class="page-subtitle">@(isAr ? "شاركنا رأيك وساعدنا في تحسين خدماتنا" : "Share your feedback and help us improve our services")</p>
+        </div>
 
         @if (!Model.Any())
         {
-            <div style="text-align:center; padding:60px; background:#fff; border-radius:15px; border:1px solid #eee;">
-                <i class="fas fa-clipboard-check fa-4x" style="color:#e2e8f0; margin-bottom:20px;"></i>
-                <h3 style="color:#64748b;">@(isAr ? "لا توجد استبيانات جديدة حالياً." : "No new surveys available.")</h3>
-                <p style="color:#999;">@(isAr ? "شكراً لاهتمامك، تابعنا لاحقاً." : "Thank you for your interest, check back later.")</p>
-                <a asp-controller="Home" asp-action="Index" class="btn primary small" style="margin-top:20px;">
+            <div class="empty-state-card fade-up">
+                <div class="empty-icon">
+                    <i class="fas fa-clipboard-check"></i>
+                </div>
+                <h3 class="fw-bold" style="color: var(--color-primary); margin-bottom: 10px;">
+                    @(isAr ? "لا توجد استبيانات جديدة حالياً" : "No new surveys available")
+                </h3>
+                <p class="text-muted mb-4">
+                    @(isAr ? "شكراً لاهتمامك، تابعنا لاحقاً للمشاركة في استطلاعات جديدة." : "Thank you for your interest, check back later for new surveys.")
+                </p>
+                <a asp-controller="Home" asp-action="Index" class="btn btn-outline-dark rounded-pill px-5 py-2 fw-bold">
                     @(isAr ? "العودة للرئيسية" : "Back Home")
                 </a>
             </div>
         }
         else
         {
-            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:25px;">
+            <div class="row g-4">
                 @foreach (var item in Model)
                 {
-                    <div class="card" style="background:#fff; padding:25px; border-radius:12px; border:1px solid #e2e8f0; box-shadow:0 5px 15px rgba(0,0,0,0.03); transition:0.3s;">
-                        <div style="margin-bottom:15px;">
-                            <span class="badge" style="background:#e0f2fe; color:#0284c7; font-size:0.8rem; margin-bottom:10px; display:inline-block;">
-                                @(isAr ? "جديد" : "New")
-                            </span>
-                            <h3 style="margin:0 0 10px; color:var(--primary); font-size:1.2rem;">@(isAr? item.Title: item.TitleEn)</h3>
-                            <p style="color:#666; font-size:0.9rem; line-height:1.6;">@(item.Description ?? (isAr ? "شاركنا رأيك..." : "Share your feedback..."))</p>
-                        </div>
+                    string title = isAr ? item.Title : (item.TitleEn ?? item.Title);
 
-                        <div style="border-top:1px solid #f5f5f5; padding-top:15px; display:flex; justify-content:space-between; align-items:center;">
-                            <small style="color:#999;">
-                                <i class="far fa-calendar-alt"></i> @(isAr ? "ينتهي:" : "Ends:") @item.EndDate.ToString("dd MMM")
-                            </small>
-                            <a asp-action="Take" asp-route-id="@item.Id" class="btn primary small" style="padding:8px 20px;">
-                                @(isAr ? "بدء الاستبيان" : "Start Survey") <i class="fas @(isAr ? "fa-arrow-left" : "fa-arrow-right")"></i>
-                            </a>
+                    <div class="col-md-6 col-lg-4 fade-up">
+                        <div class="survey-card">
+                            <span class="card-badge">@(isAr ? "جديد" : "New")</span>
+
+                            <div class="card-body">
+                                <div class="survey-icon">
+                                    <i class="fas fa-poll-h"></i>
+                                </div>
+
+                                <h3 class="card-title">@title</h3>
+                                <p class="card-text">
+                                    @(item.Description ?? (isAr ? "نود معرفة رأيك لخدمتك بشكل أفضل. شاركنا تجربتك في بضع دقائق." : "We'd love to hear your feedback to serve you better. Share your experience in a few minutes."))
+                                </p>
+
+                                <div class="card-footer-custom">
+                                    <div class="date-info" title="@(isAr ? "تاريخ الانتهاء" : "End Date")">
+                                        <i class="far fa-clock"></i>
+                                        <span>@(isAr ? "ينتهي:" : "Ends:") @item.EndDate.ToString("dd MMM")</span>
+                                    </div>
+                                    <a asp-action="Take" asp-route-id="@item.Id" class="btn-start">
+                                        <span>@(isAr ? "ابدأ الآن" : "Start")</span>
+                                        <i class="fas @(isAr ? "fa-arrow-left" : "fa-arrow-right")"></i>
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 }
@@ -48,3 +250,19 @@
         }
     </div>
 </section>
+
+<script>
+    // Simple fade-up animation on load
+    document.addEventListener("DOMContentLoaded", function() {
+        const elements = document.querySelectorAll('.fade-up');
+        elements.forEach((el, index) => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(20px)';
+            el.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
+            setTimeout(() => {
+                el.style.opacity = '1';
+                el.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+    });
+</script>

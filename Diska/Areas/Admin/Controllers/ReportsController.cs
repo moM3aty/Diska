@@ -52,7 +52,7 @@ namespace Diska.Areas.Admin.Controllers
             return View(orders);
         }
 
-        // تصدير المبيعات
+        // تصدير المبيعات (مع إصلاح اللغة العربية)
         [HttpPost]
         public async Task<IActionResult> ExportSales(DateTime? fromDate, DateTime? toDate, string status)
         {
@@ -67,10 +67,16 @@ namespace Diska.Areas.Admin.Controllers
 
             foreach (var o in orders)
             {
-                builder.AppendLine($"{o.Id},{o.CustomerName},{o.OrderDate},{o.Status},{o.PaymentMethod},{o.TotalAmount}");
+                string cleanName = o.CustomerName?.Replace(",", " ") ?? "";
+                builder.AppendLine($"{o.Id},{cleanName},{o.OrderDate},{o.Status},{o.PaymentMethod},{o.TotalAmount}");
             }
 
-            return File(Encoding.UTF8.GetBytes(builder.ToString()), "text/csv", $"sales_report_{DateTime.Now:yyyyMMdd}.csv");
+            var encoding = new UTF8Encoding(true);
+            var preamble = encoding.GetPreamble();
+            var content = encoding.GetBytes(builder.ToString());
+            var result = preamble.Concat(content).ToArray();
+
+            return File(result, "text/csv", $"sales_report_{DateTime.Now:yyyyMMdd}.csv");
         }
 
         // 2. تقرير المخزون
@@ -88,7 +94,7 @@ namespace Diska.Areas.Admin.Controllers
             return View(products);
         }
 
-        // تصدير المخزون
+        // تصدير المخزون (مع إصلاح اللغة العربية)
         [HttpPost]
         public async Task<IActionResult> ExportInventory()
         {
@@ -98,10 +104,17 @@ namespace Diska.Areas.Admin.Controllers
 
             foreach (var p in products)
             {
-                builder.AppendLine($"{p.Id},{p.Name},{p.Category?.Name},{p.Price},{p.StockQuantity},{p.Status}");
+                string cleanName = p.Name?.Replace(",", " ") ?? "";
+                string cleanCat = p.Category?.Name?.Replace(",", " ") ?? "";
+                builder.AppendLine($"{p.Id},{cleanName},{cleanCat},{p.Price},{p.StockQuantity},{p.Status}");
             }
 
-            return File(Encoding.UTF8.GetBytes(builder.ToString()), "text/csv", $"inventory_report_{DateTime.Now:yyyyMMdd}.csv");
+            var encoding = new UTF8Encoding(true);
+            var preamble = encoding.GetPreamble();
+            var content = encoding.GetBytes(builder.ToString());
+            var result = preamble.Concat(content).ToArray();
+
+            return File(result, "text/csv", $"inventory_report_{DateTime.Now:yyyyMMdd}.csv");
         }
 
         // 3. تقرير النشاط (Activity Log)

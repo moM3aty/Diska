@@ -2,23 +2,117 @@
 @{
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
     ViewData["Title"] = isAr ? "شكراً لك" : "Thank You";
+    Layout = "_Layout";
 }
 
-<section class="section-padding" style="min-height: 70vh; display: flex; align-items: center;">
-    <div class="container text-center">
-        <div style="background: #fff; padding: 60px 40px; max-width: 600px; margin: 0 auto; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+<style>
+    :root {
+        --color-primary: #0F172A;
+        --color-accent: #FACC15;
+        --color-bg: #F8FAFC;
+        --color-text: #334155;
+        --color-border: #E2E8F0;
+        --color-success: #22c55e;
+    }
 
-            <div style="width: 80px; height: 80px; background: #dcfce7; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 25px;">
-                <i class="fas fa-check fa-3x" style="color: #16a34a;"></i>
+    body {
+        background-color: var(--color-bg);
+    }
+
+    .success-card {
+        background: #fff;
+        padding: 60px 40px;
+        max-width: 600px;
+        margin: 0 auto;
+        border-radius: 24px;
+        box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.1);
+        border: 1px solid var(--color-border);
+        text-align: center;
+        animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .success-icon {
+        width: 100px;
+        height: 100px;
+        background: rgba(34, 197, 94, 0.1);
+        color: var(--color-success);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 30px;
+        font-size: 3rem;
+        box-shadow: 0 0 0 10px rgba(34, 197, 94, 0.05);
+    }
+
+    .success-title {
+        color: var(--color-primary);
+        font-weight: 800;
+        font-size: 2.2rem;
+        margin-bottom: 15px;
+    }
+
+    .success-text {
+        color: var(--color-text);
+        font-size: 1.1rem;
+        line-height: 1.8;
+        margin-bottom: 40px;
+        opacity: 0.9;
+    }
+
+    .btn-home {
+        background-color: var(--color-primary);
+        color: #fff;
+        padding: 16px 40px;
+        border-radius: 50px;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 10px 20px -5px rgba(15, 23, 42, 0.3);
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+        .btn-home:hover {
+            background-color: #1e293b;
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px -5px rgba(15, 23, 42, 0.4);
+            color: #fff;
+        }
+
+    @@keyframes slideUp {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+</style>
+
+<section class="section-padding d-flex align-items-center" style="min-height: 80vh;">
+    <div class="container">
+        <div class="success-card">
+
+            <div class="success-icon">
+                <i class="fas fa-check"></i>
             </div>
 
-            <h2 style="color: var(--primary); margin-bottom: 15px; font-weight:800;">@(isAr ? "شكراً لمشاركتك!" : "Thank You!")</h2>
-            <p style="color: #666; font-size: 1.1rem; margin-bottom: 40px; line-height:1.6;">
+            <h2 class="success-title">@(isAr ? "شكراً لمشاركتك!" : "Thank You!")</h2>
+
+            <p class="success-text">
                 @(isAr ? "تم استلام إجاباتك بنجاح. رأيك يساعدنا على تحسين خدماتنا وتقديم الأفضل لك دائماً." : "Your responses have been received successfully. Your feedback helps us improve our services for you.")
             </p>
 
-            <a asp-controller="Home" asp-action="Index" class="btn primary" style="padding:12px 40px; border-radius:50px; text-decoration:none;">
-                @(isAr ? "العودة للرئيسية" : "Back to Home")
+            <a asp-controller="Home" asp-action="Index" class="btn-home">
+                @(isAr ? "العودة للرئيسية" : "Back to Home") <i class="fas @(isAr ? "fa-arrow-left" : "fa-arrow-right")"></i>
             </a>
 
         </div>

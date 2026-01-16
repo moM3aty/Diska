@@ -91,7 +91,6 @@
                                         }
                                         else
                                         {
-
                                             <i class="far fa-star" style="color:#ddd;"></i>
                                         }
                                     }
@@ -120,10 +119,10 @@
                                         </button>
                                     </form>
 
-                                    <!-- زر الحذف -->
-                                    <form asp-action="Delete" method="post" onsubmit="return confirm('حذف هذا التقييم نهائياً؟');" style="display:inline;">
+                                    <!-- زر الحذف مع SweetAlert -->
+                                    <form id="deleteForm-@item.Id" asp-action="Delete" method="post" style="display:inline;">
                                         <input type="hidden" name="id" value="@item.Id" />
-                                        <button type="submit" class="btn btn-sm btn-danger" title="حذف">
+                                        <button type="button" class="btn btn-sm btn-danger" title="حذف" onclick="confirmDelete(@item.Id)">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </form>
@@ -136,3 +135,25 @@
         </div>
     }
 </div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        function confirmDelete(id) {
+            Swal.fire({
+                title: 'هل أنت متأكد؟',
+                text: "لن تتمكن من التراجع عن هذا الإجراء، سيتم حذف التقييم نهائياً!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'نعم، احذفه',
+                cancelButtonText: 'إلغاء'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('deleteForm-' + id).submit();
+                }
+            })
+        }
+    </script>
+}

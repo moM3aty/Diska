@@ -3,6 +3,9 @@ using Diska.Data;
 using Diska.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using System;
 
 namespace Diska.Areas.Admin.Controllers
 {
@@ -39,7 +42,7 @@ namespace Diska.Areas.Admin.Controllers
             if (ModelState.IsValid)
             {
                 _context.Surveys.Add(survey);
-                await _context.SaveChangesAsync(); // Get ID
+                await _context.SaveChangesAsync();
 
                 if (QText != null)
                 {
@@ -53,7 +56,8 @@ namespace Diska.Areas.Admin.Controllers
                                 QuestionText = QText[i],
                                 QuestionTextEn = (QTextEn != null && QTextEn.Count > i) ? QTextEn[i] : QText[i],
                                 Type = QType[i],
-                                Options = (QOptions != null && QOptions.Count > i) ? QOptions[i] : null
+                                // Fix: Ensure Options is not null (DB Constraint)
+                                Options = (QOptions != null && QOptions.Count > i && !string.IsNullOrEmpty(QOptions[i])) ? QOptions[i] : ""
                             };
                             _context.SurveyQuestions.Add(question);
                         }

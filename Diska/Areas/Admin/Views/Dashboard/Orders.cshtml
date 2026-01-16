@@ -252,9 +252,7 @@
                 <p class="text-muted small mb-0">@(isAr ? "عرض ومتابعة كافة طلبات المتجر" : "View and manage all store orders")</p>
             </div>
             <div class="d-flex gap-2 btn-print-hide">
-                <button class="btn btn-outline-secondary btn-sm fw-bold border" onclick="window.print()">
-                    <i class="fas fa-print me-2"></i> @(isAr ? "طباعة" : "Print")
-                </button>
+                
                 <form asp-action="ExportOrdersToExcel" method="post" class="d-inline">
                     <input type="hidden" name="status" value="@Context.Request.Query["status"]" />
                     <input type="hidden" name="q" value="@Context.Request.Query["q"]" />

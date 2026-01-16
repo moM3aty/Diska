@@ -158,7 +158,7 @@
                 }
 
                 <li><a asp-area="" asp-controller="Profile" asp-action="Index"><i class="fas fa-user-circle"></i> @(isAr ? "حسابي" : "My Profile")</a></li>
-                <li><a asp-area="" asp-controller="Order" asp-action="MyOrders"><i class="fas fa-box"></i> @(isAr ? "طلباتي" : "My Orders")</a></li>
+                <li><a asp-area="" asp-controller="Order" asp-action="Index"><i class="fas fa-box"></i> @(isAr ? "طلباتي" : "My Orders")</a></li>
                 <li><a asp-area="" asp-controller="Address" asp-action="Index"><i class="fas fa-map-marker-alt"></i> @(isAr ? "العناوين" : "Addresses")</a></li>
                 <li><a asp-area="" asp-controller="Wishlist" asp-action="Index"><i class="fas fa-heart"></i> @(isAr ? "المفضلة" : "Wishlist")</a></li>
 
@@ -246,6 +246,7 @@
         <a href="https://wa.me/201000000000" target="_blank" class="float-btn whatsapp-btn"><i class="fab fa-whatsapp"></i></a>
     </div>
 
+    <partial name="_SurveyPopup" />
     <script src="~/js/script.js"></script>
     <script src="~/js/cart.js"></script>
     <script>

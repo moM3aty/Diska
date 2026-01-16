@@ -8,32 +8,32 @@ namespace Diska.Models
     {
         public int Id { get; set; }
 
-        [Display(Name = "عنوان العرض")]
-        [Required(ErrorMessage = "عنوان العرض مطلوب")]
-        public string Title { get; set; } // اسم العرض (مثال: خصم الصيف)
+        [Display(Name = "عنوان العرض (عربي)")]
+        [Required(ErrorMessage = "العنوان بالعربية مطلوب")]
+        public string Title { get; set; }
 
-        // الربط (إما منتج أو قسم)
+        [Display(Name = "عنوان العرض (إنجليزي)")]
+        public string TitleEn { get; set; }
+
         public int? ProductId { get; set; }
         [ForeignKey("ProductId")]
         public virtual Product Product { get; set; }
 
-        public int? CategoryId { get; set; } // جديد: دعم الأقسام
+        public int? CategoryId { get; set; } 
         [ForeignKey("CategoryId")]
         public virtual Category Category { get; set; }
 
-        // نوع وقيمة الخصم
-        public bool IsPercentage { get; set; } = false; // جديد: هل هو نسبة مئوية؟
+        public bool IsPercentage { get; set; } = false; 
 
         [Column(TypeName = "decimal(18,2)")]
-        public decimal DealPrice { get; set; } // السعر النهائي (للمبلغ الثابت) أو قيمة الخصم
+        public decimal DealPrice { get; set; } 
 
         [Column(TypeName = "decimal(18,2)")]
-        public decimal DiscountValue { get; set; } // جديد: قيمة الخصم (مثال: 10% أو 50 جنيه)
+        public decimal DiscountValue { get; set; } 
 
-        // شروط العرض
-        public int TargetQuantity { get; set; } // الكمية المستهدفة (للشراء الجماعي)
+        public int TargetQuantity { get; set; }
         public int ReservedQuantity { get; set; }
-        public int? UsageLimit { get; set; } // جديد: حد أقصى للاستخدام
+        public int? UsageLimit { get; set; } 
 
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }

@@ -87,10 +87,17 @@ namespace Diska.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Signup(string fullName, string shopName, string phone, string password, string type, string commercialReg)
+        // تم إضافة taxCard هنا لاستقبال القيمة من الفورم وحل مشكلة قاعدة البيانات
+        public async Task<IActionResult> Signup(string fullName, string shopName, string phone, string password, string type, string commercialReg, string taxCard)
         {
-            // تنظيف المدخلات
+            // تنظيف المدخلات والتحقق من الهاتف
             phone = phone?.Trim();
+
+            if (string.IsNullOrEmpty(phone))
+            {
+                ViewBag.Error = "رقم الهاتف مطلوب.";
+                return View(); // أو return RedirectToAction إذا كان الطلب من مكان آخر
+            }
 
             var existingUser = await _userManager.FindByNameAsync(phone);
             if (existingUser != null)
@@ -101,18 +108,23 @@ namespace Diska.Controllers
 
             // تحديد القيم الافتراضية بناءً على النوع
             string role = type == "Merchant" ? "Merchant" : "Customer";
+
+            // إصلاح مشكلة SQL Error: تعيين قيم افتراضية للحقول الإجبارية في قاعدة البيانات
+            // إذا لم يكن تاجر أو لم يرسل قيمة، نضع "000000" بدلاً من NULL
             string finalShopName = role == "Merchant" ? shopName : "عميل";
-            string finalCommReg = role == "Merchant" ? commercialReg : null;
+            string finalCommReg = !string.IsNullOrEmpty(commercialReg) ? commercialReg : "000000";
+            string finalTaxCard = !string.IsNullOrEmpty(taxCard) ? taxCard : "000000";
 
             var user = new ApplicationUser
             {
-                UserName = phone,
+                UserName = phone, // هذا يحل مشكلة Parameter 'userName' cannot be null
                 PhoneNumber = phone,
                 FullName = fullName,
                 ShopName = finalShopName,
                 CommercialRegister = finalCommReg,
-                IsVerifiedMerchant = false, // التجار الجدد دائماً غير مفعلين
-                Email = $"{phone}@diska.local", // بريد وهمي للنظام
+                TaxCard = finalTaxCard, // تم إضافة هذا الحقل لحل مشكلة الإدخال في قاعدة البيانات
+                IsVerifiedMerchant = false,
+                Email = $"{phone}@diska.local",
                 WalletBalance = 0
             };
 
@@ -123,8 +135,10 @@ namespace Diska.Controllers
 
                 if (role == "Merchant")
                 {
-                    // التاجر لا يدخل مباشرة، يذهب لصفحة انتظار
-                    return RedirectToAction("MerchantLanding", "Home"); // أو صفحة "تم التسجيل بنجاح، بانتظار التفعيل"
+                    // التاجر لا يدخل مباشرة
+                    // يمكن استخدام TempData لعرض رسالة نجاح في الصفحة التالية
+                    TempData["Success"] = "تم تسجيل حساب التاجر بنجاح وهو قيد المراجعة.";
+                    return RedirectToAction("Index", "Home"); // توجيه للصفحة الرئيسية بدلاً من صفحة غير موجودة
                 }
 
                 // العميل يدخل مباشرة
@@ -135,7 +149,6 @@ namespace Diska.Controllers
             ViewBag.Error = string.Join(", ", result.Errors.Select(e => e.Description));
             return View();
         }
-
         // --- 3. Logout ---
         public async Task<IActionResult> Logout()
         {
@@ -228,8 +241,7 @@ namespace Diska.Controllers
             if (User.IsInRole("Merchant"))
                 return RedirectToAction("Index", "Dashboard", new { area = "Merchant" });
 
-            // العميل يذهب للوحة العميل (Client Area) بدلاً من الرئيسية
-            return RedirectToAction("Index", "Dashboard", new { area = "Client" });
+            return RedirectToAction("Index", "Home", new { area = "" });
         }
     }
 

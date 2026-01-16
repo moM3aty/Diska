@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Text.Json;
+using Microsoft.AspNetCore.Http;
 
 namespace Diska.Controllers
 {
@@ -24,22 +25,38 @@ namespace Diska.Controllers
             _userManager = userManager;
         }
 
-        // 1. عرض الاستبيانات النشطة والمتاحة للمستخدم
+        // Action للتحقق من وجود استبيان معلق (يتم استدعاؤه بواسطة AJAX)
+        [HttpGet]
+        public async Task<IActionResult> CheckPending()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Json(null);
+
+            var userRole = await _userManager.IsInRoleAsync(user, "Merchant") ? "Merchant" : "Customer";
+
+            // البحث عن أول استبيان نشط وموجه لهذا المستخدم ولم يقم بالإجابة عليه
+            var pendingSurvey = await _context.Surveys
+                .Where(s => s.IsActive && s.EndDate > DateTime.Now && (s.TargetAudience == "All" || s.TargetAudience == userRole))
+                .Where(s => !_context.SurveyResponses.Any(r => r.SurveyId == s.Id && r.UserId == user.Id))
+                .OrderByDescending(s => s.StartDate)
+                .Select(s => new { s.Id, s.Title, s.TitleEn })
+                .FirstOrDefaultAsync();
+
+            return Json(pendingSurvey);
+        }
+
         public async Task<IActionResult> Index()
         {
             var user = await _userManager.GetUserAsync(User);
+            if (user == null) return RedirectToAction("Login", "Account");
+
             var userRole = await _userManager.IsInRoleAsync(user, "Merchant") ? "Merchant" : "Customer";
 
-            // جلب الاستبيانات:
-            // 1. نشطة
-            // 2. تاريخها ساري
-            // 3. موجهة لهذا النوع من المستخدمين أو للكل
             var allSurveys = await _context.Surveys
                 .Where(s => s.IsActive && s.EndDate > DateTime.Now && (s.TargetAudience == "All" || s.TargetAudience == userRole))
                 .OrderByDescending(s => s.StartDate)
                 .ToListAsync();
 
-            // استبعاد الاستبيانات التي شارك فيها المستخدم سابقاً
             var respondedSurveyIds = await _context.SurveyResponses
                 .Where(r => r.UserId == user.Id)
                 .Select(r => r.SurveyId)
@@ -50,7 +67,6 @@ namespace Diska.Controllers
             return View(availableSurveys);
         }
 
-        // 2. صفحة ملء الاستبيان (GET)
         [HttpGet]
         public async Task<IActionResult> Take(int id)
         {
@@ -62,33 +78,27 @@ namespace Diska.Controllers
 
             var user = await _userManager.GetUserAsync(User);
 
-            // التأكد مرة أخرى أن المستخدم لم يشارك من قبل
             bool alreadyTaken = await _context.SurveyResponses.AnyAsync(r => r.SurveyId == id && r.UserId == user.Id);
             if (alreadyTaken)
             {
-                TempData["Error"] = "لقد شاركت في هذا الاستبيان من قبل.";
+                TempData["Info"] = "لقد شاركت في هذا الاستبيان من قبل.";
                 return RedirectToAction(nameof(Index));
             }
 
             return View(survey);
         }
 
-        // 3. حفظ الإجابات (POST)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Submit(int surveyId, IFormCollection form)
         {
             var user = await _userManager.GetUserAsync(User);
+            if (user == null) return RedirectToAction("Login", "Account");
 
-            // تجميع الإجابات في Dictionary
             var answers = new Dictionary<string, string>();
-
-            foreach (var key in form.Keys)
+            foreach (var key in form.Keys.Where(k => k.StartsWith("q_")))
             {
-                if (key.StartsWith("q_")) // مفاتيح الأسئلة تبدأ بـ q_
-                {
-                    answers[key] = form[key];
-                }
+                answers[key] = form[key].ToString();
             }
 
             if (answers.Count == 0)
@@ -97,21 +107,25 @@ namespace Diska.Controllers
                 return RedirectToAction("Take", new { id = surveyId });
             }
 
-            var response = new SurveyResponse
+            // التحقق من عدم التكرار
+            bool alreadyTaken = await _context.SurveyResponses.AnyAsync(r => r.SurveyId == surveyId && r.UserId == user.Id);
+            if (!alreadyTaken)
             {
-                SurveyId = surveyId,
-                UserId = user.Id,
-                SubmittedAt = DateTime.Now,
-                AnswerJson = JsonSerializer.Serialize(answers) // تخزين الإجابات كـ JSON
-            };
+                var response = new SurveyResponse
+                {
+                    SurveyId = surveyId,
+                    UserId = user.Id,
+                    SubmittedAt = DateTime.Now,
+                    AnswerJson = JsonSerializer.Serialize(answers)
+                };
 
-            _context.SurveyResponses.Add(response);
-            await _context.SaveChangesAsync();
+                _context.SurveyResponses.Add(response);
+                await _context.SaveChangesAsync();
+            }
 
             return RedirectToAction("Success");
         }
 
-        // 4. صفحة النجاح
         public IActionResult Success()
         {
             return View();

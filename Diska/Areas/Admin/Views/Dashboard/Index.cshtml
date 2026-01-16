@@ -6,7 +6,6 @@
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
     var culture = new CultureInfo(isAr ? "ar-EG" : "en-US");
 
-    // --- حماية البيانات من القيم الفارغة (Null Safety) ---
     decimal totalSales = ViewBag.TotalSales != null ? Convert.ToDecimal(ViewBag.TotalSales) : 0;
     int totalOrders = ViewBag.TotalOrders != null ? Convert.ToInt32(ViewBag.TotalOrders) : 0;
     int pendingOrders = ViewBag.PendingOrders != null ? Convert.ToInt32(ViewBag.PendingOrders) : 0;
@@ -15,13 +14,11 @@
     int lowStockItems = ViewBag.LowStockItems != null ? Convert.ToInt32(ViewBag.LowStockItems) : 0;
     int pendingRequests = ViewBag.PendingRequests != null ? Convert.ToInt32(ViewBag.PendingRequests) : 0;
 
-    // بيانات الرسوم البيانية الآمنة
     var chartLabels = ViewBag.ChartLabels ?? new string[] { };
     var chartValues = ViewBag.ChartValues ?? new decimal[] { };
 }
 
 <style>
-    /* --- Dashboard Specific Styles (Included for safety) --- */
     .stat-card-modern {
         background: var(--bg-card, #fff);
         border-radius: 16px;
@@ -80,15 +77,6 @@
         text-transform: uppercase;
     }
 
-    .hover-scale {
-        transition: transform 0.3s ease;
-    }
-
-        .hover-scale:hover {
-            transform: scale(1.02);
-        }
-
-    /* Chart Container */
     .chart-wrapper {
         position: relative;
         height: 320px;
@@ -97,9 +85,79 @@
         border-radius: 12px;
         padding: 10px;
     }
+
+    /* --- Premium Dark Mode Customization --- */
+    [data-bs-theme="dark"] .card {
+        background-color: #1e293b;
+        border-color: rgba(255,255,255,0.05);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+    }
+
+    [data-bs-theme="dark"] .stat-card-modern {
+        background-color: #1e293b;
+        border-color: rgba(255,255,255,0.05);
+    }
+
+    [data-bs-theme="dark"] .text-dark {
+        color: #f8fafc !important;
+    }
+
+    [data-bs-theme="dark"] .text-muted {
+        color: #94a3b8 !important;
+    }
+
+    [data-bs-theme="dark"] .bg-light {
+        background-color: rgba(255,255,255,0.03) !important;
+        color: #e2e8f0 !important;
+    }
+
+    /* تخصيص الجداول في الوضع الليلي */
+    [data-bs-theme="dark"] .table {
+        color: #f8fafc;
+        border-color: rgba(255,255,255,0.05);
+    }
+
+        /* جعل رأس الجدول كحلي داكن */
+        [data-bs-theme="dark"] .table thead th {
+            background-color: #0f172a !important; /* Deep Navy */
+            color: #ffffff !important; /* White text for contrast */
+            border-bottom: 1px solid #0f172a;
+            font-weight: 800;
+        }
+
+    /* جعل الجزء الرمادي في الخلفية كحلي أيضًا */
+    [data-bs-theme="dark"] thead.bg-light {
+        background-color: #0f172a !important;
+    }
+
+    [data-bs-theme="dark"] .table tbody td {
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        color: #f8fafc !important; /* Ensure numbers are white */
+    }
+
+    [data-bs-theme="dark"] .table-hover tbody tr:hover {
+        background-color: rgba(255,255,255,0.05);
+    }
+
+    [data-bs-theme="dark"] .avatar-initials {
+        background: #0f172a !important;
+        color: #fff !important;
+        border-color: #0f172a !important;
+    }
+
+    /* ضمان أن الأرقام والخطوط العريضة بيضاء دائمًا */
+    [data-bs-theme="dark"] .fw-bold:first-child {
+        color: #3b82f6 !important;
+    }
+    [data-bs-theme="dark"] .fw-bold {
+        color: #ffffff !important;
+    }
+
+    [data-bs-theme="dark"] td{
+        background-color:#0f172a !important;
+    }
 </style>
 
-<!-- 1. Welcome Section -->
 <div class="row mb-4 fade-up">
     <div class="col-12">
         <div class="card border-0 overflow-hidden position-relative text-white"
@@ -130,16 +188,13 @@
                 </div>
             </div>
 
-            <!-- Abstract Decoration -->
             <div style="position:absolute; top:-80px; right:-80px; width:300px; height:300px; border-radius:50%; background:radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);"></div>
             <div style="position:absolute; bottom:-50px; left:50px; width:150px; height:150px; border-radius:50%; background:radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);"></div>
         </div>
     </div>
 </div>
 
-<!-- 2. Key Metrics Grid (Modern Cards) -->
 <div class="row g-4 mb-4 fade-up" style="animation-delay: 0.1s;">
-    <!-- Revenue -->
     <div class="col-xl-3 col-md-6">
         <div class="stat-card-modern">
             <div class="stat-icon" style="background-color: rgba(16, 185, 129, 0.1); color: #10b981;">
@@ -157,7 +212,6 @@
         </div>
     </div>
 
-    <!-- Orders -->
     <div class="col-xl-3 col-md-6">
         <div class="stat-card-modern">
             <div class="stat-icon" style="background-color: rgba(59, 130, 246, 0.1); color: #3b82f6;">
@@ -175,7 +229,6 @@
         </div>
     </div>
 
-    <!-- Merchants -->
     <div class="col-xl-3 col-md-6">
         <div class="stat-card-modern">
             <div class="stat-icon" style="background-color: rgba(79, 70, 229, 0.1); color: #4f46e5;">
@@ -191,7 +244,6 @@
         </div>
     </div>
 
-    <!-- Alerts -->
     <div class="col-xl-3 col-md-6">
         <div class="stat-card-modern" style="border-bottom: 4px solid #ef4444;">
             <div class="stat-icon" style="background-color: rgba(239, 68, 68, 0.1); color: #ef4444;">
@@ -210,9 +262,7 @@
     </div>
 </div>
 
-<!-- 3. Charts Section -->
 <div class="row g-4 mb-4 fade-up" style="animation-delay: 0.2s;">
-    <!-- Sales Chart -->
     <div class="col-lg-8">
         <div class="card h-100 border-0 shadow-sm">
             <div class="card-header border-0 pt-4 px-4 pb-0 bg-transparent">
@@ -229,7 +279,6 @@
         </div>
     </div>
 
-    <!-- Order Status Chart -->
     <div class="col-lg-4">
         <div class="card h-100 border-0 shadow-sm">
             <div class="card-header border-0 pt-4 px-4 pb-0 bg-transparent">
@@ -269,7 +318,6 @@
     </div>
 </div>
 
-<!-- 4. Recent Orders Table -->
 <div class="row fade-up" style="animation-delay: 0.3s;">
     <div class="col-12">
         <div class="card border-0 shadow-sm">
@@ -297,17 +345,22 @@
                         {
                             foreach (var order in Model)
                             {
-                                <tr>
+                                <tr style="background-color:#0f172a !important;">
                                     <td class="ps-4">
-                                        <a href="/Admin/Dashboard/OrderDetails/@order.Id" class="fw-bold text-primary text-decoration-none">#@order.Id</a>
+                                        <a href="/Admin/Dashboard/OrderDetails/@order.Id" class="fw-bold text-primary text-decoration-none" style="font-family: monospace; font-size: 0.95rem;">
+                                            #@order.Id
+                                        </a>
                                         <div class="small text-muted">@order.OrderDate.ToString("dd MMM, hh:mm tt")</div>
                                     </td>
                                     <td>
                                         <div class="d-flex align-items-center gap-2">
-                                            <div class="rounded-circle bg-light d-flex align-items-center justify-content-center text-primary fw-bold border" style="width: 32px; height: 32px; font-size: 0.8rem;">
+                                            <div class="avatar-initials rounded-circle bg-light d-flex align-items-center justify-content-center text-primary fw-bold border" style="width: 32px; height: 32px; font-size: 0.8rem;">
                                                 @(order.CustomerName?.FirstOrDefault())
                                             </div>
-                                            <span class="fw-bold text-dark">@order.CustomerName</span>
+                                            <div>
+                                                <span class="fw-bold text-dark">@order.CustomerName</span>
+                                                <div class="small text-muted" style="font-size:0.75rem;">@order.Phone</div>
+                                            </div>
                                         </div>
                                     </td>
                                     <td class="fw-bold">@order.TotalAmount.ToString("N0")</td>
@@ -345,15 +398,12 @@
 </div>
 
 @section Scripts {
-    <!-- Chart.js (CDN) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Check for theme
         const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
         const textColor = isDark ? '#94a3b8' : '#64748b';
         const gridColor = isDark ? '#334155' : '#f1f5f9';
 
-        // 1. Sales Chart
         const ctxSales = document.getElementById('salesChart').getContext('2d');
         const salesGradient = ctxSales.createLinearGradient(0, 0, 0, 300);
         salesGradient.addColorStop(0, 'rgba(79, 70, 229, 0.2)');
@@ -401,7 +451,6 @@
             }
         });
 
-        // 2. Orders Doughnut
         const ctxOrders = document.getElementById('ordersDoughnut').getContext('2d');
         new Chart(ctxOrders, {
             type: 'doughnut',
