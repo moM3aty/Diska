@@ -1,95 +1,635 @@
 ﻿@model IEnumerable<Diska.Models.AuditLog>
+@using System.Globalization
 @{
-    ViewData["Title"] = "سجلات التدقيق";
+    ViewData["Title"] = "سجلات النظام";
     Layout = "_AdminLayout";
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    
+    // استقبال البيانات
+    var usersMap = ViewBag.UsersMap as System.Collections.IDictionary;
+    
+    string currentTheme = ViewContext.HttpContext.Request.Cookies["theme"] ?? "light";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="text-primary fw-bold"><i class="fas fa-fingerprint"></i> سجلات التدقيق (Audit Logs)</h2>
-    <span class="text-muted">آخر 100 عملية</span>
+<style>
+    /* Premium Styles */
+    :root {
+        --audit-bg: #ffffff;
+        --audit-border: #e2e8f0;
+        --audit-text: #0f172a;
+        --audit-muted: #64748b;
+        
+        /* Modal Specifics Light */
+        --modal-bg: #ffffff;
+        --modal-header-bg: #f8fafc;
+        --modal-pre-bg: #f8fafc;
+        --modal-pre-text: #334155;
+        --json-key: #7c3aed;     /* Purple for Keys */
+        --json-string: #059669;  /* Emerald for Strings */
+        --json-number: #d97706;  /* Amber for Numbers */
+        --json-boolean: #2563eb; /* Blue for Booleans */
+        --json-null: #dc2626;    /* Red for Null */
+    }
+
+    [data-bs-theme="dark"] {
+        --audit-bg: #1e293b;
+        --audit-border: rgba(255,255,255,0.08);
+        --audit-text: #f8fafc;
+        --audit-muted: #94a3b8;
+
+        /* Modal Specifics Dark */
+        --modal-bg: #1e293b;
+        --modal-header-bg: #0f172a;
+        --modal-pre-bg: #0b1120;  /* Very Dark for Code Block */
+        --modal-pre-text: #e2e8f0;
+        --json-key: #c084fc;      /* Light Purple */
+        --json-string: #4ade80;   /* Light Green */
+        --json-number: #fbbf24;   /* Light Amber */
+        --json-boolean: #60a5fa;  /* Light Blue */
+        --json-null: #f87171;     /* Light Red */
+    }
+
+    .filter-card {
+        background: var(--audit-bg);
+        border: 1px solid var(--audit-border);
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        margin-bottom: 24px;
+    }
+
+    .audit-table-card {
+        background: var(--audit-bg);
+        border: 1px solid var(--audit-border);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+    }
+
+    .audit-table th {
+        background: rgba(248, 250, 252, 0.5);
+        color: var(--audit-muted);
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        padding: 16px;
+        border-bottom: 1px solid var(--audit-border);
+    }
+    
+    [data-bs-theme="dark"] .audit-table th { background: rgba(0,0,0,0.2); }
+
+    .audit-table td {
+        padding: 16px;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--audit-border);
+        color: var(--audit-text);
+        font-size: 0.9rem;
+    }
+
+    .user-cell {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .user-avatar-initials {
+        width: 38px; height: 38px;
+        border-radius: 10px;
+        background: #eff6ff; color: #4f46e5;
+        font-weight: 800;
+        display: flex; align-items: center; justify-content: center;
+        border: 1px solid rgba(79, 70, 229, 0.1);
+    }
+
+    .action-badge {
+        padding: 6px 12px;
+        border-radius: 30px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        display: inline-flex; align-items: center; gap: 6px;
+        width: 100px; justify-content: center;
+    }
+    
+    .act-create { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    .act-update { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+    .act-delete { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .act-login  { background: #f3e8ff; color: #6b21a8; border: 1px solid #e9d5ff; }
+
+    [data-bs-theme="dark"] .act-create { background: rgba(34, 197, 94, 0.1); color: #4ade80; border-color: rgba(34, 197, 94, 0.2); }
+    [data-bs-theme="dark"] .act-update { background: rgba(59, 130, 246, 0.1); color: #60a5fa; border-color: rgba(59, 130, 246, 0.2); }
+    [data-bs-theme="dark"] .act-delete { background: rgba(239, 68, 68, 0.1); color: #f87171; border-color: rgba(239, 68, 68, 0.2); }
+
+    .btn-view-details {
+        background: transparent;
+        border: 1px solid var(--audit-border);
+        color: var(--audit-muted);
+        padding: 6px 12px;
+        border-radius: 8px;
+        transition: 0.2s;
+        font-size: 0.85rem;
+    }
+    
+    .btn-view-details:hover {
+        background: var(--audit-border);
+        color: var(--audit-text);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    /* Modal Styling Fixed */
+    .modal-content-premium {
+        background-color: var(--modal-bg);
+        border: 1px solid var(--audit-border);
+        border-radius: 16px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        overflow: hidden;
+    }
+
+    .modal-header-premium {
+        background-color: var(--modal-header-bg);
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--audit-border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .modal-title-premium {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--audit-text);
+    }
+
+    .details-pre {
+        background: var(--modal-pre-bg);
+        color: var(--modal-pre-text);
+        padding: 1.5rem;
+        border-radius: 12px;
+        font-family: 'Consolas', 'Monaco', monospace; 
+        font-size: 0.9rem;
+        line-height: 1.6;
+        max-height: 500px;
+        overflow-y: auto;
+        border: 1px solid var(--audit-border);
+        margin: 0;
+        white-space: pre-wrap;       /* Wrap text if too long */
+        word-wrap: break-word;
+    }
+
+    .json-key { color: var(--json-key); font-weight: 600; }
+    .json-string { color: var(--json-string); }
+    .json-number { color: var(--json-number); }
+    .json-boolean { color: var(--json-boolean); font-weight: bold; }
+    .json-null { color: var(--json-null); font-style: italic; }
+
+    .modal-footer-premium {
+        padding: 1.25rem 1.5rem;
+        border-top: 1px solid var(--audit-border);
+        background-color: var(--modal-bg);
+        display: flex;
+        justify-content: flex-end;
+    }
+    
+    /* --- User Friendly Details Styles --- */
+    .audit-diff-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+        margin-top: 10px;
+    }
+    
+    .audit-diff-table th {
+        background-color: var(--modal-header-bg);
+        padding: 12px;
+        text-align: inherit;
+        border-bottom: 2px solid var(--audit-border);
+        color: var(--audit-muted);
+        font-weight: 700;
+    }
+
+    .audit-diff-table td {
+        padding: 12px;
+        border-bottom: 1px solid var(--audit-border);
+        color: var(--audit-text);
+        vertical-align: top;
+    }
+
+    .diff-old {
+        color: #ef4444; /* Red */
+        text-decoration: line-through;
+        opacity: 0.8;
+    }
+    
+    .diff-new {
+        color: #10b981; /* Green */
+        font-weight: 600;
+    }
+
+    [data-bs-theme="dark"] .diff-old { color: #fca5a5; }
+    [data-bs-theme="dark"] .diff-new { color: #86efac; }
+
+    .prop-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .prop-item {
+        display: flex;
+        border-bottom: 1px dashed var(--audit-border);
+        padding-bottom: 8px;
+    }
+    
+    .prop-key {
+        font-weight: bold;
+        min-width: 140px;
+        color: var(--audit-muted);
+    }
+    
+    .prop-val {
+        color: var(--audit-text);
+    }
+    
+    /* ----------------------------------------------------
+       PRINT STYLES (Professional Report)
+       ---------------------------------------------------- */
+    .print-header { display: none; }
+    
+    @@media print {
+        @@page { size: A4 landscape; margin: 10mm; }
+        
+        body { 
+            background-color: #fff !important; 
+            color: #000 !important; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        /* Hide UI Elements */
+        .sidebar, .topbar, .filter-card, .btn, .no-print, .btn-view-details, footer { 
+            display: none !important; 
+        }
+
+        /* Layout Reset */
+        .app-container, .main-content, .content-wrapper {
+            width: 100% !important; margin: 0 !important; padding: 0 !important; 
+            display: block !important; overflow: visible !important;
+        }
+
+        /* Report Header */
+        .print-header {
+            display: block !important;
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+        }
+        .print-header h2 { font-size: 24px; margin: 0; font-weight: bold; color: #000; }
+        .print-header p { margin: 5px 0 0; color: #555; font-size: 14px; }
+
+        /* Table Styling */
+        .audit-table-card { border: none !important; box-shadow: none !important; }
+        .audit-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        .audit-table th { 
+            background-color: #f0f0f0 !important; 
+            color: #000 !important; 
+            border: 1px solid #000 !important; 
+            padding: 8px; 
+        }
+        .audit-table td { 
+            border: 1px solid #ccc !important; 
+            padding: 8px; 
+            color: #000 !important; 
+        }
+        
+        /* Hide Details Column for Print (Too large) */
+        .audit-table th:last-child, 
+        .audit-table td:last-child {
+            display: none;
+        }
+
+        /* Simple Badges for Print */
+        .action-badge { 
+            border: 1px solid #000 !important; 
+            color: #000 !important; 
+            background: none !important; 
+            padding: 2px 5px;
+        }
+        
+        .badge { border: 1px solid #ccc; color: #000 !important; background: #fff !important; }
+    }
+</style>
+
+<div class="print-header">
+    <h2>تقرير سجلات النظام (Audit Log Report)</h2>
+    <p>تاريخ الطباعة: @DateTime.Now.ToString("yyyy-MM-dd HH:mm")</p>
 </div>
 
-<!-- Filters -->
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-body">
-        <form method="get" class="row g-3 align-items-end">
-            <div class="col-md-3">
-                <label class="form-label">معرف المستخدم (User ID)</label>
-                <input type="text" name="userId" class="form-control" placeholder="بحث بالمعرف..." value="@Context.Request.Query["userId"]">
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">نوع الإجراء</label>
-                <select name="actionType" class="form-select" asp-items="ViewBag.ActionTypes">
-                    <option value="All">الكل</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">من تاريخ</label>
-                <input type="date" name="fromDate" class="form-control" value="@Context.Request.Query["fromDate"]">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">إلى تاريخ</label>
-                <input type="date" name="toDate" class="form-control" value="@Context.Request.Query["toDate"]">
-            </div>
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-secondary w-100">تصفية</button>
+<div class="container-fluid px-0 fade-up">
+    
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1" style="color:var(--audit-text)">@(isAr ? "سجل النشاط والتدقيق" : "Audit Logs")</h2>
+            <p class="text-muted small mb-0">@(isAr ? "متابعة جميع العمليات الحساسة في النظام" : "Track all system activities and changes")</p>
+        </div>
+        <button class="btn btn-outline-secondary shadow-sm" onclick="window.print()">
+            <i class="fas fa-print me-2"></i> @(isAr ? "طباعة التقرير" : "Print Report")
+        </button>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-card no-print">
+        <form method="get" asp-action="Index">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label small text-muted">المستخدم</label>
+                    <select name="userId" class="form-select" asp-items="ViewBag.UsersList">
+                        <option value="">-- كل المستخدمين --</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">نوع العملية</label>
+                    <select name="actionType" class="form-select" asp-items="ViewBag.ActionTypes">
+                        <option value="All">الكل</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">الكيان (الجدول)</label>
+                    <select name="entityName" class="form-select" asp-items="ViewBag.EntitiesList">
+                        <option value="All">الكل</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">من تاريخ</label>
+                    <input type="date" name="fromDate" class="form-control" value="@Context.Request.Query["fromDate"]">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-muted">إلى تاريخ</label>
+                    <input type="date" name="toDate" class="form-control" value="@Context.Request.Query["toDate"]">
+                </div>
+                <div class="col-md-1 d-flex align-items-end gap-1">
+                    <button type="submit" class="btn btn-primary w-100 fw-bold" title="تصفية"><i class="fas fa-filter"></i></button>
+                    <a href="@Url.Action("Index")" class="btn btn-outline-secondary w-100 fw-bold" title="إعادة تعيين"><i class="fas fa-undo"></i></a>
+                </div>
             </div>
         </form>
     </div>
-</div>
 
-<!-- Logs Table -->
-<div class="card border-0 shadow-sm">
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0 text-nowrap">
-            <thead class="bg-light">
-                <tr>
-                    <th>الوقت</th>
-                    <th>الإجراء</th>
-                    <th>العنصر</th>
-                    <th>التفاصيل</th>
-                    <th>المستخدم (ID)</th>
-                    <th>IP Address</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (!Model.Any())
-                {
+    <!-- Table -->
+    <div class="audit-table-card">
+        <div class="table-responsive">
+            <table class="table audit-table mb-0">
+                <thead>
                     <tr>
-                        <td colspan="6" class="text-center py-4 text-muted">لا توجد سجلات مطابقة.</td>
+                        <th class="ps-4">@(isAr ? "المستخدم" : "User")</th>
+                        <th>@(isAr ? "نوع العملية" : "Action")</th>
+                        <th>@(isAr ? "الهدف" : "Target Entity")</th>
+                        <th>@(isAr ? "الوقت" : "Timestamp")</th>
+                        <th>@(isAr ? "IP Address" : "IP Address")</th>
+                        <th class="text-end pe-4 d-print-none">@(isAr ? "التفاصيل" : "Details")</th>
                     </tr>
-                }
-                @foreach (var log in Model)
-                {
-                    <tr>
-                        <td class="small text-muted">@log.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</td>
-                        <td>
-                            @{
-                                var badgeClass = log.Action switch
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center py-5">
+                                <div class="text-muted opacity-50">
+                                    <i class="fas fa-search fa-3x mb-3"></i>
+                                    <p>@(isAr ? "لا توجد سجلات مطابقة" : "No logs found")</p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    @foreach (var log in Model)
+                    {
+                        // المتغيرات الافتراضية
+                        string userName = log.UserId; 
+                        string userEmail = "";
+                        string userInitial = "?";
+                        
+                        // محاولة جلب بيانات المستخدم من القاموس بشكل آمن
+                        if (usersMap != null && log.UserId != null && usersMap.Contains(log.UserId))
+                        {
+                            var uInfo = usersMap[log.UserId];
+                            if (uInfo != null)
+                            {
+                                try 
                                 {
-                                    "Create" => "bg-success",
-                                    "Update" => "bg-info text-dark",
-                                    "Delete" => "bg-danger",
-                                    "Login" => "bg-primary",
-                                    _ => "bg-secondary"
-                                };
+                                    var type = uInfo.GetType();
+                                    var nameProp = type.GetProperty("Name") ?? type.GetProperty("FullName");
+                                    var emailProp = type.GetProperty("Email");
+
+                                    if (nameProp != null) userName = nameProp.GetValue(uInfo)?.ToString() ?? userName;
+                                    if (emailProp != null) userEmail = emailProp.GetValue(uInfo)?.ToString() ?? "";
+                                    
+                                    if (!string.IsNullOrEmpty(userName))
+                                        userInitial = userName.Substring(0, 1).ToUpper();
+                                } 
+                                catch {}
                             }
-                            <span class="badge @badgeClass">@log.Action</span>
-                        </td>
-                        <td>
-                            <span class="fw-bold text-dark">@log.EntityName</span>
-                            <small class="text-muted d-block">ID: @log.EntityId</small>
-                        </td>
-                        <td class="text-wrap" style="max-width: 300px;">
-                            <small>@log.Details</small>
-                        </td>
-                        <td>
-                            <code class="text-primary">@log.UserId</code>
-                        </td>
-                        <td class="small font-monospace">@log.IpAddress</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+                        }
+
+                        string badgeClass = log.Action switch
+                        {
+                            "Create" => "act-create",
+                            "Update" => "act-update",
+                            "Delete" => "act-delete",
+                            "Login" => "act-login",
+                            _ => "bg-light text-dark border"
+                        };
+                        string icon = log.Action switch
+                        {
+                            "Create" => "fa-plus",
+                            "Update" => "fa-edit",
+                            "Delete" => "fa-trash",
+                            "Login" => "fa-sign-in-alt",
+                            _ => "fa-info-circle"
+                        };
+
+                        <tr>
+                            <td class="ps-4">
+                                <div class="user-cell">
+                                    <div class="user-avatar-initials">@userInitial</div>
+                                    <div>
+                                        <div class="fw-bold">@userName</div>
+                                        <div class="small text-muted" style="font-size:0.75rem;">@userEmail</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="action-badge @badgeClass">
+                                    <i class="fas @icon"></i> @log.Action
+                                </span>
+                            </td>
+                            <td>
+                                <div class="fw-bold">@log.EntityName</div>
+                                <code class="small text-muted">ID: @log.EntityId</code>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column small">
+                                    <span class="fw-bold">@log.Timestamp.ToString("yyyy-MM-dd")</span>
+                                    <span class="text-muted">@log.Timestamp.ToString("hh:mm:ss tt")</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-secondary border font-monospace">@log.IpAddress</span>
+                            </td>
+                            <td class="text-end pe-4 d-print-none">
+                                <!-- Hidden Element stores the raw JSON safely -->
+                                <div id="raw-data-@log.Id" style="display:none;">@log.Details</div>
+                                
+                                <button class="btn-view-details" onclick="showDetailsFromId(@log.Id, '@log.Action on @log.EntityName')">
+                                    <i class="fas fa-eye me-1"></i> @(isAr ? "عرض" : "View")
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
+
+<!-- Details Modal -->
+<div class="modal fade" id="detailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content-premium">
+            <div class="modal-header-premium">
+                <h5 class="modal-title-premium" id="modalTitle">تفاصيل العملية</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter: invert(@(currentTheme == "dark" ? 1 : 0))"></button>
+            </div>
+            <div class="modal-body p-4" id="modalBodyContent">
+                <!-- Content will be injected here via JS -->
+            </div>
+            <div class="modal-footer-premium">
+                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">إغلاق</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showDetailsFromId(id, title) {
+            document.getElementById('modalTitle').innerText = title;
+            const container = document.getElementById('modalBodyContent');
+            const rawData = document.getElementById('raw-data-' + id).innerText;
+            
+            container.innerHTML = ''; // Clear previous
+
+            try {
+                if (!rawData || rawData.trim() === "") {
+                    container.innerHTML = '<p class="text-muted text-center py-3">لا توجد تفاصيل إضافية لهذه العملية.</p>';
+                } else {
+                    // Check if JSON
+                    if (rawData.trim().startsWith('{') || rawData.trim().startsWith('[')) {
+                        const data = JSON.parse(rawData);
+                        container.appendChild(renderAuditData(data));
+                    } else {
+                        // Plain text
+                        container.innerHTML = `<div class="p-3 bg-light border rounded text-muted">${rawData}</div>`;
+                    }
+                }
+            } catch (e) {
+                container.innerText = rawData; // Fallback
+            }
+            
+            new bootstrap.Modal(document.getElementById('detailsModal')).show();
+        }
+
+        function renderAuditData(data) {
+            const wrapper = document.createElement('div');
+
+            // Scenario 1: Update (Old vs New)
+            if (data.Old && data.New) {
+                const table = document.createElement('table');
+                table.className = 'audit-diff-table';
+                table.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th style="width:30%">الحقل (Property)</th>
+                            <th style="width:35%">القيمة القديمة</th>
+                            <th style="width:35%">القيمة الجديدة</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                `;
+                const tbody = table.querySelector('tbody');
+                
+                // Merge keys from both Old and New to handle all properties
+                const allKeys = new Set([...Object.keys(data.Old), ...Object.keys(data.New)]);
+                
+                let hasChanges = false;
+                allKeys.forEach(key => {
+                    const oldVal = data.Old[key];
+                    const newVal = data.New[key];
+                    
+                    // Simple value comparison
+                    if (JSON.stringify(oldVal) !== JSON.stringify(newVal)) {
+                        hasChanges = true;
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td class="fw-bold">${key}</td>
+                            <td class="diff-old">${formatValue(oldVal)}</td>
+                            <td class="diff-new">${formatValue(newVal)}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    }
+                });
+                
+                if (!hasChanges) {
+                    wrapper.innerHTML = '<p class="text-muted text-center">لا توجد تغييرات في القيم (قيم متطابقة).</p>';
+                } else {
+                    wrapper.appendChild(table);
+                }
+                return wrapper;
+            }
+
+            // Scenario 2: Create (New values only)
+            if (data.New && !data.Old) {
+                wrapper.innerHTML = '<h6 class="text-success mb-3"><i class="fas fa-plus-circle"></i> البيانات المضافة:</h6>';
+                wrapper.appendChild(createPropertyList(data.New));
+                return wrapper;
+            }
+
+            // Scenario 3: Delete (Old values only)
+            if (data.Old && !data.New) {
+                wrapper.innerHTML = '<h6 class="text-danger mb-3"><i class="fas fa-trash-alt"></i> البيانات المحذوفة:</h6>';
+                wrapper.appendChild(createPropertyList(data.Old));
+                return wrapper;
+            }
+
+            // Scenario 4: Flat object (custom log)
+            wrapper.appendChild(createPropertyList(data));
+            return wrapper;
+        }
+
+        function createPropertyList(obj) {
+            const list = document.createElement('div');
+            list.className = 'prop-list';
+            
+            Object.keys(obj).forEach(key => {
+                const item = document.createElement('div');
+                item.className = 'prop-item';
+                item.innerHTML = `
+                    <span class="prop-key">${key}:</span>
+                    <span class="prop-val">${formatValue(obj[key])}</span>
+                `;
+                list.appendChild(item);
+            });
+            return list;
+        }
+
+        function formatValue(val) {
+            if (val === null || val === undefined) return '<em class="text-muted">null</em>';
+            if (typeof val === 'boolean') return val ? '<span class="badge bg-success">Yes</span>' : '<span class="badge bg-secondary">No</span>';
+            if (typeof val === 'object') return JSON.stringify(val);
+            // Handle date strings if needed
+            return val;
+        }
+    </script>
+}

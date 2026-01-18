@@ -3,6 +3,7 @@ using Diska.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Diska.Models;
 
 namespace Diska.Areas.Admin.Controllers
 {
@@ -18,10 +19,11 @@ namespace Diska.Areas.Admin.Controllers
         }
 
         // عرض سجلات النظام
-        public async Task<IActionResult> Index(string userId, string actionType, DateTime? fromDate, DateTime? toDate)
+        public async Task<IActionResult> Index(string userId, string actionType, string entityName, DateTime? fromDate, DateTime? toDate)
         {
             var query = _context.AuditLogs.AsQueryable();
 
+            // الفلاتر
             if (!string.IsNullOrEmpty(userId))
             {
                 query = query.Where(l => l.UserId == userId);
@@ -32,6 +34,11 @@ namespace Diska.Areas.Admin.Controllers
                 query = query.Where(l => l.Action == actionType);
             }
 
+            if (!string.IsNullOrEmpty(entityName) && entityName != "All")
+            {
+                query = query.Where(l => l.EntityName == entityName);
+            }
+
             if (fromDate.HasValue)
             {
                 query = query.Where(l => l.Timestamp >= fromDate.Value);
@@ -39,15 +46,25 @@ namespace Diska.Areas.Admin.Controllers
 
             if (toDate.HasValue)
             {
-                query = query.Where(l => l.Timestamp <= toDate.Value);
+                query = query.Where(l => l.Timestamp < toDate.Value.AddDays(1));
             }
 
-            // عرض أحدث 100 عملية فقط لتحسين الأداء
-            var logs = await query.OrderByDescending(l => l.Timestamp).Take(100).ToListAsync();
+            var logs = await query.OrderByDescending(l => l.Timestamp).Take(150).ToListAsync();
 
-            // تجهيز القوائم للفلتر
-            // ملاحظة: في التطبيق الحقيقي يفضل استخدام Join مع جدول المستخدمين لعرض الأسماء
-            ViewBag.ActionTypes = new SelectList(new[] { "Create", "Update", "Delete", "Login", "Approve", "Reject" });
+     
+            var userIds = logs.Select(l => l.UserId).Distinct().ToList();
+            var usersInfo = await _context.Users
+                .Where(u => userIds.Contains(u.Id))
+                .ToDictionaryAsync(u => u.Id, u => new { Name = u.FullName, Email = u.Email, Role = "User" }); 
+
+            ViewBag.UsersMap = usersInfo;
+
+            ViewBag.UsersList = new SelectList(await _context.Users.Select(u => new { u.Id, u.FullName }).ToListAsync(), "Id", "FullName", userId);
+
+            var existingEntities = await _context.AuditLogs.Select(l => l.EntityName).Distinct().ToListAsync();
+            ViewBag.EntitiesList = new SelectList(existingEntities, entityName);
+
+            ViewBag.ActionTypes = new SelectList(new[] { "Create", "Update", "Delete", "Login", "Approve", "Reject" }, actionType);
 
             return View(logs);
         }

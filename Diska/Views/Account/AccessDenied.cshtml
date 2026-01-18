@@ -1,26 +1,188 @@
-﻿@{
+﻿@using System.Globalization
+@{
     ViewData["Title"] = "غير مصرح";
+    Layout = "_Layout"; // أو _AdminLayout حسب السياق، يفضل _Layout للعملاء
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
 }
 
-<section class="section-padding">
-    <div class="container" style="text-align: center; padding: 100px 20px;">
-        <div style="max-width: 600px; margin: 0 auto; background:#fff; padding:40px; border-radius:15px; border:1px solid #eee;">
-            <i class="fas fa-user-lock fa-4x" style="color: #f59e0b; margin-bottom: 20px;"></i>
+<style>
+    /* =========================================
+           PREMIUM ACCESS DENIED STYLES
+           ========================================= */
+    :root {
+        --ad-bg: #f8fafc;
+        --ad-card-bg: #ffffff;
+        --ad-text-main: #0f172a;
+        --ad-text-muted: #64748b;
+        --ad-border: #e2e8f0;
+        --ad-shadow: 0 20px 40px -10px rgba(0,0,0,0.1);
+        --ad-primary: #0F172A;
+    }
 
-            <h1 style="font-size: 2rem; margin-bottom: 15px; color: #333;">عفواً، لا تملك صلاحية الدخول</h1>
-            <p style="color: #666; font-size: 1.1rem; line-height: 1.6;">
-                هذه الصفحة مخصصة لصلاحيات مختلفة (مثل الأدمن أو التاجر).
-                يرجى التأكد من تسجيل الدخول بالحساب الصحيح.
-            </p>
+    [data-bs-theme="dark"] {
+        --ad-bg: #020617;
+        --ad-card-bg: #1e293b;
+        --ad-text-main: #f8fafc;
+        --ad-text-muted: #94a3b8;
+        --ad-border: rgba(255,255,255,0.05);
+        --ad-shadow: 0 20px 40px -10px rgba(0,0,0,0.5);
+        --ad-primary: #f8fafc;
+    }
 
-            <div style="margin-top: 40px; display: flex; gap: 15px; justify-content: center;">
-                <a asp-controller="Home" asp-action="Index" class="btn primary" style="text-decoration: none;">
-                    <i class="fas fa-home"></i> الرئيسية
-                </a>
-                <a asp-controller="Account" asp-action="Logout" class="btn btn-outline" style="border: 1px solid #ccc; color: #333; text-decoration: none; padding: 10px 20px; border-radius: 8px;">
-                    <i class="fas fa-sign-in-alt"></i> تسجيل دخول بحساب آخر
-                </a>
-            </div>
+    body {
+        background-color: var(--ad-bg);
+    }
+
+    .error-section {
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+    }
+
+    .error-card {
+        background: var(--ad-card-bg);
+        border: 1px solid var(--ad-border);
+        border-radius: 24px;
+        padding: 60px 40px;
+        max-width: 600px;
+        width: 100%;
+        text-align: center;
+        box-shadow: var(--ad-shadow);
+        position: relative;
+        overflow: hidden;
+        animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+        /* Decorative Circle */
+        .error-card::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            z-index: 0;
+        }
+
+    .icon-wrapper {
+        width: 100px;
+        height: 100px;
+        background: rgba(245, 158, 11, 0.1); /* Amber tint */
+        color: #f59e0b;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 30px;
+        font-size: 3.5rem;
+        position: relative;
+        z-index: 1;
+        box-shadow: 0 0 0 10px rgba(245, 158, 11, 0.05);
+    }
+
+    .error-title {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--ad-text-main);
+        margin-bottom: 15px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .error-desc {
+        font-size: 1.1rem;
+        color: var(--ad-text-muted);
+        line-height: 1.6;
+        margin-bottom: 40px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .btn-group-custom {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+        position: relative;
+        z-index: 1;
+    }
+
+    .btn-primary-custom {
+        background-color: var(--ad-primary);
+        color: var(--ad-card-bg); /* Contrast text */
+        padding: 12px 30px;
+        border-radius: 50px;
+        font-weight: 700;
+        text-decoration: none;
+        transition: 0.3s;
+        border: 2px solid transparent;
+    }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px -5px rgba(0,0,0,0.2);
+            color: var(--ad-card-bg);
+        }
+
+    .btn-outline-custom {
+        background-color: transparent;
+        color: var(--ad-text-main);
+        border: 2px solid var(--ad-border);
+        padding: 12px 30px;
+        border-radius: 50px;
+        font-weight: 700;
+        text-decoration: none;
+        transition: 0.3s;
+    }
+
+        .btn-outline-custom:hover {
+            border-color: var(--ad-text-muted);
+            background-color: rgba(0,0,0,0.02);
+            color: var(--ad-text-main);
+        }
+
+    @@keyframes fadeUp {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+</style>
+
+<section class="error-section">
+    <div class="error-card">
+
+        <div class="icon-wrapper">
+            <i class="fas fa-user-lock"></i>
         </div>
+
+        <h1 class="error-title">@(isAr ? "عفواً، لا تملك صلاحية الدخول" : "Access Denied")</h1>
+
+        <p class="error-desc">
+            @(isAr ? "هذه الصفحة مخصصة لصلاحيات مختلفة (مثل الأدمن أو التاجر). يرجى التأكد من تسجيل الدخول بالحساب الصحيح." : "You do not have permission to view this page. Please ensure you are logged in with the correct account privileges.")
+        </p>
+
+        <div class="btn-group-custom">
+            <a asp-controller="Home" asp-action="Index" class="btn-primary-custom">
+                <i class="fas fa-home me-2"></i> @(isAr ? "الرئيسية" : "Home")
+            </a>
+            <a asp-controller="Account" asp-action="Logout" class="btn-outline-custom">
+                <i class="fas fa-sign-in-alt me-2"></i> @(isAr ? "دخول بحساب آخر" : "Switch Account")
+            </a>
+        </div>
+
     </div>
 </section>

@@ -50,14 +50,20 @@ namespace Diska.Areas.Admin.Controllers
                     {
                         if (!string.IsNullOrWhiteSpace(QText[i]))
                         {
+               
+                            string optionsValue = "";
+                            if (QOptions != null && QOptions.Count > i && !string.IsNullOrEmpty(QOptions[i]))
+                            {
+                                optionsValue = QOptions[i];
+                            }
+
                             var question = new SurveyQuestion
                             {
                                 SurveyId = survey.Id,
                                 QuestionText = QText[i],
-                                QuestionTextEn = (QTextEn != null && QTextEn.Count > i) ? QTextEn[i] : QText[i],
+                                QuestionTextEn = (QTextEn != null && QTextEn.Count > i && !string.IsNullOrEmpty(QTextEn[i])) ? QTextEn[i] : QText[i],
                                 Type = QType[i],
-                                // Fix: Ensure Options is not null (DB Constraint)
-                                Options = (QOptions != null && QOptions.Count > i && !string.IsNullOrEmpty(QOptions[i])) ? QOptions[i] : ""
+                                Options = optionsValue
                             };
                             _context.SurveyQuestions.Add(question);
                         }
@@ -71,6 +77,81 @@ namespace Diska.Areas.Admin.Controllers
             return View(survey);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id)
+        {
+            var survey = await _context.Surveys
+                .Include(s => s.Questions)
+                .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (survey == null) return NotFound();
+            return View(survey);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, Survey survey, List<string> QText, List<string> QTextEn, List<string> QType, List<string> QOptions)
+        {
+            if (id != survey.Id) return NotFound();
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var existingSurvey = await _context.Surveys
+                        .Include(s => s.Questions)
+                        .FirstOrDefaultAsync(s => s.Id == id);
+
+                    if (existingSurvey == null) return NotFound();
+
+                    existingSurvey.Title = survey.Title;
+                    existingSurvey.TitleEn = survey.TitleEn;
+                    existingSurvey.Description = survey.Description;
+                    existingSurvey.StartDate = survey.StartDate;
+                    existingSurvey.EndDate = survey.EndDate;
+                    existingSurvey.TargetAudience = survey.TargetAudience;
+                    existingSurvey.IsActive = survey.IsActive;
+
+            
+                    _context.SurveyQuestions.RemoveRange(existingSurvey.Questions);
+
+                    if (QText != null)
+                    {
+                        for (int i = 0; i < QText.Count; i++)
+                        {
+                            if (!string.IsNullOrWhiteSpace(QText[i]))
+                            {
+                                string optionsValue = "";
+                                if (QOptions != null && QOptions.Count > i && !string.IsNullOrEmpty(QOptions[i]))
+                                {
+                                    optionsValue = QOptions[i];
+                                }
+
+                                var question = new SurveyQuestion
+                                {
+                                    SurveyId = existingSurvey.Id,
+                                    QuestionText = QText[i],
+                                    QuestionTextEn = (QTextEn != null && QTextEn.Count > i && !string.IsNullOrEmpty(QTextEn[i])) ? QTextEn[i] : QText[i],
+                                    Type = QType[i],
+                                    Options = optionsValue
+                                };
+                                _context.SurveyQuestions.Add(question);
+                            }
+                        }
+                    }
+
+                    await _context.SaveChangesAsync();
+                    TempData["Success"] = "تم تحديث الاستبيان بنجاح";
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!_context.Surveys.Any(e => e.Id == id)) return NotFound();
+                    else throw;
+                }
+                return RedirectToAction(nameof(Index));
+            }
+            return View(survey);
+        }
         public async Task<IActionResult> Results(int id)
         {
             var survey = await _context.Surveys

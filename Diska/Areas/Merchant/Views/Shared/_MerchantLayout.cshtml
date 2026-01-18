@@ -6,189 +6,359 @@
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
     string dir = isAr ? "rtl" : "ltr";
     string lang = isAr ? "ar" : "en";
+    string currentTheme = Context.Request.Cookies["theme"] ?? "light";
 }
 <!DOCTYPE html>
-<html lang="@lang" dir="@dir">
+<html lang="@lang" dir="@dir" data-bs-theme="@currentTheme">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - لوحة التاجر</title>
+    <title>@ViewData["Title"] - Merchant Portal</title>
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
+    @if (isAr)
+    {
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
+    }
+    else
+    {
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    }
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
 
     <style>
+        :root {
+            --font-primary: 'Cairo', sans-serif;
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --primary-color: #4f46e5;
+            --sidebar-bg: #1e293b;
+            --sidebar-text: #94a3b8;
+            --sidebar-active-bg: rgba(255, 255, 255, 0.1);
+            --sidebar-width: 280px;
+            --header-height: 70px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        [data-bs-theme="dark"] {
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --primary-color: #6366f1;
+            --sidebar-bg: #020617;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+        }
+
         body {
-            font-family: 'Cairo', sans-serif;
-            background-color: #f8fafc;
+            font-family: var(--font-primary);
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+            transition: background-color 0.3s;
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 100vh;
         }
 
         .sidebar {
-            width: 260px;
-            background-color: #1e293b;
+            width: var(--sidebar-width);
+            background-color: var(--sidebar-bg);
             color: #fff;
-            min-height: 100vh;
             position: fixed;
-            right: 0;
             top: 0;
+            bottom: 0;
             z-index: 1000;
-        }
-
-        .content-wrapper {
-            margin-right: 260px;
-            padding: 30px;
-            transition: 0.3s;
+            transition: transform 0.3s;
+            overflow-y: auto;
+            border-inline-end: 1px solid rgba(255,255,255,0.05);
         }
 
         .sidebar-header {
-            padding: 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            background: rgba(0,0,0,0.2);
-            text-align: center;
-        }
-
-        .nav-link {
-            color: #cbd5e1;
-            padding: 12px 20px;
-            border-right: 3px solid transparent;
+            height: var(--header-height);
             display: flex;
             align-items: center;
-            gap: 10px;
+            padding: 0 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
         }
 
-            .nav-link:hover, .nav-link.active {
-                background: #334155;
-                color: #fff;
-                border-right-color: #FACC15;
-            }
-
-            .nav-link i {
-                width: 25px;
-                text-align: center;
-            }
+        .sidebar-menu {
+            padding: 20px 15px;
+        }
 
         .menu-label {
             font-size: 0.75rem;
             text-transform: uppercase;
-            color: #64748b;
-            padding: 20px 20px 5px;
-            font-weight: bold;
+            color: var(--sidebar-text);
+            opacity: 0.6;
+            margin: 20px 10px 10px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
         }
 
-        .stat-card {
-            background: #fff;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            border: 1px solid #e2e8f0;
-        }
-
-        .top-bar {
-            background: #fff;
-            padding: 15px 30px;
-            margin-bottom: 30px;
-            border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+        .nav-link {
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            padding: 12px 15px;
+            color: var(--sidebar-text);
+            text-decoration: none;
+            border-radius: 12px;
+            transition: 0.2s;
+            margin-bottom: 5px;
+            font-weight: 600;
         }
 
-        @@media (max-width: 768px) {
+            .nav-link:hover {
+                color: #fff;
+                background-color: rgba(255,255,255,0.05);
+            }
+
+            .nav-link.active {
+                background-color: var(--primary-color);
+                color: #fff;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            }
+
+            .nav-link i {
+                width: 24px;
+                font-size: 1.1rem;
+                margin-inline-end: 10px;
+                text-align: center;
+            }
+
+        .main-content {
+            flex: 1;
+            margin-inline-start: var(--sidebar-width);
+            display: flex;
+            flex-direction: column;
+            width: calc(100% - var(--sidebar-width));
+        }
+
+        .topbar {
+            height: var(--header-height);
+            background-color: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            position: sticky;
+            top: 0;
+            z-index: 900;
+        }
+
+        .content-wrapper {
+            padding: 30px;
+            flex: 1;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .table-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+
+        .table {
+            color: var(--text-main);
+            margin-bottom: 0;
+        }
+
+            .table thead th {
+                background-color: rgba(0,0,0,0.02);
+                color: var(--text-muted);
+                border-bottom: 1px solid var(--border-color);
+                padding: 15px 20px;
+                font-weight: 700;
+                font-size: 0.8rem;
+                text-transform: uppercase;
+            }
+
+            .table tbody td {
+                padding: 15px 20px;
+                border-bottom: 1px solid var(--border-color);
+                vertical-align: middle;
+            }
+
+        [data-bs-theme="dark"] .table-hover tbody tr:hover {
+            background-color: rgba(255,255,255,0.05);
+        }
+
+        .badge {
+            padding: 0.5em 0.8em;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            background: var(--primary-color);
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+
+        .btn-theme {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        a{
+            text-decoration:none;
+        }
+        @@media (max-width: 991px) {
             .sidebar
 
         {
             transform: translateX(100%);
+            right: 0;
         }
 
-        .content-wrapper {
-            margin-right: 0;
+        html[dir="ltr"] .sidebar {
+            transform: translateX(-100%);
+            left: 0;
+            right: auto;
+        }
+
+        .sidebar.show {
+            transform: translateX(0);
+        }
+
+        .main-content {
+            margin-inline-start: 0;
+            width: 100%;
         }
 
         }
     </style>
 </head>
 <body>
-    <nav class="sidebar">
-        <div class="sidebar-header">
-            <h4 class="mb-0 fw-bold">DISKA <span class="text-warning small">Merchant</span></h4>
-        </div>
-        <div class="py-3">
-            <a href="/Merchant/Dashboard" class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Dashboard" ? "active" : "")">
-                <i class="fas fa-home"></i> <span>الرئيسية</span>
-            </a>
-
-            <div class="menu-label">إدارة المتجر</div>
-            <a href="/Merchant/Product" class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Product" ? "active" : "")">
-                <i class="fas fa-box"></i> <span>منتجاتي</span>
-            </a>
-            <a href="/Merchant/Orders" class="nav-link">
-                <i class="fas fa-shopping-bag"></i> <span>الطلبات الواردة</span>
-            </a>
-            <a href="/Merchant/Restock" class="nav-link">
-                <i class="fas fa-boxes"></i> <span>نواقص المخزون</span>
-            </a>
-
-            <div class="menu-label">التواصل والمالية</div>
-            <a href="/Merchant/Requests" class="nav-link">
-                <i class="fas fa-bullhorn"></i> <span>طلبات خاصة</span>
-            </a>
-            <a href="/Merchant/Wallet" class="nav-link">
-                <i class="fas fa-wallet"></i> <span>المحفظة</span>
-            </a>
-            <a href="/Merchant/Reviews" class="nav-link">
-                <i class="fas fa-star"></i> <span>التقييمات</span>
-            </a>
-            <a href="/Merchant/Users" class="nav-link">
-                <i class="fas fa-users"></i> <span>فريق العمل</span>
-            </a>
-
-            <div class="menu-label">الإعدادات</div>
-            <a href="/Merchant/Profile" class="nav-link">
-                <i class="fas fa-user-circle"></i> <span>الملف الشخصي</span>
-            </a>
-            <a href="/Account/Logout" class="nav-link text-danger">
-                <i class="fas fa-sign-out-alt"></i> <span>خروج</span>
-            </a>
-        </div>
-    </nav>
-
-    <div class="content-wrapper">
-        <div class="top-bar">
-            <div class="d-flex align-items-center">
-                <h5 class="mb-0 fw-bold text-primary">@ViewData["Title"]</h5>
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h4 class="m-0 fw-bold">DISKA <span style="color:var(--primary-color); font-size:0.7em;">MERCHANT</span></h4>
             </div>
-            <div class="d-flex align-items-center gap-3">
-                <span class="badge bg-warning text-dark">@user?.ShopName</span>
-                <div class="d-flex align-items-center gap-2">
-                    <img src="https://ui-avatars.com/api/?name=@user?.FullName&background=random" class="rounded-circle" width="35">
-                    <span class="fw-bold small d-none d-md-block">@user?.FullName</span>
+            <div class="sidebar-menu">
+                <a href="/Merchant/Dashboard" class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Dashboard" ? "active" : "")">
+                    <i class="fas fa-th-large"></i> <span>@(isAr ? "لوحة القيادة" : "Dashboard")</span>
+                </a>
+
+                <div class="menu-label">@(isAr ? "المتجر" : "Store")</div>
+
+                <a href="/Merchant/Product" class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Product" ? "active" : "")">
+                    <i class="fas fa-box"></i> <span>@(isAr ? "منتجاتي" : "My Products")</span>
+                </a>
+
+                <a href="/Merchant/MerchantOrder" class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "MerchantOrder" ? "active" : "")">
+                    <i class="fas fa-shopping-bag"></i> <span>@(isAr ? "الطلبات الواردة" : "Orders")</span>
+                </a>
+
+                <a href="/Merchant/Restock" class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Restock" ? "active" : "")">
+                    <i class="fas fa-cubes"></i> <span>@(isAr ? "نواقص المخزون" : "Restock Requests")</span>
+                </a>
+
+                <div class="menu-label">@(isAr ? "العمليات" : "Operations")</div>
+
+                <a href="/Merchant/Requests" class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Requests" ? "active" : "")">
+                    <i class="fas fa-bullhorn"></i> <span>@(isAr ? "فرص وطلبات" : "Opportunities")</span>
+                </a>
+
+                <a href="/Merchant/Wallet" class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Wallet" ? "active" : "")">
+                    <i class="fas fa-wallet"></i> <span>@(isAr ? "المحفظة" : "Wallet")</span>
+                </a>
+
+                <a href="/Merchant/Reviews" class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Reviews" ? "active" : "")">
+                    <i class="fas fa-star"></i> <span>@(isAr ? "التقييمات" : "Reviews")</span>
+                </a>
+
+                <div class="menu-label">@(isAr ? "الإعدادات" : "Settings")</div>
+
+                <a href="/Merchant/Users" class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Users" ? "active" : "")">
+                    <i class="fas fa-users"></i> <span>@(isAr ? "فريق العمل" : "Staff")</span>
+                </a>
+
+                <a href="/Merchant/Profile" class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Profile" ? "active" : "")">
+                    <i class="fas fa-user-circle"></i> <span>@(isAr ? "الملف الشخصي" : "Profile")</span>
+                </a>
+
+                <a href="/Account/Logout" class="nav-link text-danger mt-4">
+                    <i class="fas fa-sign-out-alt"></i> <span>@(isAr ? "خروج" : "Logout")</span>
+                </a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="topbar">
+                <button class="btn btn-icon d-lg-none" onclick="document.getElementById('sidebar').classList.toggle('show')">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="d-flex align-items-center gap-3 ms-auto">
+                    <button id="themeToggle" class="btn-theme">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <div class="user-profile">
+                        <div class="text-end d-none d-md-block">
+                            <div class="fw-bold" style="font-size:0.9rem;">@user?.FullName</div>
+                            <div class="text-muted" style="font-size:0.75rem;">@user?.ShopName</div>
+                        </div>
+                        <div class="avatar">@user?.FullName?.FirstOrDefault()</div>
+                    </div>
                 </div>
-            </div>
-        </div>
+            </header>
 
-        @if (TempData["Success"] != null)
-        {
-            <div class="alert alert-success alert-dismissible fade show">
-                @TempData["Success"]
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <div class="content-wrapper">
+                @RenderBody()
             </div>
-        }
-        @if (TempData["Error"] != null)
-        {
-            <div class="alert alert-danger alert-dismissible fade show">
-                @TempData["Error"]
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        }
-
-        @RenderBody()
+        </main>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.getElementById('themeToggle').addEventListener('click', function() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-bs-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-bs-theme', next);
+            document.cookie = `theme=${next}; path=/; max-age=31536000`;
+        });
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

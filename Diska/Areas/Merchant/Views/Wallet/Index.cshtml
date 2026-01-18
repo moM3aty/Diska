@@ -2,91 +2,190 @@
 @{
     ViewData["Title"] = "محفظتي";
     Layout = "_MerchantLayout";
+    bool isAr = System.Globalization.CultureInfo.CurrentCulture.Name.StartsWith("ar");
 }
 
-<div class="row g-4 mb-4">
-    <!-- Balance Card -->
-    <div class="col-md-6">
-        <div class="card border-0 shadow-sm bg-primary text-white h-100">
-            <div class="card-body p-4 text-center">
-                <p class="mb-1 opacity-75">الرصيد القابل للسحب</p>
-                <h1 class="display-4 fw-bold">@(((decimal)ViewBag.Balance).ToString("N0")) <small class="fs-6">ج.م</small></h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1" style="color:var(--text-main)">@(isAr ? "المحفظة المالية" : "My Wallet")</h2>
+        <p class="text-muted small mb-0">@(isAr ? "إدارة الرصيد وسجل المعاملات" : "Manage balance and transactions")</p>
+    </div>
+</div>
 
-                <form asp-action="RequestWithdraw" method="post" class="mt-4 d-flex justify-content-center gap-2">
-                    <input type="number" name="amount" class="form-control form-control-sm w-auto" placeholder="مبلغ السحب" min="100">
-                    <button type="submit" class="btn btn-light btn-sm fw-bold text-primary">طلب سحب</button>
-                </form>
+<style>
+    /* Premium Wallet Styles */
+    .balance-card {
+        background: linear-gradient(135deg, var(--primary-color), #4338ca);
+        color: #fff;
+        border-radius: 20px;
+        padding: 30px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(79, 70, 229, 0.3);
+        border: none;
+    }
+
+        .balance-card::after {
+            content: '';
+            position: absolute;
+            bottom: -20px;
+            right: -20px;
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .balance-card .btn-light {
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.3);
+            backdrop-filter: blur(5px);
+        }
+
+            .balance-card .btn-light:hover {
+                background: #fff;
+                color: var(--primary-color);
+            }
+
+    .summary-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 20px;
+        padding: 30px;
+        height: 100%;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .trans-table-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+    }
+
+    .table thead th {
+        background: rgba(0,0,0,0.02);
+        color: var(--text-muted);
+        border-bottom: 1px solid var(--border-color);
+        padding: 18px 24px;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+    }
+
+    [data-bs-theme="dark"] .table thead th {
+        background: rgba(255,255,255,0.05);
+    }
+
+    .table td {
+        padding: 18px 24px;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-main);
+    }
+</style>
+
+<div class="row g-4 mb-5">
+    <!-- Balance Card -->
+    <div class="col-lg-6">
+        <div class="balance-card h-100 d-flex flex-column justify-content-between">
+            <div>
+                <span class="opacity-75 small text-uppercase fw-bold">@(isAr ? "الرصيد الحالي" : "Current Balance")</span>
+                <h1 class="display-4 fw-bold mt-2 mb-0">@(((decimal)ViewBag.Balance).ToString("N0")) <span class="fs-4 opacity-75">@(isAr ? "ج.م" : "EGP")</span></h1>
             </div>
+
+            <form asp-action="RequestWithdraw" method="post" class="mt-4">
+                <div class="input-group">
+                    <input type="number" name="amount" class="form-control bg-white bg-opacity-10 border-0 text-white placeholder-white" placeholder="@(isAr ? "المبلغ المراد سحبه..." : "Amount to withdraw...")" min="100" style="backdrop-filter: blur(5px);">
+                    <button type="submit" class="btn btn-light fw-bold px-4">@(isAr ? "طلب سحب" : "Withdraw")</button>
+                </div>
+                <small class="text-white opacity-50 mt-2 d-block">
+                    <i class="fas fa-info-circle me-1"></i> @(isAr ? "الحد الأدنى للسحب 100 ج.م" : "Min withdrawal: 100 EGP")
+                </small>
+            </form>
         </div>
     </div>
 
     <!-- Summary -->
-    <div class="col-md-6">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-body p-4">
-                <h5 class="card-title text-primary mb-4">ملخص الحركة</h5>
-                <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
-                    <span class="text-muted"><i class="fas fa-arrow-down text-success me-2"></i> إجمالي الأرباح</span>
-                    <span class="fw-bold text-success">@(((decimal)ViewBag.TotalEarnings).ToString("N0")) ج.م</span>
+    <div class="col-lg-6">
+        <div class="summary-card">
+            <h5 class="fw-bold mb-4" style="color:var(--text-main)">@(isAr ? "ملخص الحركة" : "Summary")</h5>
+
+            <div class="d-flex align-items-center justify-content-between mb-4 pb-3 border-bottom" style="border-color:var(--border-color)!important;">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle p-3 bg-success bg-opacity-10 text-success"><i class="fas fa-arrow-down fa-lg"></i></div>
+                    <div>
+                        <small class="text-muted d-block">@(isAr ? "إجمالي الأرباح" : "Total Earnings")</small>
+                        <h5 class="fw-bold mb-0 text-success">@(((decimal)ViewBag.TotalEarnings).ToString("N0"))</h5>
+                    </div>
                 </div>
-                <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
-                    <span class="text-muted"><i class="fas fa-arrow-up text-danger me-2"></i> المسحوبات/الخصومات</span>
-                    <span class="fw-bold text-danger">@(((decimal)ViewBag.TotalWithdrawals).ToString("N0")) ج.م</span>
+            </div>
+
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle p-3 bg-danger bg-opacity-10 text-danger"><i class="fas fa-arrow-up fa-lg"></i></div>
+                    <div>
+                        <small class="text-muted d-block">@(isAr ? "المسحوبات / الخصومات" : "Withdrawals")</small>
+                        <h5 class="fw-bold mb-0 text-danger">@(((decimal)ViewBag.TotalWithdrawals).ToString("N0"))</h5>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="card border-0 shadow-sm">
-    <div class="card-header bg-white py-3">
-        <h5 class="mb-0 text-secondary">سجل المعاملات</h5>
-    </div>
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="bg-light">
-                <tr>
-                    <th>نوع العملية</th>
-                    <th>القيمة</th>
-                    <th>الوصف</th>
-                    <th>التاريخ</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (!Model.Any())
-                {
+<div class="trans-table-card">
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5">
+            <div class="text-muted opacity-25 mb-3"><i class="fas fa-receipt fa-4x"></i></div>
+            <p class="text-muted">@(isAr ? "لا توجد معاملات مالية حتى الآن." : "No transactions found.")</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
                     <tr>
-                        <td colspan="4" class="text-center py-4 text-muted">لا توجد معاملات حتى الآن.</td>
+                        <th class="ps-4">@(isAr ? "نوع العملية" : "Type")</th>
+                        <th>@(isAr ? "القيمة" : "Amount")</th>
+                        <th>@(isAr ? "البيان" : "Description")</th>
+                        <th class="text-end pe-4">@(isAr ? "التاريخ" : "Date")</th>
                     </tr>
-                }
-                @foreach (var item in Model)
-                {
-                    bool isPositive = item.Type == "Deposit" || item.Type == "Sale";
-                    <tr>
-                        <td>
-                            @if (item.Type == "Deposit" || item.Type == "Sale")
-                            {
-                                <span class="badge bg-success">إيداع/بيع</span>
-                            }
-                            else if (item.Type == "Withdraw")
-                            {
-
-                                <span class="badge bg-warning text-dark">سحب</span>
-                            }
-                            else
-                            {
-
-                                <span class="badge bg-danger">خصم</span>
-                            }
-                        </td>
-                        <td class="fw-bold @(isPositive ? "text-success" : "text-danger")" dir="ltr">
-                            @(isPositive ? "+" : "-")@item.Amount.ToString("N0")
-                        </td>
-                        <td class="text-muted small">@item.Description</td>
-                        <td class="text-muted small">@item.TransactionDate.ToString("yyyy/MM/dd HH:mm")</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        bool isPositive = item.Type == "Deposit" || item.Type == "Sale";
+                        <tr>
+                            <td class="ps-4">
+                                @if (item.Type == "Deposit" || item.Type == "Sale")
+                                {
+                                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3">@(isAr ? "إيداع / بيع" : "Deposit/Sale")</span>
+                                }
+                                else if (item.Type == "Withdraw")
+                                {
+                                    <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-3">@(isAr ? "سحب" : "Withdraw")</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3">@(isAr ? "خصم" : "Deduction")</span>
+                                }
+                            </td>
+                            <td class="fw-bold @(isPositive ? "text-success" : "text-danger")" dir="ltr">
+                                @(isPositive ? "+" : "-")@Math.Abs(item.Amount).ToString("N0") <small>EGP</small>
+                            </td>
+                            <td class="text-muted">@item.Description</td>
+                            <td class="text-end pe-4 text-muted small">
+                                @item.TransactionDate.ToString("yyyy-MM-dd") <br>
+                                @item.TransactionDate.ToString("hh:mm tt")
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
 </div>

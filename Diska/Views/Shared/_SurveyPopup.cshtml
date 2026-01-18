@@ -2,8 +2,8 @@
 @using System.Globalization
 @inject UserManager<Diska.Models.ApplicationUser> UserManager
 @{
-    // هذا الكود يتحقق فقط إذا كان المستخدم مسجلاً
-    // التحقق الفعلي من الاستبيان يتم عبر AJAX لتجنب بطء تحميل الصفحة
+    // يتم تضمين هذا الملف في _Layout.cshtml
+    // يتحقق مما إذا كان المستخدم مسجلاً ثم يفحص الاستبيانات عبر AJAX
     bool isUserLoggedIn = User.Identity.IsAuthenticated;
 }
 
@@ -11,76 +11,63 @@
 {
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // تأخير بسيط لضمان تحميل الصفحة بالكامل قبل ظهور النافذة
-            setTimeout(checkPendingSurvey, 1500);
+            // ننتظر قليلاً حتى يتم تحميل الصفحة بالكامل لتجنب إزعاج المستخدم فوراً
+            setTimeout(checkForPendingSurvey, 2000);
         });
 
-        function checkPendingSurvey() {
-            // التحقق من الوضع الحالي (Dark/Light)
+        function checkForPendingSurvey() {
+            // التحقق من الثيم (Dark/Light) لتنسيق النافذة
             const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
 
-            // تعريف الألوان بناءً على الوضع لضمان التناسق (Premium Look)
             const colors = isDark ? {
-                background: '#1e293b', // Slate 800 (Dark Card)
-                text: '#f8fafc',       // Slate 50 (Light Text)
-                confirmBtn: '#6366f1', // Indigo 500 (Brighter Primary)
-                cancelBtn: '#94a3b8'   // Slate 400 (Muted Text)
+                bg: '#1e293b', text: '#f8fafc', btn: '#6366f1', cancel: '#94a3b8'
             } : {
-                background: '#ffffff', // White
-                text: '#0f172a',       // Slate 900 (Dark Text)
-                confirmBtn: '#0F172A', // Slate 900 (Deep Primary)
-                cancelBtn: '#64748b'   // Slate 500
+                bg: '#ffffff', text: '#0f172a', btn: '#0F172A', cancel: '#64748b'
             };
 
-            // التحقق من وجود استبيان معلق عبر AJAX
+            // استدعاء الكنترولر للبحث عن استبيان
             fetch('/UserSurvey/CheckPending')
                 .then(response => {
-                    if (!response.ok) throw new Error("Network response was not ok");
+                    if (!response.ok) return null;
                     return response.json();
                 })
                 .then(data => {
-                    // إذا عاد السيرفر ببيانات (معناه يوجد استبيان لم يتم حله)
+                    // إذا عادت البيانات بـ ID، فهذا يعني وجود استبيان متاح
                     if (data && data.id) {
                         const isAr = document.documentElement.lang === 'ar' || document.documentElement.dir === 'rtl';
 
-                        // تحديد النصوص بناءً على اللغة
-                        const title = isAr ? "شاركنا رأيك!" : "We Value Your Feedback!";
-                        const surveyTitle = isAr ? data.title : (data.titleEn || data.title);
-                        const text = isAr
-                            ? `نود تحسين خدماتنا لك. يرجى تخصيص لحظة للإجابة على استبيان: "${surveyTitle}"`
-                            : `Help us improve. Please take a moment to answer: "${surveyTitle}"`;
+                        const titleText = isAr ? "شاركنا رأيك!" : "We Value Your Feedback!";
+                        const surveyName = isAr ? data.title : (data.titleEn || data.title);
+                        const msgText = isAr
+                            ? `نود تحسين خدماتنا لك. هل لديك دقيقة للمشاركة في: "${surveyName}"؟`
+                            : `Help us improve. Do you have a minute for: "${surveyName}"?`;
 
-                        const confirmBtn = isAr ? "ابدأ الآن" : "Start Now";
-                        const cancelBtn = isAr ? "ليس الآن" : "Not Now";
+                        const btnText = isAr ? 'ابدأ الآن' : 'Start Now';
+                        const cancelText = isAr ? 'لاحقاً' : 'Later';
 
-                        // عرض SweetAlert بتصميم Premium متكيف مع الوضع
+                        // إظهار SweetAlert
                         Swal.fire({
-                            title: title,
-                            text: text,
+                            title: titleText,
+                            text: msgText,
                             icon: 'question',
                             showCancelButton: true,
-                            confirmButtonText: confirmBtn,
-                            cancelButtonText: cancelBtn,
+                            confirmButtonText: btnText,
+                            cancelButtonText: cancelText,
 
-                            // تطبيق الألوان الديناميكية
-                            background: colors.background,
+                            // Styling
+                            background: colors.bg,
                             color: colors.text,
-                            confirmButtonColor: colors.confirmBtn,
-                            cancelButtonColor: colors.cancelBtn,
+                            confirmButtonColor: colors.btn,
+                            cancelButtonColor: colors.cancel,
+                            backdrop: `rgba(0,0,0,0.5)`,
 
-                            backdrop: `rgba(15, 23, 42, 0.6)`,
-                            padding: '2em',
                             customClass: {
-                                popup: 'rounded-4 shadow-lg border ' + (isDark ? 'border-secondary' : 'border-light'),
+                                popup: 'rounded-4 shadow-lg border-0',
                                 confirmButton: 'px-4 py-2 rounded-pill fw-bold',
                                 cancelButton: 'px-4 py-2 rounded-pill'
                             },
-                            showClass: {
-                                popup: 'animate__animated animate__fadeInDown'
-                            },
-                            hideClass: {
-                                popup: 'animate__animated animate__fadeOutUp'
-                            }
+                            showClass: { popup: 'animate__animated animate__fadeInDown' },
+                            hideClass: { popup: 'animate__animated animate__fadeOutUp' }
                         }).then((result) => {
                             if (result.isConfirmed) {
                                 window.location.href = '/UserSurvey/Take/' + data.id;
@@ -89,8 +76,7 @@
                     }
                 })
                 .catch(err => {
-                    // console.error('Survey check failed', err);
-                    // Silent fail is better for UX
+                    // console.log("No pending surveys or error checking.");
                 });
         }
     </script>

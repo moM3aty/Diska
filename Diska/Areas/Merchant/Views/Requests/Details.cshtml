@@ -4,71 +4,116 @@
     ViewData["Title"] = "تفاصيل الطلب";
     Layout = "_MerchantLayout";
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    var existingOffer = ViewBag.ExistingOffer as Diska.Models.MerchantOffer;
 }
 
-<div class="row justify-content-center">
+<style>
+    .req-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        box-shadow: var(--shadow-sm);
+        padding: 30px;
+        margin-bottom: 24px;
+    }
+
+    .form-control-prem {
+        background: var(--bg-body);
+        border: 1px solid var(--border-color);
+        color: var(--text-main);
+        padding: 12px 15px;
+        border-radius: 10px;
+    }
+
+        .form-control-prem:focus {
+            background: var(--bg-card);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+            color: var(--text-main);
+        }
+
+    .price-input-group .input-group-text {
+        background: var(--bg-body);
+        border-color: var(--border-color);
+        color: var(--text-muted);
+    }
+</style>
+
+<div class="row justify-content-center fade-up">
     <div class="col-lg-8">
 
-        <a asp-action="Index" class="text-decoration-none text-muted mb-3 d-inline-block">
-            <i class="fas fa-arrow-right"></i> @(isAr ? "عودة للقائمة" : "Back to List")
+        <a asp-action="Index" class="btn btn-sm btn-outline-secondary mb-3 rounded-pill px-3">
+            <i class="fas @(isAr ? "fa-arrow-right" : "fa-arrow-left") me-1"></i> @(isAr ? "عودة للقائمة" : "Back to List")
         </a>
 
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-white py-3">
-                <h5 class="mb-0 text-primary">@(isAr ? "بيانات الطلب" : "Request Details")</h5>
+        <!-- Request Details -->
+        <div class="req-card">
+            <div class="d-flex justify-content-between align-items-start mb-4 border-bottom pb-3" style="border-color:var(--border-color)!important;">
+                <div>
+                    <h5 class="fw-bold text-main mb-1">@Model.ProductName</h5>
+                    <small class="text-muted"><i class="far fa-clock me-1"></i> تم النشر: @Model.RequestDate.ToString("dd MMMM yyyy")</small>
+                </div>
+                <span class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25 px-3 py-2">طلب مفتوح</span>
             </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="text-muted small">@(isAr ? "المنتج المطلوب" : "Product")</label>
-                        <div class="fw-bold fs-5">@Model.ProductName</div>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="text-muted small">@(isAr ? "الكمية" : "Quantity")</label>
-                        <div class="fw-bold">@Model.TargetQuantity</div>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="text-muted small">@(isAr ? "السعر المستهدف" : "Target Price")</label>
-                        <div class="fw-bold text-success">@Model.DealPrice.ToString("N0")</div>
-                    </div>
-                    <div class="col-12 border-top pt-2 mt-2">
-                        <label class="text-muted small"><i class="fas fa-map-marker-alt text-danger"></i> @(isAr ? "موقع التوصيل" : "Location")</label>
-                        <div>@Model.Location</div>
-                    </div>
+
+            <div class="row g-4">
+                <div class="col-md-4 text-center border-end" style="border-color:var(--border-color)!important;">
+                    <small class="text-muted d-block mb-1">الكمية المطلوبة</small>
+                    <h3 class="fw-bold text-primary mb-0">@Model.TargetQuantity</h3>
+                </div>
+                <div class="col-md-4 text-center border-end" style="border-color:var(--border-color)!important;">
+                    <small class="text-muted d-block mb-1">السعر المستهدف</small>
+                    <h3 class="fw-bold text-success mb-0">@Model.DealPrice.ToString("N0") <small class="fs-6 text-muted">ج.م</small></h3>
+                </div>
+                <div class="col-md-4 text-center">
+                    <small class="text-muted d-block mb-1">موقع التوصيل</small>
+                    <h6 class="fw-bold text-main mb-0 mt-2"><i class="fas fa-map-marker-alt text-danger me-1"></i> @Model.Location</h6>
                 </div>
             </div>
         </div>
 
-        <!-- Offer Form -->
-        <div class="card border-0 shadow-sm border-top border-4 border-primary">
-            <div class="card-body p-4">
-                <h5 class="mb-3 fw-bold">@(isAr ? "تقديم عرض سعر" : "Submit Your Offer")</h5>
+        <!-- Offer Form or Status -->
+        @if (existingOffer != null)
+        {
+            <div class="req-card text-center py-5">
+                <div class="mb-3 text-success opacity-75">
+                    <i class="fas fa-check-circle fa-4x"></i>
+                </div>
+                <h4 class="fw-bold text-main">تم تقديم عرضك بنجاح</h4>
+                <p class="text-muted">عرضك بقيمة <strong class="text-dark">@existingOffer.OfferPrice.ToString("N0") ج.م</strong> قيد المراجعة من قبل العميل.</p>
+                <span class="badge bg-warning text-dark px-3 py-2">حالة العرض: انتظار</span>
+            </div>
+        }
+        else
+        {
+            <div class="req-card" style="border-top: 4px solid var(--primary-color);">
+                <h5 class="mb-4 fw-bold text-main">@(isAr ? "تقديم عرض سعر" : "Submit Your Offer")</h5>
 
                 <form asp-action="SubmitOffer" method="post">
                     <input type="hidden" name="requestId" value="@Model.Id" />
 
-                    <div class="row g-3">
+                    <div class="row g-4">
                         <div class="col-md-6">
-                            <label class="form-label">@(isAr ? "سرك المقترح (للقطعة)" : "Your Price (Per Unit)")</label>
-                            <div class="input-group">
-                                <input type="number" name="price" class="form-control fw-bold" required placeholder="0.00">
+                            <label class="form-label text-muted fw-bold small">@(isAr ? "سعرك المقترح (للقطعة الواحدة)" : "Your Price (Per Unit)")</label>
+                            <div class="input-group price-input-group">
+                                <input type="number" name="price" class="form-control form-control-prem fw-bold" required placeholder="0.00">
                                 <span class="input-group-text">@(isAr ? "ج.م" : "EGP")</span>
                             </div>
                         </div>
                         <div class="col-12">
-                            <label class="form-label">@(isAr ? "ملاحظات العرض (شروط الدفع/التوصيل)" : "Notes (Payment/Delivery Terms)")</label>
-                            <textarea name="notes" class="form-control" rows="3" required placeholder="@(isAr ? "مثال: السعر شامل التوصيل، الدفع عند الاستلام..." : "Ex: Price includes delivery...")"></textarea>
+                            <label class="form-label text-muted fw-bold small">@(isAr ? "ملاحظات العرض (شروط الدفع/التوصيل)" : "Notes")</label>
+                            <textarea name="notes" class="form-control form-control-prem" rows="4" required placeholder="@(isAr ? "مثال: السعر شامل التوصيل، الدفع عند الاستلام..." : "Ex: Price includes delivery...")"></textarea>
                         </div>
                     </div>
 
                     <div class="mt-4 text-end">
-                        <button type="submit" class="btn btn-primary px-5 fw-bold">
+                        <button type="submit" class="btn btn-primary px-5 py-2 rounded-pill fw-bold shadow-sm">
                             <i class="fas fa-paper-plane me-2"></i> @(isAr ? "إرسال العرض للعميل" : "Send Offer")
                         </button>
                     </div>
                 </form>
             </div>
-        </div>
+        }
 
     </div>
 </div>

@@ -18,6 +18,8 @@
     var wishlistIds = user != null
         ? _context.WishlistItems.Where(w => w.UserId == user.Id).Select(w => w.ProductId).ToList()
         : new List<int>();
+
+    string currentTheme = Context.Request.Cookies["theme"] ?? "light";
 }
 
 <style>
@@ -26,14 +28,41 @@
         --color-gold: #D4AF37;
         --color-dark: #0f172a;
         --color-dark-soft: #1e293b;
-        --glass-bg: rgba(255, 255, 255, 0.1);
-        --glass-border: rgba(255, 255, 255, 0.2);
+        /* Light Mode Defaults */
+        --d-bg-body: #f8fafc;
+        --d-card-bg: #ffffff;
+        --d-text-main: #0f172a;
+        --d-text-muted: #64748b;
+        --d-border: #e2e8f0;
+        --d-shadow: 0 10px 30px -10px rgba(0,0,0,0.05);
+        --d-glass-bg: rgba(255, 255, 255, 0.8);
+        --d-glass-border: rgba(255, 255, 255, 0.5);
+    }
+
+    /* Dark Mode Overrides - Using body.dark-mode for higher specificity */
+    [data-bs-theme="dark"], body.dark-mode {
+        --d-bg-body: #020617; /* Deep Dark */
+        --d-card-bg: #1e293b; /* Slate 800 */
+        --d-text-main: #f8fafc; /* Light Text */
+        --d-text-muted: #94a3b8; /* Muted Text */
+        --d-border: rgba(255, 255, 255, 0.08);
+        --d-shadow: 0 10px 40px -5px rgba(0, 0, 0, 0.4);
+        --color-dark: #f8fafc; /* Repurpose dark color var for headings */
+        --d-glass-bg: rgba(30, 41, 59, 0.7); /* Darker glass */
+        --d-glass-border: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Apply Background to Body */
+    body {
+        background-color: var(--d-bg-body);
+        color: var(--d-text-main);
+        transition: background-color 0.3s ease, color 0.3s ease;
     }
 
     /* --- Deal Hero Section --- */
     .deal-hero {
         background: radial-gradient(circle at top right, #1e293b, #0f172a);
-        padding: 80px 0 100px;
+        padding: 80px 0 120px;
         color: #fff;
         text-align: center;
         position: relative;
@@ -41,7 +70,6 @@
         border-bottom: 1px solid rgba(255,255,255,0.05);
     }
 
-        /* Background Pattern */
         .deal-hero::before {
             content: '';
             position: absolute;
@@ -96,7 +124,7 @@
         z-index: 2;
     }
 
-    /* Premium Countdown */
+    /* Countdown */
     .countdown-wrapper {
         display: flex;
         justify-content: center;
@@ -106,10 +134,10 @@
     }
 
     .countdown-unit {
-        background: var(--glass-bg);
+        background: rgba(255,255,255,0.1);
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
-        border: 1px solid var(--glass-border);
+        border: 1px solid rgba(255,255,255,0.15);
         padding: 15px 25px;
         border-radius: 16px;
         min-width: 100px;
@@ -141,13 +169,14 @@
 
     /* --- Products Section --- */
     .deal-products-section {
-        background-color: #f8fafc;
+        background-color: var(--d-bg-body);
         padding: 80px 0;
         position: relative;
-        margin-top: -50px; /* Overlap effect */
+        margin-top: -60px; /* Overlap effect */
         border-radius: 40px 40px 0 0;
         z-index: 3;
         box-shadow: 0 -20px 50px rgba(0,0,0,0.05);
+        transition: background-color 0.3s ease;
     }
 
     .section-header {
@@ -158,7 +187,7 @@
         .section-header h3 {
             font-size: 2rem;
             font-weight: 800;
-            color: var(--color-dark);
+            color: var(--d-text-main);
             margin-bottom: 10px;
         }
 
@@ -168,43 +197,56 @@
         gap: 30px;
     }
 
-    /* Premium Product Card */
+    /* Product Card */
     .product-card {
-        background: #fff;
+        background: var(--d-card-bg);
         border-radius: 24px;
-        border: none;
+        border: 1px solid var(--d-border);
         transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         position: relative;
         overflow: hidden;
         display: flex;
         flex-direction: column;
         height: 100%;
-        box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05);
+        box-shadow: var(--d-shadow);
     }
 
         .product-card:hover {
             transform: translateY(-10px);
             box-shadow: 0 20px 40px -10px rgba(0,0,0,0.15);
+            border-color: var(--color-gold);
         }
 
     .product-img-wrapper {
         height: 260px;
         padding: 30px;
-        background: #fff;
+        background: #fff; /* White background for product images usually looks best */
         position: relative;
         overflow: hidden;
         display: flex;
         align-items: center;
         justify-content: center;
+        border-bottom: 1px solid var(--d-border);
     }
 
-        .product-img-wrapper img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-            transition: transform 0.5s ease;
-            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.05));
-        }
+    /* Dark Mode Image Wrapper Adjustment (Optional) */
+    [data-bs-theme="dark"] .product-img-wrapper,
+    body.dark-mode .product-img-wrapper {
+        background: var(--d-card-bg); /* Use dark bg if transparent PNGs, or keep white */
+        /* opacity: 0.9; optional dimming */
+    }
+    /* If images have white backgrounds, force white container even in dark mode for consistency */
+    [data-bs-theme="dark"] .product-img-wrapper,
+    body.dark-mode .product-img-wrapper {
+        background: #ffffff;
+    }
+
+    .product-img-wrapper img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        transition: transform 0.5s ease;
+    }
 
     .product-card:hover .product-img-wrapper img {
         transform: scale(1.1);
@@ -232,6 +274,7 @@
         display: flex;
         align-items: center;
         gap: 6px;
+        color: #000;
     }
 
     .badge-discount {
@@ -244,7 +287,7 @@
         color: #fff;
     }
 
-    /* Wishlist Button */
+    /* Fav Button */
     .fav-btn {
         position: absolute;
         top: 20px;
@@ -275,13 +318,13 @@
             background: #fee2e2;
         }
 
-    /* Product Details */
+    /* Details */
     .product-details {
         padding: 25px;
         flex-grow: 1;
         display: flex;
         flex-direction: column;
-        background: #fff;
+        background: var(--d-card-bg);
         position: relative;
         z-index: 5;
     }
@@ -290,7 +333,7 @@
         font-size: 0.7rem;
         text-transform: uppercase;
         letter-spacing: 1px;
-        color: #94a3b8;
+        color: var(--d-text-muted);
         font-weight: 700;
         margin-bottom: 8px;
     }
@@ -298,10 +341,10 @@
     .product-title {
         font-size: 1.1rem;
         font-weight: 800;
-        color: var(--color-dark);
+        color: var(--d-text-main);
         margin: 0 0 12px;
         line-height: 1.4;
-        height: 44px; /* 2 lines */
+        height: 44px;
         overflow: hidden;
         display: -webkit-box;
         -webkit-line-clamp: 2;
@@ -323,23 +366,23 @@
     .current-price {
         font-size: 1.4rem;
         font-weight: 900;
-        color: var(--color-dark);
+        color: var(--d-text-main);
     }
 
         .current-price small {
             font-size: 0.8rem;
             font-weight: 600;
-            color: #64748b;
+            color: var(--d-text-muted);
         }
 
     .old-price {
         font-size: 0.95rem;
-        color: #cbd5e1;
+        color: var(--d-text-muted);
         text-decoration: line-through;
         font-weight: 600;
     }
 
-    /* Action Area */
+    /* Actions */
     .card-actions {
         margin-top: auto;
         display: flex;
@@ -350,18 +393,19 @@
     .qty-control {
         display: flex;
         align-items: center;
-        background: #f1f5f9;
+        background: var(--d-bg-body);
         border-radius: 12px;
         padding: 5px;
+        border: 1px solid var(--d-border);
     }
 
     .qty-btn {
         width: 32px;
         height: 32px;
         border: none;
-        background: #fff;
+        background: var(--d-card-bg);
         border-radius: 8px;
-        color: var(--color-dark);
+        color: var(--d-text-main);
         font-weight: bold;
         cursor: pointer;
         transition: 0.2s;
@@ -379,14 +423,14 @@
         border: none;
         background: transparent;
         font-weight: 700;
-        color: var(--color-dark);
+        color: var(--d-text-main);
         outline: none;
     }
 
     .add-to-cart-btn {
         flex: 1;
-        background: var(--color-dark);
-        color: #fff;
+        background: var(--d-text-main);
+        color: var(--d-bg-body);
         border: none;
         border-radius: 12px;
         height: 42px;
@@ -398,27 +442,36 @@
         align-items: center;
         justify-content: center;
         gap: 8px;
-        box-shadow: 0 5px 15px rgba(15, 23, 42, 0.2);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     }
 
-        .add-to-cart-btn:hover {
-            background: var(--color-gold);
-            color: #fff;
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(212, 175, 55, 0.3);
-        }
+    [data-bs-theme="dark"] .add-to-cart-btn, body.dark-mode .add-to-cart-btn {
+        background: var(--color-gold);
+        color: #000;
+    }
 
-        .add-to-cart-btn:disabled {
-            background: #e2e8f0;
-            cursor: not-allowed;
-            box-shadow: none;
-            transform: none;
-            color: #94a3b8;
-        }
+    [data-bs-theme="dark"] .qty-control button{
+        background: var(--color-gold);
+        color:#000;
+    }
+    .add-to-cart-btn:hover {
+        background: var(--color-gold);
+        color: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(212, 175, 55, 0.3);
+    }
+
+    .add-to-cart-btn:disabled {
+        background: var(--d-border);
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
+        color: var(--d-text-muted);
+    }
 </style>
 
 <!-- Hero Section -->
-<div class="deal-hero"> 
+<div class="deal-hero">
     <div class="container">
         <span class="deal-tag">
             <i class="fas fa-bolt"></i>
@@ -468,7 +521,7 @@
         <div class="section-header">
             <h3>
                 @(isAr ? "تشكيلة العرض" : "Deal Collection")
-                <span style="font-size:1.2rem; color:#94a3b8; font-weight:400; margin-inline-start:5px;">(@(products?.Count ?? 0))</span>
+                <span style="font-size:1.2rem; color:var(--d-text-muted); font-weight:400; margin-inline-start:5px;">(@(products?.Count ?? 0))</span>
             </h3>
         </div>
 
@@ -496,7 +549,7 @@
 
                         <!-- Wishlist -->
                         <button class="fav-btn @(isLiked ? "active" : "")" onclick="toggleWishlist(@item.Id, this)">
-                            <i class="@(isLiked ? "fas" : "far") fa-heart"></i>
+                            <i class="fas @(isLiked ? "fa-heart" : "fa-heart")"></i>
                         </button>
 
                         <!-- Image -->
@@ -569,13 +622,22 @@
             const distance = endDate - now;
 
             if (distance < 0) {
-                document.getElementById("countdown").innerHTML = "<div class='text-white bg-danger px-4 py-2 rounded-pill fw-bold'>EXPIRED</div>";
+                const el = document.getElementById("countdown");
+                if(el) el.innerHTML = "<div class='text-white bg-danger px-4 py-2 rounded-pill fw-bold'>EXPIRED</div>";
                 return;
             }
 
-            document.getElementById("days").innerText = Math.floor(distance / (1000 * 60 * 60 * 24));
-            document.getElementById("hours").innerText = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            document.getElementById("minutes").innerText = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const d = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+
+            const dEl = document.getElementById("days");
+            const hEl = document.getElementById("hours");
+            const mEl = document.getElementById("minutes");
+
+            if(dEl) dEl.innerText = d;
+            if(hEl) hEl.innerText = h;
+            if(mEl) mEl.innerText = m;
         }
 
         setInterval(updateTimer, 1000);
@@ -640,14 +702,12 @@
         async function toggleWishlist(id, btn) {
             try {
                 const icon = btn.querySelector('i');
-                // Optimistic UI update
                 const isCurrentlyActive = btn.classList.contains('active');
 
                 if(isCurrentlyActive) {
                     btn.classList.remove('active'); icon.classList.remove('fas'); icon.classList.add('far');
                 } else {
                     btn.classList.add('active'); icon.classList.remove('far'); icon.classList.add('fas');
-                    // Pulse animation
                     btn.style.transform = "scale(1.2)";
                     setTimeout(() => btn.style.transform = "scale(1)", 200);
                 }
@@ -661,7 +721,6 @@
                 if(response.status === 401) { window.location.href = '/Account/Login'; return; }
                 const res = await response.json();
 
-                // Revert if failed
                 if(!res.success) {
                     if(isCurrentlyActive) {
                          btn.classList.add('active'); icon.classList.remove('far'); icon.classList.add('fas');

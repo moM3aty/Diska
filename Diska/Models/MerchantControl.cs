@@ -23,8 +23,6 @@ namespace Diska.Models
         public bool CanApprove { get; set; } = false; // غالباً false للتاجر
     }
 
-    // 2. جدول الطلبات المعلقة (Approval Workflow)
-    // أي تعديل حساس (سعر، مخزون ضخم) يتم تخزينه هنا أولاً
     public class PendingMerchantAction
     {
         public int Id { get; set; }
@@ -33,19 +31,20 @@ namespace Diska.Models
         [ForeignKey("MerchantId")]
         public virtual ApplicationUser Merchant { get; set; }
 
-        public string ActionType { get; set; } // CreateProduct, UpdatePrice, RestockRequest
-        public string EntityName { get; set; } // Product, Deal
-        public string EntityId { get; set; }   // ID للعنصر المتأثر (إن وجد)
+        public string ActionType { get; set; }
+        public string EntityName { get; set; }
+        public string EntityId { get; set; }
 
-        public string OldValueJson { get; set; } // البيانات القديمة (للمقارنة)
-        public string NewValueJson { get; set; } // البيانات الجديدة المقترحة
+        public string OldValueJson { get; set; }
+        public string NewValueJson { get; set; }
 
-        public string Status { get; set; } = "Pending"; // Pending, Approved, Rejected
-        public string AdminComment { get; set; } // سبب الرفض أو ملاحظات
+        public string Status { get; set; } = "Pending"; 
 
         public DateTime RequestDate { get; set; } = DateTime.Now;
-        public DateTime? ActionDate { get; set; }
 
-        public string ActionByAdminId { get; set; } // الأدمن الذي اتخذ القرار
+        public DateTime? ProcessedDate { get; set; }
+
+        public string ActionByAdminId { get; set; }
+        public string AdminComment { get; set; }
     }
 }

@@ -4,13 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Diska.Models;
-using Diska.Filters;
 
 namespace Diska.Areas.Merchant.Controllers
 {
     [Area("Merchant")]
     [Authorize(Roles = "Merchant")]
-    [CheckPermission("Reviews", "View")]
     public class ReviewsController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -40,8 +38,5 @@ namespace Diska.Areas.Merchant.Controllers
 
             return View(reviews);
         }
-
-        // التاجر لا يمكنه الحذف، لكن يمكنه الرد (في المستقبل)
-        // حالياً سنكتفي بالعرض
     }
 }

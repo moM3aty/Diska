@@ -6,52 +6,152 @@
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<style>
+    /* Card Styles */
+    .opp-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+        .opp-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-color);
+        }
+
+    .opp-badge {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        background: rgba(14, 165, 233, 0.1);
+        color: #0284c7;
+        font-weight: 700;
+        font-size: 0.75rem;
+        padding: 4px 10px;
+        border-radius: 20px;
+    }
+
+    html[dir="rtl"] .opp-badge {
+        left: auto;
+        right: 15px;
+    }
+
+    .opp-body {
+        padding: 45px 20px;
+        flex-grow: 1;
+    }
+
+    .opp-title {
+        font-weight: 800;
+        color: var(--text-main);
+        font-size: 1.1rem;
+        margin-bottom: 15px;
+        margin-top: 10px;
+    }
+
+    .opp-info-box {
+        background: var(--bg-body);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .opp-val {
+        font-weight: 700;
+        color: var(--text-main);
+        display: block;
+    }
+
+    .opp-lbl {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+    }
+
+    .opp-footer {
+        padding: 20px 25px;
+        border-top: 1px solid var(--border-color);
+        background: rgba(0,0,0,0.01);
+    }
+
+    .btn-offer {
+        width: 100%;
+        border-radius: 10px;
+        font-weight: 700;
+        padding: 10px;
+        background: transparent;
+        border: 1px solid var(--primary-color);
+        color: var(--primary-color);
+        transition: 0.2s;
+    }
+
+        .btn-offer:hover {
+            background: var(--primary-color);
+            color: #fff;
+        }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4 fade-up">
     <div>
-        <h2 class="text-primary fw-bold mb-0">@(isAr ? "طلبات الشراء الخاصة (الفرص)" : "Buying Requests (Opportunities)")</h2>
-        <p class="text-muted mt-1">@(isAr ? "قدم عروض أسعارك للعملاء الذين يطلبون كميات كبيرة" : "Submit offers for bulk requests")</p>
+        <h2 class="fw-bold mb-1" style="color:var(--text-main)">@(isAr ? "فرص البيع (طلبات خاصة)" : "Buying Requests")</h2>
+        <p class="text-muted small mb-0">@(isAr ? "قدم عروض أسعارك للعملاء الذين يطلبون كميات كبيرة" : "Submit offers for bulk requests")</p>
     </div>
 </div>
 
-<div class="row g-4">
+<div class="row g-4 fade-up">
     @if (!Model.Any())
     {
-        <div class="col-12 text-center py-5">
-            <i class="fas fa-search-dollar fa-3x text-muted mb-3 opacity-50"></i>
-            <p class="text-muted">@(isAr ? "لا توجد طلبات شراء متاحة حالياً." : "No active requests found.")</p>
+        <div class="col-12">
+            <div class="text-center py-5 rounded-4 border border-dashed" style="border-color: var(--border-color)!important;">
+                <div class="text-muted opacity-25 mb-3"><i class="fas fa-search-dollar fa-4x"></i></div>
+                <h4 class="text-muted">@(isAr ? "لا توجد طلبات شراء متاحة حالياً." : "No active requests found.")</h4>
+                <p class="text-muted small">عد لاحقاً للتحقق من الفرص الجديدة.</p>
+            </div>
         </div>
     }
 
     @foreach (var item in Model)
     {
         <div class="col-md-6 col-lg-4">
-            <div class="card h-100 border-0 shadow-sm hover-shadow transition">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between mb-3">
-                        <span class="badge bg-info text-dark">@(isAr ? "طلب شراء" : "Request")</span>
-                        <small class="text-muted">@item.RequestDate.ToString("dd/MM/yyyy")</small>
-                    </div>
+            <div class="opp-card">
+                <span class="opp-badge">@(isAr ? "جديد" : "New")</span>
 
-                    <h5 class="card-title fw-bold text-dark">@item.ProductName</h5>
+                <div class="opp-body">
+                    <small class="text-muted"><i class="far fa-calendar-alt me-1"></i> @item.RequestDate.ToString("dd MMM yyyy")</small>
+                    <h5 class="opp-title">@item.ProductName</h5>
 
-                    <div class="d-flex justify-content-between align-items-center my-3 bg-light p-2 rounded">
+                    <div class="opp-info-box">
                         <div class="text-center">
-                            <small class="text-muted d-block">@(isAr ? "الكمية" : "Qty")</small>
-                            <strong class="text-primary">@item.TargetQuantity</strong>
+                            <span class="opp-lbl">@(isAr ? "الكمية المطلوبة" : "Qty")</span>
+                            <span class="opp-val text-primary">@item.TargetQuantity</span>
                         </div>
-                        <div class="vr"></div>
+                        <div class="vr" style="opacity:0.1"></div>
                         <div class="text-center">
-                            <small class="text-muted d-block">@(isAr ? "السعر المستهدف" : "Target Price")</small>
-                            <strong class="text-success">@item.DealPrice.ToString("N0")</strong>
+                            <span class="opp-lbl">@(isAr ? "السعر المستهدف" : "Target Price")</span>
+                            <span class="opp-val text-success">@item.DealPrice.ToString("N0")</span>
                         </div>
                     </div>
 
-                    <div class="mb-3 small text-muted">
-                        <i class="fas fa-map-marker-alt me-1 text-danger"></i> @item.Location
+                    <div class="d-flex align-items-center gap-2 text-muted small">
+                        <i class="fas fa-map-marker-alt text-danger"></i>
+                        <span class="text-truncate">@item.Location</span>
                     </div>
+                </div>
 
-                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-primary w-100">
-                        @(isAr ? "تفاصيل وتقديم عرض" : "View & Offer")
+                <div class="opp-footer">
+                    <a asp-action="Details" asp-route-id="@item.Id" class="btn-offer">
+                        @(isAr ? "تفاصيل وتقديم عرض" : "View & Offer") <i class="fas @(isAr ? "fa-arrow-left" : "fa-arrow-right") ms-1"></i>
                     </a>
                 </div>
             </div>

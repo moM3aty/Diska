@@ -27,7 +27,7 @@ namespace Diska.Areas.Merchant.Controllers
         public async Task<IActionResult> Index()
         {
             var requests = await _context.DealRequests
-                .Where(r => r.Status == "Approved") // فقط الطلبات المعتمدة
+                .Where(r => r.Status == "Approved") // فقط الطلبات المعتمدة من الإدارة
                 .OrderByDescending(r => r.RequestDate)
                 .ToListAsync();
 
@@ -38,7 +38,16 @@ namespace Diska.Areas.Merchant.Controllers
         public async Task<IActionResult> Details(int id)
         {
             var request = await _context.DealRequests.FindAsync(id);
+            // يجب أن يكون الطلب معتمد
             if (request == null || request.Status != "Approved") return NotFound();
+
+            // التحقق مما إذا كان التاجر قد قدم عرضاً مسبقاً
+            var user = await _userManager.GetUserAsync(User);
+            var existingOffer = await _context.MerchantOffers
+                .FirstOrDefaultAsync(o => o.DealRequestId == id && o.MerchantId == user.Id);
+
+            ViewBag.ExistingOffer = existingOffer;
+
             return View(request);
         }
 
@@ -51,6 +60,13 @@ namespace Diska.Areas.Merchant.Controllers
             var request = await _context.DealRequests.FindAsync(requestId);
 
             if (request == null || request.Status != "Approved") return NotFound();
+
+            // التحقق من عدم التكرار
+            if (await _context.MerchantOffers.AnyAsync(o => o.DealRequestId == requestId && o.MerchantId == user.Id))
+            {
+                TempData["Error"] = "لقد قمت بتقديم عرض لهذا الطلب مسبقاً.";
+                return RedirectToAction(nameof(Details), new { id = requestId });
+            }
 
             var offer = new MerchantOffer
             {
@@ -66,7 +82,7 @@ namespace Diska.Areas.Merchant.Controllers
             await _context.SaveChangesAsync();
 
             // إشعار العميل
-            await _notificationService.NotifyUserAsync(request.UserId, "عرض جديد", $"التاجر {user.ShopName} قدم عرضاً على طلبك.", "Offer", $"/Request/Details/{requestId}");
+            await _notificationService.NotifyUserAsync(request.UserId, "عرض سعر جديد", $"تلقيت عرضاً جديداً من {user.ShopName} بقيمة {price} ج.م", "Offer", $"/Request/Details/{requestId}");
 
             TempData["Success"] = "تم تقديم عرضك بنجاح.";
             return RedirectToAction(nameof(Index));

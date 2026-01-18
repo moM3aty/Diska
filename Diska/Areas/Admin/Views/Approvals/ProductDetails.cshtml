@@ -1,0 +1,402 @@
+﻿@model Diska.Models.Product
+@using System.Globalization
+@{
+    ViewData["Title"] = "مراجعة المنتج";
+    Layout = "_AdminLayout";
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+
+    // حساب هامش الربح (مجرد مؤشر للأدمن)
+    decimal profitMargin = Model.Price - Model.CostPrice;
+    string profitClass = profitMargin > 0 ? "text-success" : "text-danger";
+}
+
+<style>
+    /* --- Admin Preview Styles --- */
+    .preview-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        box-shadow: var(--shadow-sm);
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+
+    /* Gallery */
+    .preview-img-main {
+        width: 100%;
+        height: 400px;
+        object-fit: contain;
+        border-radius: 12px;
+        background: var(--bg-body);
+        border: 1px solid var(--border-color);
+        margin-bottom: 15px;
+    }
+
+    .thumb-row {
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        padding-bottom: 5px;
+    }
+
+    .thumb {
+        width: 70px;
+        height: 70px;
+        border-radius: 8px;
+        border: 2px solid transparent;
+        cursor: pointer;
+        object-fit: cover;
+        background: var(--bg-body);
+    }
+
+        .thumb:hover, .thumb.active {
+            border-color: var(--primary-color);
+        }
+
+    /* Info */
+    .prod-title {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: var(--text-main);
+        margin-bottom: 5px;
+    }
+
+    .prod-sku {
+        color: var(--text-muted);
+        font-family: monospace;
+        font-size: 0.9rem;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 20px;
+        margin: 25px 0;
+        background: var(--bg-body);
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+    }
+
+    .info-item label {
+        display: block;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin-bottom: 5px;
+        font-weight: 600;
+    }
+
+    .info-item span {
+        font-weight: 700;
+        color: var(--text-main);
+        font-size: 1.1rem;
+    }
+
+    .desc-box {
+        background: var(--bg-body);
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        color: var(--text-main);
+        line-height: 1.7;
+        min-height: 150px;
+    }
+
+    /* Colors */
+    .color-dot {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        border: 2px solid var(--bg-card);
+        box-shadow: 0 0 0 1px var(--border-color);
+        display: inline-block;
+        margin-inline-end: 5px;
+    }
+
+    /* Specs Table */
+    .specs-table {
+        width: 100%;
+        font-size: 0.95rem;
+    }
+
+        .specs-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .specs-table tr:last-child td {
+            border-bottom: none;
+        }
+
+    .specs-label {
+        font-weight: 600;
+        color: var(--text-muted);
+        width: 40%;
+    }
+
+    .specs-val {
+        font-weight: 700;
+        color: var(--text-main);
+    }
+
+    /* SEO Badge */
+    .seo-badge {
+        background: #f0f9ff;
+        color: #0284c7;
+        border: 1px solid #bae6fd;
+        padding: 5px 10px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-family: monospace;
+        display: block;
+        margin-top: 5px;
+    }
+
+    /* Action Bar */
+    .action-bar {
+        position: sticky;
+        bottom: 20px;
+        background: var(--bg-card);
+        padding: 15px 30px;
+        border-radius: 50px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        border: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 1000;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    [data-bs-theme="dark"] .action-bar {
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    }
+
+    /* Tabs Override */
+    .nav-tabs .nav-link {
+        color: var(--text-muted);
+        border: none;
+        font-weight: 600;
+    }
+
+        .nav-tabs .nav-link.active {
+            color: var(--primary-color);
+            background: transparent;
+            border-bottom: 2px solid var(--primary-color);
+        }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4 fade-up">
+    <div>
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill mb-2 px-3">
+            <i class="fas @(isAr ? "fa-arrow-right" : "fa-arrow-left")"></i> @(isAr ? "عودة للموافقات" : "Back to Approvals")
+        </a>
+        <h2 class="fw-bold mb-0 text-main">مراجعة المنتج <span class="text-primary">#@Model.Id</span></h2>
+    </div>
+    <div>
+        <span class="badge bg-warning text-dark fs-6 px-3 py-2 border border-warning me-2">@Model.Status</span>
+    </div>
+</div>
+
+<div class="row g-4 fade-up">
+    <!-- Left Column: Images & Technical Specs -->
+    <div class="col-lg-5">
+        <!-- Gallery -->
+        <div class="preview-card">
+            <h5 class="fw-bold mb-3 text-main"><i class="fas fa-images me-2 text-primary"></i> المعرض</h5>
+            <img id="mainPreview" src="~/@Model.ImageUrl" class="preview-img-main" onerror="this.src='/images/default.png'">
+            <div class="thumb-row">
+                <img src="~/@Model.ImageUrl" class="thumb active" onclick="setMainImage(this.src, this)">
+                @if (Model.Images != null)
+                {
+                    foreach (var img in Model.Images)
+                    {
+                        <img src="~/@img.ImageUrl" class="thumb" onclick="setMainImage(this.src, this)">
+                    }
+                }
+            </div>
+        </div>
+
+        <!-- Technical Specs -->
+        <div class="preview-card">
+            <h5 class="fw-bold mb-3 text-main"><i class="fas fa-ruler-combined me-2 text-info"></i> المواصفات الفنية</h5>
+            <table class="specs-table">
+                <tr>
+                    <td class="specs-label">الوزن</td>
+                    <td class="specs-val">@Model.Weight Kg</td>
+                </tr>
+                <tr>
+                    <td class="specs-label">الكمية في الكرتونة</td>
+                    <td class="specs-val">@Model.UnitsPerCarton</td>
+                </tr>
+                <tr>
+                    <td class="specs-label">الباركود</td>
+                    <td class="specs-val">@Model.Barcode</td>
+                </tr>
+               
+            </table>
+        </div>
+
+        <!-- SEO Info -->
+        <div class="preview-card">
+            <h5 class="fw-bold mb-3 text-main"><i class="fas fa-search me-2 text-success"></i> بيانات SEO</h5>
+            <div class="mb-3">
+                <label class="small text-muted fw-bold">Meta Title</label>
+                <div class="text-main">@Model.MetaTitle</div>
+            </div>
+            <div class="mb-3">
+                <label class="small text-muted fw-bold">Meta Description</label>
+                <div class="text-main small">@Model.MetaDescription</div>
+            </div>
+            <div>
+                <label class="small text-muted fw-bold">Slug (URL)</label>
+                <code class="seo-badge">@Model.Slug</code>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Main Info & Pricing -->
+    <div class="col-lg-7">
+        <div class="preview-card h-100">
+            <!-- Header Info -->
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                    <h1 class="prod-title">@Model.Name</h1>
+                    <h4 class="text-muted fs-5 fw-normal">@Model.NameEn</h4>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-light text-dark border px-3 py-2">@Model.Brand</span>
+                </div>
+            </div>
+            <div class="prod-sku mb-4">SKU: @Model.SKU</div>
+
+            <!-- Pricing Grid -->
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>سعر البيع (للجمهور)</label>
+                    <span class="text-success fs-4">@Model.Price.ToString("N0") <small class="fs-6">ج.م</small></span>
+                </div>
+                <div class="info-item">
+                    <label>السعر قبل الخصم</label>
+                    <span class="text-decoration-line-through text-muted">@(Model.OldPrice.HasValue? Model.OldPrice.Value.ToString("N0") : "-")</span>
+                </div>
+                <div class="info-item">
+                    <label>سعر التكلفة (للتاجر)</label>
+                    <span class="text-danger">@Model.CostPrice.ToString("N0") ج.م</span>
+                </div>
+                <div class="info-item">
+                    <label>هامش الربح المتوقع</label>
+                    <span class="@profitClass fw-bold">@profitMargin.ToString("N0") ج.م</span>
+                </div>
+            </div>
+
+            <!-- Merchant & Stock Grid -->
+            <div class="info-grid mt-0">
+                <div class="info-item">
+                    <label>التاجر</label>
+                    <span class="text-primary cursor-pointer" title="عرض ملف التاجر">
+                        <i class="fas fa-store me-1"></i> @Model.Merchant?.ShopName
+                    </span>
+                    <div class="small text-muted mt-1">@Model.Merchant?.PhoneNumber</div>
+                </div>
+                <div class="info-item">
+                    <label>القسم</label>
+                    <span>@Model.Category?.Name</span>
+                </div>
+                <div class="info-item">
+                    <label>المخزون الحالي</label>
+                    @if (Model.StockQuantity <= Model.LowStockThreshold)
+                    {
+                        <span class="text-warning"><i class="fas fa-exclamation-triangle"></i> @Model.StockQuantity</span>
+                    }
+                    else
+                    {
+                        <span class="text-success">@Model.StockQuantity</span>
+                    }
+                </div>
+                <div class="info-item">
+                    <label>حد النواقص</label>
+                    <span>@Model.LowStockThreshold</span>
+                </div>
+            </div>
+
+            <!-- Colors -->
+            <div class="mb-4">
+                <label class="fw-bold text-muted mb-2">الألوان المتوفرة:</label>
+                <div>
+                    @if (Model.ProductColors != null && Model.ProductColors.Any())
+                    {
+                        foreach (var color in Model.ProductColors)
+                        {
+                            <span class="color-dot" style="background-color: @color.ColorHex" title="@color.ColorName"></span>
+                        }
+                    }
+                    else
+                    {
+                        <span class="text-muted small border px-2 py-1 rounded">Standard (No Variants)</span>
+                    }
+                </div>
+            </div>
+
+            <!-- Description Tabs -->
+            <div class="mt-4">
+                <ul class="nav nav-tabs mb-3" id="descTab" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#descAr" type="button">الوصف (عربي)</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#descEn" type="button">الوصف (إنجليزي)</button>
+                    </li>
+                </ul>
+                <div class="tab-content desc-box">
+                    <div class="tab-pane fade show active" id="descAr">
+                        @Html.Raw(string.IsNullOrEmpty(Model.Description) ? "<span class='text-muted'>لا يوجد وصف</span>" : Model.Description)
+                    </div>
+                    <div class="tab-pane fade" id="descEn">
+                        <div dir="ltr">
+                            @Html.Raw(string.IsNullOrEmpty(Model.DescriptionEn) ? "<span class='text-muted'>No description</span>" : Model.DescriptionEn)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Action Bar -->
+<div class="action-bar fade-up">
+    <div class="d-flex align-items-center gap-3">
+        <div class="bg-info bg-opacity-10 text-info rounded-circle p-2" style="width:45px;height:45px;display:flex;align-items:center;justify-content:center;">
+            <i class="fas fa-shield-alt fa-lg"></i>
+        </div>
+        <div class="d-none d-sm-block">
+            <div class="fw-bold text-main">قرار الموافقة</div>
+            <small class="text-muted">مراجعة بيانات المنتج قبل النشر</small>
+        </div>
+    </div>
+    <div class="d-flex gap-2">
+        <form asp-action="RejectProduct" method="post" onsubmit="return confirm('هل أنت متأكد من رفض المنتج؟');">
+            <input type="hidden" name="id" value="@Model.Id" />
+            <button class="btn btn-danger fw-bold px-4 rounded-pill">
+                <i class="fas fa-times me-2"></i> رفض المنتج
+            </button>
+        </form>
+        <form asp-action="ApproveProduct" method="post">
+            <input type="hidden" name="id" value="@Model.Id" />
+            <button class="btn btn-success fw-bold px-5 rounded-pill shadow-lg">
+                <i class="fas fa-check me-2"></i> موافقة ونشر
+            </button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function setMainImage(src, el) {
+            document.getElementById('mainPreview').src = src;
+            document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+        }
+    </script>
+}

@@ -82,7 +82,7 @@ namespace Diska.Areas.Admin.Controllers
 
                 // إرسال إشعار للنظام
                 await _notificationService.NotifyUserAsync(product.MerchantId, msgTitle, msgBody, "Alert", "/Merchant/Index");
-
+                await _context.SaveChangesAsync();
                 TempData["Success"] = $"تم إرسال طلب التوريد للتاجر {product.Merchant.ShopName}.";
             }
             else

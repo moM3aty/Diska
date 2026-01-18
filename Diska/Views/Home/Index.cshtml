@@ -12,11 +12,7 @@
     var categories = ViewBag.Categories as IEnumerable<Diska.Models.Category>;
     var banners = ViewBag.Banners as IEnumerable<Diska.Models.Banner>;
 
-    // ألوان خلفيات وأيقونات للأقسام (للتصميم)
-    string[] catColors = { "#e0f2fe", "#fef3c7", "#dcfce7", "#fee2e2", "#f3e8ff", "#ffedd5" };
-    string[] iconColors = { "#0284c7", "#d97706", "#16a34a", "#dc2626", "#9333ea", "#ea580c" };
-    int discount = 0;
-    // جلب قائمة المفضلة للمستخدم الحالي لتلوين القلب
+    // Wishlist Logic
     var user = await UserManager.GetUserAsync(User);
     var wishlistIds = user != null
         ? _context.WishlistItems.Where(w => w.UserId == user.Id).Select(w => w.ProductId).ToList()
@@ -24,11 +20,76 @@
 }
 
 <style>
+    /* =========================================
+           PREMIUM HOME STYLES (Light & Dark)
+           ========================================= */
+    :root {
+        /* Base Colors */
+        --home-bg: #f8fafc;
+        --home-card-bg: #ffffff;
+        --home-text-main: #0f172a;
+        --home-text-muted: #64748b;
+        --home-border: #e2e8f0;
+        --home-primary: #0F172A;
+        --home-accent: #FACC15;
+        --home-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
+        --home-card-hover-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
+        /* Category Colors (Light) */
+        --cat-bg-0: #e0f2fe;
+        --cat-icon-0: #0284c7;
+        --cat-bg-1: #fef3c7;
+        --cat-icon-1: #d97706;
+        --cat-bg-2: #dcfce7;
+        --cat-icon-2: #16a34a;
+        --cat-bg-3: #fee2e2;
+        --cat-icon-3: #dc2626;
+        --cat-bg-4: #f3e8ff;
+        --cat-icon-4: #9333ea;
+        --cat-bg-5: #ffedd5;
+        --cat-icon-5: #ea580c;
+        --cat-special-bg: #fff7ed;
+        --cat-special-icon: #ea580c;
+    }
+
+    [data-bs-theme="dark"] {
+        /* Dark Theme Overrides */
+        --home-bg: #020617; /* Deep Dark */
+        --home-card-bg: #1e293b; /* Slate 800 */
+        --home-text-main: #f8fafc; /* Light Text */
+        --home-text-muted: #94a3b8; /* Muted Text */
+        --home-border: rgba(255, 255, 255, 0.08);
+        --home-primary: #f8fafc; /* Headings become white */
+        --home-accent: #FACC15; /* Gold remains */
+        --home-shadow: 0 10px 40px -5px rgba(0, 0, 0, 0.4);
+        --home-card-hover-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.6);
+        /* Category Colors (Dark - More muted/transparent) */
+        --cat-bg-0: rgba(14, 165, 233, 0.15);
+        --cat-icon-0: #38bdf8;
+        --cat-bg-1: rgba(245, 158, 11, 0.15);
+        --cat-icon-1: #fbbf24;
+        --cat-bg-2: rgba(34, 197, 94, 0.15);
+        --cat-icon-2: #4ade80;
+        --cat-bg-3: rgba(239, 68, 68, 0.15);
+        --cat-icon-3: #f87171;
+        --cat-bg-4: rgba(168, 85, 247, 0.15);
+        --cat-icon-4: #c084fc;
+        --cat-bg-5: rgba(234, 88, 12, 0.15);
+        --cat-icon-5: #fb923c;
+        --cat-special-bg: rgba(251, 146, 60, 0.15);
+        --cat-special-icon: #fb923c;
+    }
+
+    body {
+        background-color: var(--home-bg);
+        transition: background-color 0.3s ease;
+    }
+
     /* --- Banner Slider Styles --- */
     .hero-section {
         position: relative;
-        margin-bottom: 50px;
-        overflow: hidden; /* لمنع ظهور السكرول أثناء الحركة */
+        margin-bottom: 60px;
+        overflow: hidden;
+        padding-top: 20px;
     }
 
     .banner-slide {
@@ -39,15 +100,54 @@
         .banner-slide.active {
             display: block;
         }
-
     @@keyframes fadeEffect {
-        from {
-            opacity: 0.4;
-        }
+        from
 
-        to {
-            opacity: 1;
-        }
+    {
+        opacity: 0.4;
+    }
+
+    to {
+        opacity: 1;
+    }
+
+    }
+
+    .banner-card {
+        background: linear-gradient(135deg, #0F172A 0%, #1e293b 100%); /* Always dark for contrast with white text */
+        border-radius: 24px;
+        padding: 50px 60px;
+        color: #fff;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--home-shadow);
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    [data-bs-theme="dark"] .banner-card {
+        background: linear-gradient(135deg, #020617 0%, #1e293b 100%);
+    }
+
+    /* Decorative Circle */
+    .banner-card::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 500px;
+        height: 500px;
+        background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+
+    .banner-content {
+        z-index: 2;
+        flex: 1;
+        text-align: right;
     }
 
     html[dir="ltr"] .banner-content {
@@ -59,33 +159,57 @@
     }
 
     .tag {
-        background: #ef4444;
-        padding: 5px 15px;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: bold;
+        background: rgba(239, 68, 68, 0.2);
+        padding: 6px 16px;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 800;
         color: #fff;
+        border: 1px solid rgba(239, 68, 68, 0.4);
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
 
     .main-headline {
-        font-size: 2.5rem;
-        font-weight: 800;
+        font-size: 2.8rem;
+        font-weight: 900;
         color: #fff;
         margin-bottom: 15px;
-        line-height: 1.3;
+        line-height: 1.2;
+        text-shadow: 0 4px 20px rgba(0,0,0,0.3);
     }
 
     .slogan-desc {
         font-size: 1.1rem;
         color: #cbd5e1;
-        margin-bottom: 25px;
+        margin-bottom: 30px;
         max-width: 500px;
+        line-height: 1.6;
     }
 
-    /* Slider Dots */
+    .banner-image {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        z-index: 2;
+        position: relative;
+    }
+
+        .banner-image img {
+            max-width: 500px;
+            object-fit: contain;
+            transform: rotate(-5deg) scale(1);
+            transition: transform 0.5s ease;
+            filter: drop-shadow(0 20px 30px rgba(0,0,0,0.4));
+        }
+
+    .banner-card:hover .banner-image img {
+        transform: rotate(0) scale(1.05);
+    }
+
     .slider-dots {
         position: absolute;
-        bottom: 20px;
+        bottom: 40px;
         left: 50%;
         transform: translateX(-50%);
         display: flex;
@@ -94,41 +218,430 @@
     }
 
     .dot {
-        height: 10px;
-        width: 10px;
-        background-color: rgba(255,255,255,0.3);
-        border-radius: 50%;
+        height: 6px;
+        width: 6px;
+        background-color: rgba(255,255,255,0.2);
+        border-radius: 4px;
         cursor: pointer;
         transition: 0.3s;
-        margin-top: -30px;
     }
 
         .dot.active {
-            background-color: #FACC15;
-            transform: scale(1.2);
+            background-color: var(--home-accent);
+            width: 25px;
         }
 
-    /* Mobile Responsive Fixes */
-    @@media (max-width: 900px) {
-        .banner-card {
-            flex-direction: column-reverse;
-            text-align: center;
-            padding: 30px 20px;
-        }
+    /* --- Categories Section --- */
+    .categories-section {
+        padding: 30px 0;
+    }
 
-        .banner-content {
-            text-align: center;
-        }
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
 
-        .banner-image img {
-            width: 80%;
-            transform: rotate(0);
-            margin-bottom: 20px;
-        }
-
-        .main-headline {
+        .section-header h3 {
             font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--home-text-main);
+            margin: 0;
         }
+
+    .view-all {
+        color: var(--home-primary);
+        font-weight: 700;
+        text-decoration: none;
+        transition: 0.2s;
+        font-size: 0.95rem;
+    }
+
+        .view-all:hover {
+            color: var(--home-accent);
+            transform: translateX(isAr ? -5px : 5px);
+        }
+
+    .categories-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+        gap: 20px;
+        text-align: center;
+    }
+
+    .cat-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-decoration: none;
+        transition: 0.3s;
+        padding:10px;
+        border-radius:25px;
+    }
+
+        .cat-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .cat-item .icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            transition: 0.3s;
+            /* Dynamic colors handled by inline styles with CSS vars */
+        }
+
+        .cat-item span {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--home-text-main);
+        }
+
+    /* --- Products Section --- */
+    .products-section {
+        padding: 50px 0;
+    }
+
+    .products-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 30px;
+    }
+
+    .product-card {
+        background: var(--home-card-bg);
+        border: 1px solid var(--home-border);
+        border-radius: 20px;
+        padding: 15px;
+        position: relative;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+        .product-card:hover {
+            box-shadow: var(--home-card-hover-shadow);
+            border-color: var(--home-accent);
+            transform: translateY(-8px);
+        }
+
+    /* Product Badges */
+    .badge-container {
+        position: absolute;
+        top: 15px; @(isAr
+                ? "right" : "left") : 15px;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .badge-bestseller, .badge-discount {
+        font-size: 0.7rem;
+        font-weight: 800;
+        padding: 4px 10px;
+        border-radius: 50px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        text-align: center;
+        color: #fff;
+    }
+
+    .badge-bestseller {
+        background: linear-gradient(135deg, #FFD700, #FDB931);
+    }
+
+    .badge-discount {
+        background: #ef4444;
+    }
+
+    /* Fav Button */
+    .fav-btn {
+        position: absolute;
+        top: 15px; @(isAr
+                ? "left" : "right") : 15px;
+        width: 40px;
+        height: 40px;
+        background: var(--home-card-bg);
+        border: 1px solid var(--home-border);
+        border-radius: 50%;
+        color: #94a3b8;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 3;
+        transition: all 0.2s;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+
+        .fav-btn:hover {
+            transform: scale(1.1);
+            color: #ef4444;
+        }
+
+        .fav-btn.active {
+            color: #ef4444;
+            border-color: #ef4444;
+            background: #fff0f0;
+        }
+
+    [data-bs-theme="dark"] .fav-btn.active {
+        background: rgba(239, 68, 68, 0.1);
+    }
+
+    /* Product Image */
+    .product-img {
+        height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 15px;
+        background: #fff; /* Always white for product visibility */
+        border-radius: 12px;
+        padding: 20px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Ensure image bg is white even in dark mode for clean product display */
+    [data-bs-theme="dark"] .product-img {
+        background: transparent;
+    }
+
+    .product-img img {
+        max-height: 100%;
+        max-width: 100%;
+        object-fit: contain;
+        transition: transform 0.5s ease;
+    }
+
+    .product-card:hover .product-img img {
+        transform: scale(1.08);
+    }
+
+    /* Info */
+    .product-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .pro-cat {
+        font-size: 0.75rem;
+        color: var(--home-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 5px;
+        font-weight: 700;
+    }
+
+    .product-info h4 {
+        font-size: 1rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+        color: var(--home-text-main);
+        height: 2.8em;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        transition: color 0.2s;
+    }
+
+    .product-card:hover h4 {
+        color: #4f46e5;
+    }
+
+    [data-bs-theme="dark"] .product-card:hover h4 {
+        color: #818cf8;
+    }
+
+    .pricing {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        margin-bottom: 15px;
+    }
+
+    .current-price {
+        font-weight: 900;
+        color: var(--home-text-main);
+        font-size: 1.2rem;
+    }
+
+        .current-price small {
+            font-size: 0.75rem;
+            color: var(--home-text-muted);
+            font-weight: 600;
+        }
+
+    .old-price {
+        text-decoration: line-through;
+        color: var(--home-text-muted);
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    /* Meta & Actions */
+    .product-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.8rem;
+        color: var(--home-text-muted);
+        margin-bottom: 15px;
+        background: rgba(0,0,0,0.02);
+        padding: 6px 10px;
+        border-radius: 8px;
+    }
+
+    [data-bs-theme="dark"] .product-meta {
+        background: rgba(255,255,255,0.03);
+    }
+
+    .stock-info {
+        font-weight: 700;
+        color: #16a34a;
+    }
+
+        .stock-info.low {
+            color: #ef4444;
+        }
+
+    .add-to-cart {
+        margin-top: auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .qty-input-group {
+        display: flex;
+        align-items: center;
+        border: 1px solid var(--home-border);
+        border-radius: 50px;
+        overflow: hidden;
+        background: var(--home-bg);
+    }
+
+    .qty-btn {
+        background: transparent;
+        border: none;
+        width: 30px;
+        height: 35px;
+        font-weight: bold;
+        color: var(--home-text-main);
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+        .qty-btn:hover {
+            background: rgba(0,0,0,0.05);
+            color: var(--home-primary);
+        }
+
+    [data-bs-theme="dark"] .qty-btn:hover {
+        background: rgba(255,255,255,0.1);
+    }
+
+    .qty-val {
+        width: 35px;
+        text-align: center;
+        border: none;
+        background: transparent;
+        font-weight: 700;
+        color: var(--home-text-main);
+        outline: none;
+        -moz-appearance: textfield;
+        font-size: 0.9rem;
+    }
+
+    .add-btn {
+        background: var(--home-primary);
+        color: #fff;
+        border: none;
+        border-radius: 50px;
+        padding: 0 20px;
+        height: 40px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        flex-grow: 1;
+        transition: 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    [data-bs-theme="dark"] .add-btn {
+        background: #FACC15;
+        color: #0F172A;
+    }
+
+    .add-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+
+    .add-btn.bg-secondary {
+        background: var(--home-border) !important;
+        color: var(--home-text-muted) !important;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
+
+    /* Button Primary (Hero) */
+    .btn.primary {
+        background: var(--home-accent);
+        color: #000;
+        padding: 12px 30px;
+        border-radius: 50px;
+        font-weight: 800;
+        display: inline-block;
+        text-decoration: none;
+        transition: 0.3s;
+        box-shadow: 0 5px 15px rgba(250, 204, 21, 0.4);
+    }
+
+        .btn.primary:hover {
+            transform: translateY(-3px);
+            background: #fff;
+            color: #000;
+        }
+
+    /* Responsive */
+    @@media (max-width: 900px) {
+        .banner-card
+
+    {
+        flex-direction: column-reverse;
+        text-align: center;
+        padding: 40px 20px;
+    }
+
+    .banner-content {
+        text-align: center;
+    }
+
+    .banner-image img {
+        margin-bottom: 20px;
+        width: 100%;
+        transform: rotate(0);
+    }
+
+    .main-headline {
+        font-size: 2rem;
+    }
+
     }
 </style>
 
@@ -139,14 +652,12 @@
         int slideIndex = 0;
         foreach (var banner in banners)
         {
-            // منطق توليد الرابط الصحيح بناءً على نوع البنر
             string href = "#";
             if (banner.LinkType == "External") { href = banner.LinkId; }
             else if (banner.LinkType == "Product") { href = Url.Action("Details", "Product", new { id = banner.LinkId }); }
             else if (banner.LinkType == "Category") { href = Url.Action("Category", "Product", new { id = banner.LinkId }); }
-            else if (banner.LinkType == "Deal") { href = Url.Action("Deals", "Home"); }
+            else if (banner.LinkType == "Deal") { href = Url.Action("Deals", "Index"); }
 
-            // استخدام صورة الديسك توب كصورة أساسية (مع إصلاح اسم الخاصية)
             string imgSrc = !string.IsNullOrEmpty(banner.ImageDesktop) ? banner.ImageDesktop : "images/banner-img.png";
 
             <div class="banner-slide @(slideIndex == 0 ? "active" : "")" id="slide-@slideIndex">
@@ -177,12 +688,12 @@
     }
     else
     {
-        <!-- Fallback Banner (If no banners exist) -->
+        <!-- Fallback Banner -->
         <div class="banner-card">
             <div class="banner-content">
                 <span class="tag">HOT</span>
-                <h2>@(isAr ? "عروض حصرية للجملة" : "Exclusive Wholesale Deals")</h2>
-                <p>@(isAr ? "تسوق الآن واحصل على أفضل الأسعار" : "Shop now for the best prices")</p>
+                <h2 class="main-headline">@(isAr ? "عروض حصرية للجملة" : "Exclusive Wholesale Deals")</h2>
+                <p class="slogan-desc">@(isAr ? "تسوق الآن واحصل على أفضل الأسعار" : "Shop now for the best prices")</p>
                 <a href="#products" class="btn primary">@(isAr ? "تسوق الآن" : "Shop Now")</a>
             </div>
             <div class="banner-image">
@@ -207,15 +718,15 @@
                 @foreach (var cat in categories)
                 {
                     <a asp-controller="Product" asp-action="Index" asp-route-id="@cat.Id" class="cat-item">
-                        <div class="icon" style="background-color: @catColors[i % 6]; color: @iconColors[i % 6]; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+                        <div class="icon" style="background-color: var(--cat-bg-@(i % 6)); color: var(--cat-icon-@(i % 6)); box-shadow: var(--home-shadow);">
                             <i class="@(cat.IconClass ?? "fas fa-box")"></i>
                         </div>
                         <span>@(isAr? cat.Name: cat.NameEn)</span>
                     </a>
                     i++;
                 }
-                <a asp-controller="Home" asp-action="Deals" class="cat-item">
-                    <div class="icon" style="background-color: #ffedd5; color: #ea580c;">
+                <a asp-controller="Deals" asp-action="Index" class="cat-item">
+                    <div class="icon" style="background-color: var(--cat-special-bg); color: var(--cat-special-icon); box-shadow: var(--home-shadow);">
                         <i class="fas fa-fire"></i>
                     </div>
                     <span>@(isAr ? "عروض خاصة" : "Special Offers")</span>
@@ -226,7 +737,7 @@
 }
 
 <!-- 3. Featured Products -->
-<section id="products" class="products-section bg-light">
+<section id="products" class="products-section">
     <div class="container">
         <div class="section-header">
             <h3>@(isAr ? "أحدث المنتجات" : "New Arrivals")</h3>
@@ -240,35 +751,30 @@
                 {
                     bool isBestSeller = item.StockQuantity > 0 && item.StockQuantity < 20;
                     bool isLiked = wishlistIds.Contains(item.Id);
+                    int discountProd = 0;
 
                     <div class="product-card" data-id="@item.Id" data-stock="@item.StockQuantity">
 
                         <!-- Badges & Wishlist -->
-                        <div class="badge-container" style="position:absolute; top:15px; @(isAr ? "right" : "left"):15px; z-index:2; display:flex; flex-direction:column; gap:5px;">
+                        <div class="badge-container">
                             @if (isBestSeller)
                             {
-                                <span class="badge-bestseller" style="background:linear-gradient(135deg, #FFD700, #FDB931); color:#fff; padding:4px 10px; border-radius:20px; font-size:0.7rem; font-weight:800; box-shadow:0 2px 5px rgba(0,0,0,0.1);">
+                                <span class="badge-bestseller">
                                     <i class="fas fa-crown"></i> @(isAr ? "الأكثر مبيعاً" : "Best Seller")
                                 </span>
                             }
-                            
+
                             @if (item.OldPrice.HasValue && item.OldPrice > item.Price)
                             {
-                                
-                                if (item.OldPrice.HasValue && item.OldPrice > item.Price)
-                                {
-                                    discount = (int)Math.Round(((item.OldPrice.Value - item.Price) / item.OldPrice.Value) * 100);
-                                }
-                                <span class="badge-discount" style="text-align:center;background:#ef4444; color:#fff; padding:4px 10px; border-radius:20px; font-size:0.7rem; font-weight:800;">
-                                    @(isAr ? "خصم" : "Sale") %@discount
+                                discountProd = (int)Math.Round(((item.OldPrice.Value - item.Price) / item.OldPrice.Value) * 100);
+                                <span class="badge-discount">
+                                    @(isAr ? "خصم" : "Sale") @discountProd%
                                 </span>
                             }
                         </div>
 
-                        <!-- زر المفضلة (تم وضعه يدوياً ليتوافق مع الستايل) -->
-                        <button class="fav-btn @(isLiked ? "active" : "")" onclick="toggleWishlist(@item.Id, this)"
-                                style="position:absolute; top:15px; @(isAr ? "left" : "right"):15px; width:35px; height:35px; background:rgba(255,255,255,0.9); border-radius:50%; border:1px solid #e2e8f0; color:@(isLiked ? "#ef4444" : "#94a3b8"); display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:3; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
-                            <i class="@(isLiked ? "fas" : "far") fa-heart"></i>
+                        <button class="fav-btn @(isLiked ? "active" : "")" onclick="toggleWishlist(@item.Id, this)">
+                            <i class="fas @(isLiked ? "fa-heart" : "fa-heart")"></i>
                         </button>
 
                         <!-- Product Image -->
@@ -278,7 +784,7 @@
 
                         <!-- Product Info -->
                         <div class="product-info">
-                            <span class="pro-cat" style="font-size:0.75rem; color:#64748b;">@(isAr? item.Category?.Name : item.Category?.NameEn)</span>
+                            <span class="pro-cat">@(isAr? item.Category?.Name : item.Category?.NameEn)</span>
 
                             <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id" style="text-decoration:none; color:inherit;">
                                 <h4>@(isAr? item.Name: item.NameEn)</h4>
@@ -307,12 +813,24 @@
 
                             <!-- Actions -->
                             <div class="add-to-cart">
-                                <button onclick="updateCardQty(this, -1)">-</button>
-                                <input type="number" id="qty-@item.Id" value="1" min="1" max="@item.StockQuantity" readonly>
-                                <button onclick="updateCardQty(this, 1)">+</button>
-                                <button class="add-btn" onclick="addToCart(this, @item.Id)">
-                                    @(isAr ? "أضف" : "Add") <i class="fas fa-cart-plus"></i>
-                                </button>
+                                <div class="qty-input-group">
+                                    <button type="button" class="qty-btn" onclick="updateCardQty(this, -1)">-</button>
+                                    <input type="number" id="qty-@item.Id" value="1" min="1" max="@item.StockQuantity" class="qty-val" readonly>
+                                    <button type="button" class="qty-btn" onclick="updateCardQty(this, 1)">+</button>
+                                </div>
+
+                                @if (item.StockQuantity > 0)
+                                {
+                                    <button class="add-btn" onclick="addToCart(this, @item.Id)">
+                                        @(isAr ? "أضف" : "Add") <i class="fas fa-cart-plus"></i>
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="add-btn bg-secondary" disabled>
+                                        @(isAr ? "غير متوفر" : "Out of Stock")
+                                    </button>
+                                }
                             </div>
                         </div>
                     </div>
@@ -320,15 +838,16 @@
             }
             else
             {
-                <div style="grid-column:1/-1; text-align:center; padding:50px; color:#777;">
+                <div style="grid-column:1/-1; text-align:center; padding:50px; color:var(--home-text-muted);">
                     <p>@(isAr ? "لا توجد منتجات متاحة حالياً." : "No products available.")</p>
                 </div>
             }
         </div>
     </div>
 </section>
-    
+
 @section Scripts {
+    <partial name="_SurveyPopup" />
     <script>
         // دوال التحكم في السلايدر
         let slideIndex = 0;
@@ -388,6 +907,18 @@
         async function toggleWishlist(id, btn) {
             try {
                 const icon = btn.querySelector('i');
+                const isCurrentlyActive = btn.classList.contains('active');
+
+                // Optimistic UI Update
+                if(isCurrentlyActive) {
+                    btn.classList.remove('active'); icon.classList.remove('fas'); icon.classList.add('far');
+                } else {
+                    btn.classList.add('active'); icon.classList.remove('far'); icon.classList.add('fas');
+                    // Pulse animation
+                    btn.style.transform = "scale(1.2)";
+                    setTimeout(() => btn.style.transform = "scale(1)", 200);
+                }
+
                 const response = await fetch('/Wishlist/Toggle', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -395,7 +926,10 @@
                 });
 
                 if (response.status === 401) {
-                    // SweetAlert is loaded in Layout
+                    // Revert UI
+                    if(isCurrentlyActive) { btn.classList.add('active'); icon.classList.add('fas'); icon.classList.remove('far'); }
+                    else { btn.classList.remove('active'); icon.classList.remove('fas'); icon.classList.add('far'); }
+
                     Swal.fire({
                         title: '@(isAr ? "تنبيه" : "Alert")',
                         text: '@(isAr ? "يجب عليك تسجيل الدخول أولاً." : "Please login first.")',
@@ -406,18 +940,16 @@
                 }
 
                 const result = await response.json();
-                if (result.success) {
-                    if (result.status === 'added') {
-                        icon.classList.remove('far');
-                        icon.classList.add('fas');
-                        btn.classList.add('active');
-                        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: '@(isAr ? "تمت الإضافة للمفضلة" : "Added to Wishlist")', showConfirmButton: false, timer: 1500 });
-                    } else {
-                        icon.classList.remove('fas');
-                        icon.classList.add('far');
-                        btn.classList.remove('active');
-                        Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: '@(isAr ? "تم الحذف من المفضلة" : "Removed from Wishlist")', showConfirmButton: false, timer: 1500 });
-                    }
+                if (!result.success) {
+                    // Revert UI on failure
+                     if(isCurrentlyActive) { btn.classList.add('active'); icon.classList.add('fas'); icon.classList.remove('far'); }
+                     else { btn.classList.remove('active'); icon.classList.remove('fas'); icon.classList.add('far'); }
+                } else {
+                    const msg = result.status === 'added' ? '@(isAr ? "تمت الإضافة للمفضلة" : "Added to Wishlist")' : '@(isAr ? "تم الحذف من المفضلة" : "Removed from Wishlist")';
+                    const Toast = Swal.mixin({
+                        toast: true, position: 'top-end', showConfirmButton: false, timer: 1500, timerProgressBar: true
+                    });
+                    Toast.fire({ icon: 'success', title: msg });
                 }
             } catch (error) { console.error(error); }
         }

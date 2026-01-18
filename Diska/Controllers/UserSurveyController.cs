@@ -25,7 +25,7 @@ namespace Diska.Controllers
             _userManager = userManager;
         }
 
-        // Action للتحقق من وجود استبيان معلق (يتم استدعاؤه بواسطة AJAX)
+        // --- 1. API للتحقق من وجود استبيان معلق (للنافذة المنبثقة) ---
         [HttpGet]
         public async Task<IActionResult> CheckPending()
         {
@@ -34,17 +34,22 @@ namespace Diska.Controllers
 
             var userRole = await _userManager.IsInRoleAsync(user, "Merchant") ? "Merchant" : "Customer";
 
-            // البحث عن أول استبيان نشط وموجه لهذا المستخدم ولم يقم بالإجابة عليه
+            // البحث عن استبيان:
+            // 1. نشط
+            // 2. غير منتهي الصلاحية
+            // 3. موجه لفئة المستخدم
+            // 4. لم يقم المستخدم بالإجابة عليه (غير موجود في جدول Responses)
             var pendingSurvey = await _context.Surveys
                 .Where(s => s.IsActive && s.EndDate > DateTime.Now && (s.TargetAudience == "All" || s.TargetAudience == userRole))
                 .Where(s => !_context.SurveyResponses.Any(r => r.SurveyId == s.Id && r.UserId == user.Id))
                 .OrderByDescending(s => s.StartDate)
-                .Select(s => new { s.Id, s.Title, s.TitleEn })
+                .Select(s => new { s.Id, s.Title, s.TitleEn }) // نختار الحقول الضرورية فقط
                 .FirstOrDefaultAsync();
 
             return Json(pendingSurvey);
         }
 
+        // --- 2. عرض قائمة الاستبيانات المتاحة ---
         public async Task<IActionResult> Index()
         {
             var user = await _userManager.GetUserAsync(User);
@@ -67,6 +72,7 @@ namespace Diska.Controllers
             return View(availableSurveys);
         }
 
+        // --- 3. صفحة المشاركة ---
         [HttpGet]
         public async Task<IActionResult> Take(int id)
         {
@@ -81,13 +87,14 @@ namespace Diska.Controllers
             bool alreadyTaken = await _context.SurveyResponses.AnyAsync(r => r.SurveyId == id && r.UserId == user.Id);
             if (alreadyTaken)
             {
-                TempData["Info"] = "لقد شاركت في هذا الاستبيان من قبل.";
+                TempData["Info"] = "لقد قمت بالمشاركة في هذا الاستبيان مسبقاً.";
                 return RedirectToAction(nameof(Index));
             }
 
             return View(survey);
         }
 
+        // --- 4. حفظ الإجابات ---
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Submit(int surveyId, IFormCollection form)
@@ -107,7 +114,6 @@ namespace Diska.Controllers
                 return RedirectToAction("Take", new { id = surveyId });
             }
 
-            // التحقق من عدم التكرار
             bool alreadyTaken = await _context.SurveyResponses.AnyAsync(r => r.SurveyId == surveyId && r.UserId == user.Id);
             if (!alreadyTaken)
             {

@@ -2,78 +2,115 @@
 @{
     ViewData["Title"] = "تقييمات منتجاتي";
     Layout = "_MerchantLayout";
+    bool isAr = System.Globalization.CultureInfo.CurrentCulture.Name.StartsWith("ar");
 }
 
+<style>
+    .rating-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        box-shadow: var(--shadow-sm);
+        padding: 30px;
+    }
+
+    .star-lg {
+        font-size: 1.2rem;
+        margin-right: 2px;
+    }
+
+    .review-item {
+        border-bottom: 1px dashed var(--border-color);
+        padding: 20px 0;
+    }
+
+        .review-item:last-child {
+            border-bottom: none;
+        }
+</style>
+
 <div class="row g-4 mb-4">
-    <div class="col-md-12">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body p-4 d-flex justify-content-between align-items-center">
-                <div>
-                    <h5 class="text-muted">متوسط تقييم المتجر</h5>
-                    <div class="d-flex align-items-center gap-2">
-                        <h1 class="mb-0 fw-bold text-warning">@(((double)ViewBag.AverageRating).ToString("0.0"))</h1>
-                        <div class="text-warning">
-                            @for (int i = 0; i < 5; i++)
+    <!-- Stats -->
+    <div class="col-12">
+        <div class="rating-card d-flex align-items-center justify-content-between flex-wrap gap-4">
+            <div>
+                <h5 class="text-muted mb-3">@(isAr ? "متوسط تقييم المتجر" : "Average Store Rating")</h5>
+                <div class="d-flex align-items-center gap-3">
+                    <h1 class="display-4 fw-bold text-warning mb-0">@(((double)ViewBag.AverageRating).ToString("0.0"))</h1>
+                    <div>
+                        <div class="text-warning mb-1">
+                            @for (int i = 1; i <= 5; i++)
                             {
-                                <i class="fas @(i < (int)(double)ViewBag.AverageRating ? "fa-star" : "fa-star-half-alt")"></i>
+                                <i class="fas @(i <= Math.Round((double)ViewBag.AverageRating) ? "fa-star" : "fa-star text-muted opacity-25") star-lg"></i>
                             }
                         </div>
+                        <small class="text-muted fw-bold">@(isAr ? $"من أصل {ViewBag.TotalReviews} تقييم" : $"Based on {ViewBag.TotalReviews} reviews")</small>
                     </div>
-                    <small class="text-muted">من أصل @ViewBag.TotalReviews تقييم</small>
                 </div>
-                <i class="fas fa-award fa-4x text-warning opacity-25"></i>
+            </div>
+            <div class="text-warning opacity-25 d-none d-md-block">
+                <i class="fas fa-award fa-6x"></i>
             </div>
         </div>
     </div>
 </div>
 
-<div class="card border-0 shadow-sm">
-    <div class="card-header bg-white py-3">
-        <h5 class="mb-0 text-primary">آراء العملاء</h5>
+<div class="rating-card p-0 overflow-hidden">
+    <div class="p-4 border-bottom" style="border-color:var(--border-color)!important;">
+        <h5 class="mb-0 fw-bold text-primary">@(isAr ? "آراء العملاء" : "Customer Reviews")</h5>
     </div>
-    <div class="table-responsive">
-        <table class="table align-middle mb-0">
-            <thead class="bg-light">
-                <tr>
-                    <th style="width:20%">المنتج</th>
-                    <th style="width:15%">العميل</th>
-                    <th style="width:15%">التقييم</th>
-                    <th>التعليق</th>
-                    <th style="width:15%">التاريخ</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (!Model.Any())
-                {
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5">
+            <div class="text-muted opacity-25 mb-3"><i class="fas fa-comment-slash fa-4x"></i></div>
+            <p class="text-muted">@(isAr ? "لا توجد تقييمات حتى الآن." : "No reviews yet.")</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead style="background:rgba(0,0,0,0.02);">
                     <tr>
-                        <td colspan="5" class="text-center py-5 text-muted">لا توجد تقييمات حتى الآن.</td>
+                        <th class="ps-4 text-muted py-3">@(isAr ? "المنتج" : "Product")</th>
+                        <th class="text-muted">@(isAr ? "العميل" : "Customer")</th>
+                        <th class="text-muted">@(isAr ? "التقييم" : "Rating")</th>
+                        <th class="text-muted" style="width: 40%;">@(isAr ? "التعليق" : "Comment")</th>
+                        <th class="text-end pe-4 text-muted">@(isAr ? "التاريخ" : "Date")</th>
                     </tr>
-                }
-                @foreach (var item in Model)
-                {
-                    <tr>
-                        <td>
-                            <div class="d-flex align-items-center gap-2">
-                                <img src="~/@item.Product?.ImageUrl" width="35" height="35" class="rounded border">
-                                <span class="fw-bold small">@item.Product?.Name</span>
-                            </div>
-                        </td>
-                        <td>@item.User?.FullName</td>
-                        <td>
-                            <div class="text-warning small">
-                                @for (int i = 0; i < item.Rating; i++)
-                                {
-                                    <i class="fas fa-star"></i>
-                                }
-                            </div>
-                        </td>
-                        <td>
-                            <p class="mb-0 small text-muted">@item.Comment</p>
-                        </td>
-                        <td class="small text-muted">@item.CreatedAt.ToString("yyyy-MM-dd")</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center gap-3">
+                                    <img src="~/@item.Product?.ImageUrl" width="40" height="40" class="rounded border" style="border-color:var(--border-color)!important; object-fit:contain; background:#fff;" onerror="this.src='/images/default.png'">
+                                    <span class="fw-bold small text-main">@(isAr? item.Product?.Name : item.Product?.NameEn)</span>
+                                </div>
+                            </td>
+                            <td class="text-main">@item.User?.FullName</td>
+                            <td>
+                                <div class="text-warning small" style="white-space:nowrap;">
+                                    @for (int i = 0; i < item.Rating; i++)
+                                    {
+                                        <i class="fas fa-star"></i>
+                                    }
+                                    @for (int i = item.Rating; i < 5; i++)
+                                    {
+                                        <i class="far fa-star text-muted opacity-25"></i>
+                                    }
+                                </div>
+                            </td>
+                            <td>
+                                <p class="mb-0 small text-muted text-break">@item.Comment</p>
+                            </td>
+                            <td class="text-end pe-4 small text-muted">@item.CreatedAt.ToString("yyyy-MM-dd")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
 </div>

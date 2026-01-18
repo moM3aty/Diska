@@ -462,9 +462,7 @@
                 <a href="/Admin/Dashboard/Messages" class="sidebar-link @(ViewContext.RouteData.Values["Action"]?.ToString() == "Messages" ? "active" : "")">
                     <i class="fas fa-envelope"></i> <span>@(isAr ? "الرسائل" : "Messages")</span>
                 </a>
-                <a href="/Admin/Settings" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Settings" ? "active" : "")">
-                    <i class="fas fa-cog"></i> <span>@(isAr ? "الإعدادات" : "Settings")</span>
-                </a>
+               
             </div>
         </nav>
 

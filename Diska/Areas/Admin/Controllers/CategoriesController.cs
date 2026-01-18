@@ -49,6 +49,7 @@ namespace Diska.Areas.Admin.Controllers
             ModelState.Remove(nameof(model.Products));
             ModelState.Remove(nameof(model.ImageUrl));
             ModelState.Remove(nameof(model.MetaTitle));
+            ModelState.Remove(nameof(model.Slug));
 
             if (ModelState.IsValid)
             {

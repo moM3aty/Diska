@@ -9,125 +9,411 @@
     decimal merchantTotal = Model.OrderItems.Sum(i => i.Quantity * i.UnitPrice);
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <a asp-action="Index" class="text-decoration-none text-muted small"><i class="fas fa-arrow-right"></i> @(isAr ? "عودة للقائمة" : "Back to List")</a>
-        <h2 class="text-primary fw-bold mt-1">@(isAr ? $"طلب رقم #{Model.Id}" : $"Order #{Model.Id}")</h2>
+<style>
+    /* =========================================
+       PREMIUM STYLES (Light & Dark)
+       ========================================= */
+    :root {
+        --dt-card-bg: #ffffff;
+        --dt-text-main: #0f172a;
+        --dt-text-muted: #64748b;
+        --dt-border: #e2e8f0;
+        --dt-bg-body: #f8fafc;
+        --dt-header-bg: #f8fafc;
+        --dt-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.06);
+        --dt-radius: 16px;
+    }
+
+    [data-bs-theme="dark"] {
+        --dt-card-bg: #1e293b;
+        --dt-text-main: #f8fafc;
+        --dt-text-muted: #94a3b8;
+        --dt-border: rgba(255, 255, 255, 0.08);
+        --dt-bg-body: #0f172a;
+        --dt-header-bg: #0f172a;
+        --dt-shadow: 0 10px 40px -5px rgba(0, 0, 0, 0.3);
+    }
+
+    /* --- Cards --- */
+    .details-card {
+        background-color: var(--dt-card-bg);
+        border-radius: var(--dt-radius);
+        box-shadow: var(--dt-shadow);
+        border: 1px solid var(--dt-border);
+        overflow: hidden;
+        margin-bottom: 24px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card-header-custom {
+        padding: 20px 25px;
+        border-bottom: 1px solid var(--dt-border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: var(--dt-header-bg);
+    }
+
+    /* --- Info Rows --- */
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px dashed var(--dt-border);
+    }
+
+    .info-row:last-child { border-bottom: none; }
+
+    .info-label {
+        color: var(--dt-text-muted);
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .info-val {
+        color: var(--dt-text-main);
+        font-weight: 700;
+        font-size: 0.95rem;
+    }
+
+    /* --- Product Table --- */
+    .table { width: 100%; border-collapse: separate; border-spacing: 0; }
+    
+    .table thead th {
+        background-color: var(--dt-header-bg);
+        color: var(--dt-text-muted);
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        padding: 16px 24px;
+        border-bottom: 1px solid var(--dt-border);
+    }
+
+    .table tbody td {
+        padding: 20px 24px;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--dt-border);
+        color: var(--dt-text-main);
+    }
+
+    .product-thumb {
+        width: 60px; height: 60px;
+        border-radius: 10px;
+        border: 1px solid var(--dt-border);
+        padding: 2px;
+        background: #fff; /* Always white for product image */
+        object-fit: contain;
+    }
+
+    /* =========================================
+       PROFESSIONAL PRINT STYLES (INVOICE)
+       ========================================= */
+    .invoice-section { display: none; }
+
+    @@media print {
+        @@page { size: A4; margin: 10mm; }
+        
+        /* Force White Background & Black Text globally for Print */
+        :root, [data-bs-theme="dark"] {
+            --dt-card-bg: #ffffff !important;
+            --dt-text-main: #000000 !important;
+            --dt-text-muted: #333333 !important;
+            --dt-border: #000000 !important;
+            --dt-bg-body: #ffffff !important;
+            --dt-header-bg: #f0f0f0 !important;
+        }
+
+        body { 
+            background-color: #fff !important; 
+            color: #000 !important; 
+            font-family: 'Cairo', sans-serif;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* 1. Hide Dashboard Elements */
+        .sidebar, .topbar, .no-print, .btn, .alert { 
+            display: none !important; 
+        }
+        
+        /* 2. Reset Layout Containers */
+        .app-container, .main-content, .content-wrapper {
+            width: 100% !important; margin: 0 !important; padding: 0 !important; 
+            display: block !important; overflow: visible !important;
+            height: auto !important;
+        }
+
+        /* 3. Show Invoice Section */
+        .invoice-section {
+            display: block !important;
+            padding: 20px;
+            width: 100%;
+        }
+
+        /* Invoice Header */
+        .inv-header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 30px;
+        }
+        .inv-logo h1 { font-size: 32px; font-weight: 900; margin: 0; text-transform: uppercase; color: #000; }
+        .inv-logo p { margin: 0; color: #333; font-size: 14px; }
+        
+        .inv-meta { text-align: right; }
+        .inv-meta h2 { font-size: 22px; font-weight: bold; margin: 0 0 10px 0; color: #000; }
+        
+        /* Invoice Grid */
+        .inv-grid { display: flex; gap: 40px; margin-bottom: 40px; }
+        .inv-box { flex: 1; }
+        .inv-box h5 { font-size: 13px; text-transform: uppercase; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 10px; font-weight: bold; color: #000; }
+        .inv-box p { font-size: 14px; line-height: 1.6; margin: 0; color: #000; }
+
+        /* Invoice Table */
+        .inv-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+        .inv-table th { background-color: #f3f3f3 !important; color: #000; font-weight: bold; padding: 10px; border: 1px solid #000; font-size: 12px; }
+        .inv-table td { padding: 10px; border: 1px solid #000; color: #000; font-size: 12px; }
+        
+        /* Totals */
+        .inv-totals { display: flex; justify-content: flex-end; }
+        .inv-totals table { width: 250px; border-collapse: collapse; }
+        .inv-totals td { padding: 8px; font-size: 14px; color: #000; }
+        .inv-totals .total-row td { font-weight: bold; font-size: 16px; border-top: 2px solid #000; }
+
+        /* Footer */
+        .inv-footer {
+            position: fixed; bottom: 30px; left: 0; right: 0;
+            text-align: center; font-size: 12px; color: #000;
+            border-top: 1px solid #000; padding-top: 15px;
+        }
+    }
+
+    /* Animation */
+    .fade-up { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+    @@keyframes fadeUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+<!-- =======================
+     Screen View (Dashboard)
+     ======================= -->
+<div class="container-fluid px-0 no-print fade-up">
+    <!-- Header Actions -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <a asp-action="Index" class="btn btn-sm btn-outline-secondary rounded-pill mb-2 px-3 border-0 bg-white shadow-sm" style="color:var(--dt-text-muted)">
+                <i class="fas @(isAr ? "fa-arrow-right" : "fa-arrow-left")"></i> @(isAr ? "عودة للقائمة" : "Back to List")
+            </a>
+            <h2 class="fw-bold mb-0 text-main">
+                @(isAr ? "طلب رقم" : "Order") <span class="text-primary font-monospace">#@Model.Id</span>
+            </h2>
+        </div>
+
+        <button onclick="window.print()" class="btn btn-outline-secondary border shadow-sm fw-bold px-4 rounded-pill">
+            <i class="fas fa-print me-2"></i> @(isAr ? "طباعة الفاتورة" : "Print Invoice")
+        </button>
     </div>
 
-    <button onclick="window.print()" class="btn btn-outline-secondary">
-        <i class="fas fa-print me-2"></i> @(isAr ? "طباعة الفاتورة" : "Print Invoice")
-    </button>
+    <div class="row g-4">
+        <!-- Order Items -->
+        <div class="col-lg-8">
+            <div class="details-card">
+                <div class="card-header-custom">
+                    <h5 class="mb-0 fw-bold" style="color:var(--dt-text-main)">
+                        <i class="fas fa-box-open text-primary me-2"></i> @(isAr ? "المنتجات المطلوبة" : "Ordered Items")
+                    </h5>
+                    <span class="badge bg-light text-dark border">@Model.OrderItems.Count @(isAr ? "منتج" : "Items")</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th class="ps-4">المنتج</th>
+                                <th class="text-center">الكمية</th>
+                                <th>السعر</th>
+                                <th class="text-end pe-4">الإجمالي</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.OrderItems)
+                            {
+                                <tr>
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <img src="~/@item.Product?.ImageUrl" class="product-thumb" onerror="this.src='/images/default.png'">
+                                            <div>
+                                                <div class="fw-bold text-main">@(isAr? item.Product?.Name : item.Product?.NameEn)</div>
+                                                <small class="text-muted font-monospace">SKU: @item.Product?.SKU</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center fw-bold" style="color:var(--dt-text-main)">@item.Quantity</td>
+                                    <td class="text-muted">@item.UnitPrice.ToString("N0")</td>
+                                    <td class="text-end pe-4 fw-bold" style="color:var(--dt-text-main)">@((item.Quantity * item.UnitPrice).ToString("N0"))</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot style="background-color: var(--dt-header-bg);">
+                            <tr>
+                                <td colspan="3" class="text-end fw-bold ps-4 text-main">@(isAr ? "إجمالي مستحقاتك:" : "Your Total:")</td>
+                                <td class="text-end pe-4 fw-bold text-success fs-5">@merchantTotal.ToString("N0") <small>ج.م</small></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.Notes))
+            {
+                <div class="alert alert-info border-0 shadow-sm d-flex align-items-center" style="background-color: rgba(14, 165, 233, 0.1); color: #0284c7;">
+                    <i class="fas fa-info-circle fa-lg me-3"></i>
+                    <div>
+                        <strong>@(isAr ? "ملاحظات العميل:" : "Customer Notes:")</strong>
+                        <p class="mb-0 mt-1">@Model.Notes</p>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Info Sidebar -->
+        <div class="col-lg-4">
+            
+            <!-- Status Card -->
+            <div class="details-card">
+                <div class="card-header-custom">
+                    <h6 class="mb-0 fw-bold" style="color:var(--dt-text-main)">حالة الطلب</h6>
+                </div>
+                <div class="p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-3 p-3 rounded-3" style="background: var(--dt-header-bg);">
+                        <span class="fw-bold" style="color:var(--dt-text-main)">@Model.Status</span>
+                        @{
+                            string color = Model.Status == "Pending" ? "warning" : (Model.Status == "Confirmed" ? "primary" : "success");
+                        }
+                        <div class="spinner-grow spinner-grow-sm text-@color" role="status"></div>
+                    </div>
+                    <p class="text-muted small mb-0">
+                        <i class="fas fa-info-circle me-1"></i> @(isAr ? "يتم تحديث الحالة مركزياً من قبل الإدارة." : "Status managed centrally by admin.")
+                    </p>
+                </div>
+            </div>
+
+            <!-- Customer Card -->
+            <div class="details-card">
+                <div class="card-header-custom">
+                    <h6 class="mb-0 fw-bold" style="color:var(--dt-text-main)">@(isAr ? "بيانات العميل" : "Customer Info")</h6>
+                </div>
+                <div class="p-4">
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="bg-primary bg-opacity-10 p-3 rounded-circle me-3 text-primary" style="width:50px; height:50px; display:flex; justify-content:center; align-items:center;">
+                            <i class="fas fa-user fa-lg"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-0 fw-bold" style="color:var(--dt-text-main)">@Model.CustomerName</h6>
+                            <small class="text-muted">@Model.User?.Email</small>
+                        </div>
+                    </div>
+
+                    <div class="info-row">
+                        <span class="info-label"><i class="fas fa-phone me-2"></i> الهاتف</span>
+                        <span class="info-val"><a href="tel:@Model.Phone" class="text-decoration-none" style="color:var(--dt-text-main)">@Model.Phone</a></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label"><i class="fas fa-map-marker-alt me-2"></i> العنوان</span>
+                        <span class="info-val text-end" style="font-size:0.9rem;">
+                            @Model.Governorate, @Model.City
+                            <div class="small text-muted fw-normal">@Model.Address</div>
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label"><i class="fas fa-clock me-2"></i> التوصيل</span>
+                        <span class="info-val">@Model.DeliverySlot</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
 </div>
 
-<div class="row g-4">
-    <!-- تفاصيل الطلب -->
-    <div class="col-lg-8">
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-white py-3">
-                <h5 class="mb-0 text-primary">@(isAr ? "المنتجات المطلوبة" : "Ordered Items")</h5>
-            </div>
-            <div class="table-responsive">
-                <table class="table align-middle mb-0">
-                    <thead class="bg-light">
-                        <tr>
-                            <th class="ps-4">المنتج</th>
-                            <th class="text-center">الكمية</th>
-                            <th>السعر</th>
-                            <th class="text-end pe-4">الإجمالي</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var item in Model.OrderItems)
-                        {
-                            <tr>
-                                <td class="ps-4">
-                                    <div class="d-flex align-items-center gap-3">
-                                        <img src="~/@item.Product?.ImageUrl" width="50" height="50" class="rounded border">
-                                        <div>
-                                            <div class="fw-bold">@(isAr? item.Product?.Name : item.Product?.NameEn)</div>
-                                            <small class="text-muted">SKU: @item.Product?.SKU</small>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="text-center fw-bold">@item.Quantity</td>
-                                <td>@item.UnitPrice.ToString("N0")</td>
-                                <td class="text-end pe-4 fw-bold text-dark">@((item.Quantity * item.UnitPrice).ToString("N0"))</td>
-                            </tr>
-                        }
-                    </tbody>
-                    <tfoot class="bg-light">
-                        <tr>
-                            <td colspan="3" class="text-end fw-bold ps-4">@(isAr ? "الإجمالي المستحق لك:" : "Your Total:")</td>
-                            <td class="text-end pe-4 fw-bold text-success fs-5">@merchantTotal.ToString("N0") ج.م</td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
+<!-- =======================
+     Print View (Invoice)
+     ======================= -->
+<div class="invoice-section">
+    <!-- Header -->
+    <div class="inv-header">
+        <div class="inv-logo">
+            <h1>DISKA</h1>
+            <p>B2B Wholesale Platform</p>
         </div>
-
-        <!-- ملاحظات -->
-        @if (!string.IsNullOrEmpty(Model.Notes))
-        {
-            <div class="alert alert-info d-flex align-items-center">
-                <i class="fas fa-info-circle fa-lg me-3"></i>
-                <div>
-                    <strong>@(isAr ? "ملاحظات العميل:" : "Customer Notes:")</strong>
-                    <p class="mb-0 mt-1">@Model.Notes</p>
-                </div>
-            </div>
-        }
+        <div class="inv-meta">
+            <h2>INVOICE</h2>
+            <p><strong>Invoice #:</strong> @Model.Id.ToString("D6")</p>
+            <p><strong>Date:</strong> @Model.OrderDate.ToString("yyyy-MM-dd")</p>
+        </div>
     </div>
 
-    <!-- معلومات العميل والحالة -->
-    <div class="col-lg-4">
-
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-body">
-                <h6 class="text-muted fw-bold mb-3">حالة الطلب (تحديث الإدارة)</h6>
-                <div class="d-flex align-items-center justify-content-between p-3 bg-light rounded mb-3">
-                    <span class="fw-bold text-dark">@Model.Status</span>
-                    @{
-                        string color = Model.Status == "Pending" ? "warning" : (Model.Status == "Confirmed" ? "primary" : "success");
-                    }
-                    <div class="spinner-grow spinner-grow-sm text-@color" role="status"></div>
-                </div>
-                <p class="text-muted small mb-0">
-                    <i class="fas fa-info-circle"></i> @(isAr ? "تتم إدارة حالة الطلب والتوصيل مركزياً من قبل إدارة المنصة." : "Order status and delivery are managed centrally by admin.")
-                </p>
-            </div>
+    <!-- Info Grid -->
+    <div class="inv-grid">
+        <div class="inv-box">
+            <h5>Bill To (العميل)</h5>
+            <p><strong>@Model.CustomerName</strong></p>
+            <p>Phone: @Model.Phone</p>
+            <p>Email: @Model.User?.Email</p>
         </div>
-
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white py-3">
-                <h5 class="mb-0 text-primary">@(isAr ? "بيانات العميل" : "Customer Info")</h5>
-            </div>
-            <div class="card-body">
-                <div class="d-flex align-items-center mb-4">
-                    <div class="bg-primary bg-opacity-10 p-3 rounded-circle me-3 text-primary">
-                        <i class="fas fa-user fa-lg"></i>
-                    </div>
-                    <div>
-                        <h6 class="mb-0 fw-bold">@Model.CustomerName</h6>
-                        <small class="text-muted">@Model.User?.Email</small>
-                    </div>
-                </div>
-
-                <ul class="list-unstyled mb-0">
-                    <li class="mb-3 d-flex">
-                        <i class="fas fa-phone text-muted mt-1 me-3"></i>
-                        <span><a href="tel:@Model.Phone" class="text-decoration-none">@Model.Phone</a></span>
-                    </li>
-                    <li class="d-flex">
-                        <i class="fas fa-map-marker-alt text-muted mt-1 me-3"></i>
-                        <span>
-                            @Model.Governorate, @Model.City
-                            <br><small class="text-muted">@Model.Address</small>
-                        </span>
-                    </li>
-                </ul>
-            </div>
+        <div class="inv-box">
+            <h5>Ship To (العنوان)</h5>
+            <p>@Model.Address</p>
+            <p>@Model.City, @Model.Governorate</p>
+            <p><strong>Slot:</strong> @Model.DeliverySlot</p>
         </div>
+        <div class="inv-box">
+            <h5>Payment (الدفع)</h5>
+            <p><strong>Method:</strong> @(Model.PaymentMethod == "Wallet" ? "Wallet" : "Cash on Delivery")</p>
+            <p><strong>Currency:</strong> EGP</p>
+        </div>
+    </div>
 
+    <!-- Table -->
+    <table class="inv-table">
+        <thead>
+            <tr>
+                <th style="width: 50%;">Item / Product</th>
+                <th style="width: 10%; text-align: center;">Qty</th>
+                <th style="width: 20%; text-align: end;">Unit Price</th>
+                <th style="width: 20%; text-align: end;">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.OrderItems)
+            {
+                <tr>
+                    <td>
+                        <strong>@(isAr ? item.Product?.Name : item.Product?.NameEn)</strong>
+                        <div style="font-size: 11px; color: #555;">SKU: @item.Product?.SKU</div>
+                    </td>
+                    <td style="text-align: center;">@item.Quantity</td>
+                    <td style="text-align: end;">@item.UnitPrice.ToString("N2")</td>
+                    <td style="text-align: end;">@((item.Quantity * item.UnitPrice).ToString("N2"))</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <!-- Totals -->
+    <div class="inv-totals">
+        <table>
+            <tr class="total-row">
+                <td>Total Due:</td>
+                <td style="text-align: end;">@merchantTotal.ToString("N2") EGP</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Footer -->
+    <div class="inv-footer">
+        <p>This is a partial invoice for items supplied by your store.</p>
+        <p>Thank you for partnering with DISKA.</p>
     </div>
 </div>

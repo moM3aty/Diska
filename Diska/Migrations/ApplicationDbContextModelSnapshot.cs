@@ -146,7 +146,7 @@ namespace Diska.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AuditLogs");
+                    b.ToTable("AuditLogs", (string)null);
                 });
 
             modelBuilder.Entity("Diska.Models.Banner", b =>
@@ -211,7 +211,7 @@ namespace Diska.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Banners");
+                    b.ToTable("Banners", (string)null);
                 });
 
             modelBuilder.Entity("Diska.Models.Category", b =>
@@ -263,7 +263,7 @@ namespace Diska.Migrations
 
                     b.HasIndex("ParentId");
 
-                    b.ToTable("Categories");
+                    b.ToTable("Categories", (string)null);
                 });
 
             modelBuilder.Entity("Diska.Models.ContactMessage", b =>
@@ -299,7 +299,7 @@ namespace Diska.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ContactMessages");
+                    b.ToTable("ContactMessages", (string)null);
                 });
 
             modelBuilder.Entity("Diska.Models.DealRequest", b =>
@@ -346,7 +346,7 @@ namespace Diska.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("DealRequests");
+                    b.ToTable("DealRequests", (string)null);
                 });
 
             modelBuilder.Entity("Diska.Models.GroupDeal", b =>
@@ -404,7 +404,7 @@ namespace Diska.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("GroupDeals");
+                    b.ToTable("GroupDeals", (string)null);
                 });
 
             modelBuilder.Entity("Diska.Models.MerchantOffer", b =>
@@ -441,7 +441,7 @@ namespace Diska.Migrations
 
                     b.HasIndex("MerchantId");
 
-                    b.ToTable("MerchantOffers");
+                    b.ToTable("MerchantOffers", (string)null);
                 });
 
             modelBuilder.Entity("Diska.Models.MerchantPermission", b =>
@@ -479,7 +479,7 @@ namespace Diska.Migrations
 
                     b.HasIndex("MerchantId");
 
-                    b.ToTable("MerchantPermissions");
+                    b.ToTable("MerchantPermissions", (string)null);
                 });
 
             modelBuilder.Entity("Diska.Models.Order", b =>
@@ -543,7 +543,7 @@ namespace Diska.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Orders");
+                    b.ToTable("Orders", (string)null);
                 });
 
             modelBuilder.Entity("Diska.Models.OrderItem", b =>
@@ -580,7 +580,7 @@ namespace Diska.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("OrderItems");
+                    b.ToTable("OrderItems", (string)null);
                 });
 
             modelBuilder.Entity("Diska.Models.PendingMerchantAction", b =>
@@ -594,9 +594,6 @@ namespace Diska.Migrations
                     b.Property<string>("ActionByAdminId")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("ActionDate")
-                        .HasColumnType("datetime2");
 
                     b.Property<string>("ActionType")
                         .IsRequired()
@@ -626,6 +623,9 @@ namespace Diska.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime?>("ProcessedDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime>("RequestDate")
                         .HasColumnType("datetime2");
 
@@ -637,7 +637,7 @@ namespace Diska.Migrations
 
                     b.HasIndex("MerchantId");
 
-                    b.ToTable("PendingMerchantActions");
+                    b.ToTable("PendingMerchantActions", (string)null);
                 });
 
             modelBuilder.Entity("Diska.Models.PriceTier", b =>
@@ -664,7 +664,7 @@ namespace Diska.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("PriceTiers");
+                    b.ToTable("PriceTiers", (string)null);
                 });
 
             modelBuilder.Entity("Diska.Models.Product", b =>
@@ -767,7 +767,7 @@ namespace Diska.Migrations
 
                     b.HasIndex("MerchantId");
 
-                    b.ToTable("Products");
+                    b.ToTable("Products", (string)null);
                 });
 
             modelBuilder.Entity("Diska.Models.ProductColor", b =>
@@ -793,7 +793,7 @@ namespace Diska.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ProductColors");
+                    b.ToTable("ProductColors", (string)null);
                 });
 
             modelBuilder.Entity("Diska.Models.ProductImage", b =>
@@ -815,7 +815,7 @@ namespace Diska.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ProductImages");
+                    b.ToTable("ProductImages", (string)null);
                 });
 
             modelBuilder.Entity("Diska.Models.ProductReview", b =>
@@ -852,7 +852,7 @@ namespace Diska.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("ProductReviews");
+                    b.ToTable("ProductReviews", (string)null);
                 });
 
             modelBuilder.Entity("Diska.Models.RestockSubscription", b =>
@@ -885,7 +885,7 @@ namespace Diska.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("RestockSubscriptions");
+                    b.ToTable("RestockSubscriptions", (string)null);
                 });
 
             modelBuilder.Entity("Diska.Models.Survey", b =>
@@ -923,7 +923,7 @@ namespace Diska.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Surveys");
+                    b.ToTable("Surveys", (string)null);
                 });
 
             modelBuilder.Entity("Diska.Models.SurveyQuestion", b =>
@@ -957,7 +957,7 @@ namespace Diska.Migrations
 
                     b.HasIndex("SurveyId");
 
-                    b.ToTable("SurveyQuestions");
+                    b.ToTable("SurveyQuestions", (string)null);
                 });
 
             modelBuilder.Entity("Diska.Models.SurveyResponse", b =>
@@ -986,7 +986,7 @@ namespace Diska.Migrations
 
                     b.HasIndex("SurveyId");
 
-                    b.ToTable("SurveyResponses");
+                    b.ToTable("SurveyResponses", (string)null);
                 });
 
             modelBuilder.Entity("Diska.Models.UserAddress", b =>
@@ -1034,7 +1034,7 @@ namespace Diska.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserAddresses");
+                    b.ToTable("UserAddresses", (string)null);
                 });
 
             modelBuilder.Entity("Diska.Models.UserNotification", b =>
@@ -1073,7 +1073,7 @@ namespace Diska.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("UserNotifications");
+                    b.ToTable("UserNotifications", (string)null);
                 });
 
             modelBuilder.Entity("Diska.Models.WalletTransaction", b =>
@@ -1106,7 +1106,7 @@ namespace Diska.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("WalletTransactions");
+                    b.ToTable("WalletTransactions", (string)null);
                 });
 
             modelBuilder.Entity("Diska.Models.WishlistItem", b =>
@@ -1128,7 +1128,7 @@ namespace Diska.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("WishlistItems");
+                    b.ToTable("WishlistItems", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>

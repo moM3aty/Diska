@@ -7,10 +7,41 @@
 
 <!-- --- Premium Cart Styles --- -->
 <style>
+    /* =========================================
+           PREMIUM STYLES (Light & Dark)
+           ========================================= */
+    :root {
+        /* Light Theme Defaults */
+        --cart-bg-body: #f8fafc;
+        --cart-card-bg: #ffffff;
+        --cart-text-main: #1e293b;
+        --cart-text-muted: #64748b;
+        --cart-border: #e2e8f0;
+        --cart-primary: #4f46e5;
+        --cart-accent: #facc15;
+        --cart-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+        --cart-input-bg: #f8fafc;
+    }
+
+    [data-bs-theme="dark"] {
+        /* Dark Theme Overrides */
+        --cart-bg-body: #020617; /* Deep Dark */
+        --cart-card-bg: #1e293b; /* Slate 800 */
+        --cart-text-main: #f8fafc; /* Light Text */
+        --cart-text-muted: #94a3b8; /* Muted Text */
+        --cart-border: rgba(255, 255, 255, 0.08);
+        --cart-primary: #818cf8; /* Lighter Indigo */
+        --cart-accent: #facc15; /* Gold */
+        --cart-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        --cart-input-bg: #0f172a; /* Slate 900 */
+    }
+
     .cart-page-wrapper {
-        background-color: #f8fafc;
+        background-color: var(--cart-bg-body);
         min-height: 85vh;
         padding: 50px 0;
+        font-family: 'Cairo', sans-serif;
+        transition: background-color 0.3s ease;
     }
 
     .cart-grid {
@@ -26,51 +57,56 @@
         justify-content: space-between;
         align-items: baseline;
         margin-bottom: 25px;
-        border-bottom: 2px solid #e2e8f0;
+        border-bottom: 2px solid var(--cart-border);
         padding-bottom: 15px;
     }
 
         .cart-header h2 {
             font-weight: 800;
-            color: var(--primary);
+            color: var(--cart-primary);
             font-size: 1.8rem;
             margin: 0;
         }
 
     .cart-count {
-        color: #64748b;
+        color: var(--cart-text-muted);
         font-weight: 600;
         font-size: 1rem;
     }
 
     /* Cart Item Card */
     .item-card {
-        background: #fff;
+        background: var(--cart-card-bg);
         border-radius: 16px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+        box-shadow: var(--cart-shadow);
         padding: 25px;
         display: flex;
         gap: 25px;
         margin-bottom: 20px;
         transition: all 0.3s ease;
         position: relative;
-        border: 1px solid transparent;
+        border: 1px solid var(--cart-border);
         align-items: center;
     }
 
         .item-card:hover {
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.01);
             transform: translateY(-3px);
-            border-color: #e2e8f0;
+            border-color: var(--cart-border);
         }
+
+    [data-bs-theme="dark"] .item-card:hover {
+        border-color: var(--cart-primary);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    }
 
     .item-img-wrapper {
         width: 110px;
         height: 110px;
         flex-shrink: 0;
-        background: #fff;
+        background: #fff; /* Keep image bg white for product visibility */
         border-radius: 12px;
-        border: 1px solid #f1f5f9;
+        border: 1px solid var(--cart-border);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -97,7 +133,7 @@
 
     .item-title {
         font-weight: 700;
-        color: #1e293b;
+        color: var(--cart-text-main);
         font-size: 1.15rem;
         text-decoration: none;
         margin-bottom: 8px;
@@ -107,12 +143,12 @@
     }
 
         .item-title:hover {
-            color: var(--primary);
+            color: var(--cart-primary);
         }
 
     .item-meta {
         font-size: 0.85rem;
-        color: #64748b;
+        color: var(--cart-text-muted);
         margin-bottom: 15px;
     }
 
@@ -126,7 +162,7 @@
 
     .item-price {
         font-weight: 800;
-        color: var(--primary);
+        color: var(--cart-primary);
         font-size: 1.3rem;
     }
 
@@ -134,8 +170,8 @@
     .qty-selector {
         display: inline-flex;
         align-items: center;
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
+        background: var(--cart-input-bg);
+        border: 1px solid var(--cart-border);
         border-radius: 50px;
         padding: 4px;
     }
@@ -144,11 +180,11 @@
         width: 32px;
         height: 32px;
         border: none;
-        background: #fff;
+        background: var(--cart-card-bg);
         border-radius: 50%;
         cursor: pointer;
         font-weight: bold;
-        color: #1e293b;
+        color: var(--cart-text-main);
         box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         transition: 0.2s;
         display: flex;
@@ -157,7 +193,7 @@
     }
 
         .qty-btn:hover {
-            background: var(--accent);
+            background: var(--cart-accent);
             color: #000;
         }
 
@@ -167,14 +203,14 @@
         border: none;
         background: transparent;
         font-weight: 700;
-        color: #1e293b;
+        color: var(--cart-text-main);
         font-size: 1rem;
         pointer-events: none;
     }
 
     /* Remove Button */
     .remove-btn {
-        color: #94a3b8;
+        color: var(--cart-text-muted);
         background: transparent;
         border: none;
         font-size: 1.1rem;
@@ -186,111 +222,116 @@
 
         .remove-btn:hover {
             color: #ef4444;
-            background: #fef2f2;
+            background: rgba(239, 68, 68, 0.1);
         }
 
     /* Summary Sidebar */
-    .summary-card {
-        background: #fff;
-        padding: 35px 30px;
-        border-radius: 16px;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
-        position: sticky;
-        top: 100px;
-        border: 1px solid #f1f5f9;
+    .cart-summary {
+        background: var(--cart-card-bg);
+        padding: 25px;
+        border: 1px solid var(--cart-border);
+        border-radius: 10px;
+        height: fit-content;
+        box-shadow: var(--cart-shadow);
     }
 
-    .summary-title {
-        font-weight: 800;
-        font-size: 1.3rem;
-        margin-bottom: 25px;
-        color: var(--primary);
-    }
+        .cart-summary h3 {
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--cart-border);
+            padding-bottom: 10px;
+            color: var(--cart-text-main);
+            font-weight: 800;
+        }
 
     .summary-row {
         display: flex;
         justify-content: space-between;
-        margin-bottom: 18px;
-        color: #475569;
+        margin-bottom: 15px;
         font-size: 0.95rem;
-        font-weight: 500;
+        color: var(--cart-text-muted);
     }
 
-        .summary-row.total {
-            margin-top: 25px;
-            padding-top: 20px;
-            border-top: 2px dashed #e2e8f0;
-            font-weight: 900;
-            color: #0f172a;
-            font-size: 1.4rem;
-            align-items: center;
+        .summary-row span.fw-bold {
+            color: var(--cart-text-main);
         }
 
-            .summary-row.total span:last-child {
-                color: var(--primary);
-            }
+        .summary-row.total {
+            font-weight: 900;
+            font-size: 1.2rem;
+            color: var(--cart-primary);
+            border-top: 1px solid var(--cart-border);
+            padding-top: 15px;
+        }
 
+    .continue-shopping {
+        display: block;
+        text-align: center;
+        margin-top: 15px;
+        color: var(--cart-text-muted);
+        font-size: 0.9rem;
+    }
+
+        .continue-shopping:hover {
+            color: var(--cart-primary);
+        }
+
+    /* Button */
     .checkout-btn {
-        background: var(--primary);
+        background: var(--cart-primary);
         color: #fff;
         width: 100%;
-        padding: 18px;
+        padding: 15px;
         border-radius: 12px;
         font-weight: 700;
         border: none;
-        margin-top: 30px;
+        margin-top: 20px;
         cursor: pointer;
         transition: 0.3s;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 12px;
+        gap: 10px;
         text-decoration: none;
         font-size: 1.05rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
 
         .checkout-btn:hover {
             background: #1e293b;
             transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            color: var(--accent);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            color: var(--cart-accent);
         }
 
-    .secure-badge {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        margin-top: 20px;
-        color: #64748b;
-        font-size: 0.85rem;
-        background: #f8fafc;
-        padding: 10px;
-        border-radius: 8px;
+    [data-bs-theme="dark"] .checkout-btn:hover {
+        background: #fff;
+        color: #000;
     }
 
     /* Empty State */
     .empty-cart-state {
         text-align: center;
-        padding: 100px 20px;
-        background: #fff;
+        padding: 80px 20px;
+        background: var(--cart-card-bg);
         border-radius: 20px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+        border: 2px dashed var(--cart-border);
+        box-shadow: var(--cart-shadow);
     }
 
     .empty-icon-box {
-        width: 120px;
-        height: 120px;
-        background: #f1f5f9;
+        width: 100px;
+        height: 100px;
+        background: var(--cart-input-bg);
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         margin: 0 auto 25px;
-        color: #94a3b8;
+        color: var(--cart-text-muted);
+        font-size: 3rem;
     }
 
+    /* Responsive */
     @@media (max-width: 992px) {
         .cart-grid
 
@@ -298,12 +339,17 @@
         grid-template-columns: 1fr;
     }
 
-    .summary-card {
+    .cart-summary {
         position: static;
         margin-top: 30px;
     }
 
-    .item-card {
+    }
+
+    @@media (max-width: 768px) {
+        .item-card
+
+    {
         flex-direction: column;
         align-items: flex-start;
     }
@@ -327,7 +373,7 @@
         <div id="cartContentWrapper">
             <!-- Loading State -->
             <div class="text-center py-5">
-                <i class="fas fa-spinner fa-spin fa-3x" style="color:var(--primary);"></i>
+                <i class="fas fa-spinner fa-spin fa-3x" style="color:var(--cart-primary);"></i>
                 <p class="mt-4 text-muted fw-bold">@(isAr ? "جاري تحميل السلة..." : "Loading cart...")</p>
             </div>
         </div>
@@ -336,11 +382,10 @@
 </div>
 
 @section Scripts {
-    <!-- إضافة SweetAlert مباشرة هنا لضمان وجودها -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
-        // تعريف المتغيرات المحلية لتجنب التضارب مع الملفات الخارجية
+        // تعريف المتغيرات المحلية
         const CART_KEY_LOCAL = 'DISKA_CART';
         const isArPage = '@isAr' === 'True';
 
@@ -353,11 +398,11 @@
                 container.innerHTML = `
                     <div class="empty-cart-state">
                         <div class="empty-icon-box">
-                            <i class="fas fa-shopping-cart fa-4x"></i>
+                            <i class="fas fa-shopping-cart"></i>
                         </div>
-                        <h2 style="color:#1e293b; font-weight:800; margin-bottom:15px;">@(isAr ? "سلة المشتريات فارغة" : "Your Cart is Empty")</h2>
-                        <p style="color:#64748b; margin-bottom:35px; font-size:1.1rem;">@(isAr ? "يبدو أنك لم تضف أي منتجات بعد. تصفح المتجر واكتشف عروضنا." : "Looks like you haven't added anything yet. Browse our store and find great deals.")</p>
-                        <a href="/" class="btn primary" style="padding:15px 50px; font-size:1.1rem; border-radius:50px;">
+                        <h2 style="color:var(--cart-text-main); font-weight:800; margin-bottom:15px;">@(isAr ? "سلة المشتريات فارغة" : "Your Cart is Empty")</h2>
+                        <p style="color:var(--cart-text-muted); margin-bottom:35px; font-size:1.1rem;">@(isAr ? "يبدو أنك لم تضف أي منتجات بعد. تصفح المتجر واكتشف عروضنا." : "Looks like you haven't added anything yet. Browse our store and find great deals.")</p>
+                        <a href="/" class="btn" style="background:var(--cart-primary); color:#fff; padding:15px 50px; font-size:1.1rem; border-radius:50px; text-decoration:none; font-weight:bold;">
                             @(isAr ? "ابدأ التسوق" : "Start Shopping")
                         </a>
                     </div>
@@ -397,7 +442,7 @@
                                 </div>
 
                                 <div class="item-price">
-                                    ${itemTotal.toLocaleString()} <small style="font-size:0.85rem; font-weight:600; color:#64748b;">@(isAr ? "ج.م" : "EGP")</small>
+                                    ${itemTotal.toLocaleString()} <small style="font-size:0.85rem; font-weight:600; color:var(--cart-text-muted);">@(isAr ? "ج.م" : "EGP")</small>
                                 </div>
                             </div>
                         </div>
@@ -406,7 +451,7 @@
             });
 
             const summaryHtml = `
-                <div class="summary-card">
+                <div class="cart-summary">
                     <h3 class="summary-title">@(isAr ? "ملخص الطلب" : "Order Summary")</h3>
 
                     <div class="summary-row">
@@ -419,20 +464,20 @@
                     </div>
                     <div class="summary-row">
                         <span>@(isAr ? "الضريبة" : "VAT (14%)")</span>
-                        <span style="color:var(--success); font-weight:bold; background:#dcfce7; padding:2px 8px; border-radius:4px; font-size:0.8rem;">@(isAr ? "شاملة" : "Included")</span>
+                        <span style="color:var(--success); font-weight:bold; background:rgba(34,197,94,0.1); padding:2px 8px; border-radius:4px; font-size:0.8rem;">@(isAr ? "شاملة" : "Included")</span>
                     </div>
 
                     <div class="summary-row total">
                         <span>@(isAr ? "الإجمالي" : "Total")</span>
-                        <span>${subtotal.toLocaleString()} <small style="font-size:1rem; color:#64748b; font-weight:600;">@(isAr ? "ج.م" : "EGP")</small></span>
+                        <span>${subtotal.toLocaleString()} <small style="font-size:1rem; color:var(--cart-text-muted); font-weight:600;">@(isAr ? "ج.م" : "EGP")</small></span>
                     </div>
 
                     <a href="/Cart/Checkout" class="checkout-btn">
                         @(isAr ? "إتمام الشراء" : "Checkout") <i class="fas @(isAr ? "fa-arrow-left" : "fa-arrow-right")"></i>
                     </a>
 
-                    <div class="secure-badge">
-                        <i class="fas fa-lock text-success"></i> @(isAr ? "تسوق آمن ومحمي 100%" : "100% Secure Checkout")
+                    <div style="text-align:center; margin-top:20px; color:var(--cart-text-muted); font-size:0.85rem; display:flex; align-items:center; justify-content:center; gap:6px;">
+                        <i class="fas fa-shield-alt" style="color:var(--success);"></i> @(isAr ? "تسوق آمن ومحمي 100%" : "100% Secure Checkout")
                     </div>
                 </div>
             `;
@@ -466,7 +511,8 @@
                 Swal.fire({
                     icon: 'warning',
                     title: isArPage ? 'عفواً' : 'Oops',
-                    text: isArPage ? 'لقد وصلت للحد الأقصى للمخزون' : 'Max stock reached'
+                    text: isArPage ? 'لقد وصلت للحد الأقصى للمخزون' : 'Max stock reached',
+                    confirmButtonColor: '#4f46e5'
                 });
                 return;
             }
@@ -487,23 +533,36 @@
             const yesBtn = isArPage ? 'نعم، احذفه' : 'Yes, remove it';
             const noBtn = isArPage ? 'إلغاء' : 'Cancel';
 
+            // Check theme for styling
+            const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+            const colors = isDark ? {
+                bg: '#1e293b', text: '#f8fafc', confirm: '#ef4444', cancel: '#64748b'
+            } : {
+                bg: '#ffffff', text: '#1f2937', confirm: '#ef4444', cancel: '#6b7280'
+            };
+
             Swal.fire({
                 title: titleMsg,
                 text: confirmMsg,
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#ef4444',
-                cancelButtonColor: '#64748b',
+                confirmButtonColor: colors.confirm,
+                cancelButtonColor: colors.cancel,
                 confirmButtonText: yesBtn,
-                cancelButtonText: noBtn
+                cancelButtonText: noBtn,
+                background: colors.bg,
+                color: colors.text
             }).then((result) => {
                 if (result.isConfirmed) {
                     performRemove(index);
-                    Swal.fire(
-                        isArPage ? 'تم الحذف!' : 'Deleted!',
-                        isArPage ? 'تم حذف المنتج من السلة.' : 'Item has been removed.',
-                        'success'
-                    );
+                    Swal.fire({
+                        title: isArPage ? 'تم الحذف!' : 'Deleted!',
+                        text: isArPage ? 'تم حذف المنتج من السلة.' : 'Item has been removed.',
+                        icon: 'success',
+                        background: colors.bg,
+                        color: colors.text,
+                        confirmButtonColor: '#4f46e5'
+                    });
                 }
             });
         }

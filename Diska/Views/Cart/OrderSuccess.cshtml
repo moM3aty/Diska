@@ -3,30 +3,190 @@
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
     ViewData["Title"] = isAr ? "تم الطلب بنجاح" : "Order Placed";
     int orderId = ViewBag.OrderId ?? 0;
+    Layout = "_Layout";
 }
 
-<section class="section-padding" style="min-height: 70vh; display: flex; align-items: center;">
-    <div class="container text-center">
-        <div class="order-summary-box" style="background: #fff; padding: 50px; max-width: 600px; margin: 0 auto; border-radius:16px; border:1px solid #eee; box-shadow:0 10px 30px rgba(0,0,0,0.05);">
+<style>
+    /* Premium Success Styles */
+    .success-page-wrapper {
+        background-color: var(--ua-bg-body, #f8fafc);
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+    }
 
-            <div style="width: 80px; height: 80px; background: #dcfce7; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
-                <i class="fas fa-check fa-3x" style="color: #16a34a;"></i>
-            </div>
+    .success-card {
+        background: var(--ua-card-bg, #ffffff);
+        border: 1px solid var(--ua-border, #e2e8f0);
+        border-radius: 24px;
+        padding: 60px 40px;
+        max-width: 600px;
+        width: 100%;
+        text-align: center;
+        box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1);
+        position: relative;
+        overflow: hidden;
+        animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
 
-            <h2 style="color: var(--primary); margin-bottom: 10px;">@(isAr ? "تم استلام طلبك بنجاح!" : "Order Placed Successfully!")</h2>
-            <p style="color: #666; font-size: 1.1rem; margin-bottom: 30px;">
-                @(isAr ? $"شكراً لك. رقم طلبك هو #{orderId}. سيتم التواصل معك قريباً لتأكيد الشحن." : $"Thank you. Your order ID is #{orderId}. We will contact you shortly.")
-            </p>
+        /* Green Top Line */
+        .success-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background: linear-gradient(90deg, #22c55e, #4ade80);
+        }
 
-            <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
-                <a asp-controller="Order" asp-action="Index" class="btn primary" style="padding:12px 30px; border-radius:8px; text-decoration:none;">
-                    <i class="fas fa-box"></i> @(isAr ? "تتبع الطلب" : "Track Order")
-                </a>
-                <a asp-controller="Home" asp-action="Index" class="btn" style="border: 1px solid #ccc; color:#555; padding:12px 30px; border-radius:8px; text-decoration:none;">
-                    <i class="fas fa-home"></i> @(isAr ? "الرئيسية" : "Home")
-                </a>
-            </div>
+    .icon-wrapper {
+        width: 100px;
+        height: 100px;
+        background: rgba(34, 197, 94, 0.1);
+        color: #22c55e;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 30px;
+        font-size: 3rem;
+        position: relative;
+        z-index: 1;
+        box-shadow: 0 0 0 10px rgba(34, 197, 94, 0.05);
+    }
 
+    .success-title {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--ua-primary, #0F172A);
+        margin-bottom: 15px;
+    }
+
+    .success-desc {
+        font-size: 1.1rem;
+        color: var(--ua-text-muted, #64748b);
+        line-height: 1.6;
+        margin-bottom: 40px;
+    }
+
+    .btn-track {
+        background-color: var(--ua-primary, #0F172A);
+        color: #fff;
+        padding: 14px 35px;
+        border-radius: 50px;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 10px 20px -5px rgba(15, 23, 42, 0.3);
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        border: none;
+    }
+
+        .btn-track:hover {
+            background-color: #1e293b;
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px -5px rgba(15, 23, 42, 0.4);
+            color: #fff;
+        }
+
+    .btn-home {
+        background-color: transparent;
+        color: var(--ua-text-main, #0f172a);
+        padding: 14px 35px;
+        border-radius: 50px;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: 2px solid var(--ua-border, #e2e8f0);
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+        .btn-home:hover {
+            background-color: var(--ua-bg-body, #f8fafc);
+            border-color: var(--ua-text-muted, #64748b);
+            color: var(--ua-text-main, #0f172a);
+        }
+
+    @@keyframes slideUp {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+
+    /* Dark Mode Specifics */
+    [data-bs-theme="dark"] .success-card {
+        background: #1e293b;
+        border-color: rgba(255,255,255,0.05);
+    }
+
+    [data-bs-theme="dark"] .success-title {
+        color: #f8fafc;
+    }
+
+    [data-bs-theme="dark"] .icon-wrapper {
+        background: rgba(74, 222, 128, 0.1);
+        color: #4ade80;
+        box-shadow: 0 0 0 10px rgba(74, 222, 128, 0.05);
+    }
+
+    [data-bs-theme="dark"] .btn-track {
+        background-color: #6366f1;
+        color: #fff;
+        box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.3);
+    }
+
+        [data-bs-theme="dark"] .btn-track:hover {
+            background-color: #818cf8;
+        }
+
+    [data-bs-theme="dark"] .btn-home {
+        color: #f8fafc;
+        border-color: rgba(255,255,255,0.1);
+    }
+
+        [data-bs-theme="dark"] .btn-home:hover {
+            background-color: rgba(255,255,255,0.05);
+        }
+</style>
+
+<div class="success-page-wrapper">
+    <div class="success-card">
+
+        <div class="icon-wrapper">
+            <i class="fas fa-check"></i>
         </div>
+
+        <h1 class="success-title">@(isAr ? "تم استلام طلبك بنجاح!" : "Order Placed Successfully!")</h1>
+
+        <p class="success-desc">
+            @(isAr ? $"شكراً لك. رقم طلبك هو #{orderId}. سيتم التواصل معك قريباً لتأكيد الشحن." : $"Thank you. Your order ID is #{orderId}. We will contact you shortly.")
+        </p>
+
+        <div class="d-flex flex-wrap justify-content-center gap-3">
+            <a asp-controller="Order" asp-action="Index" class="btn-track">
+                <i class="fas fa-box"></i> @(isAr ? "تتبع الطلب" : "Track Order")
+            </a>
+
+            <a asp-controller="Home" asp-action="Index" class="btn-home">
+                <i class="fas fa-home"></i> @(isAr ? "الرئيسية" : "Home")
+            </a>
+        </div>
+
     </div>
-</section>
+</div>

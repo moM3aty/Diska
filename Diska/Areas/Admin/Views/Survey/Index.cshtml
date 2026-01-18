@@ -4,104 +4,374 @@
     Layout = "_AdminLayout";
 }
 
-<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-    <div>
-        <h2 style="margin:0; color:var(--primary);">إدارة الاستبيانات</h2>
-        <p style="color:#64748b; margin-top:5px;">إنشاء استطلاعات رأي وجمع ملاحظات العملاء</p>
-    </div>
-    <a asp-action="Create" class="btn btn-primary"><i class="fas fa-plus"></i> إنشاء استبيان جديد</a>
-</div>
+<style>
+    /* =========================================
+           PREMIUM STYLES (Light & Dark)
+           ========================================= */
 
-<div class="card">
+    /* --- Base Variables (Light) --- */
+    :root {
+        --primary-color: #0F172A;
+        --card-bg: #ffffff;
+        --text-main: #0f172a;
+        --text-sub: #64748b;
+        --border-color: #e2e8f0;
+        --bg-hover: #f8fafc;
+        --stat-icon-bg: #f1f5f9;
+        --shadow-soft: 0 4px 20px rgba(0,0,0,0.03);
+    }
+
+    /* --- Dark Mode Overrides --- */
+    [data-bs-theme="dark"] {
+        --primary-color: #f8fafc;
+        --card-bg: #1e293b; /* Slate 800 */
+        --text-main: #f8fafc; /* Slate 50 */
+        --text-sub: #94a3b8; /* Slate 400 */
+        --border-color: rgba(255, 255, 255, 0.08);
+        --bg-hover: rgba(255, 255, 255, 0.03);
+        --stat-icon-bg: rgba(255, 255, 255, 0.05);
+        --shadow-soft: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    /* --- Stats Box --- */
+    .stat-box {
+        background: var(--card-bg);
+        padding: 25px;
+        border-radius: 16px;
+        box-shadow: var(--shadow-soft);
+        border: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        transition: transform 0.3s ease;
+    }
+
+        .stat-box:hover {
+            transform: translateY(-5px);
+        }
+
+    .stat-icon-wrapper {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+    }
+
+    /* Stats Colors (Same logic for both modes, just background opacity changes) */
+    .icon-primary {
+        color: #4f46e5;
+        background: rgba(79, 70, 229, 0.1);
+    }
+
+    .icon-success {
+        color: #16a34a;
+        background: rgba(22, 163, 74, 0.1);
+    }
+
+    .icon-info {
+        color: #0ea5e9;
+        background: rgba(14, 165, 233, 0.1);
+    }
+
+    .stat-content h3 {
+        color: var(--text-main);
+        font-weight: 800;
+        margin: 0;
+    }
+
+    .stat-content small {
+        color: var(--text-sub);
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+
+    /* --- Table Container --- */
+    .table-container {
+        background: var(--card-bg);
+        border-radius: 16px;
+        box-shadow: var(--shadow-soft);
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+        margin-top: 30px;
+    }
+
+    /* --- Table Styles --- */
+    .table {
+        margin-bottom: 0;
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+        .table thead th {
+            background: var(--bg-hover);
+            color: var(--text-sub);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+    /* Specific Dark Mode Header */
+    [data-bs-theme="dark"] .table thead th {
+        background: #0f172a; /* Darker than card */
+    }
+
+    .table tbody td {
+        padding: 20px 24px;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-main);
+        font-size: 0.95rem;
+    }
+
+    .table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: var(--bg-hover);
+    }
+
+    /* --- Badges --- */
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 30px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    /* Active: Green */
+    .status-active {
+        background: rgba(34, 197, 94, 0.1);
+        color: #16a34a;
+        border: 1px solid rgba(34, 197, 94, 0.2);
+    }
+
+    /* Inactive: Gray */
+    .status-inactive {
+        background: var(--bg-hover);
+        color: var(--text-sub);
+        border: 1px solid var(--border-color);
+    }
+
+    /* Audience Badges */
+    .badge-all {
+        background: var(--bg-hover);
+        color: var(--text-main);
+        border: 1px solid var(--border-color);
+    }
+
+    .badge-merchant {
+        background: rgba(245, 158, 11, 0.1);
+        color: #d97706;
+        border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    .badge-customer {
+        background: rgba(14, 165, 233, 0.1);
+        color: #0284c7;
+        border: 1px solid rgba(14, 165, 233, 0.2);
+    }
+
+    /* --- Action Buttons --- */
+    .action-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        border: 1px solid var(--border-color);
+        background: transparent;
+        color: var(--text-sub);
+    }
+
+        .action-btn:hover {
+            background: var(--bg-hover);
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .action-btn.delete:hover {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: #ef4444;
+            color: #ef4444;
+        }
+
+    /* Header Text */
+    .page-title {
+        color: var(--text-main);
+    }
+
+    .page-subtitle {
+        color: var(--text-sub);
+    }
+
+    /* Empty State */
+    .empty-icon {
+        color: var(--text-sub);
+        opacity: 0.3;
+    }
+</style>
+
+<div class="container-fluid px-0 fade-up">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1 page-title">إدارة الاستبيانات</h2>
+            <p class="small mb-0 page-subtitle">إنشاء ومتابعة استطلاعات الرأي للعملاء والتجار</p>
+        </div>
+        <a asp-action="Create" class="btn btn-primary px-4 fw-bold rounded-pill shadow-sm">
+            <i class="fas fa-plus me-2"></i> استبيان جديد
+        </a>
+    </div>
+
+    <!-- Stats -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="stat-box">
+                <div class="stat-icon-wrapper icon-primary">
+                    <i class="fas fa-poll"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>@Model.Count()</h3>
+                    <small>إجمالي الاستبيانات</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-box">
+                <div class="stat-icon-wrapper icon-success">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>@Model.Count(x => x.IsActive)</h3>
+                    <small>الاستبيانات النشطة</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-box">
+                <div class="stat-icon-wrapper icon-info">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>@Model.Sum(x => x.Responses.Count)</h3>
+                    <small>إجمالي المشاركات</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
     @if (!Model.Any())
     {
-        <div style="text-align:center; padding:50px; color:#64748b;">
-            <i class="fas fa-poll-h fa-3x" style="margin-bottom:15px; color:#cbd5e1;"></i>
-            <p>لا توجد استبيانات مسجلة حالياً.</p>
+        <div class="text-center py-5">
+            <div class="empty-icon mb-3">
+                <i class="fas fa-clipboard-list fa-5x"></i>
+            </div>
+            <h4 class="page-title">لا توجد استبيانات حالياً</h4>
+            <p class="page-subtitle small">ابدأ بإنشاء استبيان جديد لجمع آراء العملاء.</p>
         </div>
     }
     else
     {
-        <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead>
-                    <tr>
-                        <th>العنوان</th>
-                        <th>الجمهور</th>
-                        <th>الفترة</th>
-                        <th>المشاركات</th>
-                        <th>الحالة</th>
-                        <th>إجراءات</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in Model)
-                    {
+        <div class="table-container">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
                         <tr>
-                            <td>
-                                <strong>@item.Title</strong>
-                                @if (!string.IsNullOrEmpty(item.Description))
-                                {
-                                    <div class="small text-muted">@item.Description</div>
-                                }
-                            </td>
-                            <td>
-                                @if (item.TargetAudience == "All")
-                                {
-                                    <span class="badge bg-secondary">الكل</span>
-                                }
-                                else if (item.TargetAudience == "Merchant")
-                                {
-
-                                    <span class="badge bg-warning text-dark">تجار</span>
-                                }
-                                else
-                                {
-
-                                    <span class="badge bg-info text-dark">عملاء</span>
-                                }
-                            </td>
-                            <td>
-                                <div class="small">@item.StartDate.ToString("dd/MM") - @item.EndDate.ToString("dd/MM")</div>
-                            </td>
-                            <td>
-                                <span class="fw-bold text-primary">@item.Responses.Count</span>
-                            </td>
-                            <td>
-                                @if (item.IsActive && item.EndDate > DateTime.Now)
-                                {
-                                    <span class="badge bg-success">نشط</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-light text-dark border">@(item.IsActive ? "منتهي" : "متوقف")</span>
-                                }
-                            </td>
-                            <td>
-                                <div class="btn-group">
-                                    <a asp-action="Results" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-chart-pie me-1"></i> النتائج
-                                    </a>
-
-                                    <form asp-action="ToggleStatus" method="post" class="d-inline">
-                                        <input type="hidden" name="id" value="@item.Id" />
-                                        <button type="submit" class="btn btn-sm btn-outline-secondary" title="@(item.IsActive ? "إيقاف" : "تفعيل")">
-                                            <i class="fas @(item.IsActive ? "fa-pause" : "fa-play")"></i>
-                                        </button>
-                                    </form>
-
-                                    <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('حذف الاستبيان وجميع نتائجه؟');">
-                                        <input type="hidden" name="id" value="@item.Id" />
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
+                            <th class="ps-4">عنوان الاستبيان</th>
+                            <th>الجمهور</th>
+                            <th>الفترة</th>
+                            <th>المشاركات</th>
+                            <th>الحالة</th>
+                            <th class="text-end pe-4">إجراءات</th>
                         </tr>
-                    }
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="fw-bold">@item.Title</div>
+                                    @if (!string.IsNullOrEmpty(item.Description))
+                                    {
+                                        <div class="small text-truncate" style="max-width: 250px; color: var(--text-sub);">@item.Description</div>
+                                    }
+                                </td>
+                                <td>
+                                    @if (item.TargetAudience == "All")
+                                    {
+                                        <span class="badge badge-all rounded-pill px-3">الكل</span>
+                                    }
+                                    else if (item.TargetAudience == "Merchant")
+                                    {
+                                        <span class="badge badge-merchant rounded-pill px-3">تجار</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-customer rounded-pill px-3">عملاء</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="small" style="color: var(--text-sub);">
+                                        <i class="far fa-calendar-alt me-1"></i> @item.StartDate.ToString("dd/MM") - @item.EndDate.ToString("dd/MM")
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="fw-bold" style="color: #4f46e5;">@item.Responses.Count</span>
+                                </td>
+                                <td>
+                                    @if (item.IsActive && item.EndDate > DateTime.Now)
+                                    {
+                                        <span class="status-badge status-active"><i class="fas fa-circle fa-xs"></i> نشط</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge status-inactive">@(item.IsActive ? "منتهي" : "متوقف")</span>
+                                    }
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <a asp-action="Results" asp-route-id="@item.Id" class="action-btn" title="النتائج">
+                                            <i class="fas fa-chart-pie"></i>
+                                        </a>
+
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="action-btn" title="تعديل">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+
+                                        <form asp-action="ToggleStatus" method="post" class="d-inline">
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <button type="submit" class="action-btn" title="@(item.IsActive ? "إيقاف" : "تفعيل")">
+                                                <i class="fas @(item.IsActive ? "fa-pause" : "fa-play")"></i>
+                                            </button>
+                                        </form>
+
+                                        <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('حذف الاستبيان وجميع نتائجه؟');">
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <button type="submit" class="action-btn delete" title="حذف">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         </div>
     }
 </div>

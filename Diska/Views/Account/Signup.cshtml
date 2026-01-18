@@ -3,35 +3,170 @@
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
     ViewData["Title"] = isAr ? "إنشاء حساب" : "Sign Up";
     Layout = null;
+
+    string currentTheme = Context.Request.Cookies["theme"] ?? "light";
 }
 
 <!DOCTYPE html>
-<html lang="@(isAr ? "ar" : "en")" dir="@(isAr ? "rtl" : "ltr")">
+<html lang="@(isAr ? "ar" : "en")" dir="@(isAr ? "rtl" : "ltr")" data-bs-theme="@currentTheme">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@ViewData["Title"] - DISKA</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="~/css/style.css">
+
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
+        /* =========================================
+                   PREMIUM AUTH STYLES (Standalone)
+                   ========================================= */
+        :root {
+            --auth-bg: #f8fafc;
+            --auth-card-bg: #ffffff;
+            --auth-text-main: #0f172a;
+            --auth-text-muted: #64748b;
+            --auth-border: #e2e8f0;
+            --auth-primary: #0F172A;
+            --auth-accent: #FACC15;
+            --auth-shadow: 0 20px 40px -10px rgba(0,0,0,0.1);
+            --input-bg: #f1f5f9;
+            --focus-ring: rgba(15, 23, 42, 0.1);
+            --danger-bg: #fee2e2;
+            --danger-text: #ef4444;
+            --danger-border: #fecaca;
+        }
+
+        [data-bs-theme="dark"] {
+            --auth-bg: #020617;
+            --auth-card-bg: #1e293b;
+            --auth-text-main: #f8fafc;
+            --auth-text-muted: #94a3b8;
+            --auth-border: rgba(255,255,255,0.05);
+            --auth-primary: #6366f1;
+            --auth-accent: #FACC15;
+            --auth-shadow: 0 20px 40px -10px rgba(0,0,0,0.5);
+            --input-bg: #0f172a;
+            --focus-ring: rgba(99, 102, 241, 0.25);
+            --danger-bg: rgba(239, 68, 68, 0.1);
+            --danger-text: #f87171;
+            --danger-border: rgba(239, 68, 68, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--auth-bg);
+            color: var(--auth-text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .auth-card {
+            background: var(--auth-card-bg);
+            border: 1px solid var(--auth-border);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: var(--auth-shadow);
+            position: relative;
+            overflow: hidden;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+            /* Decorative Top Line */
+            .auth-card::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 6px;
+                background: linear-gradient(90deg, var(--auth-primary), var(--auth-accent));
+            }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .auth-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            color: var(--auth-text-main);
+        }
+
+        .auth-desc {
+            color: var(--auth-text-muted);
+            font-size: 0.95rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 700;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: var(--auth-text-main);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 2px solid var(--auth-border);
+            background-color: var(--input-bg);
+            color: var(--auth-text-main);
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+            .form-control:focus {
+                border-color: var(--auth-primary);
+                background-color: var(--auth-card-bg);
+                box-shadow: 0 0 0 4px var(--focus-ring);
+            }
+
+        /* Type Toggle */
         .type-toggle {
             display: flex;
-            background: #f1f5f9;
+            background: var(--input-bg);
             padding: 5px;
-            border-radius: 10px;
-            margin-bottom: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border: 1px solid var(--auth-border);
         }
 
             .type-toggle label {
                 flex: 1;
                 text-align: center;
-                padding: 10px;
+                padding: 12px;
                 cursor: pointer;
                 border-radius: 8px;
                 transition: 0.3s;
-                font-weight: bold;
-                color: #64748b;
+                font-weight: 700;
+                color: var(--auth-text-muted);
                 margin: 0;
+                font-size: 0.9rem;
             }
 
             .type-toggle input {
@@ -39,81 +174,187 @@
             }
 
                 .type-toggle input:checked + label {
-                    background: #fff;
-                    color: var(--primary); /* Uses CSS var from style.css */
-                    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+                    background: var(--auth-card-bg);
+                    color: var(--auth-primary);
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
                 }
-        /* Fallback for primary color if var not loaded yet */
-        :root {
-            --primary: #0F172A;
+
+        [data-bs-theme="dark"] .type-toggle input:checked + label {
+            background: var(--auth-primary);
+            color: #fff;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            background: var(--auth-primary);
+            color: #fff;
+            border: none;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+
+            .btn-submit:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 20px -5px rgba(0,0,0,0.2);
+                opacity: 0.95;
+                color: #fff;
+            }
+
+        .auth-footer {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid var(--auth-border);
+            text-align: center;
+            color: var(--auth-text-muted);
+            font-size: 0.9rem;
+        }
+
+            .auth-footer a {
+                color: var(--auth-primary);
+                font-weight: 700;
+                text-decoration: none;
+                transition: 0.2s;
+            }
+
+                .auth-footer a:hover {
+                    text-decoration: underline;
+                }
+
+        .alert-error {
+            background: var(--danger-bg);
+            color: var(--danger-text);
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 0.9rem;
+            border: 1px solid var(--danger-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
     </style>
 </head>
-<body class="auth-body">
+<body>
 
     <div class="auth-container">
-        <div class="auth-header">
-            <h2>@(isAr ? "إنشاء حساب جديد" : "Create Account")</h2>
-            <p>@(isAr ? "انضم لعائلة ديسكا" : "Join Diska Family")</p>
-        </div>
+        <div class="auth-card">
 
-        @if (ViewBag.Error != null)
-        {
-            <div style="background:#fee2e2; color:#ef4444; padding:10px; border-radius:8px; margin-bottom:20px; text-align:center; border:1px solid #fecaca;">
-                @ViewBag.Error
-            </div>
-        }
-
-        <form asp-action="Signup" method="post">
-
-            <div class="type-toggle">
-                <input type="radio" name="type" id="typeCust" value="Customer" checked onchange="toggleShop(false)">
-                <label for="typeCust">👤 @(isAr ? "عميل / مشتري" : "Customer")</label>
-
-                <input type="radio" name="type" id="typeMerch" value="Merchant" onchange="toggleShop(true)">
-                <label for="typeMerch">🏪 @(isAr ? "تاجر / مورد" : "Merchant")</label>
+            <div class="auth-header">
+                <h1 class="auth-title">@(isAr ? "إنشاء حساب جديد" : "Create Account")</h1>
+                <p class="auth-desc">@(isAr ? "انضم لعائلة ديسكا وابدأ رحلتك معنا" : "Join Diska Family and start your journey")</p>
             </div>
 
-            <div class="form-group">
-                <label>@(isAr ? "الاسم بالكامل" : "Full Name")</label>
-                <input type="text" name="fullName" required>
+            @if (ViewBag.Error != null)
+            {
+                <div class="alert-error">
+                    <i class="fas fa-exclamation-circle"></i> @ViewBag.Error
+                </div>
+            }
+
+            <form asp-action="Signup" method="post">
+
+                <div class="type-toggle">
+                    <input type="radio" name="type" id="typeCust" value="Customer" checked onchange="toggleShop(false)">
+                    <label for="typeCust">
+                        <i class="fas fa-user me-2"></i> @(isAr ? "عميل / مشتري" : "Customer")
+                    </label>
+
+                    <input type="radio" name="type" id="typeMerch" value="Merchant" onchange="toggleShop(true)">
+                    <label for="typeMerch">
+                        <i class="fas fa-store me-2"></i> @(isAr ? "تاجر / مورد" : "Merchant")
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">@(isAr ? "الاسم بالكامل" : "Full Name")</label>
+                    <input type="text" name="fullName" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">@(isAr ? "رقم الهاتف" : "Phone Number")</label>
+                    <input type="tel" name="phone" class="form-control" required
+                           placeholder="01xxxxxxxxx"
+                           style="direction:ltr; text-align:@(isAr ? "right" : "left");">
+                </div>
+
+                <!-- Merchant Only Fields -->
+                <div id="merchantFields" style="display:none; animation: fadeIn 0.3s ease;">
+                    <div class="form-group">
+                        <label class="form-label">@(isAr ? "اسم المحل / النشاط" : "Shop Name")</label>
+                        <input type="text" name="shopName" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">@(isAr ? "السجل التجاري (اختياري)" : "Commercial Register")</label>
+                        <input type="text" name="commercialReg" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">@(isAr ? "البطاقة الضريبية (اختياري)" : "Tax Card")</label>
+                        <input type="text" name="taxCard" class="form-control">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">@(isAr ? "كلمة المرور" : "Password")</label>
+                    <input type="password" name="password" class="form-control" placeholder="********" required>
+                </div>
+
+                <button type="submit" class="btn-submit">
+                    @(isAr ? "إنشاء الحساب" : "Register")
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                @(isAr ? "لديك حساب بالفعل؟" : "Already registered?")
+                <a asp-action="Login">@(isAr ? "تسجيل الدخول" : "Login")</a>
             </div>
 
-            <div class="form-group">
-                <label>@(isAr ? "رقم الهاتف" : "Phone Number")</label>
-                <input type="tel" name="phone" placeholder="01xxxxxxxxx" required style="direction:ltr; text-align:@(isAr ? "right" : "left");">
-            </div>
-
-            <div class="form-group" id="shopField" style="display:none;">
-                <label>@(isAr ? "اسم المحل / النشاط" : "Shop Name")</label>
-                <input type="text" name="shopName">
-            </div>
-
-            <div class="form-group" id="regField" style="display:none;">
-                <label>@(isAr ? "السجل التجاري (اختياري)" : "Commercial Register")</label>
-                <input type="text" name="commercialReg">
-            </div>
-
-            <div class="form-group">
-                <label>@(isAr ? "كلمة المرور" : "Password")</label>
-                <input type="password" name="password" placeholder="********" required>
-            </div>
-
-            <button type="submit" class="btn primary add-btn" style="width:100%;">@(isAr ? "إنشاء الحساب" : "Register")</button>
-        </form>
-
-        <div class="auth-footer">
-            @(isAr ? "لديك حساب بالفعل؟" : "Already registered?")
-            <a asp-action="Login" style="font-weight:bold;">@(isAr ? "تسجيل الدخول" : "Login")</a>
         </div>
     </div>
 
     <script>
         function toggleShop(show) {
-            document.getElementById('shopField').style.display = show ? 'block' : 'none';
-            document.getElementById('regField').style.display = show ? 'block' : 'none';
+            const fields = document.getElementById('merchantFields');
+            const inputs = fields.querySelectorAll('input');
+
+            if(show) {
+                fields.style.display = 'block';
+                // Make shop name required only for merchants
+                fields.querySelector('input[name="shopName"]').setAttribute('required', 'required');
+            } else {
+                fields.style.display = 'none';
+                inputs.forEach(input => {
+                    input.value = '';
+                    input.removeAttribute('required');
+                });
+            }
         }
     </script>
+
+    <style>
+        @("@keyframes") fadeIn {
+            from
+
+        {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        }
+    </style>
 
 </body>
 </html>

@@ -7,85 +7,318 @@
 }
 
 <style>
+    /* =========================================
+           PREMIUM STYLES (Light & Dark)
+           ========================================= */
+    :root {
+        --ua-bg-body: #f9fafb;
+        --ua-card-bg: #ffffff;
+        --ua-text-main: #1f2937;
+        --ua-text-muted: #6b7280;
+        --ua-border: #e2e8f0;
+        --ua-primary: #4f46e5;
+        --ua-primary-light: rgba(79, 70, 229, 0.1);
+        --ua-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        --ua-radius: 16px;
+    }
+
+    [data-bs-theme="dark"] {
+        --ua-bg-body: #020617; /* Deep Dark */
+        --ua-card-bg: #1e293b; /* Slate 800 */
+        --ua-text-main: #f8fafc; /* High Contrast Text */
+        --ua-text-muted: #94a3b8; /* Muted Text */
+        --ua-border: rgba(255, 255, 255, 0.08);
+        --ua-primary: #818cf8; /* Brighter Primary */
+        --ua-primary-light: rgba(129, 140, 248, 0.15);
+        --ua-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.4);
+    }
+
+    body {
+        background-color: var(--ua-bg-body);
+        color: var(--ua-text-main);
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
     .address-card {
-        background: #fff;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 20px;
+        background: var(--ua-card-bg);
+        border: 1px solid var(--ua-border);
+        border-radius: var(--ua-radius);
+        padding: 25px;
         position: relative;
-        transition: all 0.3s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         height: 100%;
         display: flex;
         flex-direction: column;
+        box-shadow: var(--ua-shadow);
     }
 
         .address-card:hover {
-            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-            transform: translateY(-3px);
-            border-color: var(--primary);
+            transform: translateY(-5px);
+            border-color: var(--ua-primary);
+            box-shadow: 0 15px 30px -5px rgba(0,0,0,0.1);
         }
 
-        .address-card.default {
-            background-color: #f8fafc;
-            border: 1px solid var(--primary);
-        }
+    [data-bs-theme="dark"] .address-card:hover {
+        box-shadow: 0 15px 30px -5px rgba(0,0,0,0.5);
+    }
+
+    .address-card.default {
+        background-color: var(--ua-primary-light);
+        border: 2px solid var(--ua-primary);
+    }
+
+    [data-bs-theme="dark"] .address-card.default {
+        background-color: rgba(99, 102, 241, 0.05); /* Very subtle tint for dark mode default */
+    }
 
     .default-badge {
         position: absolute;
         top: 15px;
         @(isAr ? "left" : "right") : 15px;
-        background: var(--primary);
+        background: var(--ua-primary);
         color: #fff;
         font-size: 0.75rem;
-        padding: 4px 10px;
-        border-radius: 20px;
-        font-weight: bold;
+        padding: 4px 12px;
+        border-radius: 50px;
+        font-weight: 800;
+        box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
+    }
+
+    .address-title {
+        margin: 0 0 15px;
+        color: var(--ua-text-main);
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 1.1rem;
+    }
+
+    .address-details {
+        color: var(--ua-text-muted);
+        line-height: 1.7;
+        font-size: 0.95rem;
+        flex: 1;
+    }
+
+        .address-details p {
+            margin-bottom: 5px;
+        }
+
+    .phone-number {
+        margin-top: 10px;
+        color: var(--ua-primary);
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
 
     .address-actions {
-        margin-top: auto;
+        margin-top: 20px;
         padding-top: 15px;
-        border-top: 1px solid #eee;
+        border-top: 1px dashed var(--ua-border);
         display: flex;
         gap: 10px;
         justify-content: flex-end;
     }
+
+    /* Action Buttons */
+    .btn-action {
+        border-radius: 8px;
+        padding: 8px 14px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        transition: 0.2s;
+        border: 1px solid var(--ua-border);
+        background: transparent;
+        color: var(--ua-text-muted);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        cursor: pointer;
+    }
+
+        .btn-action:hover {
+            background: var(--ua-bg-body);
+            color: var(--ua-text-main);
+            transform: translateY(-2px);
+        }
+
+    /* Specific Button Styles */
+    .btn-edit {
+        color: #0284c7;
+        border-color: #0284c7;
+        background: rgba(2, 132, 199, 0.05);
+    }
+
+        .btn-edit:hover {
+            background: #0284c7;
+            color: #fff;
+        }
+
+    .btn-delete {
+        color: #dc2626;
+        border-color: #dc2626;
+        background: rgba(220, 38, 38, 0.05);
+    }
+
+        .btn-delete:hover {
+            background: #dc2626;
+            color: #fff;
+        }
+
+    .btn-default {
+        color: #ca8a04;
+        border-color: #ca8a04;
+        background: rgba(202, 138, 4, 0.05);
+    }
+
+        .btn-default:hover {
+            background: #ca8a04;
+            color: #fff;
+        }
+
+    [data-bs-theme="dark"] .btn-edit {
+        color: #38bdf8;
+        border-color: #38bdf8;
+        background: rgba(56, 189, 248, 0.1);
+    }
+
+        [data-bs-theme="dark"] .btn-edit:hover {
+            background: #38bdf8;
+            color: #000;
+        }
+
+    [data-bs-theme="dark"] .btn-delete {
+        color: #f87171;
+        border-color: #f87171;
+        background: rgba(248, 113, 113, 0.1);
+    }
+
+        [data-bs-theme="dark"] .btn-delete:hover {
+            background: #f87171;
+            color: #000;
+        }
+
+    [data-bs-theme="dark"] .btn-default {
+        color: #facc15;
+        border-color: #facc15;
+        background: rgba(250, 204, 21, 0.1);
+    }
+
+        [data-bs-theme="dark"] .btn-default:hover {
+            background: #facc15;
+            color: #000;
+        }
+
+    /* Page Header */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .page-title {
+        margin: 0;
+        font-weight: 800;
+        color: var(--ua-text-main);
+        font-size: 1.8rem;
+    }
+
+    .btn-add {
+        background-color: var(--ua-primary);
+        color: #fff;
+        padding: 10px 24px;
+        border-radius: 50px;
+        text-decoration: none;
+        font-weight: 700;
+        box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+        transition: 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .btn-add:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.4);
+            color: #fff;
+        }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px;
+        background: var(--ua-card-bg);
+        border-radius: 20px;
+        border: 2px dashed var(--ua-border);
+    }
+
+    .empty-icon {
+        color: var(--ua-text-muted);
+        opacity: 0.5;
+        margin-bottom: 20px;
+        font-size: 4rem;
+    }
+
+    /* Animation */
+    .fade-up {
+        animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @@keyframes fadeUp {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
 </style>
 
-<section class="section-padding" style="background-color: #f9fafb; min-height: 80vh;">
+<section class="section-padding fade-up">
     <div class="container">
 
         <!-- Header -->
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
+        <div class="page-header">
             <div>
-                <h2 class="page-title" style="margin:0;">@(isAr ? "دفتر العناوين" : "Address Book")</h2>
-                <p style="color:#666; margin-top:5px;">@(isAr ? "إدارة عناوين الشحن والتوصيل" : "Manage your shipping addresses")</p>
+                <h2 class="page-title">@(isAr ? "دفتر العناوين" : "Address Book")</h2>
+                <p style="color:var(--ua-text-muted); margin-top:5px; font-size:0.95rem;">@(isAr ? "إدارة عناوين الشحن والتوصيل الخاصة بك" : "Manage your shipping and delivery addresses")</p>
             </div>
-            <a asp-action="Create" class="btn primary small">
+            <a asp-action="Create" class="btn-add">
                 <i class="fas fa-plus"></i> @(isAr ? "إضافة عنوان" : "Add Address")
             </a>
         </div>
 
         @if (TempData["Success"] != null)
         {
-            <div style="background:#dcfce7; color:#166534; padding:15px; border-radius:8px; margin-bottom:20px; border:1px solid #bbf7d0;">
+            <div style="background:rgba(34, 197, 94, 0.1); color:#16a34a; padding:15px; border-radius:12px; margin-bottom:25px; border:1px solid rgba(34, 197, 94, 0.2); display:flex; align-items:center; gap:10px;">
                 <i class="fas fa-check-circle"></i> @TempData["Success"]
             </div>
         }
 
         @if (!Model.Any())
         {
-            <div style="text-align:center; padding:60px; background:#fff; border-radius:15px; border:1px solid #eee;">
-                <i class="fas fa-map-marked-alt fa-4x" style="color:#e2e8f0; margin-bottom:20px;"></i>
-                <h3 style="color:#64748b;">@(isAr ? "لا توجد عناوين مسجلة." : "No addresses found.")</h3>
-                <a asp-action="Create" class="btn primary small" style="margin-top:20px;">
+            <div class="empty-state">
+                <i class="fas fa-map-marked-alt empty-icon"></i>
+                <h3 style="color:var(--ua-text-main); font-weight:700;">@(isAr ? "لا توجد عناوين مسجلة." : "No addresses found.")</h3>
+                <p style="color:var(--ua-text-muted);">@(isAr ? "قم بإضافة عنوان جديد لتسهيل عملية الشراء." : "Add a new address to make checkout easier.")</p>
+                <a asp-action="Create" class="btn-add" style="margin-top:20px; display:inline-flex;">
                     @(isAr ? "إضافة عنوان جديد" : "Add New Address")
                 </a>
             </div>
         }
         else
         {
-            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:25px;">
+            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:25px;">
                 @foreach (var addr in Model)
                 {
                     <div class="address-card @(addr.IsDefault ? "default" : "")">
@@ -97,16 +330,16 @@
                             </span>
                         }
 
-                        <h4 style="margin:0 0 10px; color:var(--text-dark); font-weight:bold; display:flex; align-items:center; gap:8px;">
-                            <i class="fas fa-home" style="color:#cbd5e1;"></i> @addr.Title
+                        <h4 class="address-title">
+                            <i class="fas fa-home" style="color:var(--ua-text-muted); opacity:0.7;"></i> @addr.Title
                         </h4>
 
-                        <div style="color:#555; line-height:1.6; font-size:0.95rem; flex:1;">
-                            <p style="margin:0;">@addr.Governorate, @addr.City</p>
-                            <p style="margin:0;">@addr.Street</p>
-                            <p style="margin:8px 0 0; color:var(--primary); font-weight:bold; font-size:0.9rem;">
+                        <div class="address-details">
+                            <p>@addr.Governorate, @addr.City</p>
+                            <p style="color:var(--ua-text-main); font-weight:600;">@addr.Street</p>
+                            <div class="phone-number">
                                 <i class="fas fa-phone-alt"></i> @addr.PhoneNumber
-                            </p>
+                            </div>
                         </div>
 
                         <div class="address-actions">
@@ -114,20 +347,20 @@
                             {
                                 <form asp-action="SetDefault" method="post" style="margin:0;">
                                     <input type="hidden" name="id" value="@addr.Id" />
-                                    <button type="submit" class="btn small" style="background:transparent; color:#666; border:1px solid #ddd; padding:6px 12px; font-size:0.8rem;" title="@(isAr ? "تعيين كافتراضي" : "Set as Default")">
+                                    <button type="submit" class="btn-action btn-default" title="@(isAr ? "تعيين كافتراضي" : "Set as Default")">
                                         <i class="fas fa-star"></i>
                                     </button>
                                 </form>
                             }
 
-                            <a asp-action="Edit" asp-route-id="@addr.Id" class="btn small" style="background:#e0f2fe; color:#0284c7; border:none; padding:6px 12px; font-size:0.8rem;">
+                            <a asp-action="Edit" asp-route-id="@addr.Id" class="btn-action btn-edit">
                                 <i class="fas fa-edit"></i> @(isAr ? "تعديل" : "Edit")
                             </a>
 
-                            <form asp-action="Delete" method="post" onsubmit="return confirm('@(isAr ? "هل أنت متأكد من الحذف؟" : "Delete this address?")');" style="margin:0;">
+                            <form id="deleteForm-@addr.Id" asp-action="Delete" method="post" style="margin:0;">
                                 <input type="hidden" name="id" value="@addr.Id" />
-                                <button type="submit" class="btn small" style="background:#fee2e2; color:#dc2626; border:none; padding:6px 12px; font-size:0.8rem;">
-                                    <i class="fas fa-trash"></i>
+                                <button type="button" class="btn-action btn-delete" onclick="confirmDelete(@addr.Id)">
+                                    <i class="fas fa-trash"></i> @(isAr ? "حذف" : "Delete")
                                 </button>
                             </form>
                         </div>
@@ -137,3 +370,37 @@
         }
     </div>
 </section>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        function confirmDelete(id) {
+            // Check theme for styling
+            const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+            const colors = isDark ? {
+                bg: '#1e293b', text: '#f8fafc', confirm: '#ef4444', cancel: '#64748b'
+            } : {
+                bg: '#ffffff', text: '#1f2937', confirm: '#ef4444', cancel: '#6b7280'
+            };
+
+            Swal.fire({
+                title: '@(isAr ? "هل أنت متأكد؟" : "Are you sure?")',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: colors.confirm,
+                cancelButtonColor: colors.cancel,
+                confirmButtonText: '@(isAr ? "نعم، احذف" : "Yes, delete it!")',
+                cancelButtonText: '@(isAr ? "إلغاء" : "Cancel")',
+                background: colors.bg,
+                color: colors.text,
+                customClass: {
+                    popup: 'rounded-4 shadow-lg border-0'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('deleteForm-' + id).submit();
+                }
+            })
+        }
+    </script>
+}

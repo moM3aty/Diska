@@ -1,66 +1,127 @@
 ﻿@{
     ViewData["Title"] = "إضافة موظف";
     Layout = "_MerchantLayout";
+    bool isAr = System.Globalization.CultureInfo.CurrentCulture.Name.StartsWith("ar");
 }
 
+<style>
+    .form-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        box-shadow: var(--shadow-sm);
+        padding: 30px;
+    }
+
+    .form-label {
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+    }
+
+    .form-control {
+        background: var(--bg-body);
+        border-color: var(--border-color);
+        color: var(--text-main);
+        padding: 12px 15px;
+        border-radius: 10px;
+    }
+
+        .form-control:focus {
+            background: var(--bg-card);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+            color: var(--text-main);
+        }
+
+    .perm-check {
+        padding: 15px;
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        transition: 0.2s;
+        cursor: pointer;
+    }
+
+        .perm-check:hover {
+            background: rgba(79, 70, 229, 0.05);
+            border-color: var(--primary-color);
+        }
+
+    .form-check-input:checked {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+</style>
+
 <div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white py-3">
-                <h5 class="mb-0 text-primary">بيانات الموظف الجديد</h5>
+    <div class="col-lg-8">
+        <div class="form-card">
+            <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom" style="border-color:var(--border-color)!important;">
+                <h4 class="mb-0 fw-bold text-main">@(isAr ? "بيانات الموظف الجديد" : "New Staff Details")</h4>
+                <a asp-action="Index" class="btn btn-sm btn-outline-secondary">@(isAr ? "إلغاء" : "Cancel")</a>
             </div>
-            <div class="card-body p-4">
-                <form asp-action="Create" method="post">
 
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-6">
-                            <label class="form-label">الاسم بالكامل</label>
-                            <input type="text" name="fullName" class="form-control" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">رقم الموبايل (اسم الدخول)</label>
-                            <input type="tel" name="phone" class="form-control" required>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">كلمة المرور</label>
-                            <input type="password" name="password" class="form-control" required>
+            <form asp-action="Create" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="row g-4 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label">@(isAr ? "الاسم بالكامل" : "Full Name")</label>
+                        <input type="text" name="fullName" class="form-control" required placeholder="مثال: أحمد محمد">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">@(isAr ? "رقم الهاتف (اسم الدخول)" : "Phone (Login ID)")</label>
+                        <input type="tel" name="phone" class="form-control" required placeholder="01xxxxxxxxx">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">@(isAr ? "كلمة المرور" : "Password")</label>
+                        <input type="password" name="password" class="form-control" required>
+                    </div>
+                </div>
+
+                <h6 class="fw-bold text-primary mb-3">@(isAr ? "الصلاحيات المسموحة" : "Permissions")</h6>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <div class="perm-check form-check">
+                            <input class="form-check-input float-end" type="checkbox" name="permissions" value="Products" id="permProd">
+                            <label class="form-check-label w-100 pe-4 text-main fw-bold" for="permProd">
+                                <i class="fas fa-box me-2 text-muted"></i> @(isAr ? "إدارة المنتجات" : "Manage Products")
+                            </label>
                         </div>
                     </div>
-
-                    <h6 class="text-muted mb-3 border-bottom pb-2">تحديد الصلاحيات</h6>
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="permissions" value="Products" id="permProd">
-                                <label class="form-check-label" for="permProd">إدارة المنتجات (إضافة/تعديل)</label>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="permissions" value="Orders" id="permOrder">
-                                <label class="form-check-label" for="permOrder">متابعة الطلبات</label>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="permissions" value="Restock" id="permRestock">
-                                <label class="form-check-label" for="permRestock">طلبات النواقص</label>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="permissions" value="Reviews" id="permReview">
-                                <label class="form-check-label" for="permReview">الرد على التقييمات</label>
-                            </div>
+                    <div class="col-md-6">
+                        <div class="perm-check form-check">
+                            <input class="form-check-input float-end" type="checkbox" name="permissions" value="Orders" id="permOrder">
+                            <label class="form-check-label w-100 pe-4 text-main fw-bold" for="permOrder">
+                                <i class="fas fa-shopping-bag me-2 text-muted"></i> @(isAr ? "متابعة الطلبات" : "Manage Orders")
+                            </label>
                         </div>
                     </div>
-
-                    <div class="text-end">
-                        <a asp-action="Index" class="btn btn-secondary">إلغاء</a>
-                        <button type="submit" class="btn btn-primary px-4">حفظ البيانات</button>
+                    <div class="col-md-6">
+                        <div class="perm-check form-check">
+                            <input class="form-check-input float-end" type="checkbox" name="permissions" value="Restock" id="permRestock">
+                            <label class="form-check-label w-100 pe-4 text-main fw-bold" for="permRestock">
+                                <i class="fas fa-cubes me-2 text-muted"></i> @(isAr ? "طلبات النواقص" : "Restock Requests")
+                            </label>
+                        </div>
                     </div>
-                </form>
-            </div>
+                    <div class="col-md-6">
+                        <div class="perm-check form-check">
+                            <input class="form-check-input float-end" type="checkbox" name="permissions" value="Reviews" id="permReview">
+                            <label class="form-check-label w-100 pe-4 text-main fw-bold" for="permReview">
+                                <i class="fas fa-star me-2 text-muted"></i> @(isAr ? "الرد على التقييمات" : "Reply Reviews")
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-end pt-3 border-top" style="border-color:var(--border-color)!important;">
+                    <button type="submit" class="btn btn-primary px-5 py-2 rounded-pill fw-bold shadow-sm">
+                        @(isAr ? "حفظ الموظف" : "Save Staff")
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

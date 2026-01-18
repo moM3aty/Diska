@@ -43,8 +43,11 @@ namespace Diska.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(UserAddress model)
         {
+            ModelState.Remove("User");
+            ModelState.Remove("UserId");
             if (ModelState.IsValid)
             {
+                
                 var user = await _userManager.GetUserAsync(User);
                 model.UserId = user.Id;
 
@@ -81,8 +84,11 @@ namespace Diska.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, UserAddress model)
         {
-            if (id != model.Id) return NotFound();
-
+            if (id != model.Id)
+            {
+                return NotFound();
+            }
+            ModelState.Remove("User");
             if (ModelState.IsValid)
             {
                 var user = await _userManager.GetUserAsync(User);

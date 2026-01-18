@@ -231,6 +231,11 @@ namespace Diska.Controllers
         {
             return View();
         }
+        [HttpGet]
+        public IActionResult AccessDenied()
+        {
+            return View();
+        }
 
         // --- Helpers ---
         private IActionResult RedirectToRoleDashboard()
@@ -259,4 +264,5 @@ namespace Diska.Controllers
         [System.ComponentModel.DataAnnotations.Compare("Password", ErrorMessage = "كلمة المرور غير متطابقة")]
         public string ConfirmPassword { get; set; }
     }
+
 }

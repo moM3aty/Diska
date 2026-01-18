@@ -1,11 +1,13 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Diska.Data;
 using Diska.Models;
+using Diska.Areas.Admin.ViewModels;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Diska.Services;
+using Microsoft.AspNetCore.Authorization;
 using System.Text.Json;
+using System.Threading.Tasks;
+using System.Linq;
 
 namespace Diska.Areas.Admin.Controllers
 {
@@ -15,144 +17,149 @@ namespace Diska.Areas.Admin.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly INotificationService _notificationService;
-        private readonly IAuditService _auditService;
 
-        public ApprovalsController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, INotificationService notificationService, IAuditService auditService)
+        public ApprovalsController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
             _userManager = userManager;
-            _notificationService = notificationService;
-            _auditService = auditService;
         }
 
-        // عرض كل الطلبات المعلقة
         public async Task<IActionResult> Index()
         {
-            var pending = await _context.PendingMerchantActions
+            var viewModel = new ApprovalsViewModel();
+
+            // 1. جلب التجار غير الموثقين
+            var allMerchants = await _userManager.GetUsersInRoleAsync("Merchant");
+            viewModel.NewMerchants = allMerchants.Where(u => !u.IsVerifiedMerchant).ToList();
+
+            // 2. جلب المنتجات المعلقة
+            viewModel.PendingProducts = await _context.Products
                 .Include(p => p.Merchant)
+                .Include(p => p.Category)
                 .Where(p => p.Status == "Pending")
-                .OrderByDescending(p => p.RequestDate)
                 .ToListAsync();
 
-            return View(pending);
+            // 3. جلب الطلبات الأخرى
+            viewModel.OtherActions = await _context.PendingMerchantActions
+                .Include(a => a.Merchant)
+                .Where(a => a.Status == "Pending")
+                .OrderByDescending(a => a.RequestDate)
+                .ToListAsync();
+
+            return View(viewModel);
         }
 
-        // تفاصيل الطلب للمقارنة
-        public async Task<IActionResult> Review(int id)
+        // --- صفحة معاينة المنتج للموافقة (جديد) ---
+        [HttpGet]
+        public async Task<IActionResult> ProductDetails(int id)
         {
-            var action = await _context.PendingMerchantActions
+            var product = await _context.Products
+                .Include(p => p.Category)
                 .Include(p => p.Merchant)
+                .Include(p => p.ProductColors)
+                .Include(p => p.Images)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
-            if (action == null) return NotFound();
-            return View(action);
+            if (product == null) return NotFound();
+
+            return View(product);
         }
 
-        // الموافقة على التغيير
+        // --- إجراءات التجار ---
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Approve(int id)
+        public async Task<IActionResult> ApproveMerchant(string id)
         {
-            var action = await _context.PendingMerchantActions.FindAsync(id);
-            if (action == null || action.Status != "Pending") return NotFound();
-
-            var adminId = _userManager.GetUserId(User);
-
-            try
+            var user = await _userManager.FindByIdAsync(id);
+            if (user != null)
             {
-                // تنفيذ المنطق بناءً على النوع
-                if (action.ActionType == "UpdateProductPrice")
-                {
-                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-
-                    // استخدام JsonElement للتعامل الآمن مع البيانات الديناميكية
-                    using (JsonDocument doc = JsonDocument.Parse(action.NewValueJson))
-                    {
-                        if (doc.RootElement.TryGetProperty("Price", out JsonElement priceElement) &&
-                            int.TryParse(action.EntityId, out int productId))
-                        {
-                            var product = await _context.Products.FindAsync(productId);
-                            if (product != null)
-                            {
-                                product.Price = priceElement.GetDecimal();
-                                _context.Update(product);
-                            }
-                        }
-                    }
-                }
-
-                // حالات أخرى (سحب رصيد)
-                else if (action.ActionType == "WithdrawRequest")
-                {
-                    using (JsonDocument doc = JsonDocument.Parse(action.NewValueJson))
-                    {
-                        if (doc.RootElement.TryGetProperty("Amount", out JsonElement amountElement))
-                        {
-                            decimal amount = amountElement.GetDecimal();
-                            var merchant = await _userManager.FindByIdAsync(action.MerchantId);
-
-                            // خصم الرصيد فعلياً وتسجيل العملية
-                            if (merchant != null && merchant.WalletBalance >= amount)
-                            {
-                                // (الخصم تم عند الطلب أو يتم الآن - حسب سياسة الموقع)
-                                // هنا نفترض الخصم عند الموافقة لضمان وجود الرصيد
-                                merchant.WalletBalance -= amount;
-
-                                _context.WalletTransactions.Add(new WalletTransaction
-                                {
-                                    UserId = merchant.Id,
-                                    Amount = amount,
-                                    Type = "Withdraw", // سحب
-                                    Description = $"تمت الموافقة على سحب الأرباح (Ref: #{action.Id})",
-                                    TransactionDate = DateTime.Now
-                                });
-                                await _userManager.UpdateAsync(merchant);
-                            }
-                        }
-                    }
-                }
-
-                action.Status = "Approved";
-                action.ActionDate = DateTime.Now;
-                action.ActionByAdminId = adminId;
-
-                await _context.SaveChangesAsync();
-
-                await _auditService.LogAsync(adminId, "Approve Request", action.EntityName, action.EntityId, $"تم قبول طلب {action.ActionType}", HttpContext.Connection.RemoteIpAddress?.ToString());
-                await _notificationService.NotifyUserAsync(action.MerchantId, "تمت الموافقة", "تمت الموافقة على طلبك بنجاح.", "Success");
-
-                TempData["Success"] = "تم اعتماد الطلب بنجاح.";
+                user.IsVerifiedMerchant = true;
+                await _userManager.UpdateAsync(user);
+                TempData["Success"] = $"تم توثيق التاجر {user.ShopName} بنجاح.";
             }
-            catch (Exception ex)
-            {
-                TempData["Error"] = "حدث خطأ: " + ex.Message;
-            }
-
             return RedirectToAction(nameof(Index));
         }
 
-        // رفض التغيير
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Reject(int id, string reason)
+        public async Task<IActionResult> RejectMerchant(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            if (user != null)
+            {
+                await _userManager.DeleteAsync(user);
+                TempData["Success"] = "تم رفض طلب التاجر وحذف الحساب.";
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
+        // --- إجراءات المنتجات ---
+        [HttpPost]
+        public async Task<IActionResult> ApproveProduct(int id)
+        {
+            var product = await _context.Products.FindAsync(id);
+            if (product != null)
+            {
+                product.Status = "Active";
+                await _context.SaveChangesAsync();
+                TempData["Success"] = "تم نشر المنتج بنجاح.";
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> RejectProduct(int id)
+        {
+            var product = await _context.Products.FindAsync(id);
+            if (product != null)
+            {
+                product.Status = "Rejected";
+                await _context.SaveChangesAsync();
+                TempData["Success"] = "تم رفض المنتج.";
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
+        // --- إجراءات أخرى ---
+        [HttpPost]
+        public async Task<IActionResult> ApproveAction(int id)
         {
             var action = await _context.PendingMerchantActions.FindAsync(id);
             if (action == null) return NotFound();
 
-            var adminId = _userManager.GetUserId(User);
+            if (action.ActionType == "UpdateProductPrice")
+            {
+                var product = await _context.Products.FindAsync(int.Parse(action.EntityId));
+                if (product != null)
+                {
+                    using (JsonDocument doc = JsonDocument.Parse(action.NewValueJson))
+                    {
+                        if (doc.RootElement.TryGetProperty("Price", out JsonElement priceElement))
+                        {
+                            product.Price = priceElement.GetDecimal();
+                            _context.Products.Update(product);
+                        }
+                    }
+                }
+            }
 
-            action.Status = "Rejected";
-            action.AdminComment = reason;
-            action.ActionDate = DateTime.Now;
-            action.ActionByAdminId = adminId;
-
+            action.Status = "Approved";
+            action.ProcessedDate = DateTime.Now;
             await _context.SaveChangesAsync();
 
-            await _auditService.LogAsync(adminId, "Reject Request", action.EntityName, action.EntityId, $"تم رفض الطلب. السبب: {reason}", HttpContext.Connection.RemoteIpAddress?.ToString());
-            await _notificationService.NotifyUserAsync(action.MerchantId, "تم الرفض", $"عذراً، تم رفض طلبك. السبب: {reason}", "Alert");
+            TempData["Success"] = "تمت الموافقة على الطلب.";
+            return RedirectToAction(nameof(Index));
+        }
 
-            TempData["Success"] = "تم رفض الطلب.";
+        [HttpPost]
+        public async Task<IActionResult> RejectAction(int id)
+        {
+            var action = await _context.PendingMerchantActions.FindAsync(id);
+            if (action != null)
+            {
+                action.Status = "Rejected";
+                action.ProcessedDate = DateTime.Now;
+                await _context.SaveChangesAsync();
+                TempData["Success"] = "تم رفض الطلب.";
+            }
             return RedirectToAction(nameof(Index));
         }
     }

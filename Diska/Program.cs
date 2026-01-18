@@ -30,12 +30,13 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
-// 3. تسجيل الخدمات (Dependency Injection) - هذا هو الجزء الذي يحل مشكلتك
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IShippingService, ShippingService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
-builder.Services.AddScoped<IAuditService, AuditService>(); // <-- حل مشكلة AuditService
-builder.Services.AddScoped<IPermissionService, PermissionService>(); // لصلاحيات التجار
+builder.Services.AddScoped<IAuditService, AuditService>();
+builder.Services.AddHttpContextAccessor(); 
+builder.Services.AddScoped<IPermissionService, PermissionService>(); 
+
 
 // 4. اللغات (Localization)
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");

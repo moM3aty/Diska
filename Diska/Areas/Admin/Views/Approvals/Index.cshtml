@@ -1,79 +1,256 @@
-﻿@model IEnumerable<Diska.Models.PendingMerchantAction>
+﻿@model Diska.Areas.Admin.ViewModels.ApprovalsViewModel
 @{
-    ViewData["Title"] = "طلبات الموافقات";
+    ViewData["Title"] = "مركز الموافقات";
     Layout = "_AdminLayout";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<style>
+    .approval-card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        background: var(--bg-card);
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+
+    .nav-pills .nav-link {
+        color: var(--text-muted) !important;
+        font-weight: 700;
+        padding: 12px 25px;
+        border-radius: 50px;
+        margin-right: 10px;
+        transition: all 0.3s;
+    }
+
+        .nav-pills .nav-link.active {
+            background-color: var(--primary-color);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+        }
+
+    .item-row {
+        border-bottom: 1px solid var(--border-color);
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: var(--bg-body);
+        margin-bottom: 15px;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+    }
+
+        .item-row:last-child {
+            margin-bottom: 0;
+        }
+
+    .item-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4 fade-up">
     <div>
-        <h2 class="text-primary fw-bold mb-0">طلبات التجار المعلقة</h2>
-        <p class="text-muted small">مراجعة التعديلات الحساسة (الأسعار، السحب) قبل التنفيذ</p>
+        <h2 class="fw-bold mb-1" style="color:var(--text-main)">مركز الموافقات</h2>
+        <p class="text-muted small mb-0">مراجعة واعتماد طلبات التجار والمنتجات</p>
     </div>
-    <span class="badge bg-warning text-dark fs-6">@Model.Count() طلب معلق</span>
+    <span class="badge bg-primary rounded-pill px-3 py-2 fs-6">@Model.TotalCount طلب معلق</span>
 </div>
 
-<div class="card border-0 shadow-sm">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light">
-                    <tr>
-                        <th class="ps-4">التاريخ</th>
-                        <th>التاجر</th>
-                        <th>نوع الإجراء</th>
-                        <th>التفاصيل</th>
-                        <th>الحالة</th>
-                        <th class="text-end pe-4">معاينة</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (!Model.Any())
-                    {
-                        <tr>
-                            <td colspan="6" class="text-center py-5 text-muted">
-                                <i class="fas fa-check-circle fa-3x mb-3 text-success opacity-50"></i>
-                                <p>لا توجد طلبات معلقة.</p>
-                            </td>
-                        </tr>
-                    }
-                    @foreach (var item in Model)
-                    {
-                        <tr>
-                            <td class="ps-4 text-muted small">
-                                <div>@item.RequestDate.ToString("yyyy-MM-dd")</div>
-                                <div>@item.RequestDate.ToString("hh:mm tt")</div>
-                            </td>
-                            <td>
-                                <div class="fw-bold">@item.Merchant?.ShopName</div>
-                                <div class="small text-muted">@item.Merchant?.FullName</div>
-                            </td>
-                            <td>
+<!-- Tabs -->
+<ul class="nav nav-pills mb-4 fade-up" id="pills-tab" role="tablist">
+    <li class="nav-item">
+        <button class="nav-link active" id="pills-merchants-tab" data-bs-toggle="pill" data-bs-target="#pills-merchants" type="button">
+            <i class="fas fa-store me-2"></i> تجار جدد
+            @if (Model.NewMerchants.Any())
+            {
+                <span class="badge bg-white text-primary ms-2">@Model.NewMerchants.Count</span>
+            }
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" id="pills-products-tab" data-bs-toggle="pill" data-bs-target="#pills-products" type="button">
+            <i class="fas fa-box me-2"></i> منتجات جديدة
+            @if (Model.PendingProducts.Any())
+            {
+                <span class="badge bg-white text-primary ms-2">@Model.PendingProducts.Count</span>
+            }
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" id="pills-others-tab" data-bs-toggle="pill" data-bs-target="#pills-others" type="button">
+            <i class="fas fa-tasks me-2"></i> طلبات أخرى
+            @if (Model.OtherActions.Any())
+            {
+                <span class="badge bg-white text-primary ms-2">@Model.OtherActions.Count</span>
+            }
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content fade-up" id="pills-tabContent">
+
+    <!-- 1. Merchants Tab -->
+    <div class="tab-pane fade show active" id="pills-merchants">
+        @if (!Model.NewMerchants.Any())
+        {
+            <div class="text-center py-5">
+                <i class="fas fa-check-circle fa-4x text-muted opacity-25 mb-3"></i>
+                <h5 class="text-muted">لا توجد طلبات تسجيل تجار جديدة</h5>
+            </div>
+        }
+        else
+        {
+            @foreach (var item in Model.NewMerchants)
+            {
+                <div class="item-row">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="item-icon bg-warning bg-opacity-10 text-warning">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-1 text-main">@item.ShopName</h5>
+                            <div class="text-muted small">
+                                <i class="fas fa-user me-1"></i> @item.FullName
+                                <span class="mx-2">|</span>
+                                <i class="fas fa-phone me-1"></i> @item.PhoneNumber
+                            </div>
+                            <div class="mt-1 small">
+                                <span class="badge bg-light text-dark border">سجل: @item.CommercialRegister</span>
+                                <span class="badge bg-light text-dark border">ضريبي: @item.TaxCard</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <form asp-action="ApproveMerchant" method="post">
+                            <input type="hidden" name="id" value="@item.Id" />
+                            <button class="btn btn-success fw-bold px-4 rounded-pill"><i class="fas fa-check me-2"></i> توثيق</button>
+                        </form>
+                        <form asp-action="RejectMerchant" method="post" onsubmit="return confirm('رفض التاجر؟ سيتم حذف الحساب.')">
+                            <input type="hidden" name="id" value="@item.Id" />
+                            <button class="btn btn-outline-danger fw-bold px-4 rounded-pill"><i class="fas fa-times me-2"></i> رفض</button>
+                        </form>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+
+    <!-- 2. Products Tab -->
+    <div class="tab-pane fade" id="pills-products">
+        @if (!Model.PendingProducts.Any())
+        {
+            <div class="text-center py-5">
+                <i class="fas fa-check-circle fa-4x text-muted opacity-25 mb-3"></i>
+                <h5 class="text-muted">لا توجد منتجات بانتظار الموافقة</h5>
+            </div>
+        }
+        else
+        {
+            @foreach (var item in Model.PendingProducts)
+            {
+                <div class="item-row">
+                    <div class="d-flex align-items-center gap-3">
+                        <img src="~/@item.ImageUrl" class="item-icon object-fit-cover bg-white border" onerror="this.src='/images/default.png'">
+                        <div>
+                            <h5 class="fw-bold mb-1 text-main">@item.Name</h5>
+                            <div class="text-muted small">
+                                <i class="fas fa-store me-1"></i> @item.Merchant?.ShopName
+                                <span class="mx-2">|</span>
+                                <i class="fas fa-tag me-1"></i> @item.Category?.Name
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="Approvals/ProductDetails/@item.Id" target="_blank" class="btn btn-light border rounded-pill" title="معاينة"><i class="fas fa-eye"></i></a>
+                        <form asp-action="ApproveProduct" method="post">
+                            <input type="hidden" name="id" value="@item.Id" />
+                            <button class="btn btn-success fw-bold px-3 rounded-pill"><i class="fas fa-check"></i> نشر</button>
+                        </form>
+                        <form asp-action="RejectProduct" method="post" onsubmit="return confirm('رفض المنتج؟')">
+                            <input type="hidden" name="id" value="@item.Id" />
+                            <button class="btn btn-outline-danger fw-bold px-3 rounded-pill"><i class="fas fa-times"></i> رفض</button>
+                        </form>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+
+    <!-- 3. Other Actions Tab -->
+    <div class="tab-pane fade" id="pills-others">
+        @if (!Model.OtherActions.Any())
+        {
+            <div class="text-center py-5">
+                <i class="fas fa-check-circle fa-4x text-muted opacity-25 mb-3"></i>
+                <h5 class="text-muted">لا توجد طلبات أخرى معلقة</h5>
+            </div>
+        }
+        else
+        {
+            @foreach (var item in Model.OtherActions)
+            {
+                <div class="item-row">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="item-icon bg-info bg-opacity-10 text-info">
+                            <i class="fas fa-sliders-h"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-1 text-main">
                                 @if (item.ActionType == "UpdateProductPrice")
                                 {
-                                    <span class="badge bg-info text-dark"><i class="fas fa-tag me-1"></i> تغيير سعر</span>
+                                    <span>تعديل سعر منتج</span>
                                 }
                                 else if (item.ActionType == "WithdrawRequest")
                                 {
-                                    <span class="badge bg-success"><i class="fas fa-money-bill me-1"></i> سحب رصيد</span>
+
+                                    <span>طلب سحب رصيد</span>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-secondary">@item.ActionType</span>
+
+                                    <span>@item.ActionType</span>
                                 }
-                            </td>
-                            <td>
-                                <span class="fw-bold">@item.EntityName</span> <small class="text-muted">#@item.EntityId</small>
-                            </td>
-                            <td><span class="badge bg-warning text-dark">بانتظار الموافقة</span></td>
-                            <td class="text-end pe-4">
-                                <a asp-action="Review" asp-route-id="@item.Id" class="btn btn-sm btn-primary px-3">
-                                    مراجعة <i class="fas fa-arrow-left ms-1"></i>
-                                </a>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
+                            </h5>
+                            <div class="text-muted small">
+                                <i class="fas fa-user me-1"></i> @item.Merchant?.ShopName
+                                <span class="mx-2">|</span>
+                                <i class="far fa-clock me-1"></i> @item.RequestDate.ToString("yyyy-MM-dd")
+                            </div>
+                            <div class="mt-1 small font-monospace text-muted">
+                                @if (item.ActionType == "UpdateProductPrice")
+                                {
+                                    <span>السعر الجديد: <strong class="text-success">@item.NewValueJson</strong></span>
+                                }
+                                else
+                                {
+
+                                    <span>@item.NewValueJson</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <form asp-action="ApproveAction" method="post">
+                            <input type="hidden" name="id" value="@item.Id" />
+                            <button class="btn btn-success fw-bold px-4 rounded-pill"><i class="fas fa-check me-2"></i> موافقة</button>
+                        </form>
+                        <form asp-action="RejectAction" method="post">
+                            <input type="hidden" name="id" value="@item.Id" />
+                            <button class="btn btn-outline-danger fw-bold px-4 rounded-pill"><i class="fas fa-times me-2"></i> رفض</button>
+                        </form>
+                    </div>
+                </div>
+            }
+        }
     </div>
+
 </div>

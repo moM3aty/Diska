@@ -4,98 +4,302 @@
     ViewData["Title"] = "الطلبات الواردة";
     Layout = "_MerchantLayout";
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    string currentStatus = Context.Request.Query["status"].ToString();
+    if (string.IsNullOrEmpty(currentStatus)) currentStatus = "All";
 }
 
-<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-    <div>
-        <h2 style="margin:0; color:var(--primary);">@(isAr ? "الطلبات الواردة" : "Incoming Orders")</h2>
-        <p style="color:#64748b; margin-top:5px;">@(isAr ? "متابعة وتجهيز الطلبات الجديدة" : "Track and fulfill new orders")</p>
-    </div>
-
-    <!-- فلاتر سريعة -->
-    <div class="btn-group">
-        <a asp-action="Index" asp-route-status="All" class="btn btn-outline-secondary @(Context.Request.Query["status"] == "All" ? "active" : "")">@(isAr ? "الكل" : "All")</a>
-        <a asp-action="Index" asp-route-status="Pending" class="btn btn-outline-warning @(Context.Request.Query["status"] == "Pending" ? "active" : "")">@(isAr ? "جديد" : "New")</a>
-        <a asp-action="Index" asp-route-status="Confirmed" class="btn btn-outline-primary @(Context.Request.Query["status"] == "Confirmed" ? "active" : "")">@(isAr ? "مؤكد" : "Confirmed")</a>
-    </div>
-</div>
-
-<div class="card border-0 shadow-sm">
-    @if (!Model.Any())
-    {
-        <div style="text-align:center; padding:60px; color:#666;">
-            <i class="fas fa-clipboard-list fa-4x" style="color:#e2e8f0; margin-bottom:20px;"></i>
-            <h4 style="margin:0;">@(isAr ? "لا توجد طلبات جديدة" : "No new orders")</h4>
-            <p style="margin-top:10px;">@(isAr ? "استرح قليلاً، سنخبرك فور وصول طلب جديد." : "Relax, we'll notify you when a new order arrives.")</p>
-        </div>
+<style>
+    /* =========================================
+           PREMIUM STYLES (Light & Dark)
+           ========================================= */
+    :root {
+        --mo-card-bg: #ffffff;
+        --mo-border: #e2e8f0;
+        --mo-text-main: #0f172a;
+        --mo-text-muted: #64748b;
+        --mo-hover: #f8fafc;
+        --mo-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
     }
-    else
+
+    [data-bs-theme="dark"] {
+        --mo-card-bg: #1e293b;
+        --mo-border: rgba(255, 255, 255, 0.08);
+        --mo-text-main: #f8fafc;
+        --mo-text-muted: #94a3b8;
+        --mo-hover: rgba(255, 255, 255, 0.03);
+        --mo-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+    }
+
+    /* --- Filter Buttons --- */
+    .filter-btn-group .btn {
+        border: 1px solid var(--mo-border);
+        background: var(--mo-card-bg);
+        color: var(--mo-text-muted);
+        font-weight: 600;
+        padding: 8px 20px;
+        transition: all 0.2s;
+    }
+
+        .filter-btn-group .btn:hover {
+            background: var(--mo-hover);
+            color: var(--mo-text-main);
+        }
+
+        .filter-btn-group .btn.active {
+            background: var(--primary-color);
+            color: #fff;
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+
+    /* --- Table Container --- */
+    .table-container {
+        background: var(--mo-card-bg);
+        border: 1px solid var(--mo-border);
+        border-radius: 16px;
+        box-shadow: var(--mo-shadow);
+        overflow: hidden;
+        margin-top: 20px;
+    }
+
+    .table {
+        margin-bottom: 0;
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .table thead th {
+            background-color: var(--mo-hover);
+            color: var(--mo-text-muted);
+            border-bottom: 1px solid var(--mo-border);
+            padding: 18px 24px;
+            font-weight: 700;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .table tbody td {
+            padding: 20px 24px;
+            vertical-align: middle;
+            border-bottom: 1px solid var(--mo-border);
+            color: var(--mo-text-main);
+            transition: background-color 0.2s;
+        }
+
+        .table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+    .table-hover tbody tr:hover td {
+        background-color: var(--mo-hover);
+    }
+
+    /* --- Elements --- */
+    .product-img {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        object-fit: cover;
+        border: 1px solid var(--mo-border);
+        padding: 2px;
+        background: var(--mo-card-bg);
+    }
+
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 30px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        border: 1px solid transparent;
+    }
+
+    /* Status Colors */
+    .status-Pending {
+        background: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+        border-color: rgba(245, 158, 11, 0.2);
+    }
+
+    .status-Confirmed {
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+        border-color: rgba(59, 130, 246, 0.2);
+    }
+
+    .status-Shipped {
+        background: rgba(99, 102, 241, 0.1);
+        color: #6366f1;
+        border-color: rgba(99, 102, 241, 0.2);
+    }
+
+    .status-Delivered {
+        background: rgba(34, 197, 94, 0.1);
+        color: #10b981;
+        border-color: rgba(34, 197, 94, 0.2);
+    }
+
+    .status-Cancelled {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        border-color: rgba(239, 68, 68, 0.2);
+    }
+
+    .action-btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: 0.2s;
+        border: 1px solid var(--mo-border);
+        background: transparent;
+        color: var(--mo-text-muted);
+    }
+
+        .action-btn:hover {
+            background: var(--mo-hover);
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+    /* Animation */
+    .fade-up {
+        animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @@keyframes fadeUp {
+        from
+
     {
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light">
-                    <tr>
-                        <th class="ps-4">رقم الطلب</th>
-                        <th>المنتج</th>
-                        <th>الكمية / السعر</th>
-                        <th>الإجمالي</th>
-                        <th>حالة الطلب</th>
-                        <th>التاريخ</th>
-                        <th class="text-end pe-4">إجراءات</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in Model)
-                    {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+</style>
+
+<div class="container-fluid px-0 fade-up">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        <div>
+            <h2 class="fw-bold mb-1" style="color:var(--mo-text-main)">@(isAr ? "الطلبات الواردة" : "Incoming Orders")</h2>
+            <p class="text-muted small mb-0">@(isAr ? "متابعة وتجهيز الطلبات الجديدة لمنتجاتك" : "Track and fulfill new orders for your products")</p>
+        </div>
+
+        <!-- Filters -->
+        <div class="btn-group filter-btn-group shadow-sm rounded-pill overflow-hidden" role="group">
+            <a asp-action="Index" asp-route-status="All" class="btn @(currentStatus == "All" ? "active" : "")">
+                @(isAr ? "الكل" : "All")
+            </a>
+            <a asp-action="Index" asp-route-status="Pending" class="btn @(currentStatus == "Pending" ? "active" : "")">
+                @(isAr ? "جديد" : "New")
+            </a>
+            <a asp-action="Index" asp-route-status="Confirmed" class="btn @(currentStatus == "Confirmed" ? "active" : "")">
+                @(isAr ? "مؤكد" : "Confirmed")
+            </a>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-container">
+        @if (!Model.Any())
+        {
+            <div class="text-center py-5">
+                <div class="text-muted opacity-25 mb-3">
+                    <i class="fas fa-clipboard-list fa-4x"></i>
+                </div>
+                <h4 class="fw-bold" style="color:var(--mo-text-muted)">@(isAr ? "لا توجد طلبات" : "No Orders Found")</h4>
+                <p class="text-muted small">@(isAr ? "لا توجد طلبات تطابق الفلتر الحالي." : "No orders match the current filter.")</p>
+                @if (currentStatus != "All")
+                {
+                    <a asp-action="Index" asp-route-status="All" class="btn btn-outline-primary btn-sm mt-2 rounded-pill px-4">
+                        @(isAr ? "عرض الكل" : "View All")
+                    </a>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
                         <tr>
-                            <td class="ps-4">
-                                <a asp-action="Details" asp-route-orderId="@item.OrderId" class="fw-bold text-decoration-none">#@item.OrderId</a>
-                            </td>
-                            <td>
-                                <div style="display:flex; align-items:center; gap:10px;">
-                                    <img src="~/@item.Product?.ImageUrl" style="width:40px; height:40px; border-radius:6px; object-fit:cover; border:1px solid #eee;">
-                                    <div>
-                                        <div class="fw-bold text-dark">@(isAr? item.Product?.Name : item.Product?.NameEn)</div>
-                                        <small class="text-muted">SKU: @item.Product?.SKU</small>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="fw-bold">@item.Quantity <small class="text-muted fw-normal">قطعة</small></div>
-                                <div class="small text-muted">@item.UnitPrice.ToString("N0") ج.م / قطعة</div>
-                            </td>
-                            <td>
-                                <span class="fw-bold text-primary">@((item.Quantity * item.UnitPrice).ToString("N0")) ج.م</span>
-                            </td>
-                            <td>
-                                @{
-                                    string status = item.Order.Status;
-                                    string badgeClass = status switch
-                                    {
-                                        "Pending" => "bg-warning text-dark",
-                                        "Confirmed" => "bg-primary",
-                                        "Shipped" => "bg-info text-dark",
-                                        "Delivered" => "bg-success",
-                                        "Cancelled" => "bg-danger",
-                                        _ => "bg-secondary"
-                                    };
-                                    string statusText = isAr ? (status == "Pending" ? "قيد الانتظار" : (status == "Confirmed" ? "مؤكد" : (status == "Shipped" ? "تم الشحن" : status))) : status;
-                                }
-                                <span class="badge @badgeClass">@statusText</span>
-                            </td>
-                            <td class="text-muted small">
-                                <div>@item.Order.OrderDate.ToString("yyyy-MM-dd")</div>
-                                <div>@item.Order.OrderDate.ToString("hh:mm tt")</div>
-                            </td>
-                            <td class="text-end pe-4">
-                                <a asp-action="Details" asp-route-orderId="@item.OrderId" class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-eye me-1"></i> @(isAr ? "تفاصيل" : "Details")
-                                </a>
-                            </td>
+                            <th class="ps-4">@(isAr ? "رقم الطلب" : "Order ID")</th>
+                            <th>@(isAr ? "المنتج" : "Product")</th>
+                            <th>@(isAr ? "الكمية / السعر" : "Qty / Price")</th>
+                            <th>@(isAr ? "إجمالي التاجر" : "Your Total")</th>
+                            <th>@(isAr ? "الحالة" : "Status")</th>
+                            <th>@(isAr ? "التاريخ" : "Date")</th>
+                            <th class="text-end pe-4">@(isAr ? "إجراءات" : "Actions")</th>
                         </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    }
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="ps-4">
+                                    <a asp-action="Details" asp-route-orderId="@item.OrderId" class="fw-bold text-decoration-none" style="color:var(--primary-color)">
+                                        #@item.OrderId
+                                    </a>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <img src="~/@item.Product?.ImageUrl" class="product-img" onerror="this.src='/images/default.png'">
+                                        <div>
+                                            <div class="fw-bold text-main" style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                                @(isAr? item.Product?.Name : item.Product?.NameEn)
+                                            </div>
+                                            <small class="text-muted font-monospace">@item.Product?.SKU</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold text-main">@item.Quantity <small class="text-muted fw-normal">@(isAr ? "قطعة" : "pcs")</small></div>
+                                    <div class="small text-muted">@item.UnitPrice.ToString("N0") <small>@(isAr ? "ج.م" : "EGP")</small></div>
+                                </td>
+                                <td>
+                                    <span class="fw-bold text-success">@((item.Quantity * item.UnitPrice).ToString("N0")) <small>@(isAr ? "ج.م" : "EGP")</small></span>
+                                </td>
+                                <td>
+                                    @{
+                                        string statusIcon = item.Order.Status switch
+                                        {
+                                            "Pending" => "fa-clock",
+                                            "Confirmed" => "fa-check",
+                                            "Shipped" => "fa-truck",
+                                            "Delivered" => "fa-box-open",
+                                            "Cancelled" => "fa-times",
+                                            _ => "fa-circle"
+                                        };
+                                        string statusText = isAr ? (item.Order.Status == "Pending" ? "قيد الانتظار" : (item.Order.Status == "Confirmed" ? "مؤكد" : (item.Order.Status == "Shipped" ? "تم الشحن" : item.Order.Status))) : item.Order.Status;
+                                    }
+                                    <span class="status-badge status-@item.Order.Status">
+                                        <i class="fas @statusIcon"></i> @statusText
+                                    </span>
+                                </td>
+                                <td class="text-muted small">
+                                    <div class="fw-bold">@item.Order.OrderDate.ToString("yyyy-MM-dd")</div>
+                                    <div>@item.Order.OrderDate.ToString("hh:mm tt")</div>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <a asp-action="Details" asp-route-orderId="@item.OrderId" class="action-btn" title="@(isAr ? "التفاصيل" : "Details")">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
 </div>

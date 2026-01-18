@@ -1,83 +1,144 @@
 ﻿@{
-    ViewData["Title"] = "لوحة التاجر";
-    Layout = "_MerchantLayout";
+    ViewData["Title"] = "Dashboard";
 }
 
-<div class="row g-4 mb-4">
-    <!-- Sales Widget -->
-    <div class="col-md-3">
+<style>
+    .stat-card {
+        padding: 25px;
+        border-radius: 16px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow-sm);
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .icon-sales {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+    }
+
+    .icon-products {
+        background: rgba(79, 70, 229, 0.1);
+        color: #4f46e5;
+    }
+
+    .icon-orders {
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+    }
+
+    .icon-wallet {
+        background: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+    }
+</style>
+
+<div class="row g-4 mb-5">
+    <div class="col-xl-3 col-md-6">
         <div class="stat-card">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="text-muted fw-bold">مبيعاتي</span>
-                <i class="fas fa-wallet text-success fa-lg"></i>
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="text-muted fw-bold small text-uppercase">Total Sales</div>
+                    <h3 class="fw-bold mt-2 mb-0">@(((decimal)ViewBag.TotalSales).ToString("N0")) <small class="fs-6 text-muted">EGP</small></h3>
+                </div>
+                <div class="stat-icon icon-sales"><i class="fas fa-wallet"></i></div>
             </div>
-            <h3 class="mb-0">@(((decimal)ViewBag.TotalSales).ToString("N0")) <small class="fs-6">ج.م</small></h3>
         </div>
     </div>
-
-    <!-- Products Widget -->
-    <div class="col-md-3">
+    <div class="col-xl-3 col-md-6">
         <div class="stat-card">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="text-muted fw-bold">منتجاتي</span>
-                <i class="fas fa-box text-primary fa-lg"></i>
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="text-muted fw-bold small text-uppercase">My Products</div>
+                    <h3 class="fw-bold mt-2 mb-0">@ViewBag.TotalProducts</h3>
+                    <div class="small text-success mt-1"><i class="fas fa-check-circle"></i> @ViewBag.ActiveProducts Active</div>
+                </div>
+                <div class="stat-icon icon-products"><i class="fas fa-box"></i></div>
             </div>
-            <h3 class="mb-0">@ViewBag.TotalProducts</h3>
-            <small class="text-success">@ViewBag.ActiveProducts نشط</small>
         </div>
     </div>
-
-    <!-- Orders Widget -->
-    <div class="col-md-3">
+    <div class="col-xl-3 col-md-6">
         <div class="stat-card">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="text-muted fw-bold">عدد الطلبات</span>
-                <i class="fas fa-shopping-bag text-info fa-lg"></i>
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="text-muted fw-bold small text-uppercase">Total Orders</div>
+                    <h3 class="fw-bold mt-2 mb-0">@ViewBag.TotalOrders</h3>
+                </div>
+                <div class="stat-icon icon-orders"><i class="fas fa-shopping-bag"></i></div>
             </div>
-            <h3 class="mb-0">@ViewBag.TotalOrders</h3>
         </div>
     </div>
-
-    <!-- Wallet Widget -->
-    <div class="col-md-3">
-        <div class="stat-card bg-primary text-white border-0">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="fw-bold opacity-75">رصيد المحفظة</span>
-                <i class="fas fa-coins fa-lg"></i>
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="text-muted fw-bold small text-uppercase">Wallet Balance</div>
+                    <h3 class="fw-bold mt-2 mb-0">@(((decimal)ViewBag.WalletBalance).ToString("N0")) <small class="fs-6 text-muted">EGP</small></h3>
+                    <a href="/Merchant/Wallet" class="small text-primary text-decoration-none mt-1 d-inline-block">View Details <i class="fas fa-arrow-right"></i></a>
+                </div>
+                <div class="stat-icon icon-wallet"><i class="fas fa-coins"></i></div>
             </div>
-            <h3 class="mb-0">@(((decimal)ViewBag.WalletBalance).ToString("N0")) <small class="fs-6">ج.م</small></h3>
-            <small class="opacity-75">قابل للسحب</small>
         </div>
     </div>
 </div>
 
-<!-- Recent Orders Table -->
-<div class="card border-0 shadow-sm">
-    <div class="card-header bg-white py-3">
-        <h5 class="mb-0 fw-bold text-primary">أحدث الطلبات الواردة</h5>
+<div class="table-card">
+    <div class="p-4 border-bottom d-flex justify-content-between align-items-center" style="border-color:var(--border-color)!important;">
+        <h5 class="fw-bold m-0">Recent Orders</h5>
+        <a href="/Merchant/MerchantOrder" class="btn btn-sm btn-outline-primary">View All</a>
     </div>
     <div class="table-responsive">
-        <table class="table align-middle mb-0">
-            <thead class="bg-light">
+        <table class="table align-middle">
+            <thead>
                 <tr>
-                    <th>رقم الطلب</th>
-                    <th>العميل</th>
-                    <th>قيمة منتجاتك</th>
-                    <th>الحالة</th>
-                    <th>التاريخ</th>
+                    <th class="ps-4">Order ID</th>
+                    <th>Customer</th>
+                    <th>Status</th>
+                    <th>Your Total</th>
+                    <th class="text-end pe-4">Date</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var item in ViewBag.RecentOrders)
                 {
                     <tr>
-                        <td class="fw-bold">#@item.Id</td>
+                        <td class="ps-4 fw-bold">#@item.Id</td>
                         <td>@item.CustomerName</td>
-                        <td class="text-success fw-bold">@item.Total.ToString("N0") ج.م</td>
                         <td>
-                            <span class="badge bg-secondary">@item.Status</span>
+                            @if (item.Status == "Pending")
+                            {
+                                <span class="badge bg-warning text-dark">Pending</span>
+                            }
+                            else if (item.Status == "Confirmed")
+                            {
+
+                                <span class="badge bg-info text-white">Confirmed</span>
+                            }
+                            else if (item.Status == "Delivered")
+                            {
+
+                                <span class="badge bg-success">Delivered</span>
+                            }
+                            else
+                            {
+
+                                <span class="badge bg-secondary">@item.Status</span>
+                            }
                         </td>
-                        <td class="text-muted small">@item.OrderDate.ToString("yyyy/MM/dd")</td>
+                        <td class="fw-bold text-success">@item.Total.ToString("N0") EGP</td>
+                        <td class="text-end pe-4 text-muted small">@item.OrderDate.ToString("dd MMM, hh:mm tt")</td>
                     </tr>
                 }
             </tbody>

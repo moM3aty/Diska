@@ -1,0 +1,566 @@
+﻿@model Diska.Models.Survey
+@{
+    ViewData["Title"] = "تعديل استبيان";
+    Layout = "_AdminLayout";
+}
+
+<style>
+    /* =========================================
+           PREMIUM STYLES (Match Global Theme)
+           ========================================= */
+    :root {
+        --card-radius: 20px;
+        --input-radius: 12px;
+        --input-height: 50px;
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* --- Cards --- */
+    .edit-card {
+        border: none;
+        border-radius: var(--card-radius);
+        position: relative;
+        overflow: hidden;
+        transition: var(--transition);
+    }
+
+    [data-bs-theme="light"] .edit-card {
+        background: #ffffff;
+        box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    [data-bs-theme="dark"] .edit-card {
+        background: #1e293b;
+        box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    /* --- Sticky Header --- */
+    .card-header-actions {
+        padding: 20px 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 75px;
+        z-index: 99;
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border-bottom: 1px solid;
+    }
+
+    [data-bs-theme="light"] .card-header-actions {
+        background: rgba(255, 255, 255, 0.9);
+        border-color: #f1f5f9;
+    }
+
+    [data-bs-theme="dark"] .card-header-actions {
+        background: rgba(30, 41, 59, 0.9);
+        border-color: rgba(255, 255, 255, 0.05);
+    }
+
+    /* --- Form Controls --- */
+    .form-label {
+        font-weight: 700;
+        font-size: 0.9rem;
+        margin-bottom: 8px;
+    }
+
+    [data-bs-theme="light"] .form-label {
+        color: #334155;
+    }
+
+    [data-bs-theme="dark"] .form-label {
+        color: #e2e8f0;
+    }
+
+    .form-control, .form-select {
+        height: var(--input-height);
+        border-radius: var(--input-radius);
+        font-size: 0.95rem;
+        transition: var(--transition);
+    }
+
+    [data-bs-theme="light"] .form-control, [data-bs-theme="light"] .form-select {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        color: #0f172a;
+    }
+
+        [data-bs-theme="light"] .form-control:focus, [data-bs-theme="light"] .form-select:focus {
+            background: #fff;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+
+    [data-bs-theme="dark"] .form-control, [data-bs-theme="dark"] .form-select {
+        background: #0f172a;
+        border: 1px solid rgba(255,255,255,0.1);
+        color: #f8fafc;
+    }
+
+        [data-bs-theme="dark"] .form-control:focus, [data-bs-theme="dark"] .form-select:focus {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+        }
+
+    /* --- Question Item --- */
+    .question-item {
+        border-radius: 16px;
+        padding: 25px;
+        margin-bottom: 20px;
+        position: relative;
+        transition: var(--transition);
+        border: 1px solid;
+    }
+
+    [data-bs-theme="light"] .question-item {
+        background: #f8fafc;
+        border-color: #e2e8f0;
+    }
+
+    [data-bs-theme="dark"] .question-item {
+        background: rgba(255,255,255,0.02);
+        border-color: rgba(255,255,255,0.08);
+    }
+
+    .question-item:hover {
+        transform: translateY(-3px);
+    }
+
+    /* Remove Button */
+    .btn-remove-q {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: 0.2s;
+        cursor: pointer;
+    }
+
+    [data-bs-theme="light"] .btn-remove-q {
+        background: #fee2e2;
+        color: #ef4444;
+    }
+
+        [data-bs-theme="light"] .btn-remove-q:hover {
+            background: #ef4444;
+            color: #fff;
+        }
+
+    [data-bs-theme="dark"] .btn-remove-q {
+        background: rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
+    }
+
+        [data-bs-theme="dark"] .btn-remove-q:hover {
+            background: #ef4444;
+            color: #fff;
+        }
+
+    /* Add Button */
+    .btn-add-q {
+        width: 100%;
+        padding: 15px;
+        border-radius: 12px;
+        font-weight: 700;
+        border: 2px dashed;
+        cursor: pointer;
+        transition: 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    [data-bs-theme="light"] .btn-add-q {
+        background: #f1f5f9;
+        border-color: #cbd5e1;
+        color: #64748b;
+    }
+
+        [data-bs-theme="light"] .btn-add-q:hover {
+            background: #e2e8f0;
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+        }
+
+    [data-bs-theme="dark"] .btn-add-q {
+        background: rgba(255,255,255,0.03);
+        border-color: rgba(255,255,255,0.1);
+        color: #94a3b8;
+    }
+
+        [data-bs-theme="dark"] .btn-add-q:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: var(--color-primary);
+            color: #818cf8;
+        }
+
+    /* Option Input Group */
+    .option-input-group {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+        align-items: center;
+    }
+
+        .option-input-group input {
+            flex: 1;
+        }
+
+    .btn-remove-option {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        border: none;
+        background: transparent;
+        color: var(--bs-danger);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: 0.2s;
+    }
+
+        .btn-remove-option:hover {
+            background: var(--bs-danger);
+            color: #fff;
+        }
+
+    /* Animation */
+    .fade-up {
+        animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @@keyframes fadeUp {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+</style>
+
+<div class="row justify-content-center fade-up">
+    <div class="col-lg-10">
+        <div class="edit-card card">
+
+            <form asp-action="Edit" method="post" id="surveyForm" onsubmit="prepareOptionsBeforeSubmit()">
+                <input type="hidden" asp-for="Id" />
+
+                <!-- Header -->
+                <div class="card-header-actions">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center" style="width:50px; height:50px;">
+                            <i class="fas fa-edit fa-lg"></i>
+                        </div>
+                        <div>
+                            <h4 class="fw-bold mb-0 text-main">تعديل الاستبيان</h4>
+                            <span class="badge bg-opacity-10 border mt-1" style="background-color: rgba(var(--color-primary-rgb), 0.1); color: var(--color-primary);">Edit Survey</span>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a asp-action="Index" class="btn btn-outline-secondary border fw-bold px-4 rounded-pill">إلغاء</a>
+                        <button type="submit" class="btn btn-primary px-4 fw-bold rounded-pill shadow-sm">
+                            <i class="fas fa-save me-2"></i> حفظ التغييرات
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card-body p-4 p-md-5">
+
+                    <!-- Basic Info Section -->
+                    <h6 class="text-primary fw-bold mb-4 border-bottom pb-2">
+                        <i class="fas fa-info-circle me-2"></i> البيانات الأساسية
+                    </h6>
+
+                    <div class="row g-4 mb-5">
+                        <div class="col-md-6">
+                            <label asp-for="Title" class="form-label">عنوان الاستبيان (عربي) <span class="text-danger">*</span></label>
+                            <input asp-for="Title" class="form-control" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="TitleEn" class="form-label">العنوان (إنجليزي) <span class="text-danger">*</span></label>
+                            <input asp-for="TitleEn" class="form-control" required />
+                        </div>
+
+                        <div class="col-12">
+                            <label asp-for="Description" class="form-label">وصف توضيحي</label>
+                            <textarea asp-for="Description" class="form-control" rows="2" style="height:auto;"></textarea>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label asp-for="StartDate" class="form-label">تاريخ البدء</label>
+                            <input asp-for="StartDate" type="date" class="form-control" />
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="EndDate" class="form-label">تاريخ الانتهاء</label>
+                            <input asp-for="EndDate" type="date" class="form-control" />
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="TargetAudience" class="form-label">الجمهور المستهدف</label>
+                            <select asp-for="TargetAudience" class="form-select">
+                                <option value="All">الكل (All Users)</option>
+                                <option value="Customer">العملاء فقط (Customers)</option>
+                                <option value="Merchant">التجار فقط (Merchants)</option>
+                            </select>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" asp-for="IsActive" style="cursor: pointer;">
+                                <label class="form-check-label fw-bold ms-2" for="IsActive">تفعيل الاستبيان</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Questions Section -->
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="text-primary fw-bold mb-0"><i class="fas fa-list-ol me-2"></i> أسئلة الاستبيان</h6>
+                    </div>
+
+                    <div id="questionsContainer">
+                        @if (Model.Questions != null)
+                        {
+                            foreach (var q in Model.Questions)
+                            {
+                                var qId = q.Id; // Use actual ID for existing, or generate unique for new if needed logic
+                                                <div class="question-item fade-up">
+                                                    <button type="button" class="btn-remove-q" onclick="this.closest('.question-item').remove()" title="حذف السؤال">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+
+                                    <div class="row g-3">
+                                        <div class="col-md-8">
+                                            <label class="form-label text-muted small">نص السؤال (عربي) <span class="text-danger">*</span></label>
+                                            <input type="text" name="QText" class="form-control" value="@q.QuestionText" required>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label text-muted small">نوع السؤال</label>
+                                            <select name="QType" class="form-select" onchange="toggleOptions(this, @qId)">
+                                                <option value="Text" selected="@(q.Type == "Text")">نص حر (Text Input)</option>
+                                                <option value="Star" selected="@(q.Type == "Star")">تقييم نجوم (1-5)</option>
+                                                <option value="YesNo" selected="@(q.Type == "YesNo")">نعم / لا</option>
+                                                <option value="MCQ" selected="@(q.Type == "MCQ")">اختيار متعدد (Options)</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-md-12">
+                                            <label class="form-label text-muted small">نص السؤال (إنجليزي) <span class="text-danger">*</span></label>
+                                            <input type="text" name="QTextEn" class="form-control" value="@q.QuestionTextEn" required>
+                                        </div>
+
+                                        <!-- Options Field -->
+                                        <div class="col-12 options-field" id="options-area-@qId" style="@(q.Type == "MCQ" ? "" : "display:none;")">
+                                            <div class="p-4 border rounded bg-opacity-10" style="background-color: rgba(var(--color-primary-rgb), 0.03); border-color: rgba(var(--color-primary-rgb), 0.1) !important;">
+                                                <label class="form-label text-primary small mb-3">خيارات الإجابة (عربي & إنجليزي)</label>
+
+                                                <div class="options-list" id="options-list-@qId">
+                                                    @if (q.Type == "MCQ" && !string.IsNullOrEmpty(q.Options))
+                                                    {
+                                                        var optionsList = q.Options.Split(',');
+                                                        foreach (var opt in optionsList)
+                                                        {
+                                                            var parts = opt.Trim().Split('|');
+                                                            var arOpt = parts[0];
+                                                            var enOpt = parts.Length > 1 ? parts[1] : "";
+
+                                                            <div class="option-input-group">
+                                                                <input type="text" class="form-control form-control-sm opt-ar" placeholder="خيار (عربي)" value="@arOpt" required>
+                                                                <input type="text" class="form-control form-control-sm opt-en" placeholder="Option (English)" value="@enOpt" required>
+                                                                <button type="button" class="btn-remove-option" onclick="this.parentElement.remove()" title="حذف">
+                                                                    <i class="fas fa-trash"></i>
+                                                                </button>
+                                                            </div>
+                                                        }
+                                                    }
+                                                </div>
+
+                                                <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addOptionInput(@qId)">
+                                                    <i class="fas fa-plus me-1"></i> إضافة خيار
+                                                </button>
+
+                                                <!-- Hidden input -->
+                                                <input type="hidden" name="QOptions" id="final-options-@qId" value="@q.Options">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+
+                    <button type="button" onclick="addQuestion()" class="btn-add-q">
+                        <i class="fas fa-plus-circle"></i> إضافة سؤال جديد
+                    </button>
+
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function addQuestion() {
+            const container = document.getElementById('questionsContainer');
+            const div = document.createElement('div');
+            div.className = 'question-item fade-up';
+            const qId = Date.now(); // Unique ID for new questions
+
+            // HTML Structure
+            div.innerHTML = `
+                <button type="button" class="btn-remove-q" onclick="this.closest('.question-item').remove()" title="حذف السؤال">
+                    <i class="fas fa-times"></i>
+                </button>
+
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <label class="form-label text-muted small">نص السؤال (عربي) <span class="text-danger">*</span></label>
+                        <input type="text" name="QText" class="form-control" required placeholder="اكتب السؤال هنا...">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label text-muted small">نوع السؤال</label>
+                        <select name="QType" class="form-select" onchange="toggleOptions(this, ${qId})">
+                            <option value="Text" selected>نص حر (Text Input)</option>
+                            <option value="Star">تقييم نجوم (1-5)</option>
+                            <option value="YesNo">نعم / لا</option>
+                            <option value="MCQ">اختيار متعدد (Options)</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-12">
+                        <label class="form-label text-muted small">نص السؤال (إنجليزي) <span class="text-danger">*</span></label>
+                        <input type="text" name="QTextEn" class="form-control" required placeholder="Question in English...">
+                    </div>
+
+                    <!-- Options Field -->
+                    <div class="col-12 options-field" id="options-area-${qId}" style="display:none;">
+                        <div class="p-4 border rounded bg-opacity-10" style="background-color: rgba(var(--color-primary-rgb), 0.03); border-color: rgba(var(--color-primary-rgb), 0.1) !important;">
+                            <label class="form-label text-primary small mb-3">خيارات الإجابة (عربي & إنجليزي) <span class="text-danger">*</span></label>
+
+                            <div class="options-list" id="options-list-${qId}">
+                                <!-- Dynamic Options will appear here -->
+                            </div>
+
+                            <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addOptionInput(${qId})">
+                                <i class="fas fa-plus me-1"></i> إضافة خيار
+                            </button>
+
+                            <input type="hidden" name="QOptions" id="final-options-${qId}">
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.appendChild(div);
+
+            // Add default options for new MCQ
+            addOptionInput(qId);
+            addOptionInput(qId);
+
+            // Initial state for inputs (disabled since default is Text)
+            const optionsDiv = document.getElementById(`options-area-${qId}`);
+            toggleInputsState(optionsDiv, true);
+        }
+
+        function addOptionInput(qId) {
+            const list = document.getElementById(`options-list-${qId}`);
+            const div = document.createElement('div');
+            div.className = 'option-input-group';
+            div.innerHTML = `
+                <input type="text" class="form-control form-control-sm opt-ar" placeholder="خيار (عربي)" required>
+                <input type="text" class="form-control form-control-sm opt-en" placeholder="Option (English)" required>
+                <button type="button" class="btn-remove-option" onclick="this.parentElement.remove()" title="حذف">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            list.appendChild(div);
+
+            const optionsArea = document.getElementById(`options-area-${qId}`);
+            if (optionsArea && optionsArea.style.display === 'none') {
+                const inputs = div.querySelectorAll('input');
+                inputs.forEach(inp => inp.disabled = true);
+            }
+        }
+
+        function toggleOptions(select, qId) {
+            const optionsDiv = document.getElementById(`options-area-${qId}`);
+            const finalInput = document.getElementById(`final-options-${qId}`);
+
+            if (select.value === 'MCQ') {
+                optionsDiv.style.display = 'block';
+                toggleInputsState(optionsDiv, false);
+            } else {
+                optionsDiv.style.display = 'none';
+                toggleInputsState(optionsDiv, true);
+                if(finalInput) finalInput.value = "";
+            }
+        }
+
+        function toggleInputsState(container, isDisabled) {
+            const inputs = container.querySelectorAll('input');
+            inputs.forEach(inp => {
+                if(inp.type !== 'hidden') {
+                    inp.disabled = isDisabled;
+                }
+            });
+        }
+
+        function prepareOptionsBeforeSubmit() {
+            document.querySelectorAll('.options-field').forEach(field => {
+                if (field.style.display !== 'none') {
+                    const qId = field.id.split('-')[2];
+                    const list = document.getElementById(`options-list-${qId}`);
+                    const inputsAr = list.querySelectorAll('.opt-ar');
+                    const inputsEn = list.querySelectorAll('.opt-en');
+
+                    let combinedOptions = [];
+                    for(let i=0; i<inputsAr.length; i++) {
+                        let ar = inputsAr[i].value.trim();
+                        let en = inputsEn[i].value.trim();
+                        if(ar && en) {
+                            combinedOptions.push(`${ar}|${en}`);
+                        }
+                    }
+
+                    document.getElementById(`final-options-${qId}`).value = combinedOptions.join(',');
+                }
+            });
+        }
+
+        // Initialize state for existing items (important for Edit page)
+        document.addEventListener('DOMContentLoaded', function() {
+            @if (Model.Questions != null)
+            {
+                    foreach (var q in Model.Questions)
+                    {
+                            if (q.Type == "MCQ")
+                            {
+                                    <text>
+                                    toggleInputsState(document.getElementById('options-area-@q.Id'), false);
+                                    </text>
+                            }
+                            else
+                            {
+                                    <text>
+                                    toggleInputsState(document.getElementById('options-area-@q.Id'), true);
+                                    </text>
+                            }
+                    }
+            }
+        });
+    </script>
+}

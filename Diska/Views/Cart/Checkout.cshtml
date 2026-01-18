@@ -11,14 +11,33 @@
 }
 
 <style>
-    /* --- Checkout Styles (Website Theme) --- */
+    /* =========================================
+           PREMIUM CHECKOUT STYLES (Light & Dark)
+           ========================================= */
     :root {
+        /* Light Theme Defaults */
         --site-primary: #0F172A;
         --site-accent: #FACC15;
         --site-bg: #f8fafc;
+        --site-card-bg: #ffffff;
         --text-dark: #1e293b;
         --text-gray: #64748b;
         --border-color: #e2e8f0;
+        --input-bg: #ffffff;
+        --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+    }
+
+    [data-bs-theme="dark"] {
+        /* Premium Dark Theme */
+        --site-primary: #818cf8; /* Lighter Indigo for visibility */
+        --site-accent: #facc15; /* Gold remains */
+        --site-bg: #020617; /* Deep Dark */
+        --site-card-bg: #1e293b; /* Slate 800 */
+        --text-dark: #f8fafc; /* High Contrast Text */
+        --text-gray: #94a3b8; /* Muted Text */
+        --border-color: rgba(255, 255, 255, 0.08);
+        --input-bg: #0f172a; /* Slate 900 */
+        --shadow-sm: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
     }
 
     .checkout-section {
@@ -26,6 +45,7 @@
         min-height: 90vh;
         padding: 60px 0;
         font-family: 'Cairo', sans-serif;
+        transition: background-color 0.3s ease;
     }
 
     .checkout-container {
@@ -37,12 +57,13 @@
 
     /* Cards */
     .checkout-card {
-        background: #fff;
+        background: var(--site-card-bg);
         border-radius: 16px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+        box-shadow: var(--shadow-sm);
         border: 1px solid var(--border-color);
         padding: 30px;
         margin-bottom: 25px;
+        transition: background-color 0.3s, border-color 0.3s;
     }
 
     .card-header-custom {
@@ -58,7 +79,7 @@
             width: 35px;
             height: 35px;
             background: var(--site-primary);
-            color: var(--site-accent);
+            color: #fff; /* Always white icon on primary bg */
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -66,12 +87,17 @@
             font-size: 1rem;
         }
 
-        .card-header-custom h3 {
-            margin: 0;
-            font-size: 1.25rem;
-            font-weight: 800;
-            color: var(--site-primary);
-        }
+    [data-bs-theme="dark"] .card-header-custom i {
+        background: rgba(129, 140, 248, 0.2);
+        color: var(--site-primary);
+    }
+
+    .card-header-custom h3 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: var(--text-dark); /* Adapted for dark mode */
+    }
 
     /* Form Elements */
     .form-group {
@@ -91,7 +117,7 @@
         padding: 12px 15px;
         border: 1px solid var(--border-color);
         border-radius: 10px;
-        background-color: #fff;
+        background-color: var(--input-bg);
         transition: all 0.2s ease;
         font-size: 1rem;
         color: var(--text-dark);
@@ -102,6 +128,11 @@
             box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.15);
             outline: none;
         }
+
+    [data-bs-theme="dark"] select option {
+        background-color: var(--site-card-bg);
+        color: var(--text-dark);
+    }
 
     /* Payment Options */
     .payment-options {
@@ -121,69 +152,92 @@
         align-items: center;
         justify-content: center;
         text-align: center;
-        background: #fff;
+        background: var(--input-bg);
         position: relative;
         overflow: hidden;
     }
 
         .payment-card:hover {
             border-color: #cbd5e1;
-            background: #f8fafc;
+            background: var(--site-bg); /* Slight contrast on hover */
         }
 
-        .payment-card.selected {
-            border-color: var(--site-accent);
-            background: #fffbeb;
-            color: var(--site-primary);
-        }
+    [data-bs-theme="dark"] .payment-card:hover {
+        border-color: var(--site-primary);
+        background: rgba(255,255,255,0.03);
+    }
 
-            .payment-card.selected::after {
-                content: '\f00c';
-                font-family: "Font Awesome 6 Free";
-                font-weight: 900;
-                position: absolute;
-                top: 5px;
-                @(isAr ? "left" : "right") : 5px;
-                font-size: 1rem;
-                color: var(--site-primary);
-            }
+    .payment-card.selected {
+        border-color: var(--site-accent);
+        background: #fffbeb; /* Light Mode Yellow Tint */
+        color: #0F172A; /* Keep text dark in light mode selected */
+    }
+
+    [data-bs-theme="dark"] .payment-card.selected {
+        background: rgba(250, 204, 21, 0.1); /* Dark Mode Yellow Tint */
+        color: var(--site-accent);
+    }
+
+    .payment-card.selected::after {
+        content: '\f00c';
+        font-family: "Font Awesome 6 Free";
+        font-weight: 900;
+        position: absolute;
+        top: 5px;
+        @(isAr ? "left" : "right") : 5px;
+        font-size: 1rem;
+        color: var(--site-accent);
+    }
 
     .payment-icon {
         font-size: 1.8rem;
         margin-bottom: 10px;
         color: var(--text-gray);
+        transition: 0.3s;
     }
 
     .payment-card.selected .payment-icon {
-        color: var(--site-primary);
+        color: var(--site-accent);
+        transform: scale(1.1);
     }
 
     .payment-title {
         font-weight: 700;
         font-size: 0.95rem;
+        color: var(--text-dark);
     }
 
     /* Order Summary (Sticky) */
     .summary-sticky {
         position: sticky;
         top: 20px;
-        background: var(--site-primary);
+        background: #0F172A; /* Default Dark Blue for Summary */
         color: #fff;
         border: none;
+        box-shadow: 0 20px 40px -10px rgba(0,0,0,0.3);
     }
 
-        .summary-sticky .card-header-custom {
-            border-bottom-color: rgba(255,255,255,0.1);
+    [data-bs-theme="dark"] .summary-sticky {
+        background: #1e293b; /* Consistent dark card */
+        border: 1px solid var(--border-color);
+    }
+
+    .summary-sticky .card-header-custom {
+        border-bottom-color: rgba(255,255,255,0.1);
+    }
+
+        .summary-sticky .card-header-custom h3 {
+            color: #fff;
         }
 
-            .summary-sticky .card-header-custom h3 {
-                color: #fff;
-            }
+    [data-bs-theme="dark"] .summary-sticky .card-header-custom h3 {
+        color: var(--text-dark);
+    }
 
-            .summary-sticky .card-header-custom i {
-                background: rgba(255,255,255,0.1);
-                color: var(--site-accent);
-            }
+    .summary-sticky .card-header-custom i {
+        background: rgba(255,255,255,0.1);
+        color: var(--site-accent);
+    }
 
     .order-item {
         display: flex;
@@ -223,9 +277,17 @@
         text-overflow: ellipsis;
     }
 
+    [data-bs-theme="dark"] .item-name {
+        color: var(--text-dark);
+    }
+
     .item-meta {
         color: rgba(255,255,255,0.7);
         font-size: 0.85rem;
+    }
+
+    [data-bs-theme="dark"] .item-meta {
+        color: var(--text-gray);
     }
 
     .item-price {
@@ -249,15 +311,24 @@
         font-size: 0.95rem;
     }
 
-        .summary-row.total {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px dashed rgba(255,255,255,0.2);
-            color: #fff;
-            font-weight: 800;
-            font-size: 1.2rem;
-            align-items: center;
-        }
+    [data-bs-theme="dark"] .summary-row {
+        color: var(--text-gray);
+    }
+
+    .summary-row.total {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px dashed rgba(255,255,255,0.2);
+        color: #fff;
+        font-weight: 800;
+        font-size: 1.2rem;
+        align-items: center;
+    }
+
+    [data-bs-theme="dark"] .summary-row.total {
+        color: var(--text-dark);
+        border-top-color: var(--border-color);
+    }
 
     .total-price {
         color: var(--site-accent);
@@ -267,7 +338,7 @@
     /* Button */
     .btn-place-order {
         background: var(--site-accent);
-        color: var(--site-primary);
+        color: #0F172A; /* Keep dark text on yellow button */
         width: 100%;
         padding: 18px;
         border-radius: 12px;
@@ -286,18 +357,29 @@
 
         .btn-place-order:hover {
             background: #fff;
-            color: var(--site-primary);
+            color: #0F172A;
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(255, 255, 255, 0.2);
         }
 
-        .btn-place-order:disabled {
-            background: #cbd5e1;
-            color: #666;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
+    [data-bs-theme="dark"] .btn-place-order:hover {
+        background: #e2e8f0;
+        color: #000;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+
+    .btn-place-order:disabled {
+        background: #cbd5e1;
+        color: #666;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    [data-bs-theme="dark"] .btn-place-order:disabled {
+        background: #334155;
+        color: #94a3b8;
+    }
 
     .secure-badge {
         text-align: center;
@@ -310,6 +392,11 @@
         gap: 6px;
     }
 
+    [data-bs-theme="dark"] .secure-badge {
+        color: var(--text-gray);
+    }
+
+    /* Responsive */
     @@media (max-width: 992px) {
         .checkout-container
 
@@ -441,11 +528,11 @@
                         <div class="pricing-box">
                             <div class="summary-row">
                                 <span>@(isAr ? "المجموع الفرعي" : "Subtotal")</span>
-                                <span id="subTotalDisplay" style="color:#fff; font-weight:bold;">0.00</span>
+                                <span id="subTotalDisplay" style="font-weight:bold;">0.00</span>
                             </div>
                             <div class="summary-row">
                                 <span>@(isAr ? "تكلفة الشحن" : "Shipping")</span>
-                                <span id="shippingDisplay" style="color:#fff; font-weight:bold;">0.00</span>
+                                <span id="shippingDisplay" style="font-weight:bold;">0.00</span>
                             </div>
                             <div class="summary-row">
                                 <span>@(isAr ? "الضريبة" : "Tax")</span>
@@ -550,7 +637,7 @@
                         <div class="item-info">
                             <div class="item-name">${item.name} ${colorBadge}</div>
                             <div class="item-meta">
-                                <span class="fw-bold text-white">${item.qty}</span> x ${item.price.toLocaleString()}
+                                <span class="fw-bold">${item.qty}</span> x ${item.price.toLocaleString()}
                             </div>
                         </div>
                         <div class="item-price">${itemTotal.toLocaleString()}</div>

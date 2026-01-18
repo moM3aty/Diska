@@ -24,10 +24,12 @@ namespace Diska.Areas.Merchant.Controllers
         public async Task<IActionResult> Index()
         {
             var user = await _userManager.GetUserAsync(User);
+            if (user == null) return RedirectToAction("Login", "Account", new { area = "" });
 
             var requests = await _context.RestockSubscriptions
                 .Include(r => r.Product)
-                .Where(r => r.Product.MerchantId == user.Id) // فقط لمنتجاتي
+                .ThenInclude(r => r.Merchant)
+                .Where(r => r.Product.MerchantId == user.Id)
                 .OrderByDescending(r => r.RequestDate)
                 .ToListAsync();
 

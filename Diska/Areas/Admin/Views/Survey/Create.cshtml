@@ -204,6 +204,36 @@
             color: #818cf8;
         }
 
+    /* Option Input Group */
+    .option-input-group {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+        align-items: center;
+    }
+
+        .option-input-group input {
+            flex: 1;
+        }
+
+    .btn-remove-option {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        border: none;
+        background: transparent;
+        color: var(--bs-danger);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: 0.2s;
+    }
+
+        .btn-remove-option:hover {
+            background: var(--bs-danger);
+            color: #fff;
+        }
+
     /* Animation */
     .fade-up {
         animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
@@ -228,7 +258,7 @@
     <div class="col-lg-10">
         <div class="edit-card card">
 
-            <form asp-action="Create" method="post">
+            <form asp-action="Create" method="post" id="surveyForm" onsubmit="prepareOptionsBeforeSubmit()">
                 <!-- Header -->
                 <div class="card-header-actions">
                     <div class="d-flex align-items-center gap-3">
@@ -261,8 +291,8 @@
                             <input asp-for="Title" class="form-control" required placeholder="مثال: رأيك في التوصيل" />
                         </div>
                         <div class="col-md-6">
-                            <label asp-for="TitleEn" class="form-label">العنوان (إنجليزي)</label>
-                            <input asp-for="TitleEn" class="form-control" placeholder="Ex: Delivery Feedback" />
+                            <label asp-for="TitleEn" class="form-label">العنوان (إنجليزي) <span class="text-danger">*</span></label>
+                            <input asp-for="TitleEn" class="form-control" required placeholder="Ex: Delivery Feedback" />
                         </div>
 
                         <div class="col-12">
@@ -314,6 +344,7 @@
             const container = document.getElementById('questionsContainer');
             const div = document.createElement('div');
             div.className = 'question-item fade-up';
+            const qId = Date.now(); // Unique ID for this question block
 
             // HTML Structure for Question Item
             div.innerHTML = `
@@ -323,13 +354,13 @@
 
                 <div class="row g-3">
                     <div class="col-md-8">
-                        <label class="form-label text-muted small">نص السؤال (عربي)</label>
+                        <label class="form-label text-muted small">نص السؤال (عربي) <span class="text-danger">*</span></label>
                         <input type="text" name="QText" class="form-control" required placeholder="اكتب السؤال هنا...">
                     </div>
                     <div class="col-md-4">
                         <label class="form-label text-muted small">نوع السؤال</label>
-                        <select name="QType" class="form-select" onchange="toggleOptions(this)">
-                            <option value="Text">نص حر (Text Input)</option>
+                        <select name="QType" class="form-select" onchange="toggleOptions(this, ${qId})">
+                            <option value="Text" selected>نص حر (Text Input)</option>
                             <option value="Star">تقييم نجوم (1-5)</option>
                             <option value="YesNo">نعم / لا</option>
                             <option value="MCQ">اختيار متعدد (Options)</option>
@@ -337,38 +368,108 @@
                     </div>
 
                     <div class="col-md-12">
-                        <label class="form-label text-muted small">نص السؤال (إنجليزي - اختياري)</label>
-                        <input type="text" name="QTextEn" class="form-control" placeholder="Question in English...">
+                        <label class="form-label text-muted small">نص السؤال (إنجليزي) <span class="text-danger">*</span></label>
+                        <input type="text" name="QTextEn" class="form-control" required placeholder="Question in English...">
                     </div>
 
                     <!-- Options Field (Hidden by default) -->
-                    <div class="col-12 options-field" style="display:none;">
-                        <div class="p-3 border rounded bg-opacity-10" style="background-color: rgba(var(--color-primary-rgb), 0.05); border-color: rgba(var(--color-primary-rgb), 0.1) !important;">
-                            <label class="form-label text-primary small">خيارات الإجابة</label>
-                            <input type="text" name="QOptions" class="form-control" placeholder="مثال: جيد جداً|Very Good, جيد|Good, سيء|Bad">
-                            <div class="small text-muted mt-2">
-                                <i class="fas fa-info-circle me-1"></i>
-                                الصيغة: <code>عربي|English</code> وافصل بين الخيارات بفاصلة <code>,</code>
+                    <div class="col-12 options-field" id="options-area-${qId}" style="display:none;">
+                        <div class="p-4 border rounded bg-opacity-10" style="background-color: rgba(var(--color-primary-rgb), 0.03); border-color: rgba(var(--color-primary-rgb), 0.1) !important;">
+                            <label class="form-label text-primary small mb-3">خيارات الإجابة (عربي & إنجليزي) <span class="text-danger">*</span></label>
+
+                            <div class="options-list" id="options-list-${qId}">
+                                <!-- Dynamic Options will appear here -->
                             </div>
+
+                            <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addOptionInput(${qId})">
+                                <i class="fas fa-plus me-1"></i> إضافة خيار
+                            </button>
+
+                            <!-- Hidden input to store the final combined string -->
+                            <input type="hidden" name="QOptions" id="final-options-${qId}">
                         </div>
                     </div>
                 </div>
             `;
             container.appendChild(div);
+
+            // Add default 2 options for MCQ (initially disabled because section is hidden)
+            addOptionInput(qId);
+            addOptionInput(qId);
+
+            // Ensure inputs are disabled initially because type is Text
+            const optionsDiv = document.getElementById(`options-area-${qId}`);
+            toggleInputsState(optionsDiv, true); // true = disable
         }
 
-        function toggleOptions(select) {
-            const optionsDiv = select.closest('.row').querySelector('.options-field');
-            const input = optionsDiv.querySelector('input');
+        function addOptionInput(qId) {
+            const list = document.getElementById(`options-list-${qId}`);
+            const div = document.createElement('div');
+            div.className = 'option-input-group';
+            div.innerHTML = `
+                <input type="text" class="form-control form-control-sm opt-ar" placeholder="خيار (عربي)" required>
+                <input type="text" class="form-control form-control-sm opt-en" placeholder="Option (English)" required>
+                <button type="button" class="btn-remove-option" onclick="this.parentElement.remove()" title="حذف">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            list.appendChild(div);
+
+            // If the section is hidden, disable new inputs immediately
+            const optionsArea = document.getElementById(`options-area-${qId}`);
+            if (optionsArea.style.display === 'none') {
+                const inputs = div.querySelectorAll('input');
+                inputs.forEach(inp => inp.disabled = true);
+            }
+        }
+
+        function toggleOptions(select, qId) {
+            const optionsDiv = document.getElementById(`options-area-${qId}`);
+            const finalInput = document.getElementById(`final-options-${qId}`);
 
             if (select.value === 'MCQ') {
-                $(optionsDiv).slideDown();
-                input.setAttribute('required', 'required');
+                optionsDiv.style.display = 'block';
+                toggleInputsState(optionsDiv, false); // enable
             } else {
-                $(optionsDiv).slideUp();
-                input.removeAttribute('required');
-                input.value = ""; // Clear value if hidden
+                optionsDiv.style.display = 'none';
+                toggleInputsState(optionsDiv, true); // disable
+                finalInput.value = ""; // Clear
             }
+        }
+
+        // Helper to enable/disable all inputs in a container
+        function toggleInputsState(container, isDisabled) {
+            const inputs = container.querySelectorAll('input');
+            inputs.forEach(inp => {
+                if(inp.type !== 'hidden') {
+                    inp.disabled = isDisabled;
+                }
+            });
+        }
+
+        function prepareOptionsBeforeSubmit() {
+            // Loop through all option containers
+            document.querySelectorAll('.options-field').forEach(field => {
+                // Only process if visible (MCQ selected)
+                if (field.style.display !== 'none') {
+                    const qId = field.id.split('-')[2];
+                    const list = document.getElementById(`options-list-${qId}`);
+                    const inputsAr = list.querySelectorAll('.opt-ar');
+                    const inputsEn = list.querySelectorAll('.opt-en');
+
+                    let combinedOptions = [];
+                    for(let i=0; i<inputsAr.length; i++) {
+                        let ar = inputsAr[i].value.trim();
+                        let en = inputsEn[i].value.trim();
+                        if(ar && en) {
+                            combinedOptions.push(`${ar}|${en}`);
+                        }
+                    }
+
+                    // Set the hidden input value
+                    document.getElementById(`final-options-${qId}`).value = combinedOptions.join(',');
+                }
+            });
         }
 
         // Add one empty question by default

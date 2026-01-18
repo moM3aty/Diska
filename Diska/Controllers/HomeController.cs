@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 namespace Diska.Controllers
 {
@@ -24,19 +25,22 @@ namespace Diska.Controllers
             if (User.Identity.IsAuthenticated)
             {
                 var user = await _userManager.GetUserAsync(User);
-                var userRole = await _userManager.IsInRoleAsync(user, "Merchant") ? "Merchant" : "Customer";
-
-                // هل هناك استبيان نشط لم يقم المستخدم بحله؟
-                var pendingSurvey = await _context.Surveys
-                    .Where(s => s.IsActive && s.EndDate > DateTime.Now && (s.TargetAudience == "All" || s.TargetAudience == userRole))
-                    .Where(s => !_context.SurveyResponses.Any(r => r.SurveyId == s.Id && r.UserId == user.Id))
-                    .FirstOrDefaultAsync();
-
-                if (pendingSurvey != null)
+                if (user != null)
                 {
-                    // إرسال ID الاستبيان للفيو ليتم عرضه في Popup
-                    ViewBag.PendingSurveyId = pendingSurvey.Id;
-                    ViewBag.PendingSurveyTitle = pendingSurvey.Title;
+                    var userRole = await _userManager.IsInRoleAsync(user, "Merchant") ? "Merchant" : "Customer";
+
+                    // البحث عن استبيان متاح
+                    var pendingSurvey = await _context.Surveys
+                        .Where(s => s.IsActive && s.EndDate > DateTime.Now && (s.TargetAudience == "All" || s.TargetAudience == userRole))
+                        .Where(s => !_context.SurveyResponses.Any(r => r.SurveyId == s.Id && r.UserId == user.Id))
+                        .FirstOrDefaultAsync();
+
+                    if (pendingSurvey != null)
+                    {
+                        ViewBag.ShowSurveyPopup = true;
+                        ViewBag.PopupSurveyId = pendingSurvey.Id;
+                        ViewBag.PopupSurveyTitle = CultureInfo.CurrentCulture.Name.StartsWith("ar") ? pendingSurvey.Title : (pendingSurvey.TitleEn ?? pendingSurvey.Title);
+                    }
                 }
             }
             ViewBag.Categories = await _context.Categories
@@ -79,24 +83,15 @@ namespace Diska.Controllers
             return View("~/Views/Product/Category.cshtml", products);
         }
 
-        public async Task<IActionResult> Deals()
-        {
-            var deals = await _context.GroupDeals
-                .Include(d => d.Product)
-                .Where(d => d.IsActive && d.StartDate <= DateTime.Now && d.EndDate >= DateTime.Now)
-                .OrderBy(d => d.EndDate)
-                .ToListAsync();
-            return View(deals);
-        }
+    
 
         public IActionResult About() => View();
-        public IActionResult Contact() => View(); // تم الاستغناء عنه لصالح ContactController ولكن لا بأس بوجوده كتحويل
+        public IActionResult Contact() => View(); 
         public IActionResult FAQ() => View();
         public IActionResult Policies() => View();
 
         public IActionResult MerchantLanding()
         {
-            // إذا كان المستخدم تاجراً بالفعل، نوجهه للوحته بدلاً من صفحة البيع
             if (User.IsInRole("Merchant"))
             {
                 return RedirectToAction("Index", "Dashboard", new { area = "Merchant" });
