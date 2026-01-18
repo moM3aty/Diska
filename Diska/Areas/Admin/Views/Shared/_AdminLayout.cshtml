@@ -431,7 +431,7 @@
                 <a href="/Admin/Restock" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Restock" ? "active" : "")">
                     <i class="fas fa-cubes"></i> <span>@(isAr ? "نواقص المخزون" : "Stock Alerts")</span>
                 </a>
-                <a href="/Admin/Requests" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Requests" ? "active" : "")">
+                <a href="/Admin/DealRequest" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Requests" ? "active" : "")">
                     <i class="fas fa-bullhorn"></i> <span>@(isAr ? "طلبات خاصة" : "Special Requests")</span>
                 </a>
                 <a href="/Admin/Reviews" class="sidebar-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Reviews" ? "active" : "")">

@@ -2,16 +2,186 @@
 @{
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
     ViewData["Title"] = isAr ? "الشروط والأحكام" : "Terms & Conditions";
+    Layout = "_Layout";
 }
 
-<section class="section-padding">
+<style>
+    /* =========================================
+       PREMIUM TERMS STYLES (Light & Dark)
+       ========================================= */
+    :root {
+        /* Light Theme */
+        --pol-bg-body: #f8fafc;
+        --pol-card-bg: #ffffff;
+        --pol-text-main: #0f172a;
+        --pol-text-muted: #64748b;
+        --pol-border: #e2e8f0;
+        --pol-primary: #0F172A;
+        --pol-accent: #FACC15;
+        --pol-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+        --pol-card-hover: 0 10px 25px -5px rgba(0,0,0,0.05);
+    }
+
+    [data-bs-theme="dark"] {
+        /* Dark Theme */
+        --pol-bg-body: #020617;     /* Deep Dark */
+        --pol-card-bg: #1e293b;     /* Slate 800 */
+        --pol-text-main: #f8fafc;   /* Light Text */
+        --pol-text-muted: #94a3b8;  /* Muted Text */
+        --pol-border: rgba(255, 255, 255, 0.08);
+        --pol-primary: #f8fafc;     /* Headings become white */
+        --pol-accent: #FACC15;      /* Gold remains */
+        --pol-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        --pol-card-hover: 0 15px 30px -5px rgba(0,0,0,0.5);
+    }
+
+    body {
+        background-color: var(--pol-bg-body);
+        transition: background-color 0.3s ease;
+    }
+
+    .section-padding {
+        padding: 60px 0;
+        min-height: 80vh;
+    }
+
+    /* Breadcrumb */
+    .breadcrumb-custom {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 40px;
+        font-size: 0.9rem;
+        color: var(--pol-text-muted);
+    }
+    
+    .breadcrumb-custom a {
+        color: var(--pol-text-main);
+        font-weight: 700;
+        text-decoration: none;
+        transition: 0.2s;
+    }
+    
+    .breadcrumb-custom a:hover { color: var(--pol-accent); }
+
+    /* Policy Box */
+    .policy-box {
+        background: var(--pol-card-bg);
+        padding: 50px 40px;
+        border-radius: 20px;
+        margin-bottom: 30px;
+        border: 1px solid var(--pol-border);
+        box-shadow: var(--pol-shadow);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Decorative Top Line */
+    .policy-box::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 6px;
+        background: linear-gradient(90deg, var(--pol-primary), var(--pol-accent));
+    }
+
+    .page-title {
+        color: var(--pol-primary);
+        margin-bottom: 40px;
+        border-bottom: 2px solid var(--pol-border);
+        display: inline-block;
+        padding-bottom: 15px;
+        font-size: 2rem;
+        font-weight: 900;
+    }
+
+    .terms-content {
+        line-height: 1.8;
+        color: var(--pol-text-muted);
+    }
+
+    .terms-content h3 {
+        color: var(--pol-text-main);
+        font-weight: 800;
+        font-size: 1.3rem;
+        margin-top: 30px;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .terms-content h3::before {
+        content: '';
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background-color: var(--pol-accent);
+        border-radius: 50%;
+    }
+
+    .terms-content p {
+        margin-bottom: 15px;
+        font-size: 1.05rem;
+    }
+
+    .terms-content ul {
+        list-style: none;
+        padding: 0;
+        margin-bottom: 20px;
+    }
+
+    .terms-content li {
+        margin-bottom: 12px;
+        padding-inline-start: 25px;
+        position: relative;
+        font-size: 1rem;
+    }
+
+    .terms-content li::before {
+        content: '\f054'; /* FontAwesome chevron-right */
+        font-family: "Font Awesome 6 Free";
+        font-weight: 900;
+        position: absolute;
+        @(isAr ? "right" : "left"): 0;
+        top: 4px;
+        color: var(--pol-accent);
+        font-size: 0.8rem;
+    }
+    
+    html[dir="ltr"] .terms-content li::before {
+        content: '\f054'; 
+        transform: rotate(0deg); /* Adjust if needed */
+    }
+    html[dir="rtl"] .terms-content li::before {
+        content: '\f053'; /* chevron-left for RTL */
+    }
+
+    /* Animation */
+    .fade-up { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+    @@keyframes fadeUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+<section class="section-padding fade-up">
     <div class="container">
-        <div class="policy-box" style="background:#fff; padding:40px; border-radius:10px; border:1px solid #eee;">
-            <h1 style="color:var(--primary); margin-bottom:30px; border-bottom:3px solid #FACC15; display:inline-block; padding-bottom:10px;">
+        
+        <div class="breadcrumb-custom">
+            <a asp-controller="Home" asp-action="Index">
+                <i class="fas fa-home"></i> @(isAr ? "الرئيسية" : "Home")
+            </a>
+            <span style="color:var(--pol-text-muted)">/</span>
+            <span>@(isAr ? "الشروط والأحكام" : "Terms & Conditions")</span>
+        </div>
+
+        <div class="policy-box">
+            <h1 class="page-title">
                 @(isAr ? "الشروط والأحكام" : "Terms & Conditions")
             </h1>
 
-            <div class="terms-content" style="line-height:1.8; color:#333;">
+            <div class="terms-content">
                 @if (isAr)
                 {
                     <h3>1. مقدمة</h3>
@@ -64,6 +234,9 @@
                         <li>Available payment methods: Cash on Delivery (COD) and In-App Wallet.</li>
                         <li>Wallet balance is non-refundable as cash and can only be used for future purchases on the platform.</li>
                     </ul>
+                    
+                    <h3>5. Intellectual Property</h3>
+                    <p>All content rights, designs, and logos are reserved for DISKA platform and may not be copied or used without written permission.</p>
                 }
             </div>
         </div>

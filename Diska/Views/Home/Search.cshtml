@@ -4,23 +4,379 @@
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
     var query = ViewBag.SearchQuery as string;
     ViewData["Title"] = isAr ? $"بحث: {query}" : $"Search: {query}";
+    Layout = "_Layout";
 }
 
-<section class="section-padding">
+<style>
+    /* =========================================
+           PREMIUM SEARCH RESULTS STYLES (Light & Dark)
+           ========================================= */
+    :root {
+        /* Light Mode */
+        --sr-bg-body: #f8fafc;
+        --sr-card-bg: #ffffff;
+        --sr-text-main: #0f172a;
+        --sr-text-muted: #64748b;
+        --sr-border: #e2e8f0;
+        --sr-primary: #0F172A;
+        --sr-accent: #FACC15;
+        --sr-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+        --sr-card-hover: 0 20px 40px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    [data-bs-theme="dark"] {
+        /* Dark Mode */
+        --sr-bg-body: #020617; /* Deep Dark */
+        --sr-card-bg: #1e293b; /* Slate 800 */
+        --sr-text-main: #f8fafc; /* Light Text */
+        --sr-text-muted: #94a3b8; /* Muted Text */
+        --sr-border: rgba(255, 255, 255, 0.08);
+        --sr-primary: #f8fafc; /* Headings become white */
+        --sr-accent: #FACC15; /* Gold remains */
+        --sr-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        --sr-card-hover: 0 20px 50px -10px rgba(0, 0, 0, 0.5);
+    }
+
+    body {
+        background-color: var(--sr-bg-body);
+        transition: background-color 0.3s ease;
+    }
+
+    .section-padding {
+        padding: 60px 0;
+        min-height: 80vh;
+    }
+
+    /* Header */
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 40px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--sr-border);
+    }
+
+        .section-header h3 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--sr-text-main);
+            margin: 0;
+        }
+
+    .query-text {
+        color: var(--sr-primary);
+        font-style: italic;
+    }
+
+    [data-bs-theme="dark"] .query-text {
+        color: var(--sr-accent);
+    }
+
+    .result-count {
+        color: var(--sr-text-muted);
+        font-weight: 600;
+        background: rgba(0,0,0,0.03);
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+    }
+
+    [data-bs-theme="dark"] .result-count {
+        background: rgba(255,255,255,0.05);
+    }
+
+    /* Grid */
+    .products-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 30px;
+    }
+
+    /* Product Card */
+    .product-card {
+        background: var(--sr-card-bg);
+        border: 1px solid var(--sr-border);
+        border-radius: 20px;
+        padding: 20px;
+        position: relative;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        box-shadow: var(--sr-shadow);
+        overflow: hidden;
+    }
+
+        .product-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--sr-card-hover);
+            border-color: var(--sr-accent);
+        }
+
+    /* Badges */
+    .flash-badge {
+        position: absolute;
+        top: 15px;
+        @(isAr ? "right" : "left") : 15px;
+        background: #ef4444;
+        color: #fff;
+        font-size: 0.7rem;
+        font-weight: 800;
+        padding: 4px 10px;
+        border-radius: 4px;
+        z-index: 2;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    /* Image */
+    .product-img {
+        height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+        background: #fff; /* Always white for product contrast */
+        border-radius: 12px;
+        padding: 20px;
+        position: relative;
+    }
+
+    [data-bs-theme="dark"] .product-img {
+        background: #ffffff; /* Ensure images pop in dark mode */
+        border: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .product-img img {
+        max-height: 100%;
+        max-width: 100%;
+        object-fit: contain;
+        transition: transform 0.5s ease;
+    }
+
+    .product-card:hover .product-img img {
+        transform: scale(1.1);
+    }
+
+    /* Info */
+    .product-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+        .product-info h4 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--sr-text-main);
+            margin: 0 0 10px;
+            line-height: 1.5;
+            height: 3em;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            transition: color 0.2s;
+        }
+
+    .product-card:hover h4 {
+        color: #4f46e5;
+    }
+
+    [data-bs-theme="dark"] .product-card:hover h4 {
+        color: #818cf8;
+    }
+
+    .pricing {
+        margin-bottom: 15px;
+    }
+
+    .current-price {
+        font-size: 1.3rem;
+        font-weight: 900;
+        color: var(--sr-text-main);
+    }
+
+    .product-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        color: var(--sr-text-muted);
+        margin-bottom: 20px;
+        border-top: 1px dashed var(--sr-border);
+        padding-top: 10px;
+    }
+
+    /* Add To Cart Area */
+    .add-to-cart {
+        margin-top: auto;
+        display: flex;
+        gap: 10px;
+    }
+
+    .qty-control-card {
+        display: flex;
+        border: 1px solid var(--sr-border);
+        border-radius: 8px;
+        overflow: hidden;
+        background: var(--sr-bg-body);
+    }
+
+    .qty-minus, .qty-plus {
+        border: none;
+        background: transparent;
+        width: 30px;
+        font-weight: bold;
+        color: var(--sr-text-main);
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+        .qty-minus:hover, .qty-plus:hover {
+            background: rgba(0,0,0,0.05);
+            color: var(--sr-primary);
+        }
+
+    [data-bs-theme="dark"] .qty-minus:hover, [data-bs-theme="dark"] .qty-plus:hover {
+        background: rgba(255,255,255,0.1);
+    }
+
+    .qty-val {
+        width: 40px;
+        text-align: center;
+        border: none;
+        border-left: 1px solid var(--sr-border);
+        border-right: 1px solid var(--sr-border);
+        background: transparent;
+        color: var(--sr-text-main);
+        font-weight: 700;
+        outline: none;
+    }
+
+    .add-btn {
+        flex: 2;
+        background: var(--sr-primary);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    [data-bs-theme="dark"] .add-btn {
+        background: var(--sr-accent);
+        color: #000;
+    }
+
+    .add-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .add-btn:disabled {
+        background: var(--sr-border);
+        color: var(--sr-text-muted);
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
+    }
+
+    /* Empty State */
+    .empty-search {
+        text-align: center;
+        padding: 80px 20px;
+        background: var(--sr-card-bg);
+        border-radius: 24px;
+        border: 2px dashed var(--sr-border);
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        color: var(--sr-text-muted);
+        opacity: 0.3;
+        margin-bottom: 25px;
+    }
+
+    .empty-title {
+        color: var(--sr-text-main);
+        font-weight: 800;
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+    }
+
+    .empty-text {
+        color: var(--sr-text-muted);
+        font-size: 1rem;
+        margin-bottom: 30px;
+    }
+
+    .btn-browse {
+        display: inline-block;
+        background: var(--sr-primary);
+        color: #fff;
+        padding: 12px 35px;
+        border-radius: 50px;
+        text-decoration: none;
+        font-weight: 700;
+        transition: 0.3s;
+    }
+
+    [data-bs-theme="dark"] .btn-browse {
+        background: var(--sr-accent);
+        color: #000;
+    }
+
+    .btn-browse:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+
+    /* Animation */
+    .fade-up {
+        animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @@keyframes fadeUp {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+</style>
+
+<section class="section-padding fade-up">
     <div class="container">
+
         <div class="section-header">
             <h3>
-                @(isAr ? "نتائج البحث عن:" : "Search Results for:") <span style="color:var(--primary);">"@query"</span>
+                @(isAr ? "نتائج البحث عن:" : "Search Results for:")
+                <span class="query-text">"@query"</span>
             </h3>
-            <span style="color:#666;">@Model.Count() @(isAr ? "منتج" : "items")</span>
+            <span class="result-count">@Model.Count() @(isAr ? "منتج" : "items")</span>
         </div>
 
         @if (!Model.Any())
         {
-            <div style="text-align:center; padding:50px; background:#fff; border-radius:10px; border:1px solid #eee;">
-                <i class="fas fa-search" style="font-size:3rem; color:#eee; margin-bottom:20px;"></i>
-                <p style="font-size:1.2rem; color:#555;">@(isAr ? "لم نتمكن من العثور على أي منتجات تطابق بحثك." : "We couldn't find any products matching your search.")</p>
-                <a asp-action="Index" class="btn primary" style="margin-top:20px;">@(isAr ? "تصفح جميع الأقسام" : "Browse Categories")</a>
+            <div class="empty-search">
+                <i class="fas fa-search empty-icon"></i>
+                <h3 class="empty-title">@(isAr ? "لم نتمكن من العثور على أي منتجات." : "We couldn't find any products.")</h3>
+                <p class="empty-text">@(isAr ? "حاول البحث بكلمات مختلفة أو تصفح الأقسام." : "Try searching with different keywords or browse categories.")</p>
+                <a asp-action="Index" class="btn-browse">
+                    @(isAr ? "تصفح جميع الأقسام" : "Browse Categories")
+                </a>
             </div>
         }
         else
@@ -29,7 +385,8 @@
                 @foreach (var item in Model)
                 {
                     <div class="product-card" data-id="@item.Id" data-stock="@item.StockQuantity">
-                        @if (item.OldPrice > item.Price)
+
+                        @if (item.OldPrice.HasValue && item.OldPrice > item.Price)
                         {
                             <div class="flash-badge">@(isAr ? "خصم" : "Sale")</div>
                         }
@@ -44,31 +401,31 @@
                             </a>
 
                             <div class="pricing">
-                                <span class="current-price">@item.Price.ToString("N2") @(isAr ? "ج.م" : "EGP")</span>
+                                <span class="current-price">@item.Price.ToString("N0") <small>@(isAr ? "ج.م" : "EGP")</small></span>
                             </div>
 
                             <div class="product-meta">
-                                <span><i class="fas fa-box"></i> @item.UnitsPerCarton</span>
-                                <span style="@(item.StockQuantity > 0 ? "color:green" : "color:red")">
+                                <span><i class="fas fa-box me-1"></i> @item.UnitsPerCarton</span>
+                                <span style="@(item.StockQuantity > 0 ? "color:#16a34a" : "color:#ef4444")">
                                     @(item.StockQuantity > 0 ? (isAr ? "متوفر" : "In Stock") : (isAr ? "نفذت الكمية" : "Out of Stock"))
                                 </span>
                             </div>
 
-                            <div class="add-to-cart" style="gap:10px;">
+                            <div class="add-to-cart">
                                 @if (item.StockQuantity > 0)
                                 {
-                                    <div class="qty-control-card" style="display:flex; flex:1;">
-                                        <button class="qty-minus">-</button>
-                                        <input type="number" class="qty-val" value="1" min="1" max="@item.StockQuantity" style="width:40px; text-align:center; border:none;">
-                                        <button class="qty-plus">+</button>
+                                    <div class="qty-control-card">
+                                        <button class="qty-minus" onclick="updateQty(this, -1)">-</button>
+                                        <input type="number" class="qty-val" value="1" min="1" max="@item.StockQuantity" readonly>
+                                        <button class="qty-plus" onclick="updateQty(this, 1)">+</button>
                                     </div>
-                                    <button class="add-btn" onclick="addToCart(this)" style="flex:2;">
+                                    <button class="add-btn" onclick="addToCart(this, @item.Id)">
                                         @(isAr ? "أضف" : "Add") <i class="fas fa-cart-plus"></i>
                                     </button>
                                 }
                                 else
                                 {
-                                    <button class="add-btn" disabled style="width:100%; background:#ccc; cursor:not-allowed;">@(isAr ? "غير متاح" : "Unavailable")</button>
+                                    <button class="add-btn" disabled>@(isAr ? "غير متاح" : "Unavailable")</button>
                                 }
                             </div>
                         </div>
@@ -78,3 +435,25 @@
         }
     </div>
 </section>
+
+@section Scripts {
+    <script>
+        function updateQty(btn, change) {
+            const input = btn.parentElement.querySelector('input');
+            let val = parseInt(input.value) + change;
+            let max = parseInt(input.max);
+            if (val >= 1 && val <= max) input.value = val;
+        }
+
+        function addToCart(btn, id) {
+            const qtyInput = btn.previousElementSibling.querySelector('input');
+            const qty = qtyInput.value;
+
+            if(typeof addItemToCart === 'function') {
+                addItemToCart(id, qty, btn);
+            } else {
+                console.error("Cart function missing");
+            }
+        }
+    </script>
+}

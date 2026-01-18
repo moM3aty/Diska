@@ -1,0 +1,477 @@
+﻿@model Diska.Models.DealRequest
+@using System.Globalization
+@{
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+    ViewData["Title"] = isAr ? "إدارة الطلب" : "Manage Request";
+    Layout = "_AdminLayout";
+}
+
+<style>
+    /* =========================================
+           PREMIUM ADMIN REQUEST STYLES
+           ========================================= */
+    :root {
+        --adm-bg: #f8fafc;
+        --adm-card-bg: #ffffff;
+        --adm-text: #0f172a;
+        --adm-muted: #64748b;
+        --adm-border: #e2e8f0;
+        --adm-primary: #0F172A;
+        --adm-accent: #FACC15;
+        --adm-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+        /* Chat Colors */
+        --chat-admin-bg: #0F172A;
+        --chat-admin-text: #ffffff;
+        --chat-client-bg: #f1f5f9;
+        --chat-client-text: #1e293b;
+    }
+
+    [data-bs-theme="dark"] {
+        --adm-bg: #020617;
+        --adm-card-bg: #1e293b;
+        --adm-text: #f8fafc;
+        --adm-muted: #94a3b8;
+        --adm-border: rgba(255, 255, 255, 0.08);
+        --adm-primary: #f8fafc;
+        --adm-accent: #FACC15;
+        --adm-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        /* Chat Colors Dark */
+        --chat-admin-bg: #FACC15;
+        --chat-admin-text: #0F172A;
+        --chat-client-bg: #334155;
+        --chat-client-text: #f8fafc;
+    }
+
+    .admin-req-page {
+        padding: 30px 0;
+        font-family: 'Cairo', sans-serif;
+    }
+
+    /* Header */
+    .req-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--adm-border);
+    }
+
+    .page-title {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: var(--adm-text);
+        margin: 0;
+    }
+
+    .req-id {
+        color: var(--adm-accent);
+        font-family: monospace;
+    }
+
+    /* Cards */
+    .admin-card {
+        background: var(--adm-card-bg);
+        border-radius: 16px;
+        border: 1px solid var(--adm-border);
+        box-shadow: var(--adm-shadow);
+        overflow: hidden;
+        margin-bottom: 30px;
+    }
+
+    .card-head {
+        padding: 20px;
+        background: rgba(0,0,0,0.02);
+        border-bottom: 1px solid var(--adm-border);
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: var(--adm-primary);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        padding: 25px;
+    }
+
+    .info-item label {
+        display: block;
+        font-size: 0.8rem;
+        color: var(--adm-muted);
+        margin-bottom: 5px;
+    }
+
+    .info-item span {
+        font-weight: 700;
+        color: var(--adm-text);
+        font-size: 1.1rem;
+    }
+
+    /* Status Badges */
+    .status-badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 700;
+    }
+
+    .st-Pending {
+        background: #fffbeb;
+        color: #b45309;
+    }
+
+    .st-Approved {
+        background: #e0f2fe;
+        color: #0284c7;
+    }
+
+    .st-Completed {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .st-Rejected {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    [data-bs-theme="dark"] .st-Pending {
+        background: rgba(245, 158, 11, 0.15);
+        color: #fbbf24;
+    }
+
+    /* Chat Section */
+    .chat-box {
+        height: 500px;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--adm-border);
+        border-radius: 16px;
+        overflow: hidden;
+        background: var(--adm-card-bg);
+    }
+
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        background-color: var(--adm-bg);
+    }
+
+    .msg {
+        max-width: 75%;
+        padding: 12px 16px;
+        border-radius: 12px;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        position: relative;
+    }
+
+        .msg.admin {
+            align-self: flex-end;
+            background-color: var(--chat-admin-bg);
+            color: var(--chat-admin-text);
+            border-bottom-left-radius: 2px;
+        }
+
+        .msg.client {
+            align-self: flex-start;
+            background-color: var(--chat-client-bg);
+            color: var(--chat-client-text);
+            border-bottom-right-radius: 2px;
+            border: 1px solid var(--adm-border);
+        }
+
+    .msg-meta {
+        display: block;
+        font-size: 0.65rem;
+        margin-top: 5px;
+        opacity: 0.7;
+        text-align: end;
+    }
+
+    .chat-input-area {
+        padding: 20px;
+        border-top: 1px solid var(--adm-border);
+        background: var(--adm-card-bg);
+    }
+
+    .input-group-custom {
+        display: flex;
+        gap: 10px;
+        background: var(--adm-bg);
+        padding: 5px;
+        border-radius: 50px;
+        border: 1px solid var(--adm-border);
+    }
+
+    .chat-input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        padding: 10px 20px;
+        color: var(--adm-text);
+        outline: none;
+    }
+
+    .btn-send {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        background: var(--adm-primary);
+        color: #fff;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    [data-bs-theme="dark"] .btn-send {
+        background: var(--adm-accent);
+        color: #000;
+    }
+
+    .btn-send:hover {
+        transform: scale(1.1);
+    }
+
+    /* Actions */
+    .action-btns {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn-approve {
+        background: #22c55e;
+        color: #fff;
+        border: none;
+        padding: 8px 20px;
+        border-radius: 8px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .btn-reject {
+        background: #ef4444;
+        color: #fff;
+        border: none;
+        padding: 8px 20px;
+        border-radius: 8px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+</style>
+
+<div class="admin-req-page">
+    <div class="container-fluid">
+
+        <div class="req-header">
+            <div>
+                <h1 class="page-title">@(isAr ? "إدارة الطلب" : "Manage Request") <span class="req-id">#@Model.Id</span></h1>
+                <span style="color:var(--adm-muted); font-size:0.9rem;">@(isAr ? "العميل:" : "Customer:") @Model.User?.FullName</span>
+            </div>
+            <div class="action-btns">
+                @if (Model.Status == "Pending")
+                {
+                    <form asp-action="ChangeStatus" method="post">
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <input type="hidden" name="status" value="Approved" />
+                        <button type="submit" class="btn-approve" onclick="return confirm('موافقة ونشر للتجار؟')">
+                            <i class="fas fa-check"></i> @(isAr ? "موافقة ونشر" : "Approve")
+                        </button>
+                    </form>
+                    <form asp-action="ChangeStatus" method="post">
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <input type="hidden" name="status" value="Rejected" />
+                        <button type="submit" class="btn-reject" onclick="return confirm('رفض الطلب؟')">
+                            <i class="fas fa-times"></i> @(isAr ? "رفض" : "Reject")
+                        </button>
+                    </form>
+                }
+            </div>
+        </div>
+
+        <div class="row g-4">
+
+            <!-- Left: Request Info -->
+            <div class="col-lg-7">
+                <div class="admin-card">
+                    <div class="card-head">
+                        <span><i class="fas fa-box text-primary me-2"></i> @Model.ProductName</span>
+                        <span class="status-badge st-@Model.Status">@Model.Status</span>
+                    </div>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>@(isAr ? "الكمية" : "Quantity")</label>
+                            <span>@Model.TargetQuantity</span>
+                        </div>
+                        <div class="info-item">
+                            <label>@(isAr ? "السعر المستهدف" : "Target Price")</label>
+                            <span>@Model.DealPrice.ToString("N0")</span>
+                        </div>
+                        <div class="info-item">
+                            <label>@(isAr ? "الموقع" : "Location")</label>
+                            <span>@Model.Location</span>
+                        </div>
+                        <div class="info-item">
+                            <label>@(isAr ? "التاريخ" : "Date")</label>
+                            <span>@Model.RequestDate.ToString("dd/MM/yyyy")</span>
+                        </div>
+                        <div class="info-item" style="grid-column: 1 / -1;">
+                            <label>@(isAr ? "بيانات الاتصال" : "Contact Info")</label>
+                            <span>@Model.User?.PhoneNumber | @Model.User?.Email</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Offers Summary (Optional) -->
+                <div class="admin-card">
+                    <div class="card-head">
+                        <span><i class="fas fa-store text-warning me-2"></i> @(isAr ? "العروض المقدمة" : "Merchant Offers") (@(Model.Offers?.Count ?? 0))</span>
+                    </div>
+                    <div class="p-3">
+                        @if (Model.Offers != null && Model.Offers.Any())
+                        {
+                            <table class="table" style="color:var(--adm-text);">
+                                <thead>
+                                    <tr>
+                                        <th>التاجر</th>
+                                        <th>السعر</th>
+                                        <th>الحالة</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var offer in Model.Offers)
+                                    {
+                                        <tr>
+                                            <td>@offer.Merchant?.ShopName</td>
+                                            <td>@offer.OfferPrice</td>
+                                            <td>
+                                                @if (offer.IsAccepted)
+                                                {
+                                                    <span class="text-success fw-bold">مقبول</span>
+                                                }
+                                                else
+                                                {
+
+                                                    <span class="text-muted">انتظار</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                        else
+                        {
+                            <p class="text-muted text-center m-0">لا توجد عروض حتى الآن.</p>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Chat -->
+            <div class="col-lg-5">
+                <div class="admin-card chat-box">
+                    <div class="card-head">
+                        <span><i class="fas fa-comments text-info me-2"></i> @(isAr ? "المراسلات مع العميل" : "Chat with Customer")</span>
+                    </div>
+
+                    <div class="chat-messages" id="chatBody">
+                        @if (Model.Messages != null && Model.Messages.Any())
+                        {
+                            foreach (var msg in Model.Messages)
+                            {
+                                bool isAdminMsg = msg.IsAdmin; // true = me (admin), false = client
+                                                               <div class="msg @(isAdminMsg ? "admin" : "client")">
+                                                                   @msg.Message
+                                                                   <span class="msg-meta">
+                                                                       @(isAdminMsg ? (isAr ? "أنت (الإدارة)" : "You") : (isAr ? "العميل" : "Client")) • @msg.CreatedAt.ToString("hh:mm tt")
+                                                                   </span>
+                                                               </div>
+                            }
+                        }
+                        else
+                        {
+                            <div id="emptyChat" style="text-align:center; margin-top:50px; color:var(--adm-muted); opacity:0.5;">
+                                <i class="far fa-comment-alt fa-3x mb-2"></i>
+                                <p>بدء المحادثة</p>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="chat-input-area">
+                        <!-- AJAX Form -->
+                        <form id="chatForm" asp-action="SendReply" method="post" class="input-group-custom">
+                            <input type="hidden" name="requestId" value="@Model.Id" />
+                            <input type="text" name="message" class="chat-input" placeholder="@(isAr ? "اكتب ردك هنا..." : "Type a reply...")" required autocomplete="off">
+                            <button type="submit" class="btn-send">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var chatBody = document.getElementById("chatBody");
+        chatBody.scrollTop = chatBody.scrollHeight;
+
+        const chatForm = document.getElementById('chatForm');
+
+        chatForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const btn = chatForm.querySelector('button');
+            const input = chatForm.querySelector('input[name="message"]');
+            const message = input.value.trim();
+            const originalIcon = btn.innerHTML;
+
+            if (!message) return;
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            try {
+                const formData = new FormData(chatForm);
+                const response = await fetch(chatForm.action, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    // Manual Append for instant feel
+                    const msgDiv = document.createElement('div');
+                    msgDiv.className = 'msg admin';
+                    msgDiv.innerHTML = `${message} <span class="msg-meta">@(isAr ? "أنت (الإدارة)" : "You") • @(isAr ? "الآن" : "Just now")</span>`;
+
+                    const empty = document.getElementById('emptyChat');
+                    if(empty) empty.remove();
+
+                    chatBody.appendChild(msgDiv);
+                    chatBody.scrollTop = chatBody.scrollHeight;
+                    input.value = '';
+                }
+            } catch (error) {
+                console.error('Error sending message:', error);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalIcon;
+            }
+        });
+    });
+</script>

@@ -80,7 +80,7 @@ namespace Diska.Controllers
                 .ToListAsync();
 
             ViewBag.CategoryName = "نتائج البحث";
-            return View("~/Views/Product/Category.cshtml", products);
+            return View("~/Views/Product/Index.cshtml", products);
         }
 
     
@@ -89,6 +89,8 @@ namespace Diska.Controllers
         public IActionResult Contact() => View(); 
         public IActionResult FAQ() => View();
         public IActionResult Policies() => View();
+        public IActionResult Privacy() => View();
+        public IActionResult Terms() => View();
 
         public IActionResult MerchantLanding()
         {

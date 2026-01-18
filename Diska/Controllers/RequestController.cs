@@ -25,7 +25,6 @@ namespace Diska.Controllers
             _notificationService = notificationService;
         }
 
-        // 1. عرض قائمة طلبات العميل
         public async Task<IActionResult> Index()
         {
             var user = await _userManager.GetUserAsync(User);
@@ -38,31 +37,34 @@ namespace Diska.Controllers
             return View(requests);
         }
 
-        // 2. صفحة إنشاء طلب جديد (GET)
         [HttpGet]
         public IActionResult Create()
         {
             return View();
         }
 
-        // 2. حفظ الطلب (POST)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(DealRequest request)
         {
+            ModelState.Remove("AdminNotes");
+            ModelState.Remove("User");
+            ModelState.Remove("UserId");
+            ModelState.Remove("Messages");
             if (ModelState.IsValid)
             {
                 var user = await _userManager.GetUserAsync(User);
-
                 request.UserId = user.Id;
                 request.RequestDate = DateTime.Now;
-                request.Status = "Pending"; // يذهب للمراجعة من الأدمن
+                request.Status = "Pending";
+                request.AdminNotes = string.Empty;
 
                 _context.DealRequests.Add(request);
                 await _context.SaveChangesAsync();
 
-                // إشعار للأدمن
-                await _notificationService.NotifyAdminsAsync("طلب خاص جديد", $"العميل {user.FullName} أرسل طلب شراء خاص: {request.ProductName}");
+                // إشعار للأدمن مع الرابط
+                var link = Url.Action("Details", "DealRequest", new { area = "Admin", id = request.Id });
+                await _notificationService.NotifyAdminsAsync("طلب خاص جديد", $"العميل {user.FullName} أرسل طلب شراء خاص: {request.ProductName}", "Request");
 
                 TempData["Success"] = "تم إرسال طلبك بنجاح، سيتم مراجعته قريباً.";
                 return RedirectToAction(nameof(Index));
@@ -70,21 +72,65 @@ namespace Diska.Controllers
             return View(request);
         }
 
-        // 3. تفاصيل الطلب والعروض المقدمة عليه
         public async Task<IActionResult> Details(int id)
         {
             var user = await _userManager.GetUserAsync(User);
             var request = await _context.DealRequests
-                .Include(r => r.Offers)
-                .ThenInclude(o => o.Merchant)
+                .Include(r => r.Offers).ThenInclude(o => o.Merchant)
+                .Include(r => r.Messages).ThenInclude(m => m.Sender)
                 .FirstOrDefaultAsync(r => r.Id == id && r.UserId == user.Id);
 
             if (request == null) return NotFound();
 
+            request.Messages = request.Messages.OrderBy(m => m.CreatedAt).ToList();
             return View(request);
         }
 
-        // قبول عرض من تاجر
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SendMessage(int requestId, string message)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var request = await _context.DealRequests
+                .Include(r => r.Offers)
+                .FirstOrDefaultAsync(r => r.Id == requestId && r.UserId == user.Id);
+
+            if (request == null) return NotFound();
+            if (string.IsNullOrWhiteSpace(message)) return RedirectToAction(nameof(Details), new { id = requestId });
+
+            var msg = new RequestMessage
+            {
+                DealRequestId = requestId,
+                SenderId = user.Id,
+                Message = message,
+                CreatedAt = DateTime.Now,
+                IsAdmin = false // رسالة من العميل
+            };
+
+            _context.RequestMessages.Add(msg);
+            await _context.SaveChangesAsync();
+
+            // التوجيه حسب الحالة
+            if (request.Status == "Completed")
+            {
+                // إذا تم القبول، الرسالة تذهب للتاجر الفائز
+                var acceptedOffer = request.Offers.FirstOrDefault(o => o.IsAccepted);
+                if (acceptedOffer != null)
+                {
+                    var link = Url.Action("Details", "Requests", new { area = "Merchant", id = requestId });
+                    await _notificationService.NotifyUserAsync(acceptedOffer.MerchantId, "رسالة من العميل", $"العميل أرسل رسالة بخصوص الطلب #{requestId}", "Request", link);
+                }
+            }
+            else
+            {
+                // للأدمن (تصحيح الخطأ هنا أيضاً بإزالة المعامل الرابع)
+                var link = Url.Action("Details", "DealRequest", new { area = "Admin", id = requestId });
+                await _notificationService.NotifyAdminsAsync("رسالة جديدة من عميل", $"العميل {user.FullName} أرسل استفساراً بخصوص الطلب #{requestId}", "Request");
+            }
+
+            return RedirectToAction(nameof(Details), new { id = requestId });
+        }
+
         [HttpPost]
         public async Task<IActionResult> AcceptOffer(int offerId)
         {
@@ -94,12 +140,10 @@ namespace Diska.Controllers
 
             var user = await _userManager.GetUserAsync(User);
 
-            // التأكد من الملكية والصلاحية
             if (offer == null || offer.DealRequest.UserId != user.Id) return Forbid();
 
-            // قبول العرض وتحديث حالة الطلب
             offer.IsAccepted = true;
-            offer.DealRequest.Status = "Completed"; // تم الاتفاق
+            offer.DealRequest.Status = "Completed";
 
             await _context.SaveChangesAsync();
 
@@ -110,7 +154,6 @@ namespace Diska.Controllers
             return RedirectToAction(nameof(Details), new { id = offer.DealRequestId });
         }
 
-        // حذف الطلب (إذا كان مازال معلقاً أو مرفوضاً)
         [HttpPost]
         public async Task<IActionResult> Delete(int id)
         {

@@ -1,130 +1,417 @@
-﻿@model IEnumerable<Diska.Models.UserNotification>
-@using System.Globalization
+﻿@using System.Globalization
 @{
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
     ViewData["Title"] = isAr ? "الإشعارات" : "Notifications";
     Layout = "_Layout";
 }
 
-<section class="section-padding" style="min-height: 70vh;">
-    <div class="container">
+<style>
+    /* ... (نفس الستايل السابق Premium Style) ... */
+    :root {
+        --nt-bg: #f8fafc;
+        --nt-card: #ffffff;
+        --nt-text: #0f172a;
+        --nt-muted: #64748b;
+        --nt-border: #e2e8f0;
+        --nt-primary: #0F172A;
+        --nt-danger: #ef4444;
+        --nt-success: #22c55e;
+        --nt-warning: #f59e0b;
+        --nt-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+        --nt-unread-bg: #eff6ff;
+        --nt-unread-border: #4f46e5;
+    }
 
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <h2 class="page-title" style="margin:0;">@(isAr ? "الإشعارات" : "Notifications") 🔔</h2>
+    [data-bs-theme="dark"] {
+        --nt-bg: #020617;
+        --nt-card: #1e293b;
+        --nt-text: #f8fafc;
+        --nt-muted: #94a3b8;
+        --nt-border: rgba(255, 255, 255, 0.08);
+        --nt-primary: #818cf8;
+        --nt-danger: #f87171;
+        --nt-success: #4ade80;
+        --nt-warning: #fbbf24;
+        --nt-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        --nt-unread-bg: rgba(79, 70, 229, 0.1);
+        --nt-unread-border: #818cf8;
+    }
 
-            @if (Model.Any())
-            {
-                <button onclick="clearAllNotifications()" class="btn small" style="color:#dc2626; border:1px solid #dc2626; background:transparent;">
-                    <i class="fas fa-trash-alt"></i> @(isAr ? "مسح الكل" : "Clear All")
-                </button>
-            }
-        </div>
+    body {
+        background-color: var(--nt-bg);
+        transition: background-color 0.3s ease;
+    }
 
-        <div id="notificationsContainer">
-            @if (!Model.Any())
-            {
-                <div style="text-align:center; padding:60px; background:#fff; border-radius:15px; border:1px solid #eee;">
-                    <i class="far fa-bell-slash fa-4x" style="color:#e2e8f0; margin-bottom:20px;"></i>
-                    <h3 style="color:#64748b;">@(isAr ? "لا توجد إشعارات حالياً." : "No notifications yet.")</h3>
-                </div>
-            }
-            else
-            {
-                <div style="display:flex; flex-direction:column; gap:15px;">
-                    @foreach (var item in Model)
-                    {
-                        <div class="card notif-item @(item.IsRead ? "" : "unread")" id="notif-@item.Id" style="background:@(item.IsRead ? "#fff" : "#f0f9ff"); border:1px solid #e2e8f0; border-radius:12px; padding:20px; transition:0.3s; position:relative;">
+    .notif-container {
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
 
-                            <div style="display:flex; gap:15px; align-items:flex-start;">
-                                <div style="width:45px; height:45px; background:#e0f2fe; color:var(--primary); border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                                    @if (item.Type == "Order")
-                                    {
-                                        <i class="fas fa-box"></i>
-                                    }
-                                    else if (item.Type == "Wallet")
-                                    {
+    .notif-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--nt-border);
+    }
 
-                                        <i class="fas fa-wallet"></i>
-                                    }
-                                    else if (item.Type == "Alert")
-                                    {
+    .page-title {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: var(--nt-text);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
 
-                                        <i class="fas fa-exclamation-circle text-danger"></i>
-                                    }
-                                    else
-                                    {
+    .btn-clear {
+        color: var(--nt-danger);
+        background: transparent;
+        border: 1px solid var(--nt-danger);
+        padding: 8px 20px;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
 
-                                        <i class="fas fa-info"></i>
-                                    }
-                                </div>
+        .btn-clear:hover {
+            background: var(--nt-danger);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+        }
 
-                                <div style="flex:1;">
-                                    <h4 style="margin:0 0 5px; font-size:1rem; font-weight:@(item.IsRead ? "normal" : "bold"); color:var(--text-dark);">@item.Title</h4>
-                                    <p style="margin:0 0 8px; color:#666; font-size:0.9rem; line-height:1.5;">@item.Message</p>
-                                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                                        <small style="color:#999;">@item.TimeAgo</small>
-                                        @if (!string.IsNullOrEmpty(item.Link) && item.Link != "#")
-                                        {
-                                            <a href="@item.Link" class="btn small" style="padding:4px 10px; font-size:0.8rem; background:#f8fafc; color:var(--primary); border:1px solid #ddd;">
-                                                @(isAr ? "عرض التفاصيل" : "View Details") <i class="fas @(isAr ? "fa-arrow-left" : "fa-arrow-right")"></i>
-                                            </a>
-                                        }
-                                    </div>
-                                </div>
-                            </div>
+    .notifications-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
 
-                            @if (!item.IsRead)
-                            {
-                                <button onclick="markAsRead(@item.Id)" style="position:absolute; top:15px; @(isAr ? "left" : "right"):15px; background:none; border:none; color:var(--primary); cursor:pointer;" title="@(isAr ? "تحديد كمقروء" : "Mark as read")">
-                                    <i class="fas fa-circle" style="font-size:0.7rem;"></i>
-                                </button>
-                            }
-                        </div>
-                    }
-                </div>
-            }
+    /* جعل البطاقة قابلة للنقر */
+    .notif-card {
+        background: var(--nt-card);
+        border: 1px solid var(--nt-border);
+        border-radius: 16px;
+        padding: 20px;
+        display: flex;
+        gap: 20px;
+        align-items: flex-start;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--nt-shadow);
+        cursor: pointer; /* Pointer added */
+    }
+
+        .notif-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            border-color: var(--nt-muted);
+        }
+
+    [data-bs-theme="dark"] .notif-card:hover {
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.4);
+    }
+
+    .notif-card.unread {
+        background-color: var(--nt-unread-bg);
+        border-inline-start: 4px solid var(--nt-unread-border);
+    }
+
+    .notif-icon-box {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 1.2rem;
+        transition: transform 0.3s;
+    }
+
+    .notif-card:hover .notif-icon-box {
+        transform: scale(1.1) rotate(5deg);
+    }
+
+    .icon-info {
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+    }
+
+    .icon-alert {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+    }
+
+    .icon-success {
+        background: rgba(34, 197, 94, 0.1);
+        color: #22c55e;
+    }
+
+    .icon-warning {
+        background: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+    }
+
+    [data-bs-theme="dark"] .icon-info {
+        background: rgba(59, 130, 246, 0.15);
+        color: #60a5fa;
+    }
+
+    [data-bs-theme="dark"] .icon-alert {
+        background: rgba(239, 68, 68, 0.15);
+        color: #f87171;
+    }
+
+    [data-bs-theme="dark"] .icon-success {
+        background: rgba(34, 197, 94, 0.15);
+        color: #4ade80;
+    }
+
+    [data-bs-theme="dark"] .icon-warning {
+        background: rgba(245, 158, 11, 0.15);
+        color: #fbbf24;
+    }
+
+    .notif-content {
+        flex: 1;
+    }
+
+    .notif-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 6px;
+    }
+
+    .notif-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--nt-text);
+        margin: 0;
+    }
+
+    .notif-time {
+        font-size: 0.75rem;
+        color: var(--nt-muted);
+        font-weight: 500;
+        white-space: nowrap;
+        background: rgba(0,0,0,0.03);
+        padding: 2px 8px;
+        border-radius: 4px;
+    }
+
+    [data-bs-theme="dark"] .notif-time {
+        background: rgba(255,255,255,0.05);
+    }
+
+    .notif-msg {
+        color: var(--nt-muted);
+        font-size: 0.95rem;
+        line-height: 1.6;
+        margin: 0;
+    }
+
+    /* Action buttons inside card shouldn't trigger card click */
+    .btn-mark-read {
+        position: relative;
+        z-index: 2;
+        border: none;
+        background: transparent;
+        color: var(--nt-primary);
+        cursor: pointer;
+        padding: 5px;
+        border-radius: 50%;
+        transition: 0.2s;
+        opacity: 0.6;
+    }
+
+        .btn-mark-read:hover {
+            background: rgba(79, 70, 229, 0.1);
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+    [data-bs-theme="dark"] .btn-mark-read {
+        color: var(--nt-muted);
+    }
+
+        [data-bs-theme="dark"] .btn-mark-read:hover {
+            color: #fff;
+            background: rgba(255,255,255,0.1);
+        }
+
+    .empty-state {
+        text-align: center;
+        padding: 80px 20px;
+        background: var(--nt-card);
+        border-radius: 16px;
+        border: 2px dashed var(--nt-border);
+        box-shadow: var(--nt-shadow);
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        color: var(--nt-muted);
+        opacity: 0.2;
+        margin-bottom: 20px;
+        animation: float 3s ease-in-out infinite;
+    }
+    @("@keyframes") float {
+        0%, 100%
+
+    {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+
+    }
+    @("@keyframes") fadeIn {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+</style>
+
+<div class="notif-container fade-in">
+    <div class="notif-header">
+        <h1 class="page-title"><i class="fas fa-bell" style="color:var(--nt-primary);"></i> @(isAr ? "الإشعارات" : "Notifications")</h1>
+        <button class="btn-clear" onclick="clearAllNotifications()"><i class="fas fa-trash-alt"></i> @(isAr ? "مسح الكل" : "Clear All")</button>
+    </div>
+    <div id="fullNotifList" class="notifications-list">
+        <div style="text-align:center; padding:60px;">
+            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p style="margin-top:15px; color:var(--nt-muted); font-weight:600;">@(isAr ? "جاري تحميل الإشعارات..." : "Loading notifications...")</p>
         </div>
     </div>
-</section>
+</div>
 
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        async function markAsRead(id) {
+        const loc = {
+            noNewTitle: '@Html.Raw(isAr ? "لا توجد إشعارات جديدة" : "No new notifications")',
+            noNewMsg: '@Html.Raw(isAr ? "سنخبرك فور وصول أي تحديثات هامة." : "We will notify you when updates arrive.")',
+            newBadge: '@Html.Raw(isAr ? "جديد" : "New")',
+            markRead: '@Html.Raw(isAr ? "تحديد كمقروء" : "Mark read")',
+            loadError: '@Html.Raw(isAr ? "فشل تحميل الإشعارات" : "Failed to load notifications")',
+            confirmTitle: '@Html.Raw(isAr ? "هل أنت متأكد؟" : "Are you sure?")',
+            confirmText: '@Html.Raw(isAr ? "سيتم حذف جميع الإشعارات." : "All notifications will be cleared.")',
+            yesBtn: '@Html.Raw(isAr ? "نعم، مسح الكل" : "Yes, Clear All")',
+            cancelBtn: '@Html.Raw(isAr ? "إلغاء" : "Cancel")',
+            clearedTitle: '@Html.Raw(isAr ? "تم الحذف!" : "Cleared!")'
+        };
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadNotificationsPage();
+            markAllAsSeenByPage();
+
+            const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+            if (currentTheme === 'dark') document.body.classList.add('dark-mode');
+        });
+
+        async function loadNotificationsPage() {
+            const container = document.getElementById('fullNotifList');
             try {
-                const response = await fetch('/Notification/MarkAsRead', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: `id=${id}`
-                });
-
-                if (response.ok) {
-                    const card = document.getElementById(`notif-${id}`);
-                    card.style.background = '#fff';
-                    card.querySelector('h4').style.fontWeight = 'normal';
-                    // إخفاء نقطة التمييز
-                    const btn = card.querySelector('button[onclick^="markAsRead"]');
-                    if(btn) btn.remove();
-
-                    // تحديث عداد الهيدر
-                    updateBadgeCount();
+                const response = await fetch('/Notification/GetRecent');
+                const data = await response.json();
+                container.innerHTML = '';
+                if (data.length === 0) {
+                    container.innerHTML = `<div class="empty-state"><i class="far fa-bell-slash empty-icon"></i><h4 style="color:var(--nt-text); margin-bottom:10px;">${loc.noNewTitle}</h4><p style="color:var(--nt-muted); font-size:0.95rem;">${loc.noNewMsg}</p></div>`;
+                    return;
                 }
-            } catch (e) { console.error(e); }
+                data.forEach(n => {
+                    let iconClass = 'icon-info';
+                    let faIcon = 'fa-info';
+                    if (n.type === 'Alert') { iconClass = 'icon-alert'; faIcon = 'fa-exclamation-triangle'; }
+                    else if (n.type === 'Order') { iconClass = 'icon-success'; faIcon = 'fa-box-open'; }
+                    else if (n.type === 'Wallet') { iconClass = 'icon-warning'; faIcon = 'fa-wallet'; }
+                    else if (n.type === 'Request') { iconClass = 'icon-info'; faIcon = 'fa-bullhorn'; }
+
+                    const html = `
+                        <div class="notif-card ${n.isRead ? '' : 'unread'}" id="notif-${n.id}" onclick="goToLink('${n.link}', ${n.id})">
+                            <div class="notif-icon-box ${iconClass}"><i class="fas ${faIcon}"></i></div>
+                            <div class="notif-content">
+                                <div class="notif-top">
+                                    <h4 class="notif-title">${n.title}</h4>
+                                    <span class="notif-time"><i class="far fa-clock me-1"></i> ${n.timeAgo}</span>
+                                </div>
+                                <p class="notif-msg">${n.message}</p>
+                            </div>
+                            ${!n.isRead ? `<button class="btn-mark-read" onclick="event.stopPropagation(); markAsRead(${n.id}, this)" title="${loc.markRead}"><i class="fas fa-check-circle fa-lg"></i></button>` : ''}
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', html);
+                });
+            } catch (error) { container.innerHTML = `<p class="text-center text-danger">${loc.loadError}</p>`; }
+        }
+
+        function goToLink(url, id) {
+            if (url && url !== '#') {
+                // Mark as read then redirect
+                fetch(`/Notification/MarkAsRead?id=${id}`, { method: 'POST' }).finally(() => {
+                     window.location.href = url;
+                });
+            }
+        }
+
+        async function markAsRead(id, btn) {
+            await fetch(`/Notification/MarkAsRead?id=${id}`, { method: 'POST' });
+            const card = btn.closest('.notif-card');
+            card.classList.remove('unread');
+            card.style.borderLeft = '1px solid var(--nt-border)';
+            btn.style.opacity = '0';
+            setTimeout(() => btn.remove(), 300);
+            if(window.updateNotificationBadge) window.updateNotificationBadge();
         }
 
         async function clearAllNotifications() {
-            if(!confirm('@(isAr ? "هل أنت متأكد من مسح جميع الإشعارات؟" : "Clear all notifications?")')) return;
-
-            try {
-                const response = await fetch('/Notification/ClearAll', { method: 'POST' });
-                if (response.ok) {
-                    window.location.reload();
+            const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+            const bg = isDark ? '#1e293b' : '#ffffff';
+            const text = isDark ? '#f8fafc' : '#0f172a';
+            Swal.fire({
+                title: loc.confirmTitle, text: loc.confirmText, icon: 'warning',
+                showCancelButton: true, confirmButtonColor: '#ef4444', cancelButtonColor: '#64748b',
+                confirmButtonText: loc.yesBtn, cancelButtonText: loc.cancelBtn,
+                background: bg, color: text, customClass: { popup: 'rounded-4 shadow-lg' }
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    await fetch('/Notification/ClearAll', { method: 'POST' });
+                    loadNotificationsPage();
+                    if(window.updateNotificationBadge) window.updateNotificationBadge();
+                    Swal.fire({ title: loc.clearedTitle, icon: 'success', timer: 1500, showConfirmButton: false, background: bg, color: text });
                 }
-            } catch (e) { console.error(e); }
+            });
         }
 
-        async function updateBadgeCount() {
-            const badge = document.getElementById('cartBadge'); // أو ID شارة الإشعارات في الهيدر
-            // هذه الوظيفة عادة ما تكون موجودة في Layout، لكن هنا للتوضيح
+        async function markAllAsSeenByPage() {
+            try {
+                await fetch('/Notification/MarkAllAsSeen', { method: 'POST' });
+                const badge = document.getElementById('notifBadge');
+                if(badge) { badge.style.display = 'none'; badge.innerText = '0'; }
+            } catch(e) { console.error(e); }
         }
     </script>
 }

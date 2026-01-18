@@ -27,6 +27,7 @@ namespace Diska.Data
         public DbSet<GroupDeal> GroupDeals { get; set; }
         public DbSet<DealRequest> DealRequests { get; set; }
         public DbSet<MerchantOffer> MerchantOffers { get; set; }
+        public DbSet<RequestMessage> RequestMessages { get; set; }
 
         // جداول المستخدمين والدعم
         public DbSet<UserAddress> UserAddresses { get; set; }

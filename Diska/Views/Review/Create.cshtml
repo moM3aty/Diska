@@ -8,10 +8,95 @@
 }
 
 <style>
+    /* =========================================
+           PREMIUM REVIEW STYLES (Light & Dark)
+           ========================================= */
+    :root {
+        --rev-bg: #f8fafc;
+        --rev-card-bg: #ffffff;
+        --rev-text-main: #0f172a;
+        --rev-text-muted: #64748b;
+        --rev-border: #e2e8f0;
+        --rev-primary: #0F172A;
+        --rev-accent: #FACC15;
+        --rev-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
+        --rev-input-bg: #f8fafc;
+    }
+
+    [data-bs-theme="dark"] {
+        --rev-bg: #020617; /* Deep Dark */
+        --rev-card-bg: #1e293b; /* Slate 800 */
+        --rev-text-main: #f8fafc; /* Light Text */
+        --rev-text-muted: #94a3b8; /* Muted Text */
+        --rev-border: rgba(255, 255, 255, 0.08);
+        --rev-primary: #f8fafc; /* White headings */
+        --rev-accent: #FACC15; /* Gold remains */
+        --rev-shadow: 0 10px 40px -5px rgba(0, 0, 0, 0.4);
+        --rev-input-bg: #0f172a; /* Slate 900 */
+    }
+
+    body {
+        background-color: var(--rev-bg);
+        transition: background-color 0.3s ease;
+    }
+
+    .section-padding {
+        padding: 60px 0;
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+    }
+
+    .review-card {
+        background: var(--rev-card-bg);
+        padding: 40px;
+        border-radius: 20px;
+        border: 1px solid var(--rev-border);
+        box-shadow: var(--rev-shadow);
+        max-width: 650px;
+        margin: 0 auto;
+        position: relative;
+        overflow: hidden;
+    }
+
+        /* Top Accent */
+        .review-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background: linear-gradient(90deg, var(--rev-primary), var(--rev-accent));
+        }
+
+    .page-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .page-title {
+        margin: 0;
+        color: var(--rev-primary);
+        font-weight: 800;
+        font-size: 1.8rem;
+    }
+
+    .page-subtitle {
+        color: var(--rev-text-muted);
+        margin-top: 5px;
+        font-size: 1rem;
+    }
+
+    /* Rating Stars */
     .rating-group {
         display: inline-flex;
-        flex-direction: row-reverse; /* لعكس الترتيب ليتوافق مع الـ CSS */
-        gap: 5px;
+        flex-direction: row-reverse;
+        gap: 8px;
+        background: var(--rev-input-bg);
+        padding: 10px 20px;
+        border-radius: 50px;
+        border: 1px solid var(--rev-border);
     }
 
         .rating-group input {
@@ -20,32 +105,133 @@
 
         .rating-group label {
             font-size: 2rem;
-            color: #ddd;
+            color: #cbd5e1; /* Unfilled star color */
             cursor: pointer;
             transition: 0.2s;
         }
 
-            .rating-group label:hover,
-            .rating-group label:hover ~ label,
-            .rating-group input:checked ~ label {
-                color: #f59e0b;
-            }
+    [data-bs-theme="dark"] .rating-group label {
+        color: #475569;
+    }
+
+    .rating-group label:hover,
+    .rating-group label:hover ~ label,
+    .rating-group input:checked ~ label {
+        color: var(--rev-accent);
+        transform: scale(1.1);
+    }
+
+    /* Form */
+    .form-group {
+        margin-bottom: 25px;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 10px;
+        font-weight: 700;
+        color: var(--rev-text-main);
+        font-size: 0.95rem;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 15px;
+        border: 1px solid var(--rev-border);
+        border-radius: 12px;
+        background-color: var(--rev-input-bg);
+        color: var(--rev-text-main);
+        font-family: inherit;
+        font-size: 1rem;
+        transition: 0.3s;
+        outline: none;
+    }
+
+        .form-control:focus {
+            border-color: var(--rev-accent);
+            box-shadow: 0 0 0 4px rgba(250, 204, 21, 0.15);
+            background-color: var(--rev-card-bg);
+        }
+
+    /* Buttons */
+    .btn-submit {
+        width: 100%;
+        background: #0F172A;
+        color: #fff;
+        padding: 14px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        border: none;
+        cursor: pointer;
+        transition: 0.3s;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    [data-bs-theme="dark"] .btn-submit {
+        background: var(--rev-accent);
+        color: #0F172A;
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+
+    .btn-cancel {
+        display: block;
+        text-align: center;
+        width: 100%;
+        padding: 14px;
+        border-radius: 12px;
+        border: 1px solid var(--rev-border);
+        color: var(--rev-text-muted);
+        text-decoration: none;
+        font-weight: 600;
+        transition: 0.3s;
+        background: transparent;
+    }
+
+        .btn-cancel:hover {
+            border-color: var(--rev-text-main);
+            color: var(--rev-text-main);
+            background-color: var(--rev-input-bg);
+        }
+
+    /* Animation */
+    .fade-up {
+        animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @@keyframes fadeUp {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
 </style>
 
-<section class="section-padding" style="min-height:70vh; display:flex; align-items:center;">
+<section class="section-padding fade-up">
     <div class="container">
-        <div style="max-width:600px; margin:0 auto; background:#fff; padding:40px; border-radius:16px; border:1px solid #e2e8f0; box-shadow:0 10px 30px rgba(0,0,0,0.03);">
+        <div class="review-card">
 
-            <div style="text-align:center; margin-bottom:30px;">
-                <h2 style="color:var(--primary); margin:0;">@(isAr ? "رأيك يهمنا!" : "We value your opinion!")</h2>
-                <p style="color:#666; margin-top:5px;">@(isAr ? $"كيف كانت تجربتك مع {productName}؟" : $"How was your experience with {productName}?")</p>
+            <div class="page-header">
+                <h2 class="page-title">@(isAr ? "رأيك يهمنا!" : "We value your opinion!")</h2>
+                <p class="page-subtitle">@(isAr ? $"كيف كانت تجربتك مع {productName}؟" : $"How was your experience with {productName}?")</p>
             </div>
 
             <form asp-action="Create" method="post">
                 <input type="hidden" asp-for="ProductId" />
 
-                <div class="form-group text-center mb-4">
-                    <label style="display:block; margin-bottom:10px; font-weight:bold; color:#334155;">@(isAr ? "التقييم العام" : "Overall Rating")</label>
+                <div class="form-group text-center">
+                    <label class="form-label">@(isAr ? "التقييم العام" : "Overall Rating")</label>
                     <div class="rating-group">
                         <input type="radio" id="star5" name="Rating" value="5" /><label for="star5" title="Excellent"><i class="fas fa-star"></i></label>
                         <input type="radio" id="star4" name="Rating" value="4" /><label for="star4" title="Good"><i class="fas fa-star"></i></label>
@@ -53,20 +239,20 @@
                         <input type="radio" id="star2" name="Rating" value="2" /><label for="star2" title="Poor"><i class="fas fa-star"></i></label>
                         <input type="radio" id="star1" name="Rating" value="1" /><label for="star1" title="Bad"><i class="fas fa-star"></i></label>
                     </div>
-                    <span asp-validation-for="Rating" class="text-danger d-block mt-2" style="font-size:0.85rem; color:red;"></span>
+                    <span asp-validation-for="Rating" class="text-danger d-block mt-2" style="font-size:0.85rem;"></span>
                 </div>
 
-                <div class="form-group mb-4">
-                    <label style="display:block; margin-bottom:8px; font-weight:bold; color:#334155;">@(isAr ? "اكتب تعليقك" : "Write your review")</label>
-                    <textarea asp-for="Comment" rows="4" class="form-control" style="width:100%; padding:15px; border:1px solid #cbd5e1; border-radius:10px; font-family:inherit;" placeholder="@(isAr ? "أخبرنا عن جودة المنتج، التغليف، سرعة التوصيل..." : "Tell us about product quality, packaging, delivery speed...")" required></textarea>
-                    <span asp-validation-for="Comment" class="text-danger" style="font-size:0.85rem; color:red;"></span>
+                <div class="form-group">
+                    <label class="form-label">@(isAr ? "اكتب تعليقك" : "Write your review")</label>
+                    <textarea asp-for="Comment" rows="4" class="form-control" placeholder="@(isAr ? "أخبرنا عن جودة المنتج، التغليف، سرعة التوصيل..." : "Tell us about product quality, packaging, delivery speed...")" required></textarea>
+                    <span asp-validation-for="Comment" class="text-danger" style="font-size:0.85rem;"></span>
                 </div>
 
-                <div style="display:flex; gap:15px;">
-                    <button type="submit" class="btn primary w-100" style="padding:12px; font-weight:bold; font-size:1.1rem; border-radius:8px;">
-                        @(isAr ? "نشر التقييم" : "Submit Review")
+                <div style="display:grid; grid-template-columns: 2fr 1fr; gap:15px;">
+                    <button type="submit" class="btn-submit">
+                        @(isAr ? "نشر التقييم" : "Submit Review") <i class="fas fa-paper-plane ms-2"></i>
                     </button>
-                    <a asp-controller="Product" asp-action="Details" asp-route-id="@Model.ProductId" class="btn" style="border:1px solid #ccc; color:#666; padding:12px; border-radius:8px; text-decoration:none;">
+                    <a asp-controller="Product" asp-action="Details" asp-route-id="@Model.ProductId" class="btn-cancel">
                         @(isAr ? "إلغاء" : "Cancel")
                     </a>
                 </div>

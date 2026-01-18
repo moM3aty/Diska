@@ -39,5 +39,6 @@ namespace Diska.Models
         public DateTime? UpdatedAt { get; set; } // تاريخ آخر تحديث
 
         public virtual ICollection<MerchantOffer> Offers { get; set; } = new List<MerchantOffer>();
+        public virtual ICollection<RequestMessage> Messages { get; set; }
     }
 }

@@ -1,133 +1,242 @@
 ﻿@using System.Globalization
 @{
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
-    ViewData["Title"] = isAr ? "سياسة الخصوصية" : "Privacy Policy";
+    ViewData["Title"] = isAr ? "السياسات والشحن" : "Policies & Shipping";
+    Layout = "_Layout";
 }
 
 <style>
-    .policy-box {
-        background: #fff;
-        padding: 30px;
-        border-radius: 10px;
-        margin-bottom: 30px;
-        border: 1px solid #eee;
+    /* =========================================
+           PREMIUM POLICIES STYLES (Light & Dark)
+           ========================================= */
+    :root {
+        /* Light Theme */
+        --pol-bg-body: #f8fafc;
+        --pol-card-bg: #ffffff;
+        --pol-text-main: #0f172a;
+        --pol-text-muted: #64748b;
+        --pol-border: #e2e8f0;
+        --pol-primary: #0F172A;
+        --pol-accent: #FACC15;
+        --pol-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+        --pol-active-bg: #f8fafc;
+        --pol-card-hover: 0 10px 25px -5px rgba(0,0,0,0.05);
     }
 
-        .policy-box h2, .policy-box h3 {
-            color: var(--primary);
-            border-bottom: 2px solid var(--accent);
-            display: inline-block;
-            padding-bottom: 5px;
-            margin-bottom: 15px;
+    [data-bs-theme="dark"] {
+        /* Dark Theme */
+        --pol-bg-body: #020617; /* Deep Dark */
+        --pol-card-bg: #1e293b; /* Slate 800 */
+        --pol-text-main: #f8fafc; /* Light Text */
+        --pol-text-muted: #94a3b8; /* Muted Text */
+        --pol-border: rgba(255, 255, 255, 0.08);
+        --pol-primary: #f8fafc; /* Headings become white */
+        --pol-accent: #FACC15; /* Gold remains */
+        --pol-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        --pol-active-bg: rgba(255, 255, 255, 0.03);
+        --pol-card-hover: 0 15px 30px -5px rgba(0,0,0,0.5);
+    }
+
+    body {
+        background-color: var(--pol-bg-body);
+        transition: background-color 0.3s ease;
+    }
+
+    .section-padding {
+        padding: 60px 0;
+        min-height: 80vh;
+    }
+
+    /* Breadcrumb */
+    .breadcrumb-custom {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 40px;
+        font-size: 0.9rem;
+        color: var(--pol-text-muted);
+    }
+
+        .breadcrumb-custom a {
+            color: var(--pol-text-main);
+            font-weight: 700;
+            text-decoration: none;
+            transition: 0.2s;
         }
 
-        .policy-box ul {
-            list-style: disc;
-            padding-right: 20px; /* للغة العربية */
-            padding-left: 20px; /* للغة الانجليزية سيتم ضبطها عبر التوجيه */
-            color: #555;
-            margin-bottom: 20px;
+            .breadcrumb-custom a:hover {
+                color: var(--pol-accent);
+            }
+
+    /* Policy Box */
+    .policy-box {
+        background: var(--pol-card-bg);
+        padding: 40px;
+        border-radius: 20px;
+        margin-bottom: 30px;
+        border: 1px solid var(--pol-border);
+        box-shadow: var(--pol-shadow);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .policy-box:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--pol-card-hover);
+            border-color: var(--pol-accent);
         }
 
-    html[dir="ltr"] .policy-box ul {
-        padding-right: 0;
-        padding-left: 20px;
+        /* Decorative Line */
+        .policy-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--pol-accent);
+            opacity: 0;
+            transition: 0.3s;
+        }
+
+    html[dir="rtl"] .policy-box::before {
+        left: auto;
+        right: 0;
+    }
+
+    .policy-box:hover::before {
+        opacity: 1;
+    }
+
+    .policy-box h2 {
+        color: var(--pol-primary);
+        font-weight: 800;
+        margin-bottom: 20px;
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .policy-box ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
     }
 
     .policy-box li {
-        margin-bottom: 10px;
-        line-height: 1.6;
+        margin-bottom: 15px;
+        padding-inline-start: 25px;
+        position: relative;
+        color: var(--pol-text-muted);
+        line-height: 1.7;
+        font-size: 1.05rem;
     }
+
+        .policy-box li::before {
+            content: '\f058'; /* FontAwesome check-circle */
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            position: absolute;
+            @(isAr ? "right" : "left") : 0;
+            top: 3px;
+            color: var(--pol-accent);
+            font-size: 0.9rem;
+        }
 
     .policy-box p {
-        color: #555;
+        color: var(--pol-text-muted);
         line-height: 1.8;
-        margin-bottom: 15px;
+        font-size: 1.05rem;
+        margin: 0;
     }
 
-    .policy-box strong {
-        color: var(--text-dark);
+    /* Animation */
+    .fade-up {
+        animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @@keyframes fadeUp {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
     }
 </style>
 
-<section class="section-padding">
+<section class="section-padding fade-up">
     <div class="container">
 
-        <div class="breadcrumb">
-            <a asp-controller="Home" asp-action="Index">@(isAr ? "الرئيسية" : "Home")</a> / <span>@(isAr ? "سياسة الخصوصية" : "Privacy Policy")</span>
+        <div class="breadcrumb-custom">
+            <a asp-controller="Home" asp-action="Index">
+                <i class="fas fa-home"></i> @(isAr ? "الرئيسية" : "Home")
+            </a>
+            <span style="color:var(--pol-text-muted)">/</span>
+            <span>@(isAr ? "السياسات والشحن" : "Policies")</span>
         </div>
 
-        <div class="policy-box">
-            <h2 style="font-size: 1.8rem; margin-bottom: 30px;">@(isAr ? "سياسة الخصوصية" : "Privacy Policy")</h2>
+        <div style="max-width: 900px; margin: 0 auto;">
 
-            @if (isAr)
-            {
-                <p>نحن في <strong>DISKA</strong> نأخذ خصوصيتك على محمل الجد. توضح هذه السياسة كيف نجمع ونستخدم ونحمي بياناتك الشخصية عند استخدامك للموقع أو التطبيق.</p>
-
-                <h3>1. البيانات التي نجمعها</h3>
-                <p>نقوم بجمع البيانات التالية لتقديم خدماتنا بأفضل شكل ممكن:</p>
+            <!-- الشحن -->
+            <div class="policy-box" id="shipping">
+                <h2><i class="fas fa-truck-fast text-primary"></i> @(isAr ? "الشحن والتوصيل" : "Shipping & Delivery")</h2>
                 <ul>
-                    <li><strong>بيانات الهوية:</strong> الاسم الكامل، رقم الهاتف، واسم النشاط التجاري (المحل).</li>
-                    <li><strong>بيانات التوصيل:</strong> العنوان الجغرافي بالتفصيل، المحافظة، والمدينة.</li>
-                    <li><strong>بيانات المعاملات:</strong> سجل الطلبات السابقة، طرق الدفع المستخدمة، ورصيد المحفظة.</li>
-                    <li><strong>بيانات الجهاز:</strong> معلومات تقنية مثل نوع الجهاز ونظام التشغيل لتحسين الأداء.</li>
+                    @if (isAr)
+                    {
+                        <li>يتم التوصيل خلال 24 إلى 48 ساعة داخل القاهرة والجيزة لضمان سرعة الاستلام.</li>
+                        <li>المحافظات الأخرى يستغرق التوصيل من 3 إلى 5 أيام عمل حسب بعد المسافة.</li>
+                        <li>رسوم الشحن تحتسب تلقائياً وبدقة بناءً على المنطقة الجغرافية ووزن الطلب.</li>
+                        <li><strong>عرض خاص:</strong> الشحن مجاني تماماً للطلبات التي تتجاوز قيمتها 50,000 ج.م.</li>
+                    }
+                    else
+                    {
+                        <li>Delivery within 24 to 48 hours in Cairo and Giza for fast receipt.</li>
+                        <li>Other governorates take 3 to 5 business days depending on distance.</li>
+                        <li>Shipping fees are calculated automatically based on location and weight.</li>
+                        <li><strong>Special Offer:</strong> Free shipping for orders exceeding 50,000 EGP.</li>
+                    }
                 </ul>
+            </div>
 
-                <h3>2. كيف نستخدم بياناتك</h3>
+            <!-- الإرجاع -->
+            <div class="policy-box" id="return">
+                <h2><i class="fas fa-undo-alt text-success"></i> @(isAr ? "سياسة الإرجاع والاستبدال" : "Return Policy")</h2>
                 <ul>
-                    <li>لمعالجة وتوصيل طلباتك بدقة وفي الوقت المحدد.</li>
-                    <li>للتواصل معك بخصوص حالة الطلب أو العروض الخاصة التي قد تهمك.</li>
-                    <li>لتحسين تجربة المستخدم وتطوير التطبيق بناءً على الملاحظات.</li>
-                    <li>لمنع الاحتيال وضمان أمان المنصة لجميع المستخدمين.</li>
+                    @if (isAr)
+                    {
+                        <li>يمكنك طلب إرجاع المنتجات التالفة أو غير المطابقة للمواصفات خلال 14 يوماً من الاستلام.</li>
+                        <li>يجب أن تكون البضاعة في حالتها الأصلية (الكرتونة مغلقة وغير مفتوحة).</li>
+                        <li>يتم استرداد المبلغ فوراً إلى محفظتك في التطبيق بمجرد استلام المرتجع وفحصه.</li>
+                        <li>في حالة عيوب الصناعة، نتحمل تكاليف الشحن للإرجاع بالكامل.</li>
+                    }
+                    else
+                    {
+                        <li>You can request a return for damaged or non-conforming products within 14 days.</li>
+                        <li>Goods must be in their original condition (sealed carton and unopened).</li>
+                        <li>Refunds are credited to your in-app wallet immediately upon receipt and inspection.</li>
+                        <li>In case of manufacturing defects, we cover the full return shipping costs.</li>
+                    }
                 </ul>
+            </div>
 
-                <h3>3. مشاركة البيانات</h3>
-                <p>لا نقوم ببيع بياناتك لأي أطراف ثالثة. قد نشارك بعض البيانات الضرورية فقط في الحالات التالية:</p>
-                <ul>
-                    <li><strong>شركات الشحن:</strong> مشاركة الاسم، العنوان، ورقم الهاتف لغرض توصيل الطلب فقط.</li>
-                    <li><strong>الجهات القانونية:</strong> إذا طلب منا ذلك بموجب القانون أو لحماية حقوقنا.</li>
-                </ul>
+            <!-- الخصوصية -->
+            <div class="policy-box" id="privacy">
+                <h2><i class="fas fa-shield-alt text-danger"></i> @(isAr ? "سياسة الخصوصية" : "Privacy Policy")</h2>
+                <p>
+                    @(isAr ?
+                                        "نحن في DISKA نلتزم بأعلى معايير الأمان لحماية بياناتك الشخصية والتجارية. نستخدم تقنيات تشفير متقدمة ولا نشارك بياناتك مع أي طرف ثالث إلا شركات الشحن المعتمدة لغرض التوصيل فقط." :
+                                        "At DISKA, we are committed to the highest security standards to protect your personal and commercial data. We use advanced encryption technologies and do not share your data with any third party except authorized shipping companies for delivery purposes only.")
+                </p>
+            </div>
 
-                <h3>4. أمان البيانات</h3>
-                <p>نستخدم تقنيات تشفير متطورة ومعايير أمان عالية لحماية بياناتك من الوصول غير المصرح به أو التغيير أو الإفشاء.</p>
-
-                <h3>5. حقوقك</h3>
-                <p>لديك الحق في الوصول إلى بياناتك الشخصية، تصحيحها، أو طلب حذفها في أي وقت عن طريق التواصل مع خدمة العملاء.</p>
-            }
-            else
-            {
-                <p>At <strong>DISKA</strong>, we take your privacy seriously. This policy explains how we collect, use, and protect your personal data when you use our website or app.</p>
-
-                <h3>1. Information We Collect</h3>
-                <p>We collect the following data to provide our services effectively:</p>
-                <ul>
-                    <li><strong>Identity Data:</strong> Full name, phone number, and shop/business name.</li>
-                    <li><strong>Delivery Data:</strong> Detailed address, governorate, and city.</li>
-                    <li><strong>Transaction Data:</strong> Order history, payment methods, and wallet balance.</li>
-                    <li><strong>Device Data:</strong> Technical info like device type and OS to improve performance.</li>
-                </ul>
-
-                <h3>2. How We Use Your Data</h3>
-                <ul>
-                    <li>To process and deliver your orders accurately and on time.</li>
-                    <li>To communicate with you regarding order status or relevant offers.</li>
-                    <li>To improve user experience and app development based on feedback.</li>
-                    <li>To prevent fraud and ensure platform security for all users.</li>
-                </ul>
-
-                <h3>3. Data Sharing</h3>
-                <p>We do not sell your data to third parties. We may share necessary data only in the following cases:</p>
-                <ul>
-                    <li><strong>Shipping Companies:</strong> Sharing name, address, and phone number for delivery purposes only.</li>
-                    <li><strong>Legal Authorities:</strong> If required by law or to protect our rights.</li>
-                </ul>
-
-                <h3>4. Data Security</h3>
-                <p>We use advanced encryption technologies and high security standards to protect your data from unauthorized access, alteration, or disclosure.</p>
-
-                <h3>5. Your Rights</h3>
-                <p>You have the right to access, correct, or request the deletion of your personal data at any time by contacting customer support.</p>
-            }
         </div>
 
     </div>

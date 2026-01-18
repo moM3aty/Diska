@@ -2,84 +2,219 @@
 @{
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
     ViewData["Title"] = isAr ? "الأسئلة الشائعة" : "FAQ";
+    Layout = "_Layout";
 }
 
-<!-- إضافة الستايل الخاص بالأكورديون هنا مباشرة لضمان عمله -->
 <style>
+    /* =========================================
+           PREMIUM FAQ STYLES (Light & Dark)
+           ========================================= */
+    :root {
+        /* Light Theme */
+        --faq-bg-body: #f8fafc;
+        --faq-card-bg: #ffffff;
+        --faq-text-main: #0f172a;
+        --faq-text-muted: #64748b;
+        --faq-border: #e2e8f0;
+        --faq-primary: #0F172A;
+        --faq-accent: #FACC15;
+        --faq-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+        --faq-active-bg: #f8fafc;
+    }
+
+    [data-bs-theme="dark"] {
+        /* Dark Theme */
+        --faq-bg-body: #020617; /* Deep Dark */
+        --faq-card-bg: #1e293b; /* Slate 800 */
+        --faq-text-main: #f8fafc; /* Light Text */
+        --faq-text-muted: #94a3b8; /* Muted Text */
+        --faq-border: rgba(255, 255, 255, 0.08);
+        --faq-primary: #f8fafc; /* Headings become white */
+        --faq-accent: #FACC15; /* Gold remains */
+        --faq-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        --faq-active-bg: rgba(255, 255, 255, 0.03);
+    }
+
+    body {
+        background-color: var(--faq-bg-body);
+        transition: background-color 0.3s ease;
+    }
+
+    .section-padding {
+        padding: 60px 0;
+        min-height: 80vh;
+    }
+
+    /* Breadcrumb */
+    .breadcrumb-custom {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 40px;
+        font-size: 0.9rem;
+        color: var(--faq-text-muted);
+    }
+
+        .breadcrumb-custom a {
+            color: var(--faq-text-main);
+            font-weight: 700;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+
+            .breadcrumb-custom a:hover {
+                color: var(--faq-accent);
+            }
+
+    /* Header */
+    .page-header {
+        text-align: center;
+        margin-bottom: 50px;
+    }
+
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--faq-primary);
+        margin-bottom: 10px;
+    }
+
+    .page-subtitle {
+        color: var(--faq-text-muted);
+        font-size: 1.1rem;
+    }
+
+    /* FAQ List */
+    .faq-list {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
     .faq-item {
-        background: #fff;
-        margin-bottom: 15px;
-        border-radius: 8px;
+        background: var(--faq-card-bg);
+        margin-bottom: 20px;
+        border-radius: 16px;
+        border: 1px solid var(--faq-border);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         overflow: hidden;
-        border: 1px solid #eee;
-        transition: box-shadow 0.3s ease;
     }
 
         .faq-item:hover {
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            box-shadow: var(--faq-shadow);
+            border-color: var(--faq-text-muted);
         }
 
+        .faq-item.active {
+            border-color: var(--faq-accent);
+            box-shadow: 0 10px 30px -5px rgba(0,0,0,0.1);
+        }
+
+    [data-bs-theme="dark"] .faq-item.active {
+        box-shadow: 0 10px 30px -5px rgba(0,0,0,0.4);
+    }
+
     .faq-question {
-        padding: 20px;
+        padding: 25px;
         cursor: pointer;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        font-weight: bold;
-        color: var(--primary);
+        font-weight: 700;
+        color: var(--faq-text-main);
         font-size: 1.1rem;
         user-select: none;
+        transition: background-color 0.2s;
     }
 
         .faq-question:hover {
-            background: #f9f9f9;
+            background-color: var(--faq-active-bg);
         }
 
+    .faq-item.active .faq-question {
+        background-color: var(--faq-active-bg);
+        color: var(--faq-primary);
+    }
+
+    .faq-icon {
+        width: 30px;
+        height: 30px;
+        background: var(--faq-bg-body);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        color: var(--faq-text-muted);
+        transition: all 0.3s ease;
+    }
+
+    .faq-item.active .faq-icon {
+        transform: rotate(180deg);
+        background: var(--faq-accent);
+        color: #000;
+    }
+
     .faq-answer {
-        padding: 0 20px;
+        padding: 0 25px;
         max-height: 0;
         overflow: hidden;
-        transition: all 0.3s ease;
-        color: #666;
-        line-height: 1.6;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        color: var(--faq-text-muted);
+        line-height: 1.8;
         opacity: 0;
+        font-size: 1rem;
     }
 
     .faq-item.active .faq-answer {
-        padding: 20px;
-        padding-top: 0;
-        max-height: 300px; /* ارتفاع كافي للمحتوى */
+        padding: 0 25px 25px 25px;
+        max-height: 500px; /* Arbitrary large height */
         opacity: 1;
-        /* border-top: 1px solid #eee; */
     }
 
-    .faq-question i {
-        transition: transform 0.3s ease;
+    /* Animation */
+    .fade-up {
+        animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @@keyframes fadeUp {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(20px);
     }
 
-    .faq-item.active .faq-question i {
-        transform: rotate(180deg);
-        color: var(--accent);
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
     }
 </style>
 
-<section class="section-padding">
+<section class="section-padding fade-up">
     <div class="container">
+
         <!-- Breadcrumb -->
-        <div class="breadcrumb" style="margin-bottom: 30px; color: #666;">
-            <a asp-controller="Home" asp-action="Index" style="color: var(--primary); font-weight: bold; text-decoration: none;">@(isAr ? "الرئيسية" : "Home")</a>
-            / <span>@(isAr ? "الأسئلة الشائعة" : "FAQ")</span>
+        <div class="breadcrumb-custom">
+            <a asp-controller="Home" asp-action="Index">
+                <i class="fas fa-home"></i> @(isAr ? "الرئيسية" : "Home")
+            </a>
+            <span style="color:var(--faq-text-muted)">/</span>
+            <span>@(isAr ? "الأسئلة الشائعة" : "FAQ")</span>
         </div>
 
-        <h2 class="page-title" style="margin-bottom: 30px; text-align: center; color: var(--primary);">@(isAr ? "الأسئلة الشائعة" : "Frequently Asked Questions")</h2>
+        <div class="page-header">
+            <h2 class="page-title">@(isAr ? "الأسئلة الشائعة" : "Frequently Asked Questions")</h2>
+            <p class="page-subtitle">@(isAr ? "إجابات على أكثر الاستفسارات شيوعاً حول ديسكا" : "Answers to the most common questions about DISKA")</p>
+        </div>
 
-        <div class="faq-list" style="max-width: 800px; margin: 0 auto;">
+        <div class="faq-list">
 
             <!-- Question 1 -->
             <div class="faq-item">
                 <div class="faq-question">
-                    @(isAr ? "كيف يمكنني التسجيل كتاجر؟" : "How can I register as a merchant?")
-                    <i class="fas fa-chevron-down"></i>
+                    <span>@(isAr ? "كيف يمكنني التسجيل كتاجر؟" : "How can I register as a merchant?")</span>
+                    <div class="faq-icon"><i class="fas fa-chevron-down"></i></div>
                 </div>
                 <div class="faq-answer">
                     @(isAr ?
@@ -91,8 +226,8 @@
             <!-- Question 2 -->
             <div class="faq-item">
                 <div class="faq-question">
-                    @(isAr ? "ما هو الحد الأدنى للطلب؟" : "What is the minimum order amount?")
-                    <i class="fas fa-chevron-down"></i>
+                    <span>@(isAr ? "ما هو الحد الأدنى للطلب؟" : "What is the minimum order amount?")</span>
+                    <div class="faq-icon"><i class="fas fa-chevron-down"></i></div>
                 </div>
                 <div class="faq-answer">
                     @(isAr ?
@@ -104,8 +239,8 @@
             <!-- Question 3 -->
             <div class="faq-item">
                 <div class="faq-question">
-                    @(isAr ? "هل يوجد دفع عند الاستلام؟" : "Is Cash on Delivery available?")
-                    <i class="fas fa-chevron-down"></i>
+                    <span>@(isAr ? "هل يوجد دفع عند الاستلام؟" : "Is Cash on Delivery available?")</span>
+                    <div class="faq-icon"><i class="fas fa-chevron-down"></i></div>
                 </div>
                 <div class="faq-answer">
                     @(isAr ?
@@ -117,8 +252,8 @@
             <!-- Question 4 -->
             <div class="faq-item">
                 <div class="faq-question">
-                    @(isAr ? "كيف يمكنني تتبع طلبي؟" : "How can I track my order?")
-                    <i class="fas fa-chevron-down"></i>
+                    <span>@(isAr ? "كيف يمكنني تتبع طلبي؟" : "How can I track my order?")</span>
+                    <div class="faq-icon"><i class="fas fa-chevron-down"></i></div>
                 </div>
                 <div class="faq-answer">
                     @(isAr ?
@@ -130,8 +265,8 @@
             <!-- Question 5 -->
             <div class="faq-item">
                 <div class="faq-question">
-                    @(isAr ? "ما هي سياسة الإرجاع؟" : "What is the return policy?")
-                    <i class="fas fa-chevron-down"></i>
+                    <span>@(isAr ? "ما هي سياسة الإرجاع؟" : "What is the return policy?")</span>
+                    <div class="faq-icon"><i class="fas fa-chevron-down"></i></div>
                 </div>
                 <div class="faq-answer">
                     @(isAr ?
@@ -154,7 +289,7 @@
                     const item = question.parentElement;
                     const isActive = item.classList.contains('active');
 
-                    // إغلاق جميع العناصر الأخرى (اختياري - لجعل التجربة أنظف)
+                    // إغلاق جميع العناصر الأخرى (Accordion behavior)
                     document.querySelectorAll('.faq-item').forEach(i => {
                         i.classList.remove('active');
                     });

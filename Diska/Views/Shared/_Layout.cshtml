@@ -84,7 +84,7 @@
 
                 <a asp-controller="Notification" asp-action="Index" class="action-item notif-icon-container" style="text-decoration: none; position: relative;">
                     <i class="fas fa-bell"></i>
-                    <span class="badge notif-badge" style="background:red; display:none;">0</span>
+                    <span class="badge notif-badge" id="notifBadge" style="background:var(--danger); color:#fff; display:none; position:absolute; top:-5px; right:-5px; border-radius:50%; padding:3px 6px; font-size:0.6rem;">0</span>
                     <span class="icon-label">@(isAr ? "تنبيهات" : "Alerts")</span>
                 </a>
 
@@ -225,8 +225,10 @@
                 <div style="text-align: @(isAr ? "right" : "left");">
                     <h4>@(isAr ? "المساعدة" : "Help")</h4>
                     <ul>
-                        <li><a asp-area="" asp-controller="Home" asp-action="Policies">@(isAr ? "السياسات" : "Policies")</a></li>
+                        <li><a asp-area="" asp-controller="Home" asp-action="Policies">@(isAr ? "سياسة الخصوصية" : "Privacy Policy")</a></li>
                         <li><a asp-area="" asp-controller="Home" asp-action="FAQ">@(isAr ? "الأسئلة الشائعة" : "FAQ")</a></li>
+                        <li><a asp-area="" asp-controller="Home" asp-action="Privacy">@(isAr ? "الشحن والتوصيل" : "Shipping & Delivery")</a></li>
+                        <li><a asp-area="" asp-controller="Home" asp-action="Terms">@(isAr ? "الشروط والأحكام" : "terms and conditions")</a></li>
                     </ul>
                 </div>
             </div>
@@ -259,7 +261,6 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="~/js/cart.js"></script>
 
-
     <script>
         function toggleMenu() {
             var sidebar = document.getElementById('mobileSidebar');
@@ -270,8 +271,31 @@
             }
         }
 
+        // Notification Logic
+        window.updateNotificationBadge = async function() {
+            try {
+                const response = await fetch('/Notification/GetUnreadCount');
+                if (response.ok) {
+                    const count = await response.json();
+                    const badge = document.getElementById('notifBadge');
+                    if (badge) {
+                        badge.innerText = count;
+                        badge.style.display = count > 0 ? 'flex' : 'none';
+
+                        // Optional: Add simple animation if count increased
+                        if (count > 0) {
+                            badge.classList.add('pulse-badge');
+                            setTimeout(() => badge.classList.remove('pulse-badge'), 1000);
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to update notifications badge', e);
+            }
+        };
+
         document.addEventListener('DOMContentLoaded', function() {
-            // Cart Badge Update
+            // Update Badges on Load
             const updateCartBadge = () => {
                 const cart = JSON.parse(localStorage.getItem('DISKA_CART')) || [];
                 const badge = document.getElementById('cartBadge');
@@ -281,14 +305,20 @@
                 }
             };
             updateCartBadge();
-            // Listen for custom cart update event if you implement it
             window.addEventListener('cartUpdated', updateCartBadge);
+
+            // Initial Notification Check
+            if ('@SignInManager.IsSignedIn(User)' === 'True') {
+                updateNotificationBadge();
+                // Optional: Poll every 60 seconds
+                setInterval(updateNotificationBadge, 60000);
+            }
 
             // Dark Mode Toggle Logic
             const toggleBtn = document.getElementById('darkModeToggleSidebar');
             const darkModeText = document.getElementById('darkModeText');
 
-            // Text values for switching - Use Html.Raw to avoid encoding Arabic characters
+            // Text values for switching
             const textLight = '@Html.Raw(isAr ? "الوضع النهاري" : "Light Mode")';
             const textDark = '@Html.Raw(isAr ? "الوضع الليلي" : "Dark Mode")';
 
@@ -327,6 +357,30 @@
             }
         });
     </script>
+
+    <style>
+        @("@keyframes") pulseBadge {
+            0%
+
+        {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.3);
+        }
+
+        100% {
+            transform: scale(1);
+        }
+
+        }
+
+        .pulse-badge {
+            animation: pulseBadge 0.5s ease-in-out;
+        }
+    </style>
+
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

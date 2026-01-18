@@ -6,23 +6,383 @@
     Layout = "_Layout";
 }
 
-<section class="section-padding" style="min-height: 70vh;">
+<style>
+    /* =========================================
+           PREMIUM WISHLIST STYLES (Light & Dark)
+           ========================================= */
+    :root {
+        /* Light Mode */
+        --wl-bg-body: #f8fafc;
+        --wl-card-bg: #ffffff;
+        --wl-text-main: #0f172a;
+        --wl-text-muted: #64748b;
+        --wl-border: #e2e8f0;
+        --wl-primary: #0F172A;
+        --wl-accent: #FACC15;
+        --wl-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+        --wl-card-hover: 0 20px 40px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    [data-bs-theme="dark"] {
+        /* Dark Mode */
+        --wl-bg-body: #020617; /* Deep Dark */
+        --wl-card-bg: #1e293b; /* Slate 800 */
+        --wl-text-main: #f8fafc; /* Light Text */
+        --wl-text-muted: #94a3b8; /* Muted Text */
+        --wl-border: rgba(255, 255, 255, 0.08);
+        --wl-primary: #f8fafc; /* Headings become white */
+        --wl-accent: #FACC15; /* Gold remains */
+        --wl-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        --wl-card-hover: 0 20px 50px -10px rgba(0, 0, 0, 0.5);
+    }
+
+    body {
+        background-color: var(--wl-bg-body);
+        transition: background-color 0.3s ease;
+    }
+
+    .section-padding {
+        padding: 60px 0;
+        min-height: 70vh;
+    }
+
+    /* Header */
+    .wishlist-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--wl-border);
+    }
+
+    .page-title {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: var(--wl-text-main);
+        margin: 0;
+    }
+
+    .btn-browse {
+        color: var(--wl-primary);
+        border: 1px solid var(--wl-primary);
+        background: transparent;
+        padding: 8px 20px;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        text-decoration: none;
+        transition: 0.3s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    [data-bs-theme="dark"] .btn-browse {
+        color: var(--wl-accent);
+        border-color: var(--wl-accent);
+    }
+
+    .btn-browse:hover {
+        background: var(--wl-primary);
+        color: #fff;
+    }
+
+    [data-bs-theme="dark"] .btn-browse:hover {
+        background: var(--wl-accent);
+        color: #000;
+    }
+
+    /* Grid */
+    .products-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 30px;
+    }
+
+    /* Product Card */
+    .product-card {
+        background: var(--wl-card-bg);
+        border: 1px solid var(--wl-border);
+        border-radius: 20px;
+        padding: 20px;
+        position: relative;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        display: flex;
+        flex-direction: column;
+        box-shadow: var(--wl-shadow);
+        overflow: hidden;
+    }
+
+        .product-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--wl-card-hover);
+            border-color: var(--wl-accent);
+        }
+
+    /* Remove Button */
+    .btn-remove {
+        position: absolute;
+        top: 15px;
+        @(isAr ? "left" : "right") : 15px;
+        z-index: 10;
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        border-radius: 50%;
+        width: 35px;
+        height: 35px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+        .btn-remove:hover {
+            background: #ef4444;
+            color: #fff;
+            transform: scale(1.1);
+        }
+
+    /* Badges */
+    .flash-badge {
+        position: absolute;
+        top: 15px;
+        @(isAr ? "right" : "left") : 15px;
+        background: #ef4444;
+        color: #fff;
+        font-size: 0.7rem;
+        font-weight: 800;
+        padding: 4px 10px;
+        border-radius: 4px;
+        z-index: 2;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    /* Image */
+    .product-img {
+        height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+        background: #fff; /* Always white for product contrast */
+        border-radius: 12px;
+        padding: 20px;
+        position: relative;
+        border: 1px solid var(--wl-border);
+    }
+
+    [data-bs-theme="dark"] .product-img {
+        border-color: rgba(255,255,255,0.05);
+        background:transparent;
+    }
+
+    .product-img img {
+        max-height: 100%;
+        max-width: 100%;
+        object-fit: contain;
+        transition: transform 0.5s ease;
+    }
+
+    .product-card:hover .product-img img {
+        transform: scale(1.1);
+    }
+
+    /* Info */
+    .product-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .pro-cat {
+        font-size: 0.75rem;
+        color: var(--wl-text-muted);
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .product-info h4 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--wl-text-main);
+        margin: 0 0 10px;
+        line-height: 1.5;
+        height: 3em;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        transition: color 0.2s;
+    }
+
+    .product-card:hover h4 {
+        color: #4f46e5;
+    }
+
+    [data-bs-theme="dark"] .product-card:hover h4 {
+        color: #818cf8;
+    }
+
+    .pricing {
+        margin-bottom: 15px;
+    }
+
+    .current-price {
+        font-size: 1.3rem;
+        font-weight: 900;
+        color: var(--wl-text-main);
+    }
+
+    .old-price {
+        text-decoration: line-through;
+        color: var(--wl-text-muted);
+        font-size: 0.9rem;
+        margin-inline-start: 8px;
+    }
+
+    .product-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        color: var(--wl-text-muted);
+        margin-bottom: 20px;
+        border-top: 1px dashed var(--wl-border);
+        padding-top: 10px;
+    }
+
+    /* Add To Cart Area */
+    .add-to-cart {
+        margin-top: auto;
+    }
+
+    .add-btn {
+        width: 100%;
+        background: var(--wl-primary);
+        color: #fff;
+        border: none;
+        padding: 12px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    [data-bs-theme="dark"] .add-btn {
+        background: var(--wl-accent);
+        color: #000;
+    }
+
+    .add-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .add-btn:disabled {
+        background: var(--wl-border);
+        color: var(--wl-text-muted);
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 80px 20px;
+        background: var(--wl-card-bg);
+        border-radius: 24px;
+        border: 2px dashed var(--wl-border);
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        color: var(--wl-text-muted);
+        opacity: 0.3;
+        margin-bottom: 25px;
+    }
+
+    .empty-title {
+        color: var(--wl-text-main);
+        font-weight: 800;
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+    }
+
+    .empty-text {
+        color: var(--wl-text-muted);
+        font-size: 1rem;
+        margin-bottom: 30px;
+    }
+
+    .btn-start {
+        display: inline-block;
+        background: var(--wl-primary);
+        color: #fff;
+        padding: 12px 35px;
+        border-radius: 50px;
+        text-decoration: none;
+        font-weight: 700;
+        transition: 0.3s;
+    }
+
+    [data-bs-theme="dark"] .btn-start {
+        background: var(--wl-accent);
+        color: #000;
+    }
+
+    .btn-start:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+
+    /* Animation */
+    .fade-up {
+        animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @@keyframes fadeUp {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+</style>
+
+<section class="section-padding fade-up">
     <div class="container">
 
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
-            <h2 class="page-title" style="margin:0;">@(isAr ? "المنتجات المفضلة ❤️" : "My Wishlist ❤️")</h2>
-            <a asp-controller="Home" asp-action="Index" class="btn btn-outline-primary small">
+        <div class="wishlist-header">
+            <h2 class="page-title">@(isAr ? "المنتجات المفضلة ❤️" : "My Wishlist ❤️")</h2>
+            <a asp-controller="Home" asp-action="Index" class="btn-browse">
                 <i class="fas fa-plus"></i> @(isAr ? "تصفح المزيد" : "Browse More")
             </a>
         </div>
 
         @if (!Model.Any())
         {
-            <div style="text-align:center; padding:80px; background:#fff; border-radius:16px; border:1px solid #eee;">
-                <i class="far fa-heart fa-4x" style="color:#e2e8f0; margin-bottom:20px;"></i>
-                <h3 style="color:#64748b;">@(isAr ? "قائمة المفضلة فارغة." : "Your wishlist is empty.")</h3>
-                <p style="color:#999; margin-bottom:20px;">@(isAr ? "احفظ المنتجات التي تعجبك هنا للوصول إليها لاحقاً." : "Save items you like here for later.")</p>
-                <a asp-controller="Home" asp-action="Index" class="btn primary small">
+            <div class="empty-state">
+                <i class="far fa-heart empty-icon"></i>
+                <h3 class="empty-title">@(isAr ? "قائمة المفضلة فارغة." : "Your wishlist is empty.")</h3>
+                <p class="empty-text">@(isAr ? "احفظ المنتجات التي تعجبك هنا للوصول إليها لاحقاً." : "Save items you like here for later.")</p>
+                <a asp-controller="Home" asp-action="Index" class="btn-start">
                     @(isAr ? "ابدأ التسوق" : "Start Shopping")
                 </a>
             </div>
@@ -35,9 +395,9 @@
                     <div class="product-card" data-id="@item.Product.Id">
 
                         <!-- زر الحذف -->
-                        <form asp-action="Remove" method="post" style="position:absolute; top:15px; @(isAr?"left":"right"):15px; z-index:10;">
+                        <form asp-action="Remove" method="post">
                             <input type="hidden" name="id" value="@item.Id" />
-                            <button type="submit" class="btn" style="background:#fee2e2; color:red; border-radius:50%; width:35px; height:35px; padding:0; display:flex; align-items:center; justify-content:center; border:none; cursor:pointer; box-shadow:0 2px 5px rgba(0,0,0,0.1);" title="@(isAr ? "إزالة" : "Remove")">
+                            <button type="submit" class="btn-remove" title="@(isAr ? "إزالة" : "Remove")">
                                 <i class="fas fa-times"></i>
                             </button>
                         </form>
@@ -52,7 +412,7 @@
                         </a>
 
                         <div class="product-info">
-                            <span class="pro-cat" style="font-size:0.75rem; color:#64748b; display:block; margin-bottom:5px;">
+                            <span class="pro-cat">
                                 @(isAr? item.Product.Category?.Name : item.Product.Category?.NameEn)
                             </span>
 
@@ -69,23 +429,21 @@
                             </div>
 
                             <div class="product-meta">
-                                <span class="@(item.Product.StockQuantity > 0 ? "stock-info" : "stock-info low")">
-                                    @(item.Product.StockQuantity > 0 ? (isAr ? "متوفر" : "In Stock") : (isAr ? "غير متوفر" : "Out of Stock"))
+                                <span style="@(item.Product.StockQuantity > 0 ? "color:#16a34a" : "color:#ef4444")">
+                                    @(item.Product.StockQuantity > 0 ? (isAr ? "متوفر" : "In Stock") : (isAr ? "نفذت الكمية" : "Out of Stock"))
                                 </span>
                             </div>
 
-                            <div class="add-to-cart" style="margin-top:10px;">
+                            <div class="add-to-cart">
                                 @if (item.Product.StockQuantity > 0)
                                 {
-                                    <button class="add-btn" onclick="addToCartSimple(@item.Product.Id)" style="width:100%; display:flex; align-items:center; justify-content:center; gap:5px;">
+                                    <button class="add-btn" onclick="addToCartSimple(@item.Product.Id)">
                                         @(isAr ? "إضافة للسلة" : "Add to Cart") <i class="fas fa-cart-plus"></i>
                                     </button>
                                 }
                                 else
                                 {
-                                    <button class="add-btn" disabled style="width:100%; background:#ccc; cursor:not-allowed;">
-                                        @(isAr ? "نفذت الكمية" : "Out of Stock")
-                                    </button>
+                                    <button class="add-btn" disabled>@(isAr ? "غير متاح" : "Unavailable")</button>
                                 }
                             </div>
                         </div>

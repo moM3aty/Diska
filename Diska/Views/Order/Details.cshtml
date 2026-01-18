@@ -12,15 +12,48 @@
 }
 
 <style>
-    /* Premium Details Style */
+    /* =========================================
+           PREMIUM DETAILS STYLES (Light & Dark)
+           ========================================= */
     :root {
+        /* Light Theme */
+        --d-bg-body: #f8fafc;
+        --d-card-bg: #ffffff;
+        --d-text-main: #0f172a;
+        --d-text-muted: #64748b;
+        --d-border: #e2e8f0;
         --d-primary: #0F172A;
         --d-accent: #FACC15;
-        --d-bg: #f8fafc;
+        --d-header-bg: #f8fafc;
+        --d-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        --d-step-bg: #f1f5f9;
+        --d-step-border: #ffffff;
+        --d-item-hover: #fcfcfd;
+    }
+
+    [data-bs-theme="dark"] {
+        /* Dark Theme - Premium Slate */
+        --d-bg-body: #020617; /* Deepest Slate */
+        --d-card-bg: #1e293b; /* Slate 800 */
+        --d-text-main: #f1f5f9; /* Slate 100 */
+        --d-text-muted: #94a3b8; /* Slate 400 */
+        --d-border: rgba(255, 255, 255, 0.08);
+        --d-primary: #818cf8; /* Indigo 400 */
+        --d-accent: #facc15; /* Gold */
+        --d-header-bg: #0f172a; /* Slate 900 for headers */
+        --d-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
+        --d-step-bg: #334155; /* Slate 700 */
+        --d-step-border: #1e293b; /* Match card bg */
+        --d-item-hover: rgba(255, 255, 255, 0.03);
+    }
+
+    body {
+        background-color: var(--d-bg-body);
+        color: var(--d-text-main);
+        transition: background-color 0.3s ease, color 0.3s ease;
     }
 
     .order-details-page {
-        background-color: var(--d-bg);
         padding: 50px 0;
         min-height: 90vh;
         font-family: 'Cairo', sans-serif;
@@ -35,7 +68,7 @@
     }
 
     .back-link {
-        color: #64748b;
+        color: var(--d-text-muted);
         text-decoration: none;
         font-weight: 700;
         transition: 0.2s;
@@ -57,7 +90,7 @@
     }
 
     .page-head span {
-        color: #94a3b8;
+        color: var(--d-text-muted);
         font-size: 0.9rem;
         margin-top: 5px;
         display: block;
@@ -69,24 +102,45 @@
         grid-template-columns: 2fr 1fr;
         gap: 30px;
     }
+    @@media (max-width: 992px) {
+        .details-grid
+
+    {
+        grid-template-columns: 1fr;
+    }
+
+    }
 
     /* Cards */
     .info-card {
-        background: #fff;
+        background: var(--d-card-bg);
         border-radius: 20px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-        border: 1px solid #e2e8f0;
+        box-shadow: var(--d-shadow);
+        border: 1px solid var(--d-border);
         overflow: hidden;
         margin-bottom: 30px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
 
+        .info-card:hover {
+            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1);
+        }
+
+    [data-bs-theme="dark"] .info-card:hover {
+        box-shadow: 0 20px 40px -10px rgba(0,0,0,0.6);
+        border-color: rgba(255,255,255,0.15);
+    }
+
+    [data-bs-theme="dark"] .details-grid{
+        background:transparent;
+    }
     .card-head {
         padding: 20px 30px;
-        border-bottom: 1px solid #f1f5f9;
+        border-bottom: 1px solid var(--d-border);
         display: flex;
         justify-content: space-between;
         align-items: center;
-        background: #fff;
+        background: var(--d-header-bg);
     }
 
         .card-head h3 {
@@ -98,6 +152,19 @@
             align-items: center;
             gap: 10px;
         }
+
+    /* Force text colors in header for consistency */
+    [data-bs-theme="dark"] .card-head h3,
+    [data-bs-theme="dark"] .card-head h3 i {
+        color: var(--d-text-main);
+    }
+
+        [data-bs-theme="dark"] .card-head h3 i.text-primary,
+        [data-bs-theme="dark"] .card-head h3 i.text-success,
+        [data-bs-theme="dark"] .card-head h3 i.text-secondary {
+            color: var(--d-primary) !important;
+        }
+
 
     /* Stepper */
     .stepper-wrapper {
@@ -118,9 +185,12 @@
             left: 0;
             width: 100%;
             height: 4px;
-            background: #f1f5f9;
+            background: var(--d-step-bg);
             z-index: 1;
+            border-radius: 4px;
         }
+
+    /* Stepper Progress Bar (Dynamic Width could be added here) */
 
     .step-item {
         position: relative;
@@ -133,34 +203,44 @@
         width: 34px;
         height: 34px;
         border-radius: 50%;
-        background: #f1f5f9;
+        background: var(--d-step-bg);
         margin: 0 auto 10px;
         display: flex;
         align-items: center;
         justify-content: center;
         font-weight: 800;
-        color: #94a3b8;
-        border: 3px solid #fff;
-        box-shadow: 0 0 0 2px #f1f5f9;
-        transition: 0.3s;
+        color: var(--d-text-muted);
+        border: 4px solid var(--d-step-border);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
+    /* Active Step */
     .step-item.active .step-circle {
         background: var(--d-primary);
-        color: var(--d-accent);
-        box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.1);
+        color: #fff;
+        transform: scale(1.2);
+        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.2);
+        border-color: var(--d-card-bg);
     }
 
+    [data-bs-theme="dark"] .step-item.active .step-circle {
+        background: var(--d-accent);
+        color: #000;
+        box-shadow: 0 0 0 4px rgba(250, 204, 21, 0.2);
+    }
+
+    /* Completed Step */
     .step-item.completed .step-circle {
-        background: #16a34a;
+        background: #10b981;
         color: #fff;
-        box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2);
+        border-color: var(--d-card-bg);
     }
 
     .step-label {
         font-size: 0.85rem;
         font-weight: 600;
-        color: #64748b;
+        color: var(--d-text-muted);
+        margin-top: 8px;
     }
 
     .step-item.active .step-label {
@@ -168,12 +248,17 @@
         font-weight: 800;
     }
 
-    /* Order Items */
+    [data-bs-theme="dark"] .step-item.active .step-label {
+        color: var(--d-text-main);
+    }
+
+
+    /* Items */
     .item-row {
         display: flex;
         gap: 20px;
         padding: 20px 30px;
-        border-bottom: 1px solid #f1f5f9;
+        border-bottom: 1px solid var(--d-border);
         align-items: center;
         transition: 0.2s;
     }
@@ -183,18 +268,19 @@
         }
 
         .item-row:hover {
-            background: #fcfcfd;
+            background: var(--d-item-hover);
         }
 
     .item-img {
         width: 80px;
         height: 80px;
         border-radius: 12px;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--d-border);
         padding: 5px;
         background: #fff;
         object-fit: contain;
     }
+    /* Ensure image background stays white in dark mode for visibility */
 
     .item-details {
         flex: 1;
@@ -202,24 +288,16 @@
 
     .item-name {
         font-weight: 700;
-        color: var(--d-primary);
+        color: var(--d-text-main);
         margin-bottom: 5px;
         font-size: 1rem;
     }
 
     .item-meta {
         font-size: 0.85rem;
-        color: #64748b;
+        color: var(--d-text-muted);
         display: flex;
         gap: 15px;
-    }
-
-    .color-dot {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        display: inline-block;
-        border: 1px solid #ddd;
     }
 
     .item-price {
@@ -232,36 +310,16 @@
         color: var(--d-primary);
     }
 
+    [data-bs-theme="dark"] .price-val {
+        color: var(--d-accent);
+    }
+
     .price-qty {
         font-size: 0.85rem;
-        color: #94a3b8;
+        color: var(--d-text-muted);
     }
 
-    /* Summary & Sidebar */
-    .summary-row {
-        display: flex;
-        justify-content: space-between;
-        padding: 12px 0;
-        color: #475569;
-        font-size: 0.95rem;
-        border-bottom: 1px dashed #e2e8f0;
-    }
-
-        .summary-row.total {
-            border-top: 2px solid var(--d-primary);
-            border-bottom: none;
-            margin-top: 15px;
-            padding-top: 15px;
-            font-size: 1.3rem;
-            font-weight: 800;
-            color: var(--d-primary);
-            align-items: center;
-        }
-
-            .summary-row.total span:last-child {
-                color: var(--d-primary);
-            }
-
+    /* Sidebar Info */
     .sidebar-info {
         padding: 25px;
     }
@@ -271,58 +329,97 @@
     }
 
         .info-group h4 {
-            font-size: 0.9rem;
-            color: #94a3b8;
+            font-size: 0.85rem;
+            color: var(--d-text-muted);
             text-transform: uppercase;
             font-weight: 700;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
         }
 
     .info-text {
-        color: var(--d-primary);
+        color: var(--d-text-main);
         font-weight: 600;
         line-height: 1.6;
         font-size: 0.95rem;
     }
 
-    .btn-action {
-        display: block;
-        width: 100%;
-        padding: 15px;
-        border-radius: 12px;
-        text-align: center;
-        font-weight: 700;
-        text-decoration: none;
-        margin-bottom: 10px;
-        transition: 0.2s;
-        border: none;
-        cursor: pointer;
-    }
-
-    .btn-reorder {
-        background: var(--d-primary);
-        color: #fff;
-        box-shadow: 0 4px 15px rgba(15, 23, 42, 0.3);
-    }
-
-        .btn-reorder:hover {
-            background: #1e293b;
-            transform: translateY(-2px);
-        }
-
-    .btn-invoice {
-        background: #fff;
-        color: var(--d-primary);
+    .btn-outline {
+        background: transparent;
         border: 2px solid var(--d-primary);
+        color: var(--d-primary);
+        padding: 8px 20px;
+        border-radius: 50px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: 0.3s;
+        font-weight: 700;
     }
 
-        .btn-invoice:hover {
-            background: #f8fafc;
+        .btn-outline:hover {
+            background: var(--d-primary);
+            color: #fff;
         }
 
-    @@media (max-width: 992px) {
-        .details-grid {
-            grid-template-columns: 1fr;
+    [data-bs-theme="dark"] .btn-outline {
+        border-color: var(--d-border);
+        color: var(--d-text-main);
+    }
+
+        [data-bs-theme="dark"] .btn-outline:hover {
+            background: var(--d-header-bg);
+            border-color: var(--d-text-main);
+            color: #fff;
+        }
+
+    /* Dots */
+    .color-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        border: 1px solid var(--d-border);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    /* Animation */
+    .fade-up {
+        animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @@keyframes fadeUp {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+
+    /* Print */
+    @@media print {
+        .nav-bar, .btn-outline, .stepper {
+            display: none !important;
+        }
+
+        .order-details-page {
+            background: #fff !important;
+            padding: 0 !important;
+            color: #000 !important;
+        }
+
+        .info-card {
+            border: 1px solid #000 !important;
+            box-shadow: none !important;
+        }
+
+        * {
+            color: #000 !important;
         }
     }
 </style>
@@ -382,6 +479,9 @@
                 <div class="info-card">
                     <div class="card-head">
                         <h3><i class="fas fa-shopping-basket text-primary"></i> @(isAr ? "المنتجات" : "Items") <span class="badge bg-light text-dark ms-2">@Model.OrderItems.Count</span></h3>
+                        <button onclick="window.print()" class="btn-outline">
+                            <i class="fas fa-print me-2"></i> @(isAr ? "طباعة" : "Print")
+                        </button>
                     </div>
                     <div>
                         @foreach (var item in Model.OrderItems)
@@ -395,20 +495,15 @@
                                         @if (!string.IsNullOrEmpty(item.SelectedColorHex))
                                         {
                                             <span class="d-flex align-items-center gap-1">
-                                                @(isAr ? "اللون:" : "Color:")
                                                 <span class="color-dot" style="background:@item.SelectedColorHex"></span>
                                                 @item.SelectedColorName
                                             </span>
-                                        }
-                                        @if (item.Product?.UnitsPerCarton > 1)
-                                        {
-                                            <span class="text-warning"><i class="fas fa-box"></i> @item.Product.UnitsPerCarton pcs/carton</span>
                                         }
                                     </div>
                                 </div>
                                 <div class="item-price">
                                     <div class="price-val">@((item.UnitPrice * item.Quantity).ToString("N0")) <small>ج.م</small></div>
-                                    <div class="price-qty">@item.UnitPrice x @item.Quantity</div>
+                                    <div class="price-qty">@item.UnitPrice.ToString("N0") x @item.Quantity</div>
                                 </div>
                             </div>
                         }
@@ -427,11 +522,11 @@
                     <div class="sidebar-info">
                         <div class="summary-row">
                             <span>@(isAr ? "المجموع الفرعي" : "Subtotal")</span>
-                            <span>@((Model.TotalAmount - Model.ShippingCost).ToString("N0"))</span>
+                            <span class="fw-bold text-main">@((Model.TotalAmount - Model.ShippingCost).ToString("N0"))</span>
                         </div>
                         <div class="summary-row">
                             <span>@(isAr ? "الشحن" : "Shipping")</span>
-                            <span>@Model.ShippingCost.ToString("N0")</span>
+                            <span class="fw-bold text-main">@Model.ShippingCost.ToString("N0")</span>
                         </div>
                         <div class="summary-row total">
                             <span>@(isAr ? "الإجمالي" : "Total")</span>
@@ -464,7 +559,7 @@
                             <h4>@(isAr ? "المستلم" : "Receiver")</h4>
                             <div class="info-text">
                                 <i class="fas fa-user me-1 text-muted"></i> @Model.CustomerName<br>
-                                <i class="fas fa-phone me-1 text-muted"></i> <a href="tel:@Model.Phone" class="text-decoration-none">@Model.Phone</a>
+                                <i class="fas fa-phone me-1 text-muted"></i> <a href="tel:@Model.Phone" class="text-decoration-none" style="color:var(--d-primary)">@Model.Phone</a>
                             </div>
                         </div>
                         @if (!string.IsNullOrEmpty(Model.Notes))
@@ -476,8 +571,6 @@
                         }
                     </div>
                 </div>
-
-                
 
             </div>
         </div>

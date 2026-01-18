@@ -6,124 +6,695 @@
     Layout = "_Layout";
 }
 
-<section class="section-padding" style="background-color: #f9fafb;">
+<style>
+    /* =========================================
+           PREMIUM REQUEST DETAILS STYLES
+           ========================================= */
+    :root {
+        --req-bg: #f8fafc;
+        --req-card-bg: #ffffff;
+        --req-text-main: #0f172a;
+        --req-text-muted: #64748b;
+        --req-border: #e2e8f0;
+        --req-primary: #0F172A;
+        --req-accent: #FACC15;
+        --req-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+        --req-status-pending-bg: #fffbeb;
+        --req-status-pending-text: #b45309;
+        --req-status-approved-bg: #e0f2fe;
+        --req-status-approved-text: #0284c7;
+        --req-chat-me: #0F172A;
+        --req-chat-me-text: #ffffff;
+        --req-chat-other: #f1f5f9;
+        --req-chat-other-text: #1e293b;
+    }
+
+    [data-bs-theme="dark"] {
+        --req-bg: #020617;
+        --req-card-bg: #1e293b;
+        --req-text-main: #f8fafc;
+        --req-text-muted: #94a3b8;
+        --req-border: rgba(255, 255, 255, 0.08);
+        --req-primary: #f8fafc;
+        --req-accent: #FACC15;
+        --req-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.4);
+        --req-status-pending-bg: rgba(245, 158, 11, 0.15);
+        --req-status-pending-text: #fbbf24;
+        --req-status-approved-bg: rgba(14, 165, 233, 0.15);
+        --req-status-approved-text: #38bdf8;
+        --req-chat-me: #FACC15;
+        --req-chat-me-text: #0F172A;
+        --req-chat-other: #334155;
+        --req-chat-other-text: #f1f5f9;
+    }
+
+    body {
+        background-color: var(--req-bg);
+        transition: background-color 0.3s ease;
+    }
+
+    .section-padding {
+        padding: 60px 0;
+        min-height: 80vh;
+    }
+
+    .breadcrumb-custom {
+        margin-bottom: 30px;
+        font-size: 0.95rem;
+        color: var(--req-text-muted);
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .breadcrumb-custom a {
+            color: var(--req-text-main);
+            text-decoration: none;
+            transition: 0.2s;
+        }
+
+            .breadcrumb-custom a:hover {
+                color: var(--req-accent);
+            }
+
+    .main-card {
+        background: var(--req-card-bg);
+        padding: 30px;
+        border-radius: 20px;
+        border: 1px solid var(--req-border);
+        box-shadow: var(--req-shadow);
+        margin-bottom: 30px;
+    }
+
+    .req-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .req-title {
+        margin: 0;
+        color: var(--req-primary);
+        font-weight: 800;
+        font-size: 1.8rem;
+    }
+
+    .status-badge {
+        padding: 6px 16px;
+        border-radius: 30px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .status-pending {
+        background: var(--req-status-pending-bg);
+        color: var(--req-status-pending-text);
+    }
+
+    .status-approved {
+        background: var(--req-status-approved-bg);
+        color: var(--req-status-approved-text);
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 20px;
+        padding-top: 20px;
+        border-top: 1px dashed var(--req-border);
+    }
+
+    .info-item small {
+        color: var(--req-text-muted);
+        display: block;
+        margin-bottom: 4px;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .info-item div {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: var(--req-text-main);
+    }
+
+    .info-item .price {
+        color: var(--req-primary);
+    }
+
+    [data-bs-theme="dark"] .info-item .price {
+        color: var(--req-accent);
+    }
+
+    /* Offers Section */
+    .offers-title {
+        margin-bottom: 20px;
+        color: var(--req-text-main);
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 1.4rem;
+    }
+
+    .empty-offers {
+        text-align: center;
+        padding: 50px;
+        background: var(--req-card-bg);
+        border-radius: 16px;
+        border: 2px dashed var(--req-border);
+        color: var(--req-text-muted);
+    }
+
+    .offer-card {
+        background: var(--req-card-bg);
+        padding: 25px;
+        border-radius: 16px;
+        border: 1px solid var(--req-border);
+        position: relative;
+        transition: transform 0.3s ease;
+        box-shadow: var(--req-shadow);
+    }
+
+        .offer-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--req-text-muted);
+        }
+
+        .offer-card.accepted {
+            border-color: #22c55e;
+            border-width: 2px;
+        }
+
+    [data-bs-theme="dark"] .offer-card.accepted {
+        border-color: #4ade80;
+    }
+
+    .accepted-badge {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        background: #22c55e;
+        color: #fff;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 800;
+    }
+
+    html[dir="rtl"] .accepted-badge {
+        left: auto;
+        right: 15px;
+    }
+
+    .offer-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+
+    .merchant-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .merchant-avatar {
+        width: 50px;
+        height: 50px;
+        background: var(--req-bg);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--req-primary);
+        font-size: 1.5rem;
+    }
+
+    .merchant-name {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--req-text-main);
+    }
+
+    .offer-date {
+        color: var(--req-text-muted);
+        font-size: 0.8rem;
+    }
+
+    .offer-price {
+        text-align: center;
+    }
+
+    .price-val {
+        font-size: 1.6rem;
+        font-weight: 900;
+        color: var(--req-primary);
+        line-height: 1;
+    }
+
+    [data-bs-theme="dark"] .merchant-info {
+        background: #0f172a;
+    }
+    [data-bs-theme="dark"] .price-val {
+        color: var(--req-accent);
+    }
+
+    .price-unit {
+        color: var(--req-text-muted);
+        font-size: 0.85rem;
+    }
+
+    .offer-notes {
+        background: var(--req-bg);
+        padding: 15px;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        color: var(--req-text-main);
+        margin-top: 15px;
+        border: 1px solid var(--req-border);
+    }
+
+    .btn-accept {
+        background: var(--req-primary);
+        color: #fff;
+        padding: 10px 24px;
+        border-radius: 50px;
+        font-weight: 700;
+        border: none;
+        cursor: pointer;
+        transition: 0.2s;
+        font-size: 0.9rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    [data-bs-theme="dark"] .btn-accept {
+        background: var(--req-accent);
+        color: #000;
+    }
+
+    .btn-accept:hover {
+        transform: scale(1.05);
+    }
+
+    .btn-contact {
+        border: 1px solid var(--req-primary);
+        color: var(--req-primary);
+        text-decoration: none;
+        padding: 8px 20px;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    [data-bs-theme="dark"] .btn-contact {
+        border-color: var(--req-text-main);
+        color: var(--req-text-main);
+    }
+
+    .btn-contact:hover {
+        background: var(--req-bg);
+    }
+
+    /* Side Info */
+    .side-info-card {
+        background: rgba(14, 165, 233, 0.05);
+        padding: 25px;
+        border-radius: 16px;
+        color: #0284c7;
+        border: 1px solid rgba(14, 165, 233, 0.2);
+    }
+
+    [data-bs-theme="dark"] .side-info-card {
+        background: rgba(14, 165, 233, 0.1);
+        color: #38bdf8;
+    }
+
+    .side-title {
+        font-weight: 800;
+        font-size: 1.1rem;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .side-list {
+        padding-inline-start: 20px;
+        margin: 0;
+        line-height: 1.7;
+        font-size: 0.9rem;
+    }
+
+    /* --- Chat System Styles (Premium) --- */
+    .chat-card {
+        background: var(--req-card-bg);
+        border: 1px solid var(--req-border);
+        border-radius: 24px;
+        box-shadow: var(--req-shadow);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        height: 550px; /* Fixed height for chat area */
+    }
+
+    .chat-header {
+        padding: 20px;
+        border-bottom: 1px solid var(--req-border);
+        background: var(--req-bg);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        color: var(--req-text-main);
+        font-size: 1.1rem;
+    }
+
+    .chat-body {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        background-color: var(--req-card-bg); /* Contrast with header/footer */
+        background-image: radial-gradient(var(--req-border) 1px, transparent 1px);
+        background-size: 20px 20px;
+    }
+
+        /* Custom Scrollbar for Chat */
+        .chat-body::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-body::-webkit-scrollbar-thumb {
+            background: var(--req-border);
+            border-radius: 10px;
+        }
+
+            .chat-body::-webkit-scrollbar-thumb:hover {
+                background: var(--req-text-muted);
+            }
+
+    .chat-msg {
+        max-width: 80%;
+        padding: 12px 18px;
+        border-radius: 16px;
+        position: relative;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        word-wrap: break-word;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+
+        /* Client Messages (Me) */
+        .chat-msg.me {
+            align-self: flex-end;
+            background-color: var(--req-chat-me);
+            color: var(--req-chat-me-text);
+            border-bottom-left-radius: 4px;
+            border: 1px solid transparent;
+        }
+
+        /* Admin Messages */
+        .chat-msg.admin {
+            align-self: flex-start;
+            background-color: var(--req-chat-other);
+            color: var(--req-chat-other-text);
+            border-bottom-right-radius: 4px;
+            border: 1px solid var(--req-border);
+        }
+
+    .msg-meta {
+        display: block;
+        font-size: 0.65rem;
+        margin-top: 6px;
+        opacity: 0.7;
+        text-align: end;
+        font-weight: 600;
+    }
+
+    .chat-footer {
+        padding: 20px;
+        background: var(--req-bg);
+        border-top: 1px solid var(--req-border);
+    }
+
+    .chat-input-group {
+        display: flex;
+        gap: 10px;
+        background: var(--req-card-bg);
+        padding: 5px;
+        border-radius: 50px;
+        border: 1px solid var(--req-border);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+    }
+
+    [data-bs-theme="dark"] .chat-input-group {
+        background: #0f172a;
+    }
+
+    .chat-input {
+        flex: 1;
+        padding: 12px 20px;
+        border: none;
+        background: transparent;
+        color: var(--req-text-main);
+        outline: none;
+        font-size: 0.95rem;
+    }
+
+    .btn-send-msg {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        background: var(--req-primary);
+        color: #fff;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: 0.3s;
+        flex-shrink: 0;
+    }
+
+    [data-bs-theme="dark"] .btn-send-msg {
+        background: var(--req-accent);
+        color: #000;
+    }
+
+    .btn-send-msg:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    .btn-send-msg:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    /* Animation */
+    .fade-up {
+        animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @@keyframes fadeUp {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+</style>
+
+<section class="section-padding fade-up">
     <div class="container">
 
-        <div class="breadcrumb" style="margin-bottom:20px;">
+        <div class="breadcrumb-custom">
             <a asp-action="Index">@(isAr ? "طلباتي" : "My Requests")</a> / <span>#@Model.Id</span>
         </div>
 
-        <div class="row" style="display:flex; flex-wrap:wrap; gap:30px;">
+        <div class="row g-4">
 
-            <!-- Request Info -->
-            <div class="col-lg-8" style="flex:2; min-width:300px;">
-                <div class="card" style="background:#fff; padding:30px; border-radius:16px; border:1px solid #e2e8f0; margin-bottom:30px;">
-                    <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:20px;">
-                        <h2 style="margin:0; color:var(--primary);">@Model.ProductName</h2>
+            <!-- Request Info (Left) -->
+            <div class="col-lg-7">
+                <div class="main-card">
+                    <div class="req-header">
+                        <h2 class="req-title">@Model.ProductName</h2>
                         @{
                             var statusText = isAr ? (Model.Status == "Pending" ? "قيد المراجعة" : Model.Status == "Approved" ? "مفتوح للعروض" : Model.Status == "Completed" ? "مكتمل" : "مرفوض") : Model.Status;
-                            var statusColor = Model.Status == "Approved" ? "#dcfce7" : (Model.Status == "Pending" ? "#fffbeb" : "#eee");
-                            var textColor = Model.Status == "Approved" ? "#166534" : (Model.Status == "Pending" ? "#d97706" : "#333");
+                            var statusClass = Model.Status == "Approved" ? "status-approved" : (Model.Status == "Pending" ? "status-pending" : "status-default");
+                            var statusIcon = Model.Status == "Approved" ? "fa-lock-open" : "fa-clock";
                         }
-                        <span style="background:@statusColor; color:@textColor; padding:5px 15px; border-radius:20px; font-weight:bold; font-size:0.9rem;">@statusText</span>
+                        <span class="status-badge @statusClass">
+                            <i class="fas @statusIcon"></i> @statusText
+                        </span>
                     </div>
 
-                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:20px; color:#555;">
-                        <div>
-                            <small style="color:#999;">@(isAr ? "الكمية" : "Quantity")</small>
-                            <div style="font-weight:bold; font-size:1.1rem;">@Model.TargetQuantity</div>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <small>@(isAr ? "الكمية" : "Quantity")</small>
+                            <div>@Model.TargetQuantity</div>
                         </div>
-                        <div>
-                            <small style="color:#999;">@(isAr ? "السعر المستهدف" : "Target Price")</small>
-                            <div style="font-weight:bold; font-size:1.1rem; color:var(--primary);">@Model.DealPrice.ToString("N0") <small>@(isAr ? "ج.م" : "EGP")</small></div>
+                        <div class="info-item">
+                            <small>@(isAr ? "السعر المستهدف" : "Target Price")</small>
+                            <div class="price">@Model.DealPrice.ToString("N0") <span style="font-size:0.8rem; font-weight:normal;">@(isAr ? "ج.م" : "EGP")</span></div>
                         </div>
-                        <div>
-                            <small style="color:#999;">@(isAr ? "الموقع" : "Location")</small>
-                            <div style="font-weight:bold; font-size:1.1rem;">@Model.Location</div>
+                        <div class="info-item">
+                            <small>@(isAr ? "الموقع" : "Location")</small>
+                            <div>@Model.Location</div>
                         </div>
-                        <div>
-                            <small style="color:#999;">@(isAr ? "التاريخ" : "Date")</small>
-                            <div style="font-weight:bold;">@Model.RequestDate.ToString("dd/MM/yyyy")</div>
+                        <div class="info-item">
+                            <small>@(isAr ? "التاريخ" : "Date")</small>
+                            <div>@Model.RequestDate.ToString("dd/MM/yyyy")</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Offers List -->
-                <h3 style="margin-bottom:20px; color:#334155;">
+                <h3 class="offers-title">
                     @(isAr ? "العروض المقدمة" : "Received Offers")
-                    <span style="font-size:1rem; color:#999; font-weight:normal;">(@(Model.Offers?.Count ?? 0))</span>
+                    <span style="font-size:1rem; color:var(--req-text-muted); font-weight:normal;">(@(Model.Offers?.Count ?? 0))</span>
                 </h3>
 
                 @if (Model.Offers == null || !Model.Offers.Any())
                 {
-                    <div style="text-align:center; padding:40px; background:#fff; border-radius:12px; border:1px dashed #ccc; color:#777;">
-                        <p>@(isAr ? "لم تتلق أي عروض حتى الآن. يرجى الانتظار." : "No offers received yet. Please wait.")</p>
+                    <div class="empty-offers">
+                        <i class="far fa-folder-open fa-3x mb-3" style="opacity:0.5;"></i>
+                        <p class="m-0">@(isAr ? "لم تتلق أي عروض حتى الآن. يرجى الانتظار." : "No offers received yet. Please wait.")</p>
                     </div>
                 }
                 else
                 {
-                    <div style="display:grid; gap:15px;">
+                    <div style="display:grid; gap:20px;">
                         @foreach (var offer in Model.Offers)
                         {
-                            <div class="card" style="background:#fff; padding:20px; border-radius:12px; border:1px solid @(offer.IsAccepted ? "var(--success)" : "#e2e8f0"); position:relative;">
+                            <div class="offer-card @(offer.IsAccepted ? "accepted" : "")">
                                 @if (offer.IsAccepted)
                                 {
-                                    <div style="position:absolute; top:10px; left:10px; background:var(--success); color:#fff; padding:3px 10px; border-radius:4px; font-size:0.75rem;">
+                                    <div class="accepted-badge">
                                         <i class="fas fa-check"></i> @(isAr ? "تم القبول" : "Accepted")
                                     </div>
                                 }
 
-                                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px;">
-                                    <div style="display:flex; align-items:center; gap:15px;">
-                                        <div style="width:50px; height:50px; background:#f1f5f9; border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--primary); font-size:1.5rem;">
-                                            <i class="fas fa-store"></i>
-                                        </div>
+                                <div class="offer-header">
+                                    <div class="merchant-info">
+                                        <div class="merchant-avatar"><i class="fas fa-store"></i></div>
                                         <div>
-                                            <h4 style="margin:0; font-size:1.1rem;">@offer.Merchant?.ShopName</h4>
-                                            <small style="color:#666;">@offer.CreatedAt.ToString("dd/MM HH:mm")</small>
+                                            <h4 class="merchant-name">@offer.Merchant?.ShopName</h4>
+                                            <span class="offer-date">@offer.CreatedAt.ToString("dd/MM HH:mm")</span>
                                         </div>
                                     </div>
-
-                                    <div style="text-align:center;">
-                                        <div style="font-size:1.5rem; font-weight:bold; color:var(--primary);">@offer.OfferPrice.ToString("N0") <small>@(isAr ? "ج.م" : "EGP")</small></div>
-                                        <small style="color:#999;">@(isAr ? "للقطعة" : "Per Unit")</small>
+                                    <div class="offer-price">
+                                        <div class="price-val">@offer.OfferPrice.ToString("N0")</div>
+                                        <div class="price-unit">@(isAr ? "ج.م / قطعة" : "EGP / Unit")</div>
                                     </div>
                                 </div>
 
-                                <div style="margin-top:15px; background:#f9fafb; padding:10px; border-radius:8px; font-size:0.95rem; color:#555;">
-                                    <strong>@(isAr ? "ملاحظات:" : "Notes:")</strong> @offer.Notes
+                                <div class="offer-notes">
+                                    <strong style="color:var(--req-primary)">@(isAr ? "ملاحظات:" : "Notes:")</strong> @offer.Notes
                                 </div>
 
-                                @if (!offer.IsAccepted && Model.Status == "Approved")
-                                {
-                                    <form asp-action="AcceptOffer" method="post" style="margin-top:15px; text-align:right;">
-                                        <input type="hidden" name="offerId" value="@offer.Id" />
-                                        <button type="submit" class="btn primary small" onclick="return confirm('@(isAr ? "هل أنت متأكد من قبول هذا العرض؟" : "Accept this offer?")')">
-                                            @(isAr ? "قبول العرض" : "Accept Offer")
-                                        </button>
-                                    </form>
-                                }
-                                else if (offer.IsAccepted)
-                                {
-                                    <div style="margin-top:15px; text-align:right;">
-                                        <a href="tel:@offer.Merchant?.PhoneNumber" class="btn" style="border:1px solid var(--primary); color:var(--primary); text-decoration:none;">
+                                <div style="margin-top:20px; text-align:right;">
+                                    @if (!offer.IsAccepted && Model.Status == "Approved")
+                                    {
+                                        <form asp-action="AcceptOffer" method="post" style="display:inline;">
+                                            <input type="hidden" name="offerId" value="@offer.Id" />
+                                            <button type="submit" class="btn-accept" onclick="return confirm('تأكيد القبول؟')">@(isAr ? "قبول العرض" : "Accept Offer")</button>
+                                        </form>
+                                    }
+                                    else if (offer.IsAccepted)
+                                    {
+                                        <a href="tel:@offer.Merchant?.PhoneNumber" class="btn-contact">
                                             <i class="fas fa-phone"></i> @(isAr ? "تواصل مع التاجر" : "Contact Merchant")
                                         </a>
-                                    </div>
-                                }
+                                    }
+                                </div>
                             </div>
                         }
                     </div>
                 }
             </div>
 
-            <!-- Sidebar Info -->
-            <div class="col-lg-4" style="flex:1; min-width:250px;">
-                <div class="card" style="background:#e0f2fe; padding:25px; border-radius:16px; border:none; color:#0284c7;">
-                    <h4 style="margin-top:0; display:flex; align-items:center; gap:10px;">
+            <!-- Chat Section (Right) -->
+            <div class="col-lg-5">
+                <div class="chat-card">
+                    <div class="chat-header">
+                        <div style="width:35px; height:35px; background:var(--req-primary); color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+                            <i class="fas fa-comments"></i>
+                        </div>
+                        @(isAr ? "المحادثة مع الإدارة" : "Chat with Admin")
+                    </div>
+
+                    <div class="chat-body" id="chatBody">
+                        @if (Model.Messages != null && Model.Messages.Any())
+                        {
+                            foreach (var msg in Model.Messages)
+                            {
+                                bool isMe = !msg.IsAdmin;
+                                <div class="chat-msg @(isMe ? "me" : "admin")">
+                                    @msg.Message
+                                    <span class="msg-meta">
+                                        @(isMe ? (isAr ? "أنت" : "You") : (isAr ? "الإدارة" : "Admin")) • @msg.CreatedAt.ToString("hh:mm tt")
+                                    </span>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div id="emptyChatState" style="text-align:center; color:var(--req-text-muted); margin-top:100px;">
+                                <i class="far fa-comment-dots fa-4x mb-3" style="opacity:0.2;"></i>
+                                <p style="font-weight:600;">@(isAr ? "لا توجد رسائل بعد." : "No messages yet.")</p>
+                                <small>@(isAr ? "يمكنك بدء المحادثة هنا." : "You can start chatting here.")</small>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="chat-footer">
+                        <!-- تم إضافة ID للفورم لربطه بالجافاسكريبت -->
+                        <form id="chatForm" asp-action="SendMessage" method="post" class="chat-input-group">
+                            <input type="hidden" name="requestId" value="@Model.Id" />
+                            <input type="text" name="message" class="chat-input" placeholder="@(isAr ? "اكتب رسالتك..." : "Type a message...")" required autocomplete="off">
+                            <button type="submit" class="btn-send-msg">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Side Info -->
+                <div class="side-info-card mt-4 d-none d-lg-block">
+                    <h4 class="side-title">
                         <i class="fas fa-info-circle"></i> @(isAr ? "كيف يعمل؟" : "How it works?")
                     </h4>
-                    <ul style="padding-right:20px; line-height:1.6; font-size:0.95rem;">
+                    <ul class="side-list">
                         <li>@(isAr ? "بعد إرسال الطلب، يتم مراجعته من الإدارة." : "Request is reviewed by admin.")</li>
                         <li>@(isAr ? "عند الموافقة، يظهر الطلب للتجار." : "Once approved, merchants see it.")</li>
                         <li>@(isAr ? "ستتلقى عروض أسعار مختلفة هنا." : "You receive offers here.")</li>
@@ -131,7 +702,60 @@
                     </ul>
                 </div>
             </div>
+
         </div>
 
     </div>
 </section>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var chatBody = document.getElementById("chatBody");
+        chatBody.scrollTop = chatBody.scrollHeight;
+
+        // AJAX Chat Logic
+        const chatForm = document.getElementById('chatForm');
+
+        chatForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const btn = chatForm.querySelector('button');
+            const input = chatForm.querySelector('input[name="message"]');
+            const message = input.value.trim();
+            const originalIcon = btn.innerHTML;
+
+            if (!message) return;
+
+            // UI Optimistic Update
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            try {
+                const formData = new FormData(chatForm);
+                const response = await fetch(chatForm.action, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+      
+                    const msgDiv = document.createElement('div');
+                    msgDiv.className = 'chat-msg me';
+                    msgDiv.innerHTML = `${message} <span class="msg-meta">@(isAr ? "أنت" : "You") • @(isAr ? "الآن" : "Just now")</span>`;
+
+                    const emptyState = document.getElementById('emptyChatState');
+                    if(emptyState) emptyState.remove();
+
+                    chatBody.appendChild(msgDiv);
+                    chatBody.scrollTop = chatBody.scrollHeight;
+                    input.value = '';
+                }
+            } catch (error) {
+                console.error('Error sending message:', error);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalIcon;
+            }
+        });
+    });
+</script>

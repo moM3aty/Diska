@@ -1,99 +1,269 @@
 ﻿@using System.Globalization
 @{
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
-    ViewData["Title"] = isAr ? "السياسات والشحن" : "Policies & Shipping";
+    ViewData["Title"] = isAr ? "سياسة الخصوصية" : "Privacy Policy";
+    Layout = "_Layout";
 }
 
-<!-- يمكن إضافة هذا الستايل هنا أو في ملف CSS العام لضمان ظهوره كما طلبت -->
 <style>
-    .policy-box {
-        background: #fff;
-        padding: 30px;
-        border-radius: 10px;
-        margin-bottom: 30px;
-        border: 1px solid #eee;
+    /* =========================================
+           PREMIUM PRIVACY STYLES (Matches Policies)
+           ========================================= */
+    :root {
+        /* Light Theme */
+        --pol-bg-body: #f8fafc;
+        --pol-card-bg: #ffffff;
+        --pol-text-main: #0f172a;
+        --pol-text-muted: #64748b;
+        --pol-border: #e2e8f0;
+        --pol-primary: #0F172A;
+        --pol-accent: #FACC15;
+        --pol-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+        --pol-card-hover: 0 10px 25px -5px rgba(0,0,0,0.05);
     }
 
-        .policy-box h2 {
-            color: var(--primary);
-            border-bottom: 2px solid var(--accent);
-            display: inline-block;
-            padding-bottom: 5px;
+    [data-bs-theme="dark"] {
+        /* Dark Theme */
+        --pol-bg-body: #020617;
+        --pol-card-bg: #1e293b;
+        --pol-text-main: #f8fafc;
+        --pol-text-muted: #94a3b8;
+        --pol-border: rgba(255, 255, 255, 0.08);
+        --pol-primary: #f8fafc;
+        --pol-accent: #FACC15;
+        --pol-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        --pol-card-hover: 0 15px 30px -5px rgba(0,0,0,0.5);
+    }
+
+    body {
+        background-color: var(--pol-bg-body);
+        transition: background-color 0.3s ease;
+    }
+
+    .section-padding {
+        padding: 60px 0;
+        min-height: 80vh;
+    }
+
+    /* Breadcrumb */
+    .breadcrumb-custom {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 40px;
+        font-size: 0.9rem;
+        color: var(--pol-text-muted);
+    }
+
+        .breadcrumb-custom a {
+            color: var(--pol-text-main);
+            font-weight: 700;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+
+            .breadcrumb-custom a:hover {
+                color: var(--pol-accent);
+            }
+
+    /* Policy Content */
+    .policy-header {
+        text-align: center;
+        margin-bottom: 50px;
+    }
+
+    .policy-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--pol-primary);
+        margin-bottom: 15px;
+    }
+
+    .policy-last-updated {
+        color: var(--pol-text-muted);
+        font-size: 0.9rem;
+    }
+
+    .policy-box {
+        background: var(--pol-card-bg);
+        padding: 40px;
+        border-radius: 20px;
+        margin-bottom: 30px;
+        border: 1px solid var(--pol-border);
+        box-shadow: var(--pol-shadow);
+        transition: all 0.3s ease;
+    }
+
+        .policy-box h3 {
+            color: var(--pol-primary);
+            font-weight: 700;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+            .policy-box h3 i {
+                color: var(--pol-accent);
+                font-size: 1.1rem;
+            }
+
+        .policy-box p {
+            color: var(--pol-text-muted);
+            line-height: 1.8;
+            font-size: 1.05rem;
             margin-bottom: 15px;
         }
 
         .policy-box ul {
-            list-style: disc;
-            padding-right: 20px; /* للغة العربية */
-            padding-left: 20px; /* للغة الانجليزية سيتم ضبطها عبر التوجيه */
-            color: #555;
+            list-style: none;
+            padding: 0;
+            margin-bottom: 15px;
         }
 
-    html[dir="ltr"] .policy-box ul {
-        padding-right: 0;
-        padding-left: 20px;
+        .policy-box li {
+            margin-bottom: 10px;
+            padding-inline-start: 20px;
+            position: relative;
+            color: var(--pol-text-muted);
+            line-height: 1.6;
+        }
+
+            .policy-box li::before {
+                content: '•';
+                color: var(--pol-accent);
+                font-weight: bold;
+                font-size: 1.5rem;
+                position: absolute; @(isAr
+                                ? "right" : "left") : 0;
+                top: -5px;
+            }
+
+        .policy-box strong {
+            color: var(--pol-text-main);
+        }
+
+    /* Animation */
+    .fade-up {
+        animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @@keyframes fadeUp {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(20px);
     }
 
-    .policy-box li {
-        margin-bottom: 10px;
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
     }
 </style>
 
-<section class="section-padding">
+<section class="section-padding fade-up">
     <div class="container">
 
-        <div class="breadcrumb">
-            <a asp-controller="Home" asp-action="Index">@(isAr ? "الرئيسية" : "Home")</a> / <span>@(isAr ? "السياسات والشحن" : "Policies")</span>
+        <div class="breadcrumb-custom">
+            <a asp-controller="Home" asp-action="Index">
+                <i class="fas fa-home"></i> @(isAr ? "الرئيسية" : "Home")
+            </a>
+            <span style="color:var(--pol-text-muted)">/</span>
+            <span>@(isAr ? "سياسة الخصوصية" : "Privacy Policy")</span>
         </div>
 
-        <!-- قسم الشحن -->
-        <div class="policy-box" id="shipping">
-            <h2>@(isAr ? "🚚 الشحن والتوصيل" : "🚚 Shipping & Delivery")</h2>
-            <ul>
-                @if (isAr)
-                {
-                    <li>يتم التوصيل خلال 24 إلى 48 ساعة داخل القاهرة والجيزة.</li>
-                    <li>المحافظات الأخرى يستغرق التوصيل من 3 إلى 5 أيام عمل.</li>
-                    <li>رسوم الشحن تحتسب تلقائياً بناءً على المنطقة والوزن.</li>
-                    <li>الشحن مجاني للطلبات التي تتجاوز 50,000 ج.م.</li>
-                }
-                else
-                {
-                    <li>Delivery within 24 to 48 hours in Cairo and Giza.</li>
-                    <li>Other governorates take 3 to 5 business days.</li>
-                    <li>Shipping fees are calculated automatically based on location and weight.</li>
-                    <li>Free shipping for orders exceeding 50,000 EGP.</li>
-                }
-            </ul>
+        <div class="policy-header">
+            <h1 class="policy-title">
+                <i class="fas fa-shield-alt text-success me-2"></i>
+                @(isAr ? "سياسة الخصوصية" : "Privacy Policy")
+            </h1>
+            <span class="policy-last-updated">
+                @(isAr ? "آخر تحديث: 20 فبراير 2025" : "Last Updated: Feb 20, 2025")
+            </span>
         </div>
 
-        <!-- قسم الإرجاع -->
-        <div class="policy-box" id="return">
-            <h2>@(isAr ? "🔄 سياسة الإرجاع والاستبدال" : "🔄 Return Policy")</h2>
-            <ul>
-                @if (isAr)
-                {
-                    <li>يمكن إرجاع المنتجات التالفة أو غير المطابقة للمواصفات خلال 14 يوم.</li>
-                    <li>يجب أن تكون البضاعة في حالتها الأصلية (الكرتونة مغلقة).</li>
-                    <li>يتم استرداد المبلغ إلى المحفظة في التطبيق فور استلام المرتجع.</li>
-                }
-                else
-                {
-                    <li>Damaged or non-conforming products can be returned within 14 days.</li>
-                    <li>Goods must be in their original condition (sealed carton).</li>
-                    <li>Refunds are credited to the in-app wallet immediately upon receipt.</li>
-                }
-            </ul>
-        </div>
+        <div style="max-width: 900px; margin: 0 auto;">
 
-        <!-- قسم الخصوصية -->
-        <div class="policy-box" id="privacy">
-            <h2>@(isAr ? "🔒 سياسة الخصوصية" : "🔒 Privacy Policy")</h2>
-            <p style="color: #555; line-height: 1.6;">
-                @(isAr ?
-                                "نحن في DISKA نلتزم بحماية بياناتك الشخصية والتجارية. لا يتم مشاركة بياناتك مع أي طرف ثالث إلا شركات الشحن لغرض التوصيل فقط." :
-                                "At DISKA, we are committed to protecting your personal and commercial data. We do not share your data with any third party except shipping companies for delivery purposes only.")
-            </p>
+            <div class="policy-box">
+                <p>
+                    @(isAr ?
+                                        "نحن في DISKA نأخذ خصوصيتك على محمل الجد. توضح هذه السياسة كيف نجمع ونستخدم ونحمي بياناتك الشخصية عند استخدامك للموقع أو التطبيق." :
+                                        "At DISKA, we take your privacy seriously. This policy explains how we collect, use, and protect your personal data when you use our website or app.")
+                </p>
+            </div>
+
+            <div class="policy-box">
+                <h3><i class="fas fa-database"></i> @(isAr ? "1. البيانات التي نجمعها" : "1. Information We Collect")</h3>
+                <p>@(isAr ? "نقوم بجمع البيانات التالية لتقديم خدماتنا بأفضل شكل ممكن:" : "We collect the following data to provide our services effectively:")</p>
+                <ul>
+                    @if (isAr)
+                    {
+                        <li><strong>بيانات الهوية:</strong> الاسم الكامل، رقم الهاتف، واسم النشاط التجاري (المحل).</li>
+                        <li><strong>بيانات التوصيل:</strong> العنوان الجغرافي بالتفصيل، المحافظة، والمدينة.</li>
+                        <li><strong>بيانات المعاملات:</strong> سجل الطلبات السابقة، طرق الدفع المستخدمة، ورصيد المحفظة.</li>
+                        <li><strong>بيانات الجهاز:</strong> معلومات تقنية مثل نوع الجهاز ونظام التشغيل لتحسين الأداء.</li>
+                    }
+                    else
+                    {
+                        <li><strong>Identity Data:</strong> Full name, phone number, and shop/business name.</li>
+                        <li><strong>Delivery Data:</strong> Detailed address, governorate, and city.</li>
+                        <li><strong>Transaction Data:</strong> Order history, payment methods, and wallet balance.</li>
+                        <li><strong>Device Data:</strong> Technical info like device type and OS to improve performance.</li>
+                    }
+                </ul>
+            </div>
+
+            <div class="policy-box">
+                <h3><i class="fas fa-cogs"></i> @(isAr ? "2. كيف نستخدم بياناتك" : "2. How We Use Your Data")</h3>
+                <ul>
+                    @if (isAr)
+                    {
+                        <li>لمعالجة وتوصيل طلباتك بدقة وفي الوقت المحدد.</li>
+                        <li>للتواصل معك بخصوص حالة الطلب أو العروض الخاصة التي قد تهمك.</li>
+                        <li>لتحسين تجربة المستخدم وتطوير التطبيق بناءً على الملاحظات.</li>
+                        <li>لمنع الاحتيال وضمان أمان المنصة لجميع المستخدمين.</li>
+                    }
+                    else
+                    {
+                        <li>To process and deliver your orders accurately and on time.</li>
+                        <li>To communicate with you regarding order status or relevant offers.</li>
+                        <li>To improve user experience and app development based on feedback.</li>
+                        <li>To prevent fraud and ensure platform security for all users.</li>
+                    }
+                </ul>
+            </div>
+
+            <div class="policy-box">
+                <h3><i class="fas fa-share-alt"></i> @(isAr ? "3. مشاركة البيانات" : "3. Data Sharing")</h3>
+                <p>
+                    @(isAr ? "لا نقوم ببيع بياناتك لأي أطراف ثالثة. قد نشارك بعض البيانات الضرورية فقط مع:" : "We do not sell your data to third parties. We may share necessary data only with:")
+                </p>
+                <ul>
+                    @if (isAr)
+                    {
+                        <li><strong>شركات الشحن:</strong> مشاركة الاسم، العنوان، ورقم الهاتف لغرض توصيل الطلب فقط.</li>
+                        <li><strong>الجهات القانونية:</strong> إذا طلب منا ذلك بموجب القانون أو لحماية حقوقنا.</li>
+                    }
+                    else
+                    {
+                        <li><strong>Shipping Companies:</strong> Sharing name, address, and phone number for delivery purposes only.</li>
+                        <li><strong>Legal Authorities:</strong> If required by law or to protect our rights.</li>
+                    }
+                </ul>
+            </div>
+
+            <div class="policy-box">
+                <h3><i class="fas fa-lock"></i> @(isAr ? "4. أمان البيانات" : "4. Data Security")</h3>
+                <p>
+                    @(isAr ?
+                                        "نستخدم تقنيات تشفير متطورة ومعايير أمان عالية لحماية بياناتك من الوصول غير المصرح به أو التغيير أو الإفشاء." :
+                                        "We use advanced encryption technologies and high security standards to protect your data from unauthorized access, alteration, or disclosure.")
+                </p>
+            </div>
+
         </div>
 
     </div>

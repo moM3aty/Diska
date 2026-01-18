@@ -6,82 +6,378 @@
     Layout = "_Layout";
 }
 
-<section class="section-padding">
+<style>
+    /* =========================================
+           PREMIUM MY REVIEWS STYLES
+           ========================================= */
+    :root {
+        --rev-bg: #f8fafc;
+        --rev-card-bg: #ffffff;
+        --rev-text-main: #0f172a;
+        --rev-text-muted: #64748b;
+        --rev-border: #e2e8f0;
+        --rev-primary: #0F172A;
+        --rev-accent: #FACC15;
+        --rev-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+    }
+
+    [data-bs-theme="dark"] {
+        --rev-bg: #020617;
+        --rev-card-bg: #1e293b;
+        --rev-text-main: #f8fafc;
+        --rev-text-muted: #94a3b8;
+        --rev-border: rgba(255, 255, 255, 0.08);
+        --rev-primary: #f8fafc;
+        --rev-accent: #FACC15;
+        --rev-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+    }
+
+    body {
+        background-color: var(--rev-bg);
+        transition: background-color 0.3s ease;
+    }
+
+    .section-padding {
+        padding: 60px 0;
+        min-height: 80vh;
+    }
+
+    .header-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--rev-border);
+    }
+
+    .page-title {
+        margin: 0;
+        color: var(--rev-primary);
+        font-weight: 800;
+        font-size: 1.8rem;
+    }
+
+    .page-desc {
+        color: var(--rev-text-muted);
+        margin-top: 5px;
+        font-size: 0.95rem;
+    }
+
+    .btn-back {
+        color: var(--rev-text-muted);
+        text-decoration: none;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: 0.2s;
+        border: 1px solid var(--rev-border);
+        padding: 8px 16px;
+        border-radius: 50px;
+    }
+
+        .btn-back:hover {
+            border-color: var(--rev-primary);
+            color: var(--rev-primary);
+            transform: translateX( @(isAr ? "5px" : "-5px") );
+        }
+
+    .alert-success-custom {
+        background: #dcfce7;
+        color: #166534;
+        padding: 12px;
+        border-radius: 12px;
+        margin-bottom: 25px;
+        border: 1px solid #bbf7d0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    [data-bs-theme="dark"] .alert-success-custom {
+        background: rgba(34, 197, 94, 0.15);
+        color: #4ade80;
+        border-color: rgba(34, 197, 94, 0.2);
+    }
+
+    .reviews-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 25px;
+    }
+
+    .review-card {
+        background: var(--rev-card-bg);
+        border-radius: 16px;
+        border: 1px solid var(--rev-border);
+        padding: 20px;
+        box-shadow: var(--rev-shadow);
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .review-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px -5px rgba(0,0,0,0.1);
+            border-color: var(--rev-text-muted);
+        }
+
+    [data-bs-theme="dark"] .review-card:hover {
+        box-shadow: 0 15px 30px -5px rgba(0,0,0,0.4);
+    }
+
+    .review-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 1px dashed var(--rev-border);
+    }
+
+    .prod-thumb {
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        object-fit: contain;
+        background: #fff;
+        border: 1px solid var(--rev-border);
+        padding: 2px;
+    }
+
+    .prod-info h5 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+        line-height: 1.3;
+    }
+
+    .prod-info a {
+        color: var(--rev-text-main);
+        text-decoration: none;
+        transition: 0.2s;
+    }
+
+        .prod-info a:hover {
+            color: var(--rev-accent);
+        }
+
+    .review-date {
+        color: var(--rev-text-muted);
+        font-size: 0.8rem;
+        margin-top: 3px;
+        display: block;
+    }
+
+    .rating-stars {
+        color: #f59e0b;
+        font-size: 0.9rem;
+        margin-bottom: 10px;
+    }
+
+    .far.fa-star {
+        color: #cbd5e1;
+    }
+
+    [data-bs-theme="dark"] .far.fa-star {
+        color: #475569;
+    }
+
+    .review-comment {
+        color: var(--rev-text-muted);
+        line-height: 1.6;
+        font-size: 0.95rem;
+        background: var(--rev-bg);
+        padding: 12px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+        flex-grow: 1;
+        position: relative;
+    }
+
+        .review-comment i {
+            color: var(--rev-border);
+            margin-inline-end: 5px;
+        }
+
+    .review-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: auto;
+    }
+
+    .btn-action {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        cursor: pointer;
+        transition: 0.2s;
+        font-size: 0.9rem;
+    }
+
+    .btn-edit {
+        background: rgba(59, 130, 246, 0.1);
+        color: #2563eb;
+        text-decoration: none;
+    }
+
+        .btn-edit:hover {
+            background: #2563eb;
+            color: #fff;
+        }
+
+    [data-bs-theme="dark"] .btn-edit {
+        background: rgba(59, 130, 246, 0.2);
+        color: #60a5fa;
+    }
+
+    .btn-delete {
+        background: rgba(239, 68, 68, 0.1);
+        color: #dc2626;
+    }
+
+        .btn-delete:hover {
+            background: #dc2626;
+            color: #fff;
+        }
+
+    [data-bs-theme="dark"] .btn-delete {
+        background: rgba(239, 68, 68, 0.2);
+        color: #f87171;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 80px 20px;
+        background: var(--rev-card-bg);
+        border-radius: 20px;
+        border: 2px dashed var(--rev-border);
+    }
+
+    .empty-icon {
+        color: var(--rev-text-muted);
+        opacity: 0.3;
+        margin-bottom: 20px;
+    }
+
+    .btn-browse {
+        background: var(--rev-primary);
+        color: #fff;
+        padding: 12px 30px;
+        border-radius: 50px;
+        text-decoration: none;
+        font-weight: 700;
+        margin-top: 20px;
+        display: inline-block;
+        transition: 0.3s;
+    }
+
+    [data-bs-theme="dark"] .btn-browse {
+        background: var(--rev-accent);
+        color: #000;
+    }
+
+    .btn-browse:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .fade-up {
+        animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @@keyframes fadeUp {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+</style>
+
+<section class="section-padding fade-up">
     <div class="container">
 
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="header-nav">
             <div>
-                <h2 class="page-title" style="margin:0;">@(isAr ? "تقييماتي" : "My Reviews") <i class="fas fa-star text-warning"></i></h2>
-                <p style="color:#666; margin-top:5px;">@(isAr ? "سجل بآرائك وتقييماتك للمنتجات" : "History of your product reviews")</p>
+                <h2 class="page-title">@(isAr ? "تقييماتي" : "My Reviews") <i class="fas fa-star text-warning"></i></h2>
+                <p class="page-desc">@(isAr ? "سجل بآرائك وتقييماتك للمنتجات" : "History of your product reviews")</p>
             </div>
-            <a asp-controller="Account" asp-action="Profile" class="btn btn-outline-secondary small">
+            <a asp-controller="Profile" asp-action="Index" class="btn-back">
                 <i class="fas @(isAr ? "fa-arrow-right" : "fa-arrow-left")"></i> @(isAr ? "عودة لحسابي" : "Back to Profile")
             </a>
         </div>
 
         @if (TempData["Success"] != null)
         {
-            <div class="alert alert-success" style="background:#dcfce7; color:#166534; padding:10px; border-radius:8px; margin-bottom:20px; border:1px solid #bbf7d0;">
+            <div class="alert-success-custom">
                 <i class="fas fa-check-circle"></i> @TempData["Success"]
             </div>
         }
 
         @if (!Model.Any())
         {
-            <div style="text-align:center; padding:60px; background:#fff; border-radius:15px; border:1px solid #eee;">
-                <i class="far fa-comment-dots fa-4x" style="color:#e2e8f0; margin-bottom:20px;"></i>
-                <h3 style="color:#64748b;">@(isAr ? "لم تقم بتقييم أي منتجات بعد." : "No reviews yet.")</h3>
-                <a asp-controller="Home" asp-action="Index" class="btn primary small" style="margin-top:20px;">
+            <div class="empty-state">
+                <i class="far fa-comment-dots fa-4x empty-icon"></i>
+                <h3 style="color:var(--rev-text-main);">@(isAr ? "لم تقم بتقييم أي منتجات بعد." : "No reviews yet.")</h3>
+                <a asp-controller="Home" asp-action="Index" class="btn-browse">
                     @(isAr ? "تصفح المنتجات" : "Browse Products")
                 </a>
             </div>
         }
         else
         {
-            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:25px;">
+            <div class="reviews-grid">
                 @foreach (var item in Model)
                 {
-                    <div class="card" style="background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:20px; box-shadow:0 2px 5px rgba(0,0,0,0.02);">
-                        <div style="display:flex; align-items:center; gap:15px; margin-bottom:15px; border-bottom:1px solid #f5f5f5; padding-bottom:10px;">
-                            <img src="~/@item.Product?.ImageUrl" onerror="this.src='/images/default.png'" style="width:50px; height:50px; border-radius:8px; object-fit:contain; border:1px solid #eee;">
-                            <div>
-                                <h5 style="margin:0; font-size:1rem; font-weight:bold;">
-                                    <a asp-controller="Product" asp-action="Details" asp-route-id="@item.ProductId" style="color:inherit; text-decoration:none;">
+                    <div class="review-card">
+                        <div class="review-header">
+                            <img src="~/@item.Product?.ImageUrl" onerror="this.src='/images/default.png'" class="prod-thumb">
+                            <div class="prod-info">
+                                <h5>
+                                    <a asp-controller="Product" asp-action="Details" asp-route-id="@item.ProductId">
                                         @(isAr? item.Product?.Name : item.Product?.NameEn)
                                     </a>
                                 </h5>
-                                <small style="color:#999;">@item.CreatedAt.ToString("dd MMMM yyyy")</small>
+                                <span class="review-date">@item.CreatedAt.ToString("dd MMMM yyyy")</span>
                             </div>
                         </div>
 
-                        <div style="margin-bottom:15px;">
-                            <div style="color:#f59e0b; font-size:1.1rem; margin-bottom:5px;">
-                                @for (int i = 1; i <= 5; i++)
-                                {
-                                    if (i <= item.Rating)
-                                    {
-                                        <i class="fas fa-star"></i>
-                                    }
-                                    else
-                                    {
-
-                                        <i class="far fa-star" style="color:#ddd;"></i>
-                                    }
-                                }
-                            </div>
-                            <p style="color:#555; line-height:1.6; font-size:0.95rem; background:#f9fafb; padding:10px; border-radius:8px;">
-                                <i class="fas fa-quote-right" style="color:#ddd; margin-right:5px;"></i>
-                                @item.Comment
-                            </p>
+                        <div class="rating-stars">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                <i class="fas @(i <= item.Rating ? "fa-star" : "fa-star far")"></i>
+                            }
                         </div>
 
-                        <div style="display:flex; justify-content:flex-end; gap:10px;">
-                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn small" style="background:#e0f2fe; color:#0284c7; padding:6px 12px; border:none; font-size:0.8rem;">
-                                <i class="fas fa-edit"></i> @(isAr ? "تعديل" : "Edit")
+                        <div class="review-comment">
+                            <i class="fas fa-quote-right"></i> @item.Comment
+                        </div>
+
+                        <div class="review-actions">
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn-action btn-edit" title="@(isAr ? "تعديل" : "Edit")">
+                                <i class="fas fa-edit"></i>
                             </a>
-                            <form asp-action="Delete" method="post" onsubmit="return confirm('@(isAr ? "هل أنت متأكد من الحذف؟" : "Delete review?")');" style="margin:0;">
+
+                            <!-- SweetAlert Delete Form -->
+                            <form id="deleteForm-@item.Id" asp-action="Delete" method="post" style="margin:0;">
                                 <input type="hidden" name="id" value="@item.Id" />
-                                <button type="submit" class="btn small" style="background:#fee2e2; color:#dc2626; padding:6px 12px; border:none; font-size:0.8rem;">
+                                <button type="button" class="btn-action btn-delete" title="@(isAr ? "حذف" : "Delete")" onclick="confirmDelete(@item.Id)">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </form>
@@ -92,3 +388,35 @@
         }
     </div>
 </section>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        function confirmDelete(id) {
+            // Check theme for styling
+            const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+            const bg = isDark ? '#1e293b' : '#ffffff';
+            const text = isDark ? '#f8fafc' : '#0f172a';
+
+            Swal.fire({
+                title: '@Html.Raw(isAr ? "هل أنت متأكد؟" : "Are you sure?")',
+                text: '@Html.Raw(isAr ? "لن تتمكن من استعادة هذا التقييم!" : "You won\'t be able to revert this review!")',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: '@Html.Raw(isAr ? "نعم، احذف" : "Yes, delete it!")',
+                cancelButtonText: '@Html.Raw(isAr ? "إلغاء" : "Cancel")',
+                background: bg,
+                color: text,
+                customClass: {
+                    popup: 'rounded-4 shadow-lg border-0'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('deleteForm-' + id).submit();
+                }
+            })
+        }
+    </script>
+}

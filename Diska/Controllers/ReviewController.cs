@@ -103,7 +103,9 @@ namespace Diska.Controllers
                 .FirstOrDefaultAsync(r => r.Id == id && r.UserId == user.Id);
 
             if (reviewToUpdate == null) return NotFound();
-
+            ModelState.Remove("User");
+            ModelState.Remove("UserId");
+            ModelState.Remove("Product");
             if (ModelState.IsValid)
             {
                 reviewToUpdate.Rating = model.Rating;

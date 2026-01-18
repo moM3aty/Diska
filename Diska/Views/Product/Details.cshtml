@@ -5,7 +5,7 @@
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
     ViewData["Title"] = isAr ? Model.Name : Model.NameEn;
     var dir = isAr ? "rtl" : "ltr";
-    
+
     // Data Preparation
     var reviews = ViewBag.Reviews as IEnumerable<Diska.Models.ProductReview> ?? new List<Diska.Models.ProductReview>();
     var avgRating = ViewBag.AverageRating != null ? Convert.ToDouble(ViewBag.AverageRating) : 0;
@@ -19,7 +19,7 @@
     {
         discountPercentage = (int)Math.Round(((Model.OldPrice.Value - Model.Price) / Model.OldPrice.Value) * 100);
     }
-    
+
     // Images
     var allImages = new List<string>();
     if (!string.IsNullOrEmpty(Model.ImageUrl)) allImages.Add(Model.ImageUrl);
@@ -39,111 +39,796 @@
         defaultColorName = "Standard";
         defaultColorHex = Model.Color;
     }
+
+    string currentTheme = Context.Request.Cookies["theme"] ?? "light";
 }
 
 <style>
-    /* ... (نفس الستايل السابق Premium Style) ... */
-    :root { --m-primary: #0F172A; --m-accent: #FACC15; --m-bg: #f8fafc; --m-text: #334155; --m-border: #e2e8f0; }
-    .modern-wrapper { background-color: var(--m-bg); padding: 40px 0; font-family: 'Cairo', sans-serif; color: var(--m-text); overflow-x: hidden; }
-    .modern-crumb { margin-bottom: 30px; font-size: 0.95rem; color: #64748b; font-weight: 600; }
-    .modern-crumb a { color: var(--m-primary); text-decoration: none; transition: 0.2s; }
-    .modern-crumb a:hover { color: var(--m-accent); }
-    .modern-crumb i { font-size: 0.75rem; color: #cbd5e1; margin: 0 10px; }
-    .modern-grid { display: grid; grid-template-columns: 1.3fr 0.8fr; gap: 40px; align-items: start; }
-    .gallery-card { background: #fff; border-radius: 24px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); margin-bottom: 40px; position: relative; }
-    .main-view { height: 500px; border-radius: 16px; background: radial-gradient(circle at center, #fff 40%, #f1f5f9 100%); display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: zoom-in; position: relative; margin-bottom: 20px; }
-    .main-view img { max-width: 90%; max-height: 90%; transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
-    .main-view:hover img { transform: scale(1.6); }
-    .sale-sticker { position: absolute; top: 20px; left: 20px; background: var(--m-accent); color: var(--m-primary); font-weight: 900; padding: 8px 15px; border-radius: 30px; box-shadow: 0 5px 15px rgba(250, 204, 21, 0.4); z-index: 5; }
-    .thumb-grid { display: flex; gap: 15px; justify-content: center; }
-    .thumb-card { width: 80px; height: 80px; border-radius: 12px; border: 2px solid transparent; cursor: pointer; padding: 5px; background: #fff; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
-    .thumb-card.active { border-color: var(--m-primary); transform: translateY(-5px); box-shadow: 0 8px 20px rgba(15, 23, 42, 0.15); }
-    .thumb-card img { width: 100%; height: 100%; object-fit: contain; }
-    .content-card { background: #fff; border-radius: 24px; padding: 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); }
-    .modern-tabs { display: flex; gap: 30px; border-bottom: 1px solid var(--m-border); margin-bottom: 30px; }
-    .m-tab { background: none; border: none; padding: 15px 0; font-size: 1.1rem; font-weight: 700; color: #94a3b8; cursor: pointer; position: relative; transition: 0.3s; }
-    .m-tab.active { color: var(--m-primary); }
-    .m-tab.active::after { content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 4px; background: var(--m-accent); border-radius: 4px 4px 0 0; }
-    .tab-body { display: none; animation: slideUp 0.4s ease-out; }
-    .tab-body.active { display: block; }
-    .desc-text { line-height: 1.9; color: #475569; font-size: 1.05rem; }
-    .sticky-wrapper { position: sticky; top: 20px; z-index: 100; }
-    .purchase-card { background: #fff; border-radius: 24px; padding: 35px; box-shadow: 0 20px 40px -5px rgba(0,0,0,0.08); border: 1px solid #f1f5f9; }
-    .p-brand { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: #2563eb; font-weight: 800; margin-bottom: 10px; display: block; }
-    .p-title { font-size: 1.8rem; font-weight: 800; color: var(--m-primary); line-height: 1.3; margin: 0 0 15px; }
-    .p-rating { display: flex; align-items: center; gap: 8px; margin-bottom: 25px; }
-    .star-icon { color: #f59e0b; font-size: 0.9rem; }
-    .stock-badge { background: #dcfce7; color: #166534; font-weight: 700; font-size: 0.8rem; padding: 4px 10px; border-radius: 6px; margin-inline-start: auto; }
-    .stock-badge.out { background: #fee2e2; color: #991b1b; }
-    .p-price { font-size: 2.5rem; font-weight: 900; color: var(--m-primary); display: flex; align-items: baseline; gap: 10px; margin-bottom: 5px; }
-    .p-price small { font-size: 1.1rem; color: #64748b; font-weight: 700; }
-    .p-old-price { text-decoration: line-through; color: #94a3b8; font-size: 1.2rem; margin-bottom: 30px; display: block; }
-    .opt-title { font-weight: 700; font-size: 0.9rem; margin-bottom: 10px; display: block; }
-    .color-picker { display: flex; gap: 12px; margin-bottom: 25px; }
-    .color-item { width: 40px; height: 40px; border-radius: 50%; cursor: pointer; border: 3px solid #fff; box-shadow: 0 0 0 1px #cbd5e1; transition: 0.2s; }
-    .color-item:hover { transform: scale(1.1); }
-    .color-item.active { box-shadow: 0 0 0 2px var(--m-primary); }
-    .qty-selector { display: flex; background: #f8fafc; border-radius: 12px; padding: 5px; margin-bottom: 20px; align-items: center; border: 1px solid #e2e8f0; }
-    .qty-btn { width: 40px; height: 40px; border: none; background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); cursor: pointer; color: var(--m-primary); font-size: 1.2rem; transition: 0.2s; }
-    .qty-btn:hover { background: var(--m-accent); }
-    .qty-display { flex: 1; text-align: center; font-weight: 800; font-size: 1.2rem; border: none; background: transparent; outline: none; }
-    .add-btn { width: 100%; background: var(--m-primary); color: #fff; border: none; padding: 18px; border-radius: 14px; font-weight: 800; font-size: 1.1rem; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.4); }
-    .add-btn:hover { transform: translateY(-3px); background: #1e293b; box-shadow: 0 15px 30px -5px rgba(15, 23, 42, 0.5); }
-    .add-btn:disabled { background: #cbd5e1; cursor: not-allowed; box-shadow: none; transform: none; }
-    .wish-btn { width: 100%; background: #fff; border: 2px solid #e2e8f0; color: #64748b; padding: 15px; border-radius: 14px; font-weight: 700; margin-top: 15px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
-    .wish-btn:hover { border-color: var(--m-primary); color: var(--m-primary); }
-    .wish-btn.active { background: #fee2e2; color: #ef4444; border-color: #ef4444; }
-    .trust-box { margin-top: 30px; padding-top: 20px; border-top: 1px dashed #cbd5e1; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-    .trust-item { display: flex; align-items: center; gap: 10px; font-size: 0.8rem; color: #475569; font-weight: 600; }
-    .trust-item i { font-size: 1.2rem; color: var(--m-primary); }
-    .related-section { margin-top: 80px; padding-top: 40px; border-top: 2px solid var(--m-border); }
-    .section-title { font-size: 1.8rem; font-weight: 800; color: var(--m-primary); margin-bottom: 30px; display: flex; align-items: center; gap: 15px; }
-    .section-title::before { content: ''; width: 8px; height: 35px; background: var(--m-accent); border-radius: 4px; }
-    .related-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 25px; }
-    .product-card-modern { background: #fff; border-radius: 20px; border: 1px solid transparent; transition: all 0.3s ease; position: relative; overflow: hidden; display: flex; flex-direction: column; }
-    .product-card-modern:hover { transform: translateY(-8px); box-shadow: 0 15px 30px rgba(0,0,0,0.06); border-color: var(--m-border); }
-    .card-img-wrapper { height: 220px; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, #fff 40%, #f8fafc 100%); padding: 20px; position: relative; }
-    .card-img-wrapper img { max-width: 100%; max-height: 100%; object-fit: contain; transition: transform 0.3s; }
-    .product-card-modern:hover .card-img-wrapper img { transform: scale(1.1); }
-    .card-info { padding: 20px; text-align: center; background: #fff; flex-grow: 1; }
-    .card-title { font-weight: 700; font-size: 1rem; color: var(--m-text); margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; text-decoration: none; }
-    .card-title:hover { color: var(--m-primary); }
-    .card-price { font-weight: 800; font-size: 1.2rem; color: var(--m-primary); }
-    .btn-quick-view { position: absolute; top: 15px; @(isAr?"left":"right"): 15px; width: 35px; height: 35px; border-radius: 50%; background: #fff; color: var(--m-text); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); opacity: 0; transform: translateY(-10px); transition: 0.3s; }
-    .product-card-modern:hover .btn-quick-view { opacity: 1; transform: translateY(0); }
-    .btn-quick-view:hover { background: var(--m-primary); color: #fff; }
-    @@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    @@media (max-width: 992px) { .modern-grid { grid-template-columns: 1fr; } .sticky-wrapper { position: static; } .main-view { height: 350px; } .related-grid { grid-template-columns: repeat(2, 1fr); } }
+    /* =========================================
+           PREMIUM PRODUCT DETAILS STYLES (Light & Dark)
+           ========================================= */
+    :root {
+        --m-primary: #0F172A;
+        --m-accent: #FACC15;
+        --m-bg: #f8fafc;
+        --m-card-bg: #ffffff;
+        --m-text: #334155;
+        --m-text-muted: #64748b;
+        --m-border: #e2e8f0;
+        --m-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        --m-input-bg: #f8fafc;
+        --m-hover-bg: #f1f5f9;
+        --m-main-view-bg: radial-gradient(circle at center, #fff 40%, #f1f5f9 100%);
+    }
+
+    [data-bs-theme="dark"] {
+        --m-primary: #f8fafc; /* White headings */
+        --m-accent: #FACC15; /* Gold */
+        --m-bg: #020617; /* Deep Dark */
+        --m-card-bg: #1e293b; /* Slate 800 */
+        --m-text: #f8fafc; /* Light Text */
+        --m-text-muted: #94a3b8; /* Muted Text */
+        --m-border: rgba(255, 255, 255, 0.08);
+        --m-shadow: 0 10px 40px -5px rgba(0, 0, 0, 0.4);
+        --m-input-bg: #0f172a;
+        --m-hover-bg: rgba(255, 255, 255, 0.05);
+        --m-main-view-bg: #ffffff; /* Keep white for product visibility */
+    }
+
+    body {
+        background-color: var(--m-bg);
+        color: var(--m-text);
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .modern-wrapper {
+        padding: 40px 0;
+        font-family: 'Cairo', sans-serif;
+        overflow-x: hidden;
+    }
+
+    .modern-crumb {
+        margin-bottom: 30px;
+        font-size: 0.95rem;
+        color: var(--m-text-muted);
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+        .modern-crumb a {
+            color: var(--m-text);
+            text-decoration: none;
+            transition: 0.2s;
+        }
+
+            .modern-crumb a:hover {
+                color: var(--m-accent);
+            }
+
+        .modern-crumb i {
+            font-size: 0.75rem;
+            color: var(--m-text-muted);
+        }
+
+    .modern-grid {
+        display: grid;
+        grid-template-columns: 1.3fr 0.8fr;
+        gap: 40px;
+        align-items: start;
+    }
+
+    /* Left Column */
+    .gallery-card {
+        background: var(--m-card-bg);
+        border-radius: 24px;
+        padding: 20px;
+        box-shadow: var(--m-shadow);
+        border: 1px solid var(--m-border);
+        margin-bottom: 40px;
+        position: relative;
+    }
+
+    .main-view {
+        height: 500px;
+        border-radius: 16px;
+        background: var(--m-main-view-bg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        cursor: zoom-in;
+        position: relative;
+        margin-bottom: 20px;
+        border: 1px solid var(--m-border);
+    }
+
+    /* Ensure dark mode images still pop */
+    [data-bs-theme="dark"] .main-view {
+        background: transparent;
+    }
+
+    .main-view img {
+        max-width: 90%;
+        max-height: 90%;
+        transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    .main-view:hover img {
+        transform: scale(1.6);
+    }
+
+    .sale-sticker {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background: var(--m-accent);
+        color: #0F172A; /* Contrast text */
+        font-weight: 900;
+        padding: 8px 15px;
+        border-radius: 30px;
+        box-shadow: 0 5px 15px rgba(250, 204, 21, 0.4);
+        z-index: 5;
+    }
+
+    .thumb-grid {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+    }
+
+    .thumb-card {
+        width: 80px;
+        height: 80px;
+        border-radius: 12px;
+        border: 2px solid transparent;
+        cursor: pointer;
+        padding: 5px;
+        background: transparent !important; 
+        transition: 0.3s;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+    }
+
+    [data-bs-theme="dark"] .thumb-card {
+        border: 1px solid var(--m-border);
+    }
+
+    .thumb-card.active {
+        border-color: var(--m-primary);
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+
+    [data-bs-theme="dark"] .thumb-card.active {
+        border-color: var(--m-accent);
+    }
+
+    .thumb-card img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    /* Content Card (Tabs) */
+    .content-card {
+        background: var(--m-card-bg);
+        border-radius: 24px;
+        padding: 40px;
+        box-shadow: var(--m-shadow);
+        border: 1px solid var(--m-border);
+    }
+
+    .modern-tabs {
+        display: flex;
+        gap: 30px;
+        border-bottom: 1px solid var(--m-border);
+        margin-bottom: 30px;
+    }
+
+    .m-tab {
+        background: none;
+        border: none;
+        padding: 15px 0;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--m-text-muted);
+        cursor: pointer;
+        position: relative;
+        transition: 0.3s;
+    }
+
+        .m-tab.active {
+            color: var(--m-primary);
+        }
+
+    [data-bs-theme="dark"] .m-tab.active {
+        color: var(--m-accent);
+    }
+
+    .m-tab.active::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: var(--m-accent);
+        border-radius: 4px 4px 0 0;
+    }
+
+    .tab-body {
+        display: none;
+        animation: slideUp 0.4s ease-out;
+    }
+
+        .tab-body.active {
+            display: block;
+        }
+
+    .desc-text {
+        line-height: 1.9;
+        color: var(--m-text-muted);
+        font-size: 1.05rem;
+    }
+
+    [data-bs-theme="dark"] .desc-text {
+        color: #cbd5e1;
+    }
+
+    /* Table in Dark Mode */
+    .table-bordered {
+        border-color: var(--m-border);
+    }
+
+        .table-bordered th, .table-bordered td {
+            border-color: var(--m-border);
+            color: var(--m-text);
+            background-color: transparent;
+        }
+
+    .bg-light {
+        background-color: var(--m-hover-bg) !important;
+        color: var(--m-text) !important;
+    }
+
+    /* Reviews */
+    .border-bottom {
+        border-bottom-color: var(--m-border) !important;
+    }
+
+    .review-avatar {
+        width: 45px;
+        height: 45px;
+        background: var(--m-hover-bg);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: var(--m-primary);
+    }
+
+    [data-bs-theme="dark"] .review-avatar {
+        color: #fff;
+    }
+
+    /* Right Column: Sticky Purchase Card */
+    .sticky-wrapper {
+        position: sticky;
+        top: 20px;
+        z-index: 100;
+    }
+
+    .purchase-card {
+        background: var(--m-card-bg);
+        border-radius: 24px;
+        padding: 35px;
+        box-shadow: var(--m-shadow);
+        border: 1px solid var(--m-border);
+    }
+
+    .p-brand {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #2563eb;
+        font-weight: 800;
+        margin-bottom: 10px;
+        display: block;
+    }
+
+    [data-bs-theme="dark"] .p-brand {
+        color: #38bdf8;
+    }
+
+    .p-title {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: var(--m-primary);
+        line-height: 1.3;
+        margin: 0 0 15px;
+    }
+
+    .p-rating {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 25px;
+        color: var(--m-text);
+    }
+
+    .star-icon {
+        color: #f59e0b;
+        font-size: 0.9rem;
+    }
+
+    .stock-badge {
+        background: #dcfce7;
+        color: #166534;
+        font-weight: 700;
+        font-size: 0.8rem;
+        padding: 4px 10px;
+        border-radius: 6px;
+        margin-inline-start: auto;
+    }
+
+        .stock-badge.out {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+    [data-bs-theme="dark"] .stock-badge {
+        background: rgba(34, 197, 94, 0.2);
+        color: #4ade80;
+    }
+
+        [data-bs-theme="dark"] .stock-badge.out {
+            background: rgba(220, 38, 38, 0.2);
+            color: #f87171;
+        }
+
+    .p-price {
+        font-size: 2.5rem;
+        font-weight: 900;
+        color: var(--m-primary);
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        margin-bottom: 5px;
+    }
+
+    [data-bs-theme="dark"] .p-price {
+        color: #f8fafc;
+    }
+
+    .p-price small {
+        font-size: 1.1rem;
+        color: var(--m-text-muted);
+        font-weight: 700;
+    }
+
+    .p-old-price {
+        text-decoration: line-through;
+        color: var(--m-text-muted);
+        font-size: 1.2rem;
+        margin-bottom: 30px;
+        display: block;
+    }
+
+    /* Wholesale Alert */
+    .alert-warning {
+        background: #fffbeb;
+        color: #b45309;
+        border: none;
+    }
+
+    [data-bs-theme="dark"] .alert-warning {
+        background: rgba(245, 158, 11, 0.15);
+        color: #fbbf24;
+    }
+
+    .opt-title {
+        font-weight: 700;
+        font-size: 0.9rem;
+        margin-bottom: 10px;
+        display: block;
+        color: var(--m-text);
+    }
+
+    /* Colors */
+    .color-picker {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 25px;
+    }
+
+    .color-item {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 3px solid var(--m-card-bg);
+        box-shadow: 0 0 0 1px var(--m-border);
+        transition: 0.2s;
+    }
+
+        .color-item:hover {
+            transform: scale(1.1);
+        }
+
+        .color-item.active {
+            box-shadow: 0 0 0 2px var(--m-primary);
+        }
+
+    [data-bs-theme="dark"] .color-item.active {
+        box-shadow: 0 0 0 2px var(--m-accent);
+    }
+
+    /* Qty & Buttons */
+    .qty-selector {
+        display: flex;
+        background: var(--m-input-bg);
+        border-radius: 12px;
+        padding: 5px;
+        margin-bottom: 20px;
+        align-items: center;
+        border: 1px solid var(--m-border);
+    }
+
+    .qty-btn {
+        width: 40px;
+        height: 40px;
+        border: none;
+        background: var(--m-card-bg);
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        cursor: pointer;
+        color: var(--m-primary);
+        font-size: 1.2rem;
+        transition: 0.2s;
+    }
+
+    [data-bs-theme="dark"] .qty-btn {
+        color: var(--m-text);
+    }
+
+    .qty-btn:hover {
+        background: var(--m-accent);
+        color: #000;
+    }
+
+    .qty-display {
+        flex: 1;
+        text-align: center;
+        font-weight: 800;
+        font-size: 1.2rem;
+        border: none;
+        background: transparent;
+        outline: none;
+        color: var(--m-text);
+    }
+
+    .add-btn {
+        width: 100%;
+        background: var(--m-primary);
+        color: #fff;
+        border: none;
+        padding: 18px;
+        border-radius: 14px;
+        font-weight: 800;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.4);
+    }
+
+    [data-bs-theme="dark"] .add-btn {
+        background: var(--m-accent);
+        color: #0F172A;
+    }
+
+    .add-btn:hover {
+        transform: translateY(-3px);
+        background: #1e293b;
+        box-shadow: 0 15px 30px -5px rgba(15, 23, 42, 0.5);
+    }
+
+    [data-bs-theme="dark"] .add-btn:hover {
+        background: #fff;
+    }
+
+    .add-btn:disabled {
+        background: #cbd5e1;
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
+    }
+
+    [data-bs-theme="dark"] .add-btn:disabled {
+        background: #334155;
+        color: #64748b;
+    }
+
+    .wish-btn {
+        width: 100%;
+        background: var(--m-card-bg);
+        border: 2px solid var(--m-border);
+        color: var(--m-text-muted);
+        padding: 15px;
+        border-radius: 14px;
+        font-weight: 700;
+        margin-top: 15px;
+        cursor: pointer;
+        transition: 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+        .wish-btn:hover {
+            border-color: var(--m-primary);
+            color: var(--m-primary);
+        }
+
+    [data-bs-theme="dark"] .wish-btn:hover {
+        border-color: var(--m-accent);
+        color: var(--m-accent);
+    }
+
+    .wish-btn.active {
+        background: #fee2e2;
+        color: #ef4444;
+        border-color: #ef4444;
+    }
+
+    [data-bs-theme="dark"] .wish-btn.active {
+        background: rgba(220, 38, 38, 0.15);
+    }
+
+    .trust-box {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px dashed var(--m-border);
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+
+    .trust-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.8rem;
+        color: var(--m-text-muted);
+        font-weight: 600;
+    }
+
+        .trust-item i {
+            font-size: 1.2rem;
+            color: var(--m-primary);
+        }
+
+    [data-bs-theme="dark"] .trust-item i {
+        color: var(--m-accent);
+    }
+
+    /* Related Products */
+    .related-section {
+        margin-top: 80px;
+        padding-top: 40px;
+        border-top: 2px solid var(--m-border);
+    }
+
+    .section-title {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: var(--m-primary);
+        margin-bottom: 30px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+        .section-title::before {
+            content: '';
+            width: 8px;
+            height: 35px;
+            background: var(--m-accent);
+            border-radius: 4px;
+        }
+
+    .related-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 25px;
+    }
+
+    .product-card-modern {
+        background: var(--m-card-bg);
+        border-radius: 20px;
+        border: 1px solid transparent;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+        .product-card-modern:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.06);
+            border-color: var(--m-primary);
+        }
+
+    [data-bs-theme="dark"] .product-card-modern:hover {
+        border-color: var(--m-accent);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+    }
+
+    .card-img-wrapper {
+        height: 220px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(circle, #fff 40%, #f8fafc 100%);
+        padding: 20px;
+        position: relative;
+    }
+    /* Always white bg for images */
+    [data-bs-theme="dark"] .card-img-wrapper {
+        background: #fff;
+    }
+
+    .card-img-wrapper img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        transition: transform 0.3s;
+    }
+
+    .product-card-modern:hover .card-img-wrapper img {
+        transform: scale(1.1);
+    }
+
+    .card-info {
+        padding: 20px;
+        text-align: center;
+        background: var(--m-card-bg);
+        flex-grow: 1;
+    }
+
+    .card-title {
+        font-weight: 700;
+        font-size: 1rem;
+        color: var(--m-text);
+        margin-bottom: 8px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: block;
+        text-decoration: none;
+    }
+
+        .card-title:hover {
+            color: var(--m-primary);
+        }
+
+    [data-bs-theme="dark"] .card-title:hover {
+        color: var(--m-accent);
+    }
+
+    .card-price {
+        font-weight: 800;
+        font-size: 1.2rem;
+        color: var(--m-primary);
+    }
+
+    [data-bs-theme="dark"] .card-price {
+        color: #f8fafc;
+    }
+
+    .btn-quick-view {
+        position: absolute;
+        top: 15px; @(isAr ? "left" : "right")
+        : 15px;
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        background: var(--m-card-bg);
+        color: var(--m-text);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        opacity: 0;
+        transform: translateY(-10px);
+        transition: 0.3s;
+    }
+
+    .product-card-modern:hover .btn-quick-view {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .btn-quick-view:hover {
+        background: var(--m-primary);
+        color: #fff;
+    }
+
+    [data-bs-theme="dark"] .btn-quick-view:hover {
+        background: var(--m-accent);
+        color: #000;
+    }
+
+    @@keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @@media (max-width: 992px) {
+        .modern-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .sticky-wrapper {
+            position: static;
+        }
+
+        .main-view {
+            height: 350px;
+        }
+
+        .related-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
 </style>
 
 <div class="modern-wrapper">
     <div class="container">
-        
+
         <!-- Breadcrumb -->
         <div class="modern-crumb">
-            <a asp-controller="Home" asp-action="Index"><i class="fas fa-home"></i> @(isAr?"الرئيسية":"Home")</a>
-            <i class="fas @(isAr?"fa-chevron-left":"fa-chevron-right")"></i>
-            <a asp-controller="Product" asp-action="Index" asp-route-categoryId="@Model.CategoryId">@(isAr ? Model.Category?.Name : Model.Category?.NameEn)</a>
-            <i class="fas @(isAr?"fa-chevron-left":"fa-chevron-right")"></i>
-            <span style="color:var(--m-primary); font-weight:700;">@(isAr ? Model.Name : Model.NameEn)</span>
+            <a asp-controller="Home" asp-action="Index"><i class="fas fa-home"></i> @(isAr ? "الرئيسية" : "Home")</a>
+            <i class="fas @(isAr ? "fa-chevron-left" : "fa-chevron-right")"></i>
+            <a asp-controller="Product" asp-action="Index" asp-route-categoryId="@Model.CategoryId">@(isAr? Model.Category?.Name : Model.Category?.NameEn)</a>
+            <i class="fas @(isAr ? "fa-chevron-left" : "fa-chevron-right")"></i>
+            <span style="color:var(--m-primary); font-weight:700;">@(isAr? Model.Name: Model.NameEn)</span>
         </div>
 
         <div class="modern-grid">
-            
+
             <!-- Left: Content Stream -->
             <div class="content-col">
                 <!-- Gallery -->
                 <div class="gallery-card">
                     <div class="main-view" id="zoomContainer" onmousemove="zoom(event)" onmouseleave="resetZoom()">
-                        @if(discountPercentage > 0) { <div class="sale-sticker">@(isAr?"خصم":"Sale") @discountPercentage%</div> }
+                        @if (discountPercentage > 0)
+                        {
+                            <div class="sale-sticker">@(isAr ? "خصم" : "Sale") @discountPercentage%</div>
+                        }
                         <img id="mainImage" src="~/@Model.ImageUrl" alt="@Model.Name" onerror="this.src='/images/default.png'">
                     </div>
                     @if (allImages.Count > 1)
                     {
                         <div class="thumb-grid">
-                            @for(int i=0; i<allImages.Count; i++)
+                            @for (int i = 0; i < allImages.Count; i++)
                             {
-                                <div class="thumb-card @(i==0?"active":"")" onclick="switchImage(@i)">
+                                <div class="thumb-card @(i == 0 ? "active" : "")" onclick="switchImage(@i)">
                                     <img src="~/@allImages[i]" onerror="this.src='/images/default.png'">
                                 </div>
                             }
@@ -154,9 +839,9 @@
                 <!-- Tabs -->
                 <div class="content-card">
                     <div class="modern-tabs">
-                        <button class="m-tab active" onclick="switchTab('desc', this)">@(isAr?"الوصف الكامل":"Description")</button>
-                        <button class="m-tab" onclick="switchTab('specs', this)">@(isAr?"المواصفات":"Specs")</button>
-                        <button class="m-tab" onclick="switchTab('reviews', this)">@(isAr?"التقييمات":"Reviews") <span class="badge bg-light text-dark ms-1 rounded-pill">@reviewCount</span></button>
+                        <button class="m-tab active" onclick="switchTab('desc', this)">@(isAr ? "الوصف الكامل" : "Description")</button>
+                        <button class="m-tab" onclick="switchTab('specs', this)">@(isAr ? "المواصفات" : "Specs")</button>
+                        <button class="m-tab" onclick="switchTab('reviews', this)">@(isAr ? "التقييمات" : "Reviews") <span class="badge bg-light text-dark ms-1 rounded-pill">@reviewCount</span></button>
                     </div>
 
                     <div id="desc-tab" class="tab-body active">
@@ -166,10 +851,10 @@
                     <div id="specs-tab" class="tab-body">
                         <table class="table table-bordered">
                             <tbody>
-                                <tr><th width="30%" class="bg-light">@(isAr?"الوزن":"Weight")</th><td>@Model.Weight Kg</td></tr>
+                                <tr><th width="30%" class="bg-light">@(isAr ? "الوزن" : "Weight")</th><td>@Model.Weight Kg</td></tr>
                                 <tr><th class="bg-light">SKU</th><td>@Model.SKU</td></tr>
                                 <tr><th class="bg-light">Barcode</th><td>@Model.Barcode</td></tr>
-                                <tr><th class="bg-light">@(isAr?"وحدة البيع":"Unit")</th><td>@(isAr?"كرتونة":"Carton") (@Model.UnitsPerCarton pcs)</td></tr>
+                                <tr><th class="bg-light">@(isAr ? "وحدة البيع" : "Unit")</th><td>@(isAr ? "كرتونة" : "Carton") (@Model.UnitsPerCarton pcs)</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -180,22 +865,25 @@
                             @foreach (var r in reviews)
                             {
                                 <div class="d-flex gap-3 mb-4 pb-3 border-bottom last-no-border">
-                                    <div style="width:45px; height:45px; background:#f1f5f9; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold;">
+                                    <div class="review-avatar">
                                         @(r.User?.FullName?.FirstOrDefault() ?? 'U')
                                     </div>
                                     <div>
-                                        <h6 class="fw-bold mb-1">@r.User?.FullName</h6>
-                                        <div class="text-warning small">@for(int k=0; k<r.Rating; k++){<i class="fas fa-star"></i>}</div>
-                                        <p class="text-muted mt-2 mb-0 small">@r.Comment</p>
-                                    </div>
+                                        <h6 class="fw-bold mb-1" style="color:var(--m-text)">@r.User?.FullName</h6>
+                                        <div class="text-warning small">@for(int k=0; k<r.Rating; k++){
+                                        <i class="fas fa-star"></i>
+                                    }
+    </div>
+                                    <p class="text-muted mt-2 mb-0 small">@r.Comment</p>
                                 </div>
-                            }
+                            </div>
                         }
-                        else
+                                                }
+                                                else
                         {
                             <div class="text-center py-5 text-muted">
                                 <i class="far fa-comment-dots fa-3x mb-3 opacity-25"></i>
-                                <p>@(isAr?"كن أول من يقيم هذا المنتج!":"Be the first to review!")</p>
+                                <p>@(isAr ? "كن أول من يقيم هذا المنتج!" : "Be the first to review!")</p>
                             </div>
                         }
                     </div>
@@ -206,54 +894,68 @@
             <div class="sticky-wrapper">
                 <div class="purchase-card">
                     <span class="p-brand">@(Model.Brand ?? Model.Merchant?.ShopName ?? "Brand")</span>
-                    <h1 class="p-title">@(isAr ? Model.Name : Model.NameEn)</h1>
-                    
+                    <h1 class="p-title">@(isAr? Model.Name: Model.NameEn)</h1>
+
                     <div class="p-rating">
                         <span class="fw-bold">@avgRating</span>
-                        <div class="stars">@for(int i=1; i<=5; i++){<i class="fas @(i<=avgRating?"fa-star":"fa-star text-muted opacity-25") star-icon"></i>}</div>
+                        <div class="stars">@for(int i=1; i<=5; i++){
+                        <i class="fas @(i <= avgRating ? "fa-star" : "fa-star text-muted opacity-25") star-icon"></i>
+                                                }
+</div>
                         <span class="text-muted small">(@reviewCount)</span>
-                        @if(Model.StockQuantity > 0) { <span class="stock-badge">@(isAr?"متوفر":"In Stock")</span> } 
-                        else { <span class="stock-badge out">@(isAr?"غير متوفر":"Out")</span> }
+                        @if (Model.StockQuantity > 0)
+                        {
+                            <span class="stock-badge">@(isAr ? "متوفر" : "In Stock")</span>
+                        }
+                        else
+                        {
+
+                            <span class="stock-badge out">@(isAr ? "غير متوفر" : "Out")</span>
+                        }
                     </div>
 
                     <div class="p-price">
-                        @Model.Price.ToString("N0") <small>@(isAr?"ج.م":"EGP")</small>
+                        @Model.Price.ToString("N0") <small>@(isAr ? "ج.م" : "EGP")</small>
                     </div>
-                    @if(Model.OldPrice > Model.Price) { <span class="p-old-price">@Model.OldPrice.Value.ToString("N0")</span> }
+                    @if (Model.OldPrice > Model.Price)
+                    {
+                        <span class="p-old-price">@Model.OldPrice.Value.ToString("N0")</span>
+                    }
 
                     <!-- Wholesale Tiers -->
-                    @if(Model.PriceTiers != null && Model.PriceTiers.Any())
+                    @if (Model.PriceTiers != null && Model.PriceTiers.Any())
                     {
-                        <div class="alert alert-warning border-0 d-flex align-items-center gap-2 p-2 mb-4" style="background:#fffbeb; color:#b45309;">
-                            <i class="fas fa-tags"></i> <small class="fw-bold">@(isAr?"أسعار جملة متاحة!":"Bulk pricing available!")</small>
+                        <div class="alert alert-warning border-0 d-flex align-items-center gap-2 p-2 mb-4">
+                            <i class="fas fa-tags"></i> <small class="fw-bold">@(isAr ? "أسعار جملة متاحة!" : "Bulk pricing available!")</small>
                         </div>
                     }
 
                     <!-- Colors -->
-                    @if(Model.ProductColors != null && Model.ProductColors.Any())
+                    @if (Model.ProductColors != null && Model.ProductColors.Any())
                     {
                         <div class="options-group">
-                            <span class="opt-title">@(isAr?"اللون":"Color"):</span>
+                            <span class="opt-title">@(isAr ? "اللون" : "Color"):</span>
                             <div class="color-picker">
-                                @{ 
+                                @{
                                     var firstColor = true;
                                     string defName = defaultColorName;
                                     string defHex = defaultColorHex;
                                 }
-                                @foreach(var color in Model.ProductColors)
+                                @foreach (var color in Model.ProductColors)
                                 {
-                                    if(firstColor) {
+                                    if (firstColor)
+                                    {
                                         defName = color.ColorName;
                                         defHex = color.ColorHex;
                                     }
-                                    <div class="color-item @(firstColor ? "active" : "")" 
-                                         style="background-color:@color.ColorHex" 
-                                         title="@color.ColorName" 
+                                    <div class="color-item @(firstColor ? "active" : "")"
+                                         style="background-color:@color.ColorHex"
+                                         title="@color.ColorName"
                                          data-name="@color.ColorName"
                                          data-hex="@color.ColorHex"
                                          onclick="selectColor(this)">
                                     </div>
-                                     firstColor = false; 
+                                    firstColor = false;
                                 }
                                 <!-- Hidden inputs to store selected color data -->
                                 <input type="hidden" id="selectedColorName" value="@defName">
@@ -275,28 +977,28 @@
                         <button class="qty-btn" onclick="updateQty(1)">+</button>
                     </div>
 
-                    @if(Model.StockQuantity > 0)
+                    @if (Model.StockQuantity > 0)
                     {
                         <button class="add-btn" onclick="addToCartSimple(this, @Model.Id)">
-                            <span>@(isAr?"إضافة للسلة":"Add to Cart")</span>
+                            <span>@(isAr ? "إضافة للسلة" : "Add to Cart")</span>
                             <i class="fas fa-shopping-cart"></i>
                         </button>
                     }
                     else
                     {
-                        <button class="add-btn" disabled style="background:#94a3b8; cursor:not-allowed;">@(isAr?"نفذت الكمية":"Out of Stock")</button>
+                        <button class="add-btn" disabled style="background:#94a3b8; cursor:not-allowed;">@(isAr ? "نفذت الكمية" : "Out of Stock")</button>
                     }
 
-                    <button class="wish-btn @(isWishlisted ? "active" : "")" onclick="toggleWishlist(@Model.Id, this)" title="@(isAr?"المفضلة":"Wishlist")">
+                    <button class="wish-btn @(isWishlisted ? "active" : "")" onclick="toggleWishlist(@Model.Id, this)" title="@(isAr ? "المفضلة" : "Wishlist")">
                         <i class="@(isWishlisted ? "fas" : "far") fa-heart"></i>
-                        <span>@(isWishlisted ? (isAr?"مضاف للمفضلة":"Saved") : (isAr?"إضافة للمفضلة":"Save for later"))</span>
+                        <span>@(isWishlisted ? (isAr ? "مضاف للمفضلة" : "Saved") : (isAr ? "إضافة للمفضلة" : "Save for later"))</span>
                     </button>
 
                     <div class="trust-box">
-                        <div class="trust-item"><i class="fas fa-truck"></i> @(isAr?"شحن سريع":"Fast Delivery")</div>
-                        <div class="trust-item"><i class="fas fa-shield-alt"></i> @(isAr?"دفع آمن":"Secure Payment")</div>
-                        <div class="trust-item"><i class="fas fa-undo"></i> @(isAr?"إرجاع مجاني":"Free Returns")</div>
-                        <div class="trust-item"><i class="fas fa-certificate"></i> @(isAr?"منتج أصلي":"Authentic")</div>
+                        <div class="trust-item"><i class="fas fa-truck"></i> @(isAr ? "شحن سريع" : "Fast Delivery")</div>
+                        <div class="trust-item"><i class="fas fa-shield-alt"></i> @(isAr ? "دفع آمن" : "Secure Payment")</div>
+                        <div class="trust-item"><i class="fas fa-undo"></i> @(isAr ? "إرجاع مجاني" : "Free Returns")</div>
+                        <div class="trust-item"><i class="fas fa-certificate"></i> @(isAr ? "منتج أصلي" : "Authentic")</div>
                     </div>
                 </div>
             </div>
@@ -304,7 +1006,7 @@
         </div>
 
         <!-- Related -->
-        @if(relatedProducts != null && relatedProducts.Any())
+        @if (relatedProducts != null && relatedProducts.Any())
         {
             <div class="related-section">
                 <div class="section-title"><span>@(isAr ? "منتجات قد تعجبك" : "You May Also Like")</span></div>
@@ -313,14 +1015,17 @@
                     {
                         <div class="product-card-modern">
                             <div class="card-img-wrapper">
-                                @if (item.OldPrice > item.Price) { <div class="sale-sticker" style="font-size:0.7rem; padding:4px 10px;">Sale</div> }
+                                @if (item.OldPrice > item.Price)
+                                {
+                                    <div class="sale-sticker" style="font-size:0.7rem; padding:4px 10px;">Sale</div>
+                                }
                                 <a href="/Product/Details/@item.Id" class="btn-quick-view"><i class="fas fa-eye"></i></a>
                                 <a href="/Product/Details/@item.Id">
                                     <img src="~/@item.ImageUrl" onerror="this.src='/images/default.png'" alt="@item.Name">
                                 </a>
                             </div>
                             <div class="card-info">
-                                <a href="/Product/Details/@item.Id" class="card-title">@(isAr ? item.Name : item.NameEn)</a>
+                                <a href="/Product/Details/@item.Id" class="card-title">@(isAr? item.Name: item.NameEn)</a>
                                 <div class="card-price">@item.Price.ToString("N0") <small>ج.م</small></div>
                             </div>
                         </div>
@@ -385,7 +1090,7 @@
             // UI update
             document.querySelectorAll('.color-item').forEach(c => c.classList.remove('active'));
             el.classList.add('active');
-            
+
             // Set hidden inputs
             const name = el.getAttribute('data-name');
             const hex = el.getAttribute('data-hex');
@@ -406,7 +1111,7 @@
             // Get color values from hidden inputs
             let cName = document.getElementById('selectedColorName') ? document.getElementById('selectedColorName').value : '';
             let cHex = document.getElementById('selectedColorHex') ? document.getElementById('selectedColorHex').value : '';
-            
+
             let originalText = btn.innerHTML;
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
@@ -425,22 +1130,22 @@
             .then(res => {
                 if(res.success) {
                     Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: res.message, showConfirmButton: false, timer: 1500 });
-                    
+
                     // Update Local Storage
                     let cart = JSON.parse(localStorage.getItem('DISKA_CART')) || [];
                     // Using compound ID to store different variants as distinct items
                     let uniqueId = id + '_' + (res.product.colorHex || 'def');
                     let existing = cart.find(i => i.uniqueId === uniqueId);
-                    
+
                     if(existing) existing.qty += parseInt(qty);
                     else cart.push({
                          id: res.product.id, uniqueId: uniqueId, qty: parseInt(qty),
                          name: res.product.name, price: res.product.price, image: res.product.image,
-                         maxStock: res.product.stock, 
-                         colorName: res.product.colorName, 
+                         maxStock: res.product.stock,
+                         colorName: res.product.colorName,
                          colorHex: res.product.colorHex
                     });
-                    
+
                     localStorage.setItem('DISKA_CART', JSON.stringify(cart));
                     if(typeof updateCartBadge === 'function') updateCartBadge();
                 } else {
@@ -457,19 +1162,21 @@
         async function toggleWishlist(id, btn) {
             try {
                 const icon = btn.querySelector('i');
-                const response = await fetch('/Wishlist/Toggle', { 
-                    method: 'POST', 
-                    headers: {'Content-Type': 'application/x-www-form-urlencoded'}, 
-                    body: `productId=${id}` 
+                const response = await fetch('/Wishlist/Toggle', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: `productId=${id}`
                 });
-                
+
                 if(response.status === 401) { window.location.href = '/Account/Login'; return; }
                 const res = await response.json();
                 if(res.success) {
                     if(res.status === 'added') {
                         icon.classList.remove('far'); icon.classList.add('fas'); btn.classList.add('active');
+                        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'تمت الإضافة للمفضلة', showConfirmButton: false, timer: 1500 });
                     } else {
                         icon.classList.remove('fas'); icon.classList.add('far'); btn.classList.remove('active');
+                        Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: 'تم الحذف من المفضلة', showConfirmButton: false, timer: 1500 });
                     }
                 }
             } catch(e) { console.error(e); }
@@ -478,14 +1185,14 @@
         function requestQuote(id) {
             if(typeof Swal !== 'undefined') {
                 Swal.fire({
-                    title: '@(isAr?"طلب عرض سعر":"Request Quote")',
-                    html: `<input type="text" class="swal2-input" placeholder="@(isAr?"الشركة":"Company")"><textarea class="swal2-textarea" placeholder="@(isAr?"التفاصيل":"Details")"></textarea>`,
-                    confirmButtonText: '@(isAr?"إرسال":"Send")',
+                    title: '@(isAr ? "طلب عرض سعر" : "Request Quote")',
+                    html: `<input type="text" class="swal2-input" placeholder="@(isAr ? "الشركة" : "Company")"><textarea class="swal2-textarea" placeholder="@(isAr ? "التفاصيل" : "Details")"></textarea>`,
+                    confirmButtonText: '@(isAr ? "إرسال" : "Send")',
                     confirmButtonColor: '#0F172A'
                 });
             }
         }
 
-        document.addEventListener('DOMContentLoaded', startAutoSlide);
+        document.addEventListener('DOMContentLoaded', startSlide);
     </script>
 }

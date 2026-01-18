@@ -6,27 +6,55 @@
     ViewData["Title"] = isAr ? "طلباتي" : "My Orders";
 
     // Pagination & Filter Data
-    int currentPage = ViewBag.CurrentPage;
-    int totalPages = ViewBag.TotalPages;
-    string currentStatus = ViewBag.CurrentStatus;
+    int currentPage = ViewBag.CurrentPage ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    string currentStatus = ViewBag.CurrentStatus ?? "all";
 
     // Stats
-    int totalOrders = ViewBag.TotalOrdersCount;
-    int activeOrders = ViewBag.ActiveOrdersCount;
-    decimal totalSpent = ViewBag.TotalSpent;
+    int totalOrders = ViewBag.TotalOrdersCount ?? 0;
+    int activeOrders = ViewBag.ActiveOrdersCount ?? 0;
+    decimal totalSpent = ViewBag.TotalSpent ?? 0;
 }
 
 <style>
+    /* =========================================
+           PREMIUM ORDERS STYLES (Light & Dark)
+           ========================================= */
     :root {
-        --o-primary: #0F172A;
-        --o-accent: #FACC15;
-        --o-bg: #f8fafc;
-        --o-text: #334155;
-        --o-border: #e2e8f0;
+        /* Light Theme */
+        --ord-bg-body: #f8fafc;
+        --ord-card-bg: #ffffff;
+        --ord-text-main: #0f172a;
+        --ord-text-muted: #64748b;
+        --ord-border: #e2e8f0;
+        --ord-primary: #0F172A;
+        --ord-accent: #FACC15;
+        --ord-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+        --ord-badge-bg: #f1f5f9;
+        --ord-hover-bg: #f8fafc;
+    }
+
+    [data-bs-theme="dark"] {
+        /* Dark Theme - Premium Slate */
+        --ord-bg-body: #020617; /* Deep Dark */
+        --ord-card-bg: #1e293b; /* Slate 800 */
+        --ord-text-main: #f8fafc; /* Light Text */
+        --ord-text-muted: #94a3b8; /* Muted Text */
+        --ord-border: rgba(255, 255, 255, 0.08);
+        --ord-primary: #f8fafc; /* Headings become white */
+        --ord-accent: #FACC15; /* Gold remains */
+        --ord-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        --ord-badge-bg: rgba(255, 255, 255, 0.05);
+        --ord-hover-bg: rgba(255, 255, 255, 0.03);
+    }
+
+    body {
+        background-color: var(--ord-bg-body);
+        color: var(--ord-text-main);
+        transition: background-color 0.3s ease, color 0.3s ease;
     }
 
     .orders-page {
-        background-color: var(--o-bg);
         padding: 50px 0;
         min-height: 80vh;
         font-family: 'Cairo', sans-serif;
@@ -45,54 +73,93 @@
     .page-title h1 {
         font-size: 2.2rem;
         font-weight: 800;
-        color: var(--o-primary);
+        color: var(--ord-primary);
         margin: 0;
     }
 
     .page-title p {
-        color: #64748b;
+        color: var(--ord-text-muted);
         margin: 5px 0 0;
     }
 
     .stats-row {
         display: flex;
         gap: 20px;
+        flex-wrap: wrap;
     }
 
     .stat-badge {
-        background: #fff;
-        padding: 10px 20px;
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-        border: 1px solid var(--o-border);
+        background: var(--ord-card-bg);
+        padding: 12px 20px;
+        border-radius: 16px;
+        box-shadow: var(--ord-shadow);
+        border: 1px solid var(--ord-border);
         display: flex;
         align-items: center;
         gap: 12px;
+        transition: 0.3s;
     }
 
+        .stat-badge:hover {
+            transform: translateY(-3px);
+            border-color: var(--ord-text-muted);
+        }
+
     .stat-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 10px;
-        background: rgba(15, 23, 42, 0.05);
-        color: var(--o-primary);
+        width: 45px;
+        height: 45px;
+        border-radius: 12px;
+        background: var(--ord-badge-bg);
+        color: var(--ord-text-main);
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 1.2rem;
     }
 
+        /* Specific Colors for Stats (Adaptive) */
+        .stat-icon.blue {
+            color: #0284c7;
+            background: rgba(2, 132, 199, 0.1);
+        }
+
+        .stat-icon.orange {
+            color: #d97706;
+            background: rgba(217, 119, 6, 0.1);
+        }
+
+        .stat-icon.green {
+            color: #16a34a;
+            background: rgba(22, 163, 74, 0.1);
+        }
+
+    [data-bs-theme="dark"] .stat-icon.blue {
+        color: #38bdf8;
+        background: rgba(56, 189, 248, 0.15);
+    }
+
+    [data-bs-theme="dark"] .stat-icon.orange {
+        color: #fbbf24;
+        background: rgba(251, 191, 36, 0.15);
+    }
+
+    [data-bs-theme="dark"] .stat-icon.green {
+        color: #4ade80;
+        background: rgba(74, 222, 128, 0.15);
+    }
+
+
     .stat-info span {
         display: block;
         font-size: 0.75rem;
-        color: #64748b;
-        font-weight: 600;
+        color: var(--ord-text-muted);
+        font-weight: 700;
         text-transform: uppercase;
     }
 
     .stat-info strong {
-        font-size: 1.1rem;
-        color: var(--o-primary);
+        font-size: 1.2rem;
+        color: var(--ord-text-main);
         font-weight: 800;
     }
 
@@ -100,26 +167,34 @@
     .orders-tabs {
         display: flex;
         gap: 10px;
-        border-bottom: 2px solid var(--o-border);
+        border: 2px solid var(--ord-border);
         margin-bottom: 30px;
         overflow-x: auto;
         padding-bottom: 2px;
+        background: transparent;
     }
 
     .tab-link {
-        background: none;
+        background: transparent;
         border: none;
         padding: 12px 25px;
         font-weight: 700;
-        color: #94a3b8;
+        color: var(--ord-text-muted) !important;
         text-decoration: none;
         position: relative;
         transition: 0.3s;
         white-space: nowrap;
+        border-radius: 8px 8px 0 0;
+        overflow:hidden;
     }
 
+        .tab-link:hover {
+            background: var(--ord-hover-bg);
+            color: var(--ord-text-main);
+        }
+
         .tab-link.active {
-            color: var(--o-primary);
+            color: var(--ord-primary);
         }
 
             .tab-link.active::after {
@@ -129,27 +204,37 @@
                 left: 0;
                 width: 100%;
                 height: 4px;
-                background: var(--o-accent);
+                background: var(--ord-accent);
                 border-radius: 4px 4px 0 0;
             }
 
+    [data-bs-theme="dark"] .tab-link.active {
+        color: var(--ord-text-main);
+    }
+
+
     /* Order Card */
     .order-card {
-        background: #fff;
-        border-radius: 16px;
-        border: 1px solid var(--o-border);
+        background: var(--ord-card-bg);
+        border-radius: 20px;
+        border: 1px solid var(--ord-border);
         padding: 25px;
         margin-bottom: 20px;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
         overflow: hidden;
+        box-shadow: var(--ord-shadow);
     }
 
         .order-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.06);
-            border-color: #cbd5e1;
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px -5px rgba(0,0,0,0.1);
+            border-color: var(--ord-text-muted);
         }
+
+    [data-bs-theme="dark"] .order-card:hover {
+        box-shadow: 0 15px 30px -5px rgba(0,0,0,0.4);
+    }
 
     .card-top {
         display: flex;
@@ -157,26 +242,29 @@
         align-items: center;
         margin-bottom: 20px;
         padding-bottom: 15px;
-        border-bottom: 1px dashed var(--o-border);
+        border-bottom: 1px dashed var(--ord-border);
     }
 
     .order-id {
         font-size: 1.1rem;
         font-weight: 800;
-        color: var(--o-primary);
+        color: var(--ord-text-main);
         display: flex;
         align-items: center;
         gap: 10px;
     }
 
         .order-id i {
-            color: var(--o-accent);
+            color: var(--ord-accent);
         }
 
     .order-date {
         font-size: 0.9rem;
-        color: #64748b;
-        font-weight: 500;
+        color: var(--ord-text-muted);
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 6px;
     }
 
     .card-body-grid {
@@ -189,28 +277,30 @@
     .info-block span {
         display: block;
         font-size: 0.8rem;
-        color: #94a3b8;
+        color: var(--ord-text-muted);
         margin-bottom: 5px;
+        font-weight: 600;
     }
 
     .info-block strong {
         display: block;
         font-size: 1.1rem;
-        color: var(--o-text);
+        color: var(--ord-text-main);
         font-weight: 700;
     }
 
-    /* Status Badge */
+    /* Status Badges */
     .status-pill {
         padding: 6px 14px;
         border-radius: 30px;
         font-size: 0.85rem;
-        font-weight: 700;
+        font-weight: 800;
         display: inline-flex;
         align-items: center;
         gap: 6px;
     }
 
+    /* Light Mode Status */
     .st-Pending {
         background: #fffbeb;
         color: #b45309;
@@ -236,24 +326,62 @@
         color: #dc2626;
     }
 
+    /* Dark Mode Status Overrides */
+    [data-bs-theme="dark"] .st-Pending {
+        background: rgba(245, 158, 11, 0.15);
+        color: #fbbf24;
+    }
+
+    [data-bs-theme="dark"] .st-Confirmed {
+        background: rgba(59, 130, 246, 0.15);
+        color: #60a5fa;
+    }
+
+    [data-bs-theme="dark"] .st-Shipped {
+        background: rgba(14, 165, 233, 0.15);
+        color: #38bdf8;
+    }
+
+    [data-bs-theme="dark"] .st-Delivered {
+        background: rgba(34, 197, 94, 0.15);
+        color: #4ade80;
+    }
+
+    [data-bs-theme="dark"] .st-Cancelled {
+        background: rgba(239, 68, 68, 0.15);
+        color: #f87171;
+    }
+
+
     .btn-view {
-        background: var(--o-primary);
+        background: var(--ord-primary);
         color: #fff;
         padding: 10px 25px;
-        border-radius: 10px;
+        border-radius: 12px;
         text-decoration: none;
         font-weight: 700;
-        transition: 0.2s;
+        transition: 0.3s;
         display: inline-flex;
         align-items: center;
         gap: 8px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
 
-        .btn-view:hover {
-            background: #1e293b;
-            color: #fff;
-            transform: translateX( @(isAr ? "-5px" : "5px") );
-        }
+    [data-bs-theme="dark"] .btn-view {
+        background: var(--ord-accent);
+        color: #000;
+    }
+
+    .btn-view:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        color: #fff;
+    }
+
+    [data-bs-theme="dark"] .btn-view:hover {
+        color: #000;
+        background: #fff;
+    }
 
     /* Pagination */
     .pagination-wrapper {
@@ -270,81 +398,104 @@
         height: 40px;
         border-radius: 10px;
         margin: 0 5px;
-        background: #fff;
-        border: 1px solid var(--o-border);
-        color: var(--o-text);
+        background: var(--ord-card-bg);
+        border: 1px solid var(--ord-border);
+        color: var(--ord-text-main);
         text-decoration: none;
         font-weight: 700;
         transition: 0.2s;
     }
 
         .page-link-custom:hover {
-            border-color: var(--o-primary);
-            color: var(--o-primary);
+            border-color: var(--ord-text-muted);
         }
 
         .page-link-custom.active {
-            background: var(--o-primary);
+            background: var(--ord-primary);
             color: #fff;
-            border-color: var(--o-primary);
+            border-color: var(--ord-primary);
         }
 
-        .page-link-custom.disabled {
-            opacity: 0.5;
-            cursor: default;
-            pointer-events: none;
-        }
+    [data-bs-theme="dark"] .page-link-custom.active {
+        background: var(--ord-accent);
+        color: #000;
+        border-color: var(--ord-accent);
+    }
+
+    .page-link-custom.disabled {
+        opacity: 0.5;
+        cursor: default;
+        pointer-events: none;
+    }
 
     /* Empty State */
     .empty-state {
         text-align: center;
-        padding: 60px 20px;
-        background: #fff;
+        padding: 80px 20px;
+        background: var(--ord-card-bg);
         border-radius: 20px;
-        border: 2px dashed var(--o-border);
+        border: 2px dashed var(--ord-border);
     }
 
     .empty-icon {
         width: 80px;
         height: 80px;
-        background: #f1f5f9;
+        background: var(--ord-badge-bg);
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         margin: 0 auto 20px;
         font-size: 2rem;
-        color: #94a3b8;
+        color: var(--ord-text-muted);
     }
 
+    /* Animation */
+    .fade-up {
+        animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @@keyframes fadeUp {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+
+    /* Responsive */
     @@media (max-width: 768px) {
-        .card-body-grid {
-            grid-template-columns: 1fr;
-            gap: 15px;
-        }
+        .card-body-grid
 
-        .btn-view {
-            width: 100%;
-            justify-content: center;
-        }
+    {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
 
-        .stats-row {
-            width: 100%;
-            overflow-x: auto;
-            padding-bottom: 10px;
-        }
+    .stats-row {
+        flex-direction: column;
+    }
 
-        .stat-badge {
-            min-width: 160px;
-        }
+    .btn-view {
+        width: 100%;
+        justify-content: center;
+        margin-top: 15px;
+    }
+
     }
 </style>
 
-<div class="orders-page">
+<div class="orders-page fade-up">
     <div class="container">
 
         <!-- Header -->
-        <div class="dashboard-header fade-up">
+        <div class="dashboard-header">
             <div class="page-title">
                 <h1>@(isAr ? "سجل طلباتي" : "My Orders")</h1>
                 <p>@(isAr ? "تتبع مشترياتك وحالة الطلبات السابقة" : "Track your purchases and order history")</p>
@@ -352,21 +503,21 @@
 
             <div class="stats-row">
                 <div class="stat-badge">
-                    <div class="stat-icon"><i class="fas fa-shopping-bag"></i></div>
+                    <div class="stat-icon blue"><i class="fas fa-shopping-bag"></i></div>
                     <div class="stat-info">
                         <span>@(isAr ? "إجمالي الطلبات" : "Total Orders")</span>
                         <strong>@totalOrders</strong>
                     </div>
                 </div>
                 <div class="stat-badge">
-                    <div class="stat-icon" style="color:#d97706; background:#fffbeb;"><i class="fas fa-clock"></i></div>
+                    <div class="stat-icon orange"><i class="fas fa-clock"></i></div>
                     <div class="stat-info">
                         <span>@(isAr ? "طلبات نشطة" : "Active")</span>
                         <strong>@activeOrders</strong>
                     </div>
                 </div>
                 <div class="stat-badge">
-                    <div class="stat-icon" style="color:#16a34a; background:#dcfce7;"><i class="fas fa-coins"></i></div>
+                    <div class="stat-icon green"><i class="fas fa-coins"></i></div>
                     <div class="stat-info">
                         <span>@(isAr ? "إجمالي الإنفاق" : "Total Spent")</span>
                         <strong>@totalSpent.ToString("N0")</strong>
@@ -375,8 +526,8 @@
             </div>
         </div>
 
-        <!-- Filter Tabs (Links to Controller) -->
-        <div class="orders-tabs fade-up" style="animation-delay: 0.1s;">
+        <!-- Filter Tabs -->
+        <div class="orders-tabs">
             <a href="@Url.Action("Index", new { status = "all" })" class="tab-link @(currentStatus == "all" ? "active" : "")">
                 @(isAr ? "الكل" : "All Orders")
             </a>
@@ -392,13 +543,13 @@
         </div>
 
         <!-- Orders List -->
-        <div class="orders-list fade-up" style="animation-delay: 0.2s;">
+        <div class="orders-list">
             @if (!Model.Any())
             {
                 <div class="empty-state">
                     <div class="empty-icon"><i class="fas fa-box-open"></i></div>
-                    <h3>@(isAr ? "لا توجد طلبات هنا" : "No orders here")</h3>
-                    <p class="text-muted mb-4">@(isAr ? "لم تقم بأي طلبات مطابقة لهذا الفلتر" : "You haven't placed any orders matching this filter")</p>
+                    <h3 style="color:var(--ord-text-main); margin-bottom:10px;">@(isAr ? "لا توجد طلبات هنا" : "No orders here")</h3>
+                    <p style="color:var(--ord-text-muted); margin-bottom:25px;">@(isAr ? "لم تقم بأي طلبات مطابقة لهذا الفلتر" : "You haven't placed any orders matching this filter")</p>
                     <a asp-controller="Home" asp-action="Index" class="btn-view" style="width:auto; padding:12px 30px;">
                         @(isAr ? "تسوق الآن" : "Shop Now")
                     </a>
@@ -414,7 +565,7 @@
                                 <i class="fas fa-hashtag"></i> @order.Id
                             </div>
                             <div class="order-date">
-                                <i class="far fa-calendar-alt me-1"></i> @order.OrderDate.ToString("dd MMMM yyyy, hh:mm tt")
+                                <i class="far fa-calendar-alt"></i> @order.OrderDate.ToString("dd MMMM yyyy, hh:mm tt")
                             </div>
                         </div>
 
@@ -426,7 +577,7 @@
 
                             <div class="info-block">
                                 <span>@(isAr ? "الإجمالي" : "Total Amount")</span>
-                                <strong>@order.TotalAmount.ToString("N0") <small style="font-size:0.8rem; color:#94a3b8;">@(isAr ? "ج.م" : "EGP")</small></strong>
+                                <strong>@order.TotalAmount.ToString("N0") <small style="font-size:0.8rem; color:var(--ord-text-muted);">@(isAr ? "ج.م" : "EGP")</small></strong>
                             </div>
 
                             <div class="info-block">
@@ -438,24 +589,21 @@
                                     }
                                     else if (order.Status == "Cancelled")
                                     {
-
                                         <i class="fas fa-times-circle"></i>
                                     }
                                     else if (order.Status == "Shipped")
                                     {
-
                                         <i class="fas fa-truck"></i>
                                     }
                                     else
                                     {
-
                                         <i class="fas fa-spinner fa-spin"></i>
                                     }
                                     @order.Status
                                 </div>
                             </div>
 
-                            <div class="text-end">
+                            <div style="text-align: @(isAr ? "left" : "right")">
                                 <a asp-action="Details" asp-route-id="@order.Id" class="btn-view">
                                     @(isAr ? "تفاصيل الطلب" : "View Details") <i class="fas @(isAr ? "fa-arrow-left" : "fa-arrow-right")"></i>
                                 </a>
@@ -466,13 +614,12 @@
             }
         </div>
 
-        <!-- Pagination Controls -->
+        <!-- Pagination -->
         @if (totalPages > 1)
         {
-            <div class="pagination-wrapper fade-up" style="animation-delay: 0.3s;">
-                <!-- Prev -->
+            <div class="pagination-wrapper">
                 <a href="@Url.Action("Index", new { status = currentStatus, page = currentPage - 1 })" class="page-link-custom @(currentPage == 1 ? "disabled" : "")">
-                    <i class="fas fa-chevron-right"></i>
+                    <i class="fas @(isAr ? "fa-chevron-right" : "fa-chevron-left")"></i>
                 </a>
 
                 @for (int i = 1; i <= totalPages; i++)
@@ -482,9 +629,8 @@
                     </a>
                 }
 
-                <!-- Next -->
                 <a href="@Url.Action("Index", new { status = currentStatus, page = currentPage + 1 })" class="page-link-custom @(currentPage == totalPages ? "disabled" : "")">
-                    <i class="fas fa-chevron-left"></i>
+                    <i class="fas @(isAr ? "fa-chevron-left" : "fa-chevron-right")"></i>
                 </a>
             </div>
         }

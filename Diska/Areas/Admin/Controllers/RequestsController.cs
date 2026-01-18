@@ -1,139 +1,105 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Diska.Data;
-using Microsoft.EntityFrameworkCore;
 using Diska.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Diska.Services;
+using System.Linq;
+using System.Threading.Tasks;
+using System;
 
 namespace Diska.Areas.Admin.Controllers
 {
     [Area("Admin")]
     [Authorize(Roles = "Admin")]
-    public class RequestsController : Controller
+    public class DealRequestController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
         private readonly INotificationService _notificationService;
 
-        public RequestsController(ApplicationDbContext context, INotificationService notificationService)
+        public DealRequestController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, INotificationService notificationService)
         {
             _context = context;
+            _userManager = userManager;
             _notificationService = notificationService;
         }
 
-        // 1. القائمة الرئيسية
-        public async Task<IActionResult> Index(string status = "All", string search = "")
+        // عرض قائمة الطلبات
+        public async Task<IActionResult> Index()
         {
-            var query = _context.DealRequests.Include(r => r.User).AsQueryable();
+            var requests = await _context.DealRequests
+                .Include(r => r.User)
+                .Include(r => r.Offers)
+                .OrderByDescending(r => r.RequestDate)
+                .ToListAsync();
 
-            // Filter by Status
-            if (status != "All")
-            {
-                query = query.Where(r => r.Status == status);
-            }
-
-            // Search
-            if (!string.IsNullOrEmpty(search))
-            {
-                query = query.Where(r => r.ProductName.Contains(search) || r.User.FullName.Contains(search));
-            }
-
-            var requests = await query.OrderByDescending(r => r.RequestDate).ToListAsync();
-
-            ViewBag.CurrentStatus = status;
             return View(requests);
         }
 
-        // 2. تفاصيل الطلب وإدارته
+        // عرض التفاصيل والمحادثة للأدمن
         public async Task<IActionResult> Details(int id)
         {
             var request = await _context.DealRequests
                 .Include(r => r.User)
-                .Include(r => r.Offers)
+                .Include(r => r.Offers).ThenInclude(o => o.Merchant)
+                .Include(r => r.Messages).ThenInclude(m => m.Sender)
                 .FirstOrDefaultAsync(r => r.Id == id);
 
             if (request == null) return NotFound();
 
+            request.Messages = request.Messages.OrderBy(m => m.CreatedAt).ToList();
+
             return View(request);
         }
 
-        // 3. تحديث الحالة (Workflow)
+        // إرسال رد من الأدمن
         [HttpPost]
-        public async Task<IActionResult> UpdateStatus(int id, string status, string notes)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SendReply(int requestId, string message)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var request = await _context.DealRequests.FindAsync(requestId);
+
+            if (request == null) return NotFound();
+            if (string.IsNullOrWhiteSpace(message)) return RedirectToAction(nameof(Details), new { id = requestId });
+
+            var msg = new RequestMessage
+            {
+                DealRequestId = requestId,
+                SenderId = user.Id,
+                Message = message,
+                CreatedAt = DateTime.Now,
+                IsAdmin = true // هذه الرسالة من الإدارة
+            };
+
+            _context.RequestMessages.Add(msg);
+            await _context.SaveChangesAsync();
+
+            // إشعار العميل
+            await _notificationService.NotifyUserAsync(request.UserId, "رد جديد من الإدارة", $"قامت الإدارة بالرد على طلبك #{requestId}.", "Request");
+
+            return RedirectToAction(nameof(Details), new { id = requestId });
+        }
+
+        // تغيير حالة الطلب (موافقة/رفض)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangeStatus(int id, string status)
         {
             var request = await _context.DealRequests.FindAsync(id);
             if (request == null) return NotFound();
 
-            string oldStatus = request.Status;
             request.Status = status;
-            request.UpdatedAt = DateTime.Now;
-
-            if (!string.IsNullOrEmpty(notes))
-            {
-                request.AdminNotes = notes;
-            }
-
             await _context.SaveChangesAsync();
 
-            // إشعارات بناءً على الحالة
-            if (oldStatus != status)
-            {
-                string title = "تحديث طلبك";
-                string msg = "";
-                string type = "Info";
-
-                switch (status)
-                {
-                    case "InReview":
-                        msg = $"طلبك لمنتج '{request.ProductName}' قيد المراجعة الآن.";
-                        break;
-                    case "Approved":
-                        title = "مبروك! تمت الموافقة";
-                        msg = $"تمت الموافقة على طلبك '{request.ProductName}'. سيتمكن التجار من تقديم عروضهم الآن.";
-                        type = "Success";
-                        break;
-                    case "Rejected":
-                        title = "عذراً";
-                        msg = $"تم رفض طلبك لمنتج '{request.ProductName}'. راجع الملاحظات.";
-                        type = "Alert";
-                        break;
-                }
-
-                if (!string.IsNullOrEmpty(msg))
-                {
-                    await _notificationService.NotifyUserAsync(request.UserId, title, msg, type, $"/Request/Details/{id}");
-                }
-            }
+            // إشعار العميل بتحديث الحالة
+            string msg = status == "Approved" ? "تمت الموافقة على طلبك وهو الآن متاح للتجار." : "عفواً، تم رفض طلبك.";
+            await _notificationService.NotifyUserAsync(request.UserId, "تحديث حالة الطلب", msg, "Request");
 
             TempData["Success"] = "تم تحديث حالة الطلب بنجاح.";
             return RedirectToAction(nameof(Details), new { id = id });
-        }
-
-        // 4. حفظ الملاحظات فقط
-        [HttpPost]
-        public async Task<IActionResult> SaveNotes(int id, string notes)
-        {
-            var request = await _context.DealRequests.FindAsync(id);
-            if (request != null)
-            {
-                request.AdminNotes = notes;
-                request.UpdatedAt = DateTime.Now;
-                await _context.SaveChangesAsync();
-                TempData["Success"] = "تم حفظ الملاحظات.";
-            }
-            return RedirectToAction(nameof(Details), new { id = id });
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> Delete(int id)
-        {
-            var request = await _context.DealRequests.FindAsync(id);
-            if (request != null)
-            {
-                _context.DealRequests.Remove(request);
-                await _context.SaveChangesAsync();
-                TempData["Success"] = "تم حذف الطلب.";
-            }
-            return RedirectToAction(nameof(Index));
         }
     }
 }

@@ -2,155 +2,539 @@
 @{
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
     ViewData["Title"] = isAr ? "انضم كتاجر" : "Become a Merchant";
+    Layout = "_Layout";
 }
 
-<!-- Hero Section: Dark Professional Look -->
-<section style="background: var(--primary); padding: 80px 0; position: relative; overflow: hidden; color: #fff;">
-    <div class="container" style="position: relative; z-index: 2; text-align: center;">
-        <span style="background: rgba(250, 204, 21, 0.2); color: var(--accent); padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; display: inline-block; margin-bottom: 20px;">
-            @(isAr ? "🚀 الشريك الأول لتجار الجملة" : "🚀 #1 B2B Partner")
-        </span>
-        <h1 style="font-size: 3.5rem; font-weight: 900; margin-bottom: 20px; line-height: 1.2;">
-            @(isAr ? "وسع تجارتك مع" : "Scale Your Business with") <span style="color: var(--accent);">DISKA</span>
-        </h1>
-        <p style="font-size: 1.2rem; color: #cbd5e1; max-width: 700px; margin: 0 auto 40px; line-height: 1.8;">
-            @(isAr ?
-                        "المنصة الرقمية التي تربطك مباشرة بآلاف محلات التجزئة والسوبر ماركت في جميع أنحاء مصر. تخلص من مشاكل التحصيل والتوزيع، وركز في اللي بتفهم فيه.. التجارة."
-                        :
-                        "The digital platform connecting you directly to thousands of retailers across Egypt. Forget distribution hassles, focus on what you do best: Trading.")
-        </p>
-        <div style="display: flex; gap: 15px; justify-content: center;">
-            <a asp-controller="Account" asp-action="Signup" class="btn primary big" style="padding: 15px 40px; font-size: 1.1rem; box-shadow: 0 10px 20px rgba(250, 204, 21, 0.3);">
-                @(isAr ? "سجل كتاجر الآن مجاناً" : "Join as Merchant - Free")
-            </a>
-            <a href="#features" class="btn btn-outline" style="border-color: #fff; color: #fff; padding: 15px 30px;">
-                @(isAr ? "اكتشف المميزات" : "Explore Features")
+<style>
+    /* =========================================
+           PREMIUM LANDING STYLES
+           ========================================= */
+    :root {
+        --l-bg: #ffffff;
+        --l-text: #0f172a;
+        --l-muted: #64748b;
+        --l-primary: #0F172A;
+        --l-accent: #FACC15;
+        --l-card-bg: #ffffff;
+        --l-border: #e2e8f0;
+        --l-hero-bg: #0f172a;
+        --l-hero-text: #ffffff;
+        --l-shadow: 0 20px 40px -5px rgba(0,0,0,0.1);
+        --l-glass: rgba(255, 255, 255, 0.7);
+        --l-glass-border: rgba(255, 255, 255, 0.5);
+    }
+
+    [data-bs-theme="dark"] {
+        --l-bg: #020617;
+        --l-text: #f8fafc;
+        --l-muted: #94a3b8;
+        --l-primary: #f8fafc;
+        --l-card-bg: #1e293b;
+        --l-border: rgba(255,255,255,0.08);
+        --l-hero-bg: #020617;
+        --l-shadow: 0 20px 50px -10px rgba(0,0,0,0.5);
+        --l-glass: rgba(30, 41, 59, 0.6);
+        --l-glass-border: rgba(255, 255, 255, 0.1);
+    }
+
+    .landing-wrapper {
+        background-color: var(--l-bg);
+        color: var(--l-text);
+        font-family: 'Cairo', sans-serif;
+        overflow-x: hidden;
+    }
+
+    /* --- Hero Section --- */
+    .landing-hero {
+        position: relative;
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        padding: 120px 0 160px;
+        text-align: center;
+        overflow: hidden;
+        color: #fff;
+    }
+
+        .landing-hero::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(79, 70, 229, 0.15) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+    /* Animated Circles */
+    .hero-shape {
+        position: absolute;
+        border-radius: 50%;
+        background: linear-gradient(45deg, var(--l-accent), #f59e0b);
+        filter: blur(80px);
+        opacity: 0.15;
+        animation: float 10s infinite ease-in-out;
+    }
+
+    .shape-1 {
+        width: 300px;
+        height: 300px;
+        top: -100px;
+        left: -100px;
+        animation-delay: 0s;
+    }
+
+    .shape-2 {
+        width: 250px;
+        height: 250px;
+        bottom: -50px;
+        right: -50px;
+        animation-delay: 2s;
+        background: linear-gradient(45deg, #4f46e5, #818cf8);
+    }
+
+    .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 8px 20px;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: var(--l-accent);
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .hero-title {
+        font-size: 4rem;
+        font-weight: 900;
+        line-height: 1.1;
+        margin-bottom: 25px;
+        background: linear-gradient(to right, #fff, #cbd5e1);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        position: relative;
+        z-index: 2;
+    }
+
+        .hero-title span {
+            color: var(--l-accent);
+            -webkit-text-fill-color: var(--l-accent);
+        }
+
+    .hero-desc {
+        font-size: 1.25rem;
+        color: #94a3b8;
+        max-width: 750px;
+        margin: 0 auto 45px;
+        line-height: 1.8;
+        position: relative;
+        z-index: 2;
+    }
+
+    .btn-cta {
+        background: var(--l-accent);
+        color: #0f172a;
+        padding: 18px 45px;
+        border-radius: 16px;
+        font-weight: 800;
+        font-size: 1.1rem;
+        text-decoration: none;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 10px 30px -5px rgba(250, 204, 21, 0.4);
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        position: relative;
+        z-index: 2;
+    }
+
+        .btn-cta:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 20px 40px -10px rgba(250, 204, 21, 0.5);
+            background: #fff;
+        }
+
+    /* --- Stats Section (Glassmorphism) --- */
+    .stats-container {
+        margin-top: -60px;
+        position: relative;
+        z-index: 5;
+        padding: 0 20px;
+    }
+
+    .stats-card {
+        background: var(--l-glass);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid var(--l-glass-border);
+        border-radius: 24px;
+        padding: 40px;
+        box-shadow: var(--l-shadow);
+        display: flex;
+        justify-content: space-around;
+        flex-wrap: wrap;
+        gap: 30px;
+    }
+
+    .stat-item {
+        text-align: center;
+        flex: 1;
+        min-width: 150px;
+    }
+
+    .stat-val {
+        font-size: 2.8rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, var(--l-accent), #f59e0b);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 5px;
+        display: block;
+    }
+
+    .stat-lbl {
+        color: var(--l-text);
+        font-weight: 700;
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* --- Features Grid --- */
+    .section-padding {
+        padding: 100px 0;
+    }
+
+    .sec-header {
+        text-align: center;
+        margin-bottom: 60px;
+    }
+
+    .sec-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--l-text);
+        margin-bottom: 15px;
+    }
+
+    .sec-subtitle {
+        color: var(--l-muted);
+        font-size: 1.1rem;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .feature-card {
+        background: var(--l-card-bg);
+        border: 1px solid var(--l-border);
+        border-radius: 24px;
+        padding: 40px 30px;
+        height: 100%;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        position: relative;
+        overflow: hidden;
+        margin: 15px;
+    }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--l-accent);
+            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1);
+        }
+
+    .f-icon-box {
+        width: 70px;
+        height: 70px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        margin-bottom: 25px;
+        transition: 0.3s;
+    }
+
+    .icon-blue {
+        background: rgba(14, 165, 233, 0.1);
+        color: #0ea5e9;
+    }
+
+    .icon-purple {
+        background: rgba(139, 92, 246, 0.1);
+        color: #8b5cf6;
+    }
+
+    .icon-green {
+        background: rgba(34, 197, 94, 0.1);
+        color: #22c55e;
+    }
+
+    .feature-card:hover .f-icon-box {
+        transform: scale(1.1) rotate(5deg);
+    }
+
+    .f-head {
+        font-size: 1.4rem;
+        font-weight: 800;
+        margin-bottom: 15px;
+        color: var(--l-text);
+    }
+
+    .f-desc {
+        color: var(--l-muted);
+        line-height: 1.7;
+        font-size: 1rem;
+    }
+
+    /* --- Steps Timeline --- */
+    .steps-section {
+        background: linear-gradient(to bottom, var(--l-bg), var(--l-card-bg));
+        position: relative;
+    }
+
+    .step-item {
+        background: var(--l-card-bg);
+        border: 1px solid var(--l-border);
+        border-radius: 24px;
+        padding: 40px;
+        text-align: center;
+        position: relative;
+        z-index: 2;
+        margin: 15px;
+        transition: 0.3s;
+    }
+
+        .step-item:hover {
+            transform: translateY(-5px);
+            border-color: var(--l-accent);
+        }
+
+    .step-num {
+        width: 50px;
+        height: 50px;
+        background: var(--l-accent);
+        color: #000;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 900;
+        font-size: 1.5rem;
+        margin: 0 auto 20px;
+        box-shadow: 0 0 0 8px var(--l-bg);
+    }
+
+    /* --- Final CTA --- */
+    .cta-box {
+        background: radial-gradient(circle at center, #1e293b, #0f172a);
+        border-radius: 30px;
+        padding: 80px 40px;
+        text-align: center;
+        color: #fff;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 60px;
+        box-shadow: 0 20px 50px -10px rgba(15, 23, 42, 0.5);
+    }
+
+        .cta-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('data:image/svg+xml,...'); /* Optional pattern */
+            opacity: 0.05;
+        }
+
+    /* Animation */
+    .fade-up {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+        .fade-up.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+    @@media (max-width: 768px) {
+        .hero-title {
+            font-size: 2.8rem;
+        }
+
+        .stats-card {
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        .stat-item {
+            border-bottom: 1px solid var(--l-border);
+            padding-bottom: 20px;
+        }
+
+            .stat-item:last-child {
+                border-bottom: none;
+            }
+    }
+
+    @@keyframes float {
+        0%, 100% {
+            transform: translateY(0);
+        }
+
+        50% {
+            transform: translateY(-20px);
+        }
+    }
+</style>
+
+<div class="landing-wrapper">
+
+    <!-- Hero -->
+    <header class="landing-hero">
+        <div class="hero-shape shape-1"></div>
+        <div class="hero-shape shape-2"></div>
+
+        <div class="container position-relative">
+            <div class="hero-badge fade-up">
+                <i class="fas fa-crown"></i> @(isAr ? "الخيار الأول لتجار الجملة" : "#1 Choice for Wholesalers")
+            </div>
+
+            <h1 class="hero-title fade-up">
+                @(isAr ? "ابدأ رحلة النجاح مع" : "Start Your Journey with") <br>
+                <span>DISKA</span>
+            </h1>
+
+            <p class="hero-desc fade-up">
+                @(isAr ?
+                                "نقدم لك منصة متكاملة لإدارة تجارتك، الوصول لآلاف العملاء، وتحقيق أرباح أعلى بدون تعقيدات." :
+                                "We provide an integrated platform to manage your trade, reach thousands of customers, and maximize profits seamlessly.")
+            </p>
+
+            <div class="fade-up" style="transition-delay: 0.2s;">
+                <a asp-controller="Account" asp-action="Signup" class="btn-cta">
+                    @(isAr ? "سجل الآن مجاناً" : "Register Now for Free") <i class="fas @(isAr ? "fa-arrow-left" : "fa-arrow-right")"></i>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Stats -->
+    <div class="container stats-container fade-up">
+        <div class="stats-card">
+            <div class="stat-item">
+                <span class="stat-val">+10k</span>
+                <span class="stat-lbl">@(isAr ? "عميل نشط" : "Active Users")</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-val">+50k</span>
+                <span class="stat-lbl">@(isAr ? "طلب شهرياً" : "Monthly Orders")</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-val">0%</span>
+                <span class="stat-lbl">@(isAr ? "عمولة مخفية" : "Hidden Fees")</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features -->
+    <section class="section-padding">
+        <div class="container">
+            <div class="sec-header fade-up">
+                <h2 class="sec-title">@(isAr ? "لماذا ديسكا؟" : "Why Diska?")</h2>
+                <p class="sec-subtitle">@(isAr ? "أدوات احترافية صممت خصيصاً لنمو أعمالك" : "Professional tools designed for your business growth")</p>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-md-4 fade-up">
+                    <div class="feature-card">
+                        <div class="f-icon-box icon-blue"><i class="fas fa-bullhorn"></i></div>
+                        <h3 class="f-head">@(isAr ? "وصول أوسع" : "Wider Reach")</h3>
+                        <p class="f-desc">@(isAr ? "اعرض منتجاتك أمام شبكة ضخمة من تجار التجزئة في جميع المحافظات بضغطة زر." : "Showcase your products to a massive network of retailers across all governorates instantly.")</p>
+                    </div>
+                </div>
+                <div class="col-md-4 fade-up" style="transition-delay: 0.1s;">
+                    <div class="feature-card">
+                        <div class="f-icon-box icon-purple"><i class="fas fa-wallet"></i></div>
+                        <h3 class="f-head">@(isAr ? "دفع فوري" : "Instant Payouts")</h3>
+                        <p class="f-desc">@(isAr ? "نظام محفظة ذكي يتيح لك متابعة أرباحك وسحبها بسهولة وسرعة." : "Smart wallet system allowing you to track and withdraw earnings easily and quickly.")</p>
+                    </div>
+                </div>
+                <div class="col-md-4 fade-up" style="transition-delay: 0.2s;">
+                    <div class="feature-card">
+                        <div class="f-icon-box icon-green"><i class="fas fa-chart-bar"></i></div>
+                        <h3 class="f-head">@(isAr ? "تحليلات دقيقة" : "Smart Analytics")</h3>
+                        <p class="f-desc">@(isAr ? "تقارير مفصلة عن المبيعات والمخزون تساعدك في اتخاذ قرارات تجارية صائبة." : "Detailed sales and inventory reports helping you make right business decisions.")</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Steps -->
+    <section class="section-padding steps-section">
+        <div class="container">
+            <div class="sec-header fade-up">
+                <h2 class="sec-title">@(isAr ? "كيف تبدأ؟" : "How it Works?")</h2>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-md-4 fade-up">
+                    <div class="step-item">
+                        <div class="step-num">1</div>
+                        <h4 class="f-head">@(isAr ? "سجل حسابك" : "Register")</h4>
+                        <p class="f-desc">@(isAr ? "أنشئ حساب تاجر وارفع المستندات المطلوبة للتوثيق." : "Create merchant account and upload required documents.")</p>
+                    </div>
+                </div>
+                <div class="col-md-4 fade-up" style="transition-delay: 0.1s;">
+                    <div class="step-item">
+                        <div class="step-num">2</div>
+                        <h4 class="f-head">@(isAr ? "أضف منتجاتك" : "Add Products")</h4>
+                        <p class="f-desc">@(isAr ? "استخدم لوحة التحكم لرفع صور وأسعار منتجاتك." : "Use the dashboard to upload product images and prices.")</p>
+                    </div>
+                </div>
+                <div class="col-md-4 fade-up" style="transition-delay: 0.2s;">
+                    <div class="step-item">
+                        <div class="step-num">3</div>
+                        <h4 class="f-head">@(isAr ? "ابدأ البيع" : "Start Selling")</h4>
+                        <p class="f-desc">@(isAr ? "استقبل الطلبات، جهزها، وحقق الأرباح." : "Receive orders, fulfill them, and earn profits.")</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <div class="container fade-up">
+        <div class="cta-box">
+            <h2 style="font-weight:900; margin-bottom:20px; font-size:2.5rem;">@(isAr ? "جاهز لتنمية أعمالك؟" : "Ready to Scale?")</h2>
+            <p style="color:#cbd5e1; font-size:1.2rem; margin-bottom:40px;">@(isAr ? "انضم اليوم لمجتمع ديسكا وابدأ قصة نجاحك." : "Join Diska community today and start your success story.")</p>
+            <a asp-controller="Account" asp-action="Signup" class="btn-cta" style="background:#fff; color:#0f172a;">
+                @(isAr ? "انضم الآن" : "Join Now")
             </a>
         </div>
     </div>
 
-    <!-- Decorative Background Circles -->
-    <div style="position: absolute; top: -100px; left: -100px; width: 300px; height: 300px; background: rgba(255,255,255,0.03); border-radius: 50%;"></div>
-    <div style="position: absolute; bottom: -50px; right: -50px; width: 200px; height: 200px; background: rgba(250, 204, 21, 0.05); border-radius: 50%;"></div>
-</section>
-
-<!-- Stats Strip -->
-<div style="background: #1e293b; padding: 30px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
-    <div class="container">
-        <div style="display: flex; justify-content: space-around; flex-wrap: wrap; text-align: center; gap: 20px;">
-            <div>
-                <h3 style="color: #fff; font-size: 2rem; margin: 0; font-weight: bold;">+5,000</h3>
-                <small style="color: #94a3b8;">@(isAr ? "تاجر تجزئة نشط" : "Active Retailers")</small>
-            </div>
-            <div>
-                <h3 style="color: #fff; font-size: 2rem; margin: 0; font-weight: bold;">+50,000</h3>
-                <small style="color: #94a3b8;">@(isAr ? "طلب شهرياً" : "Monthly Orders")</small>
-            </div>
-            <div>
-                <h3 style="color: #fff; font-size: 2rem; margin: 0; font-weight: bold;">24/7</h3>
-                <small style="color: #94a3b8;">@(isAr ? "دعم فني وتجار" : "Merchant Support")</small>
-            </div>
-            <div>
-                <h3 style="color: #fff; font-size: 2rem; margin: 0; font-weight: bold;">0%</h3>
-                <small style="color: #94a3b8;">@(isAr ? "مصاريف خفية" : "Hidden Fees")</small>
-            </div>
-        </div>
-    </div>
 </div>
 
-<!-- Why Join Us (Features) -->
-<section id="features" class="section-padding" style="background: #fff;">
-    <div class="container">
-        <div style="text-align: center; margin-bottom: 50px;">
-            <h2 style="color: var(--primary); font-size: 2.2rem; font-weight: 800; margin-bottom: 10px;">
-                @(isAr ? "لماذا يختار كبار التجار ديسكا؟" : "Why Top Merchants Choose Diska?")
-            </h2>
-            <p style="color: #666; font-size: 1.1rem;">@(isAr ? "نقدم لك حلول تقنية ولوجستية لتنمية تجارتك" : "Tech and logistic solutions to grow your trade")</p>
-        </div>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        });
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
-            <!-- Feature 1 -->
-            <div class="merchant-form-box" style="padding: 40px; text-align: center; transition: transform 0.3s;">
-                <div style="width: 70px; height: 70px; background: #e0f2fe; color: #0284c7; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 25px;">
-                    <i class="fas fa-users"></i>
-                </div>
-                <h3 style="margin-bottom: 15px; color: var(--primary);">@(isAr ? "وصول مباشر للعملاء" : "Direct Access")</h3>
-                <p style="color: #666; line-height: 1.7;">
-                    @(isAr ? "اعرض منتجاتك أمام آلاف المحلات في وقت واحد. لا حاجة لتوظيف مندوبين مبيعات أو صرف مبالغ طائلة على التسويق." : "Showcase products to thousands of shops instantly. No need for sales reps or huge marketing budgets.")
-                </p>
-            </div>
-
-            <!-- Feature 2 -->
-            <div class="merchant-form-box" style="padding: 40px; text-align: center; transition: transform 0.3s; border-color: var(--accent);">
-                <div style="width: 70px; height: 70px; background: #fffbeb; color: #d97706; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 25px;">
-                    <i class="fas fa-wallet"></i>
-                </div>
-                <h3 style="margin-bottom: 15px; color: var(--primary);">@(isAr ? "سيولة نقدية أسرع" : "Faster Cash Flow")</h3>
-                <p style="color: #666; line-height: 1.7;">
-                    @(isAr ? "نظام تحصيل متطور يضمن وصول أموالك لمحفظتك فور تسليم الطلب، مع إمكانية سحب الأرباح أسبوعياً." : "Advanced collection system ensures funds hit your wallet upon delivery, with weekly withdrawals.")
-                </p>
-            </div>
-
-            <!-- Feature 3 -->
-            <div class="merchant-form-box" style="padding: 40px; text-align: center; transition: transform 0.3s;">
-                <div style="width: 70px; height: 70px; background: #dcfce7; color: #16a34a; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 25px;">
-                    <i class="fas fa-chart-pie"></i>
-                </div>
-                <h3 style="margin-bottom: 15px; color: var(--primary);">@(isAr ? "تحليلات وتقارير" : "Analytics & Reports")</h3>
-                <p style="color: #666; line-height: 1.7;">
-                    @(isAr ? "لوحة تحكم خاصة تعطيك رؤية كاملة عن المنتجات الأكثر مبيعاً، المخزون، وأداء مبيعاتك لاتخاذ قرارات أذكى." : "Dashboard giving you full insights on best-sellers, inventory, and sales performance.")
-                </p>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- How it Works (Steps) -->
-<section class="section-padding bg-light">
-    <div class="container">
-        <div style="text-align: center; margin-bottom: 50px;">
-            <h2 style="color: var(--primary); font-size: 2.2rem; font-weight: 800;">@(isAr ? "كيف تبدأ البيع؟" : "How to Start Selling?")</h2>
-        </div>
-
-        <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 40px; text-align: center;">
-
-            <div style="flex: 1; min-width: 250px;">
-                <div style="width: 50px; height: 50px; background: var(--primary); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: bold; margin: 0 auto 20px;">1</div>
-                <h4 style="margin-bottom: 10px;">@(isAr ? "سجل حسابك" : "Register")</h4>
-                <p style="color: #666; font-size: 0.9rem;">@(isAr ? "أنشئ حساب تاجر وارفع السجل التجاري للتوثيق." : "Create account and upload documents.")</p>
-            </div>
-
-            <div style="display: flex; align-items: center; justify-content: center;">
-                <i class="fas @(isAr ? "fa-arrow-left" : "fa-arrow-right")" style="color: #ccc; font-size: 1.5rem;"></i>
-            </div>
-
-            <div style="flex: 1; min-width: 250px;">
-                <div style="width: 50px; height: 50px; background: var(--primary); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: bold; margin: 0 auto 20px;">2</div>
-                <h4 style="margin-bottom: 10px;">@(isAr ? "ارفع منتجاتك" : "Upload Products")</h4>
-                <p style="color: #666; font-size: 0.9rem;">@(isAr ? "أضف الصور والأسعار والكميات المتاحة من لوحة التحكم." : "Add photos, prices, and stock via dashboard.")</p>
-            </div>
-
-            <div style="display: flex; align-items: center; justify-content: center;">
-                <i class="fas @(isAr ? "fa-arrow-left" : "fa-arrow-right")" style="color: #ccc; font-size: 1.5rem;"></i>
-            </div>
-
-            <div style="flex: 1; min-width: 250px;">
-                <div style="width: 50px; height: 50px; background: var(--accent); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: bold; margin: 0 auto 20px;">3</div>
-                <h4 style="margin-bottom: 10px;">@(isAr ? "استقبل الطلبات" : "Receive Orders")</h4>
-                <p style="color: #666; font-size: 0.9rem;">@(isAr ? "ابدأ في استقبال الطلبات فوراً وحقق الأرباح." : "Start receiving orders instantly and earn.")</p>
-            </div>
-
-        </div>
-    </div>
-</section>
-
-<!-- Final CTA -->
-<section style="padding: 80px 0; background: var(--primary); text-align: center; color: #fff;">
-    <div class="container">
-        <h2 style="font-size: 2.5rem; margin-bottom: 20px; color: #fff;">@(isAr ? "جاهز للانطلاق؟" : "Ready to Launch?")</h2>
-        <p style="font-size: 1.2rem; color: #cbd5e1; margin-bottom: 40px;">@(isAr ? "انضم لأكثر من 1000 تاجر يثقون في ديسكا." : "Join over 1000 merchants trusting Diska.")</p>
-        <a asp-controller="Account" asp-action="Signup" class="btn" style="background: var(--accent); color: var(--primary); padding: 15px 50px; font-size: 1.2rem; font-weight: bold; border-radius: 50px;">
-            @(isAr ? "ابدأ البيع الآن" : "Start Selling Now")
-        </a>
-    </div>
-</section>
+        document.querySelectorAll('.fade-up').forEach((el) => observer.observe(el));
+    });
+</script>

@@ -1,11 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Diska.Data;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Diska.Models;
 using Microsoft.AspNetCore.Authorization;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
+using Diska.Models;
 
 namespace Diska.Controllers
 {
@@ -21,52 +19,38 @@ namespace Diska.Controllers
             _userManager = userManager;
         }
 
-        // 1. عرض قائمة الإشعارات
-        public async Task<IActionResult> Index()
+        public IActionResult Index()
+        {
+            return View();
+        }
+
+        // API لجلب الإشعارات
+        [HttpGet]
+        public async Task<IActionResult> GetRecent()
         {
             var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+
             var notifications = await _context.UserNotifications
                 .Where(n => n.UserId == user.Id)
                 .OrderByDescending(n => n.CreatedAt)
+                .Take(20)
+                .Select(n => new
+                {
+                    id = n.Id,
+                    title = n.Title,
+                    message = n.Message,
+                    type = n.Type,
+                    link = n.Link,
+                    isRead = n.IsRead,
+                    timeAgo = TimeAgo(n.CreatedAt) // دالة مساعدة لحساب الوقت
+                })
                 .ToListAsync();
 
-            // تحديث حالة "مقروء" عند فتح الصفحة (اختياري، أو يتم يدوياً)
-            // حالياً سنتركها للمستخدم ليضغط "تمييز كمقروء" أو عند النقر على الرابط
-
-            return View(notifications);
+            return Json(notifications);
         }
 
-        // 2. تحديد كـ مقروء (API for AJAX)
-        [HttpPost]
-        public async Task<IActionResult> MarkAsRead(int id)
-        {
-            var user = await _userManager.GetUserAsync(User);
-            var notification = await _context.UserNotifications
-                .FirstOrDefaultAsync(n => n.Id == id && n.UserId == user.Id);
-
-            if (notification != null)
-            {
-                notification.IsRead = true;
-                await _context.SaveChangesAsync();
-                return Json(new { success = true });
-            }
-            return Json(new { success = false });
-        }
-
-        // 3. حذف جميع الإشعارات
-        [HttpPost]
-        public async Task<IActionResult> ClearAll()
-        {
-            var user = await _userManager.GetUserAsync(User);
-            var notifications = _context.UserNotifications.Where(n => n.UserId == user.Id);
-
-            _context.UserNotifications.RemoveRange(notifications);
-            await _context.SaveChangesAsync();
-
-            return Json(new { success = true });
-        }
-
-        // 4. API للحصول على العدد غير المقروء (للـ Layout Badge)
+        // API لجلب عدد غير المقروء (للـ Badge في الـ Layout)
         [HttpGet]
         public async Task<IActionResult> GetUnreadCount()
         {
@@ -77,6 +61,68 @@ namespace Diska.Controllers
                 .CountAsync(n => n.UserId == user.Id && !n.IsRead);
 
             return Json(count);
+        }
+
+        // API لجعل كل الإشعارات مقروءة (عند فتح الصفحة)
+        [HttpPost]
+        public async Task<IActionResult> MarkAllAsSeen()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+
+            var unreadNotifications = await _context.UserNotifications
+                .Where(n => n.UserId == user.Id && !n.IsRead)
+                .ToListAsync();
+
+            if (unreadNotifications.Any())
+            {
+                foreach (var n in unreadNotifications)
+                {
+                    n.IsRead = true;
+                }
+                await _context.SaveChangesAsync();
+            }
+
+            return Ok();
+        }
+
+        // API لتحديد إشعار واحد كمقروء
+        [HttpPost]
+        public async Task<IActionResult> MarkAsRead(int id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var notification = await _context.UserNotifications.FindAsync(id);
+
+            if (notification != null && notification.UserId == user.Id)
+            {
+                notification.IsRead = true;
+                await _context.SaveChangesAsync();
+            }
+            return Ok();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ClearAll()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var all = await _context.UserNotifications.Where(n => n.UserId == user.Id).ToListAsync();
+
+            _context.UserNotifications.RemoveRange(all);
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
+
+        // Helper for TimeAgo (ممكن وضعها في Helper Class منفصل)
+        private static string TimeAgo(DateTime dateTime)
+        {
+            var span = DateTime.Now - dateTime;
+            if (span.Days > 365) return "منذ سنوات";
+            if (span.Days > 30) return "منذ شهور";
+            if (span.Days > 0) return $"منذ {span.Days} يوم";
+            if (span.Hours > 0) return $"منذ {span.Hours} ساعة";
+            if (span.Minutes > 0) return $"منذ {span.Minutes} دقيقة";
+            return "الآن";
         }
     }
 }

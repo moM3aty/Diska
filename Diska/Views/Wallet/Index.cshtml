@@ -3,71 +3,394 @@
 @{
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
     ViewData["Title"] = isAr ? "المحفظة" : "My Wallet";
+    Layout = "_Layout";
 }
 
-<section class="section-padding">
+<style>
+    /* =========================================
+           PREMIUM WALLET STYLES (Light & Dark)
+           ========================================= */
+    :root {
+        /* Light Theme Defaults */
+        --wal-bg-body: #f8fafc;
+        --wal-card-bg: #ffffff;
+        --wal-text-main: #0f172a;
+        --wal-text-muted: #64748b;
+        --wal-border: #e2e8f0;
+        --wal-primary: #0F172A;
+        --wal-accent: #FACC15;
+        --wal-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+        --wal-card-hover: 0 20px 40px -5px rgba(0, 0, 0, 0.1);
+        --wal-gradient: linear-gradient(135deg, #0F172A 0%, #1e40af 100%);
+        --wal-item-hover: #fcfcfd;
+    }
+
+    [data-bs-theme="dark"] {
+        /* Dark Theme Overrides */
+        --wal-bg-body: #020617; /* Deep Dark */
+        --wal-card-bg: #1e293b; /* Slate 800 */
+        --wal-text-main: #f8fafc; /* Light Text */
+        --wal-text-muted: #94a3b8; /* Muted Text */
+        --wal-border: rgba(255, 255, 255, 0.08);
+        --wal-primary: #f8fafc; /* Headings become white */
+        --wal-accent: #FACC15; /* Gold remains */
+        --wal-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        --wal-card-hover: 0 20px 50px -10px rgba(0, 0, 0, 0.5);
+        --wal-gradient: linear-gradient(135deg, #020617 0%, #1e3a8a 100%);
+        --wal-item-hover: rgba(255, 255, 255, 0.03);
+    }
+
+    body {
+        background-color: var(--wal-bg-body);
+        transition: background-color 0.3s ease;
+    }
+
+    .section-padding {
+        padding: 60px 0;
+        min-height: 80vh;
+    }
+
+    /* Breadcrumb */
+    .breadcrumb-custom {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 30px;
+        font-size: 0.9rem;
+        color: var(--wal-text-muted);
+    }
+
+        .breadcrumb-custom a {
+            color: var(--wal-text-main);
+            font-weight: 700;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+
+            .breadcrumb-custom a:hover {
+                color: var(--wal-accent);
+            }
+
+    /* Balance Card */
+    .balance-card {
+        background: var(--wal-gradient);
+        color: #fff;
+        padding: 50px 40px;
+        border-radius: 24px;
+        text-align: center;
+        margin-bottom: 40px;
+        box-shadow: var(--wal-shadow);
+        position: relative;
+        overflow: hidden;
+    }
+
+        /* Decorative Elements */
+        .balance-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -10%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .balance-card::after {
+            content: '';
+            position: absolute;
+            bottom: -50%;
+            right: -10%;
+            width: 250px;
+            height: 250px;
+            background: radial-gradient(circle, rgba(250, 204, 21, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+    .balance-label {
+        margin: 0 0 10px;
+        opacity: 0.9;
+        font-size: 1.1rem;
+        font-weight: 500;
+    }
+
+    .balance-amount {
+        margin: 0 0 30px;
+        font-size: 4rem;
+        font-weight: 900;
+        line-height: 1.1;
+        text-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+
+        .balance-amount small {
+            font-size: 1.5rem;
+            font-weight: 700;
+            opacity: 0.8;
+        }
+
+    .btn-topup {
+        background: var(--wal-accent);
+        color: #0F172A; /* Always dark text on gold */
+        font-weight: 800;
+        border: none;
+        padding: 14px 40px;
+        border-radius: 50px;
+        text-decoration: none;
+        transition: 0.3s;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 10px 20px -5px rgba(250, 204, 21, 0.4);
+        position: relative;
+        z-index: 2;
+    }
+
+        .btn-topup:hover {
+            transform: translateY(-3px) scale(1.05);
+            background: #fff;
+            box-shadow: 0 15px 30px -5px rgba(255, 255, 255, 0.3);
+        }
+
+    /* Transactions Section */
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+    }
+
+    .section-title {
+        margin: 0;
+        color: var(--wal-primary);
+        font-size: 1.5rem;
+        font-weight: 800;
+    }
+
+    .btn-view-all {
+        border: 1px solid var(--wal-border);
+        color: var(--wal-text-muted);
+        padding: 8px 20px;
+        border-radius: 50px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: 0.2s;
+        background: transparent;
+    }
+
+        .btn-view-all:hover {
+            border-color: var(--wal-text-main);
+            color: var(--wal-text-main);
+            background: var(--wal-card-bg);
+        }
+
+    /* Transactions List */
+    .transactions-list {
+        background: var(--wal-card-bg);
+        border: 1px solid var(--wal-border);
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: var(--wal-shadow);
+    }
+
+    .transaction-item {
+        padding: 20px 25px;
+        border-bottom: 1px solid var(--wal-border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: background-color 0.2s;
+    }
+
+        .transaction-item:last-child {
+            border-bottom: none;
+        }
+
+        .transaction-item:hover {
+            background-color: var(--wal-item-hover);
+        }
+
+    .trans-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .trans-icon {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+
+    /* Icon Colors */
+    .icon-up {
+        background: #dcfce7;
+        color: #16a34a;
+    }
+
+    .icon-down {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+    [data-bs-theme="dark"] .icon-up {
+        background: rgba(34, 197, 94, 0.15);
+        color: #4ade80;
+    }
+
+    [data-bs-theme="dark"] .icon-down {
+        background: rgba(239, 68, 68, 0.15);
+        color: #f87171;
+    }
+
+    .trans-desc {
+        margin: 0;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--wal-text-main);
+    }
+
+    .trans-date {
+        color: var(--wal-text-muted);
+        font-size: 0.85rem;
+        margin-top: 4px;
+    }
+
+    .trans-amount {
+        font-weight: 800;
+        font-size: 1.2rem;
+        text-align: end;
+    }
+
+    .amount-positive {
+        color: #16a34a;
+    }
+
+    .amount-negative {
+        color: #dc2626;
+    }
+
+    [data-bs-theme="dark"] .amount-positive {
+        color: #4ade80;
+    }
+
+    [data-bs-theme="dark"] .amount-negative {
+        color: #f87171;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--wal-text-muted);
+    }
+
+    .empty-icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+        opacity: 0.3;
+    }
+
+    /* Animation */
+    .fade-up {
+        animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @@keyframes fadeUp {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+</style>
+
+<section class="section-padding fade-up">
     <div class="container">
 
-        <div class="breadcrumb" style="margin-bottom:20px;">
-            <a asp-controller="Home" asp-action="Index">@(isAr ? "الرئيسية" : "Home")</a> /
+        <!-- Breadcrumb -->
+        <div class="breadcrumb-custom">
+            <a asp-controller="Home" asp-action="Index">@(isAr ? "الرئيسية" : "Home")</a>
+            <span>/</span>
             <span>@(isAr ? "محفظتي" : "My Wallet")</span>
         </div>
 
         <div style="max-width: 800px; margin: 0 auto;">
 
             <!-- Balance Card -->
-            <div style="background: linear-gradient(135deg, var(--primary) 0%, #1e40af 100%); color: #fff; padding: 40px; border-radius: 16px; text-align: center; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
-                <p style="margin: 0 0 10px; opacity: 0.9; font-size: 1.1rem;">@(isAr ? "رصيدك الحالي" : "Current Balance")</p>
-                <h1 style="margin: 0 0 20px; font-size: 3.5rem; font-weight: 800;">
-                    @(((decimal)ViewBag.Balance).ToString("N0")) <small style="font-size: 1.5rem;">@(isAr ? "ج.م" : "EGP")</small>
+            <div class="balance-card">
+                <p class="balance-label">@(isAr ? "رصيدك الحالي" : "Current Balance")</p>
+                <h1 class="balance-amount">
+                    @(((decimal)ViewBag.Balance).ToString("N0")) <small>@(isAr ? "ج.م" : "EGP")</small>
                 </h1>
 
                 <div style="display: flex; gap: 15px; justify-content: center;">
-                    <a asp-action="TopUp" class="btn" style="background: var(--accent); color: var(--primary); font-weight: bold; border: none; padding: 12px 30px; border-radius: 50px;">
+                    <a asp-action="TopUp" class="btn-topup">
                         <i class="fas fa-plus-circle"></i> @(isAr ? "شحن الرصيد" : "Top Up")
                     </a>
                 </div>
             </div>
 
             <!-- Recent Transactions Header -->
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3 style="margin: 0; color: var(--primary);">@(isAr ? "آخر المعاملات" : "Recent Transactions")</h3>
-                <a asp-action="Transactions" class="btn btn-outline small" style="border: 1px solid #ddd; color: #666; padding: 5px 15px; border-radius: 20px;">
+            <div class="section-header">
+                <h3 class="section-title">@(isAr ? "آخر المعاملات" : "Recent Transactions")</h3>
+                <a asp-action="Transactions" class="btn-view-all">
                     @(isAr ? "عرض الكل" : "View All")
                 </a>
             </div>
 
             <!-- Transactions List -->
-            @if (!Model.Any())
-            {
-                <div style="text-align: center; padding: 40px; background: #fff; border: 1px solid #eee; border-radius: 12px;">
-                    <p style="color: #999;">@(isAr ? "لا توجد معاملات حديثة." : "No recent transactions.")</p>
-                </div>
-            }
-            else
-            {
-                <div style="background: #fff; border: 1px solid #eee; border-radius: 12px; overflow: hidden;">
+            <div class="transactions-list">
+                @if (!Model.Any())
+                {
+                    <div class="empty-state">
+                        <i class="far fa-list-alt empty-icon"></i>
+                        <p>@(isAr ? "لا توجد معاملات حديثة." : "No recent transactions.")</p>
+                    </div>
+                }
+                else
+                {
                     @foreach (var item in Model)
                     {
                         bool isPositive = item.Type == "Deposit" || item.Type == "Refund";
-                        <div style="padding: 15px 20px; border-bottom: 1px solid #f5f5f5; display: flex; justify-content: space-between; align-items: center;">
-                            <div style="display: flex; align-items: center; gap: 15px;">
-                                <div style="width: 40px; height: 40px; background: @(isPositive ? "#dcfce7" : "#fee2e2"); color: @(isPositive ? "#16a34a" : "#dc2626"); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                    <i class="fas @(isPositive ? "fa-arrow-down" : "fa-arrow-up")"></i>
+                        string iconClass = isPositive ? "icon-up" : "icon-down";
+                        string arrowIcon = isPositive ? "fa-arrow-down" : "fa-arrow-up"; // Down = In (Deposit), Up = Out (Payment)
+                                                                                         // Or logically: Deposit adds to wallet (Arrow Down into wallet?), Payment leaves wallet (Arrow Up out?)
+                                                                                         // Let's stick to Green/Red logic mostly.
+
+                        <div class="transaction-item">
+                            <div class="trans-info">
+                                <div class="trans-icon @iconClass">
+                                    <i class="fas @arrowIcon"></i>
                                 </div>
                                 <div>
-                                    <h4 style="margin: 0; font-size: 1rem;">@item.Description</h4>
-                                    <small style="color: #999;">@item.TransactionDate.ToString("dd MMMM yyyy, hh:mm tt")</small>
+                                    <h4 class="trans-desc">@item.Description</h4>
+                                    <div class="trans-date">
+                                        <i class="far fa-clock me-1"></i> @item.TransactionDate.ToString("dd MMMM yyyy, hh:mm tt")
+                                    </div>
                                 </div>
                             </div>
-                            <div style="font-weight: bold; color: @(isPositive ? "#16a34a" : "#dc2626"); font-size: 1.1rem;">
+                            <div class="trans-amount @(isPositive ? "amount-positive" : "amount-negative")">
                                 @(isPositive ? "+" : "-")@item.Amount.ToString("N0")
                             </div>
                         </div>
                     }
-                </div>
-            }
-        </div>
+                }
+            </div>
 
+        </div>
     </div>
 </section>

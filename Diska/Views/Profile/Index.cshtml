@@ -15,11 +15,46 @@
 }
 
 <style>
-    /* Professional Profile Styles */
+    /* =========================================
+           PREMIUM PROFILE STYLES (Light & Dark)
+           ========================================= */
+    :root {
+        /* Light Theme Defaults */
+        --pr-bg-body: #f8fafc;
+        --pr-card-bg: #ffffff;
+        --pr-text-main: #0f172a;
+        --pr-text-muted: #64748b;
+        --pr-border: #e2e8f0;
+        --pr-primary: #0F172A;
+        --pr-accent: #FACC15;
+        --pr-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+        --pr-sidebar-active: #eff6ff;
+        --pr-input-bg: #f8fafc;
+    }
+
+    [data-bs-theme="dark"] {
+        /* Dark Theme Overrides */
+        --pr-bg-body: #020617; /* Deep Dark */
+        --pr-card-bg: #1e293b; /* Slate 800 */
+        --pr-text-main: #f8fafc; /* Light Text */
+        --pr-text-muted: #94a3b8; /* Muted Text */
+        --pr-border: rgba(255, 255, 255, 0.08);
+        --pr-primary: #f8fafc; /* White headings */
+        --pr-accent: #FACC15; /* Gold remains */
+        --pr-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        --pr-sidebar-active: rgba(255, 255, 255, 0.05);
+        --pr-input-bg: #0f172a; /* Slate 900 */
+    }
+
+    body {
+        background-color: var(--pr-bg-body);
+        color: var(--pr-text-main);
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
     .profile-section {
-        background-color: #f8fafc;
+        padding: 50px 0;
         min-height: 85vh;
-        padding: 40px 0;
     }
 
     .profile-container {
@@ -30,54 +65,61 @@
 
     /* Sidebar Card */
     .profile-sidebar-card {
-        background: #fff;
+        background: var(--pr-card-bg);
         border-radius: 16px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        box-shadow: var(--pr-shadow);
         overflow: hidden;
-        border: 1px solid #fff;
+        border: 1px solid var(--pr-border);
         position: sticky;
         top: 20px;
+        transition: 0.3s;
     }
 
     .user-cover {
         height: 100px;
-        background: linear-gradient(135deg, var(--primary) 0%, #1e40af 100%);
+        background: linear-gradient(135deg, #0F172A 0%, #1e40af 100%);
     }
 
     .user-avatar-wrapper {
         margin-top: -50px;
         text-align: center;
+        position: relative;
     }
 
     .user-avatar {
         width: 100px;
         height: 100px;
-        background: #fff;
+        background: var(--pr-card-bg);
         border-radius: 50%;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         font-size: 2.5rem;
         font-weight: 800;
-        color: var(--primary);
-        border: 4px solid #fff;
+        color: #4f46e5;
+        border: 4px solid var(--pr-card-bg);
         box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    [data-bs-theme="dark"] .user-avatar {
+        color: var(--pr-accent);
     }
 
     .user-info-text {
         text-align: center;
         padding: 15px 20px;
-        border-bottom: 1px solid #f1f5f9;
+        border-bottom: 1px solid var(--pr-border);
     }
 
     .user-name {
         font-weight: 800;
         font-size: 1.2rem;
-        color: #1e293b;
+        color: var(--pr-text-main);
+        margin-bottom: 5px;
     }
 
     .user-phone {
-        color: #64748b;
+        color: var(--pr-text-muted);
         font-size: 0.9rem;
         font-family: monospace;
     }
@@ -94,7 +136,7 @@
         align-items: center;
         justify-content: space-between;
         padding: 12px 15px;
-        color: #475569;
+        color: var(--pr-text-muted);
         text-decoration: none;
         border-radius: 10px;
         font-weight: 600;
@@ -103,23 +145,35 @@
     }
 
         .menu-item a:hover {
-            background-color: #f8fafc;
-            color: var(--primary);
+            background-color: var(--pr-bg-body);
+            color: var(--pr-text-main);
             transform: translateX( @(isAr ? "-5px" : "5px") );
         }
 
-        .menu-item a.active {
-            background-color: #eff6ff;
-            color: var(--primary);
-        }
+    [data-bs-theme="dark"] .menu-item a:hover {
+        background-color: rgba(255,255,255,0.03);
+    }
 
-        .menu-item a.danger {
-            color: #ef4444;
-        }
+    .menu-item a.active {
+        background-color: var(--pr-sidebar-active);
+        color: #4f46e5;
+    }
 
-            .menu-item a.danger:hover {
-                background-color: #fef2f2;
-            }
+    [data-bs-theme="dark"] .menu-item a.active {
+        color: var(--pr-accent);
+    }
+
+    .menu-item a.danger {
+        color: #ef4444;
+    }
+
+    [data-bs-theme="dark"] .menu-item a.danger {
+        color: #f87171;
+    }
+
+    .menu-item a.danger:hover {
+        background-color: rgba(239, 68, 68, 0.1);
+    }
 
     .menu-icon {
         width: 25px;
@@ -128,8 +182,8 @@
     }
 
     .count-badge {
-        background: #e2e8f0;
-        color: #475569;
+        background: var(--pr-border);
+        color: var(--pr-text-muted);
         font-size: 0.75rem;
         padding: 2px 8px;
         border-radius: 10px;
@@ -138,12 +192,12 @@
 
     /* Main Content */
     .content-card {
-        background: #fff;
+        background: var(--pr-card-bg);
         border-radius: 16px;
         padding: 30px;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--pr-border);
         margin-bottom: 30px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        box-shadow: var(--pr-shadow);
     }
 
     /* Stats Grid */
@@ -155,19 +209,20 @@
     }
 
     .stat-widget {
-        background: #fff;
+        background: var(--pr-card-bg);
         padding: 20px;
         border-radius: 14px;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--pr-border);
         display: flex;
         align-items: center;
         gap: 20px;
         transition: transform 0.3s;
+        box-shadow: var(--pr-shadow);
     }
 
         .stat-widget:hover {
             transform: translateY(-5px);
-            border-color: var(--primary);
+            border-color: var(--pr-text-muted);
         }
 
     .stat-icon-box {
@@ -183,13 +238,13 @@
     .stat-value {
         font-size: 1.5rem;
         font-weight: 800;
-        color: #1e293b;
+        color: var(--pr-text-main);
         line-height: 1;
     }
 
     .stat-label {
         font-size: 0.85rem;
-        color: #64748b;
+        color: var(--pr-text-muted);
         font-weight: 600;
         margin-top: 5px;
     }
@@ -198,33 +253,53 @@
     .section-title {
         font-size: 1.2rem;
         font-weight: 800;
-        color: #1e293b;
+        color: var(--pr-text-main);
         margin-bottom: 25px;
         padding-bottom: 15px;
-        border-bottom: 1px solid #f1f5f9;
+        border-bottom: 1px solid var(--pr-border);
         display: flex;
         align-items: center;
         gap: 10px;
     }
 
+    .form-label-custom {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 700;
+        color: var(--pr-text-main);
+        font-size: 0.9rem;
+    }
+
     .input-custom {
-        background-color: #f8fafc;
-        border: 1px solid #e2e8f0;
+        background-color: var(--pr-input-bg);
+        border: 1px solid var(--pr-border);
         border-radius: 10px;
         padding: 12px 15px;
         width: 100%;
         transition: 0.3s;
         font-size: 0.95rem;
+        color: var(--pr-text-main);
     }
 
         .input-custom:focus {
-            background-color: #fff;
-            border-color: var(--primary);
+            background-color: var(--pr-card-bg);
+            border-color: #4f46e5;
             outline: none;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
         }
 
+    [data-bs-theme="dark"] .input-custom:focus {
+        border-color: var(--pr-accent);
+        box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.15);
+    }
+
+    .input-custom:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
     .btn-save {
-        background: var(--primary);
+        background: #0F172A;
         color: #fff;
         padding: 12px 30px;
         border-radius: 10px;
@@ -234,9 +309,19 @@
         transition: 0.3s;
     }
 
-        .btn-save:hover {
-            background: #1d4ed8;
-        }
+    [data-bs-theme="dark"] .btn-save {
+        background: var(--pr-accent);
+        color: #000;
+    }
+
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    [data-bs-theme="dark"] .btn-save:hover {
+        background: #fff;
+    }
 
     /* Alerts */
     .custom-alert {
@@ -256,23 +341,68 @@
         border: 1px solid #bbf7d0;
     }
 
+    [data-bs-theme="dark"] .alert-success-custom {
+        background: rgba(34, 197, 94, 0.15);
+        color: #4ade80;
+        border-color: rgba(34, 197, 94, 0.2);
+    }
+
     .alert-error-custom {
         background: #fee2e2;
         color: #991b1b;
         border: 1px solid #fecaca;
     }
 
-    @@media (max-width: 992px) {
-        .profile-container
-
-    {
-        grid-template-columns: 1fr;
+    [data-bs-theme="dark"] .alert-error-custom {
+        background: rgba(239, 68, 68, 0.15);
+        color: #f87171;
+        border-color: rgba(239, 68, 68, 0.2);
     }
 
+    /* Table (if needed) */
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .table th {
+            background: var(--pr-bg-body);
+            color: var(--pr-text-muted);
+            padding: 12px;
+            text-align: start;
+        }
+
+        .table td {
+            border-bottom: 1px solid var(--pr-border);
+            padding: 12px;
+            color: var(--pr-text-main);
+        }
+
+    @@media (max-width: 992px) {
+        .profile-container {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Animation */
+    .fade-up {
+        animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @@keyframes fadeUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 </style>
 
-<section class="profile-section">
+<section class="profile-section fade-up">
     <div class="container">
 
         <div class="profile-container">
@@ -302,14 +432,15 @@
                         <li class="menu-item"><a asp-controller="Wishlist" asp-action="Index"><span><i class="fas fa-heart menu-icon"></i> @(isAr ? "المفضلة" : "Wishlist")</span><span class="count-badge">@wishlistCount</span></a></li>
                         <li class="menu-item"><a asp-controller="Address" asp-action="Index"><span><i class="fas fa-map-marker-alt menu-icon"></i> @(isAr ? "العناوين" : "Addresses")</span><span class="count-badge">@addressesCount</span></a></li>
                         <li class="menu-item"><a asp-controller="Request" asp-action="Index"><span><i class="fas fa-bullhorn menu-icon"></i> @(isAr ? "طلبات خاصة" : "Special Requests")</span></a></li>
+                        <li class="menu-item"><a asp-controller="Review" asp-action="MyReviews"><span><i class="fas fa-star menu-icon"></i> @(isAr ? "تقييماتي" : "My Reviews")</span></a></li>
 
                         @if (ViewBag.IsMerchant == true)
                         {
-                            <li style="border-top:1px solid #f1f5f9; margin:5px 0;"></li>
-                            <li class="menu-item"><a asp-area="Merchant" asp-controller="Dashboard" asp-action="Index" style="color:var(--primary);"><span><i class="fas fa-tachometer-alt menu-icon"></i> @(isAr ? "لوحة التاجر" : "Merchant Panel")</span></a></li>
+                            <li style="border-top:1px solid var(--pr-border); margin:5px 0;"></li>
+                            <li class="menu-item"><a asp-area="Merchant" asp-controller="Dashboard" asp-action="Index" style="color:var(--pr-accent);"><span><i class="fas fa-tachometer-alt menu-icon"></i> @(isAr ? "لوحة التاجر" : "Merchant Panel")</span></a></li>
                         }
 
-                        <li style="border-top:1px solid #f1f5f9; margin:5px 0;"></li>
+                        <li style="border-top:1px solid var(--pr-border); margin:5px 0;"></li>
                         <li class="menu-item"><a asp-controller="Account" asp-action="Logout" class="danger"><span><i class="fas fa-sign-out-alt menu-icon"></i> @(isAr ? "خروج" : "Logout")</span></a></li>
                     </ul>
                 </div>
@@ -320,26 +451,27 @@
                 <!-- 1. Stats Row -->
                 <div class="stats-row">
                     <div class="stat-widget">
-                        <div class="stat-icon-box" style="background:#e0f2fe; color:#0284c7;"><i class="fas fa-wallet"></i></div>
+                        <div class="stat-icon-box" style="background:rgba(2, 132, 199, 0.1); color:#0284c7;"><i class="fas fa-wallet"></i></div>
                         <div>
                             <div class="stat-value">@walletBalance.ToString("N0") <small style="font-size:0.9rem;">@(isAr ? "ج.م" : "EGP")</small></div>
                             <div class="stat-label">@(isAr ? "رصيد المحفظة" : "Wallet Balance")</div>
                         </div>
                     </div>
                     <div class="stat-widget">
-                        <div class="stat-icon-box" style="background:#dcfce7; color:#166534;"><i class="fas fa-shopping-bag"></i></div>
+                        <div class="stat-icon-box" style="background:rgba(22, 163, 74, 0.1); color:#166534;"><i class="fas fa-shopping-bag"></i></div>
                         <div>
                             <div class="stat-value">@ordersCount</div>
                             <div class="stat-label">@(isAr ? "إجمالي الطلبات" : "Total Orders")</div>
                         </div>
                     </div>
                     <div class="stat-widget">
-                        <div class="stat-icon-box" style="background:#fffbeb; color:#d97706;"><i class="fas fa-clock"></i></div>
+                        <div class="stat-icon-box" style="background:rgba(217, 119, 6, 0.1); color:#d97706;"><i class="fas fa-clock"></i></div>
                         <div>
                             <div class="stat-value">@pendingCount</div>
                             <div class="stat-label">@(isAr ? "قيد التنفيذ" : "Pending Orders")</div>
                         </div>
                     </div>
+
                 </div>
 
                 <!-- 2. Recent Orders Table -->
@@ -350,34 +482,34 @@
                             <h2 class="section-title" style="margin:0; border:none; padding:0;">
                                 <i class="fas fa-history text-primary"></i> @(isAr ? "آخر الطلبات" : "Recent Orders")
                             </h2>
-                            <a asp-controller="Order" asp-action="MyOrders" class="btn btn-outline-secondary btn-sm">@(isAr ? "عرض الكل" : "View All")</a>
+                            <a asp-controller="Order" asp-action="MyOrders" class="btn btn-outline-secondary btn-sm" style="border-radius:20px; font-weight:700;">@(isAr ? "عرض الكل" : "View All")</a>
                         </div>
                         <div style="overflow-x:auto;">
-                            <table class="table" style="width:100%; text-align:@(isAr ? "right" : "left");">
-                                <thead style="background:#f8fafc; color:#64748b;">
+                            <table class="table" style="text-align:@(isAr ? "right" : "left");">
+                                <thead style="background:var(--pr-bg-body); color:var(--pr-text-muted);">
                                     <tr>
-                                        <th style="padding:10px;">#</th>
-                                        <th style="padding:10px;">@(isAr ? "التاريخ" : "Date")</th>
-                                        <th style="padding:10px;">@(isAr ? "الإجمالي" : "Total")</th>
-                                        <th style="padding:10px;">@(isAr ? "الحالة" : "Status")</th>
+                                        <th style="padding:15px;">#</th>
+                                        <th style="padding:15px;">@(isAr ? "التاريخ" : "Date")</th>
+                                        <th style="padding:15px;">@(isAr ? "الإجمالي" : "Total")</th>
+                                        <th style="padding:15px;">@(isAr ? "الحالة" : "Status")</th>
                                         <th></th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach (var order in recentOrders)
                                     {
-                                        <tr style="border-bottom:1px solid #f1f5f9;">
-                                            <td style="padding:12px; font-weight:bold;">#@order.Id</td>
-                                            <td style="padding:12px; color:#666; font-size:0.9rem;">@order.OrderDate.ToString("dd/MM/yyyy")</td>
-                                            <td style="padding:12px; font-weight:bold;">@order.TotalAmount.ToString("N0")</td>
-                                            <td style="padding:12px;">
+                                        <tr>
+                                            <td style="padding:15px; font-weight:bold;">#@order.Id</td>
+                                            <td style="padding:15px; color:var(--pr-text-muted); font-size:0.9rem;">@order.OrderDate.ToString("dd/MM/yyyy")</td>
+                                            <td style="padding:15px; font-weight:bold;">@order.TotalAmount.ToString("N0")</td>
+                                            <td style="padding:15px;">
                                                 @{
                                                     var badgeClass = order.Status == "Pending" ? "bg-warning text-dark" : "bg-primary text-white";
                                                     var statusText = isAr ? (order.Status == "Pending" ? "قيد التنفيذ" : order.Status) : order.Status;
                                                 }
-                                                <span class="badge @badgeClass" style="font-weight:normal; padding:4px 8px; border-radius:4px;">@statusText</span>
+                                                <span class="badge @badgeClass" style="font-weight:normal; padding:6px 12px; border-radius:30px;">@statusText</span>
                                             </td>
-                                            <td style="padding:12px; text-align:end;"><a href="/Order/Details/@order.Id" style="color:var(--primary);"><i class="fas fa-eye"></i></a></td>
+                                            <td style="padding:15px; text-align:end;"><a href="/Order/Details/@order.Id" style="color:var(--pr-text-main);"><i class="fas fa-eye"></i></a></td>
                                         </tr>
                                     }
                                 </tbody>
@@ -415,7 +547,7 @@
                             <div>
                                 <label class="form-label-custom">@(isAr ? "رقم الهاتف (اسم المستخدم)" : "Phone Number")</label>
                                 <input type="text" value="@Model.PhoneNumber" class="input-custom" disabled>
-                                <small style="color:#94a3b8; font-size:0.75rem; margin-top:5px; display:block;">
+                                <small style="color:var(--pr-text-muted); font-size:0.75rem; margin-top:5px; display:block;">
                                     <i class="fas fa-lock"></i> @(isAr ? "لا يمكن تغيير الرقم" : "Cannot be changed")
                                 </small>
                             </div>
@@ -429,7 +561,7 @@
                             </div>
                         }
 
-                        <h5 style="margin:25px 0 15px; color:var(--primary); font-weight:bold;">@(isAr ? "تغيير كلمة المرور" : "Change Password")</h5>
+                        <h5 style="margin:30px 0 20px; color:var(--pr-text-main); font-weight:bold; border-top:1px dashed var(--pr-border); padding-top:20px;">@(isAr ? "تغيير كلمة المرور" : "Change Password")</h5>
                         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-bottom:20px;">
                             <div>
                                 <label class="form-label-custom">@(isAr ? "كلمة المرور الحالية" : "Current Password")</label>
@@ -445,7 +577,7 @@
                             </div>
                         </div>
 
-                        <div style="text-align: @(isAr ? "left" : "right"); border-top:1px solid #f1f5f9; padding-top:20px;">
+                        <div style="text-align: @(isAr ? "left" : "right"); padding-top:20px;">
                             <button type="submit" class="btn-save">
                                 <i class="fas fa-save me-2"></i> @(isAr ? "حفظ التغييرات" : "Save Changes")
                             </button>

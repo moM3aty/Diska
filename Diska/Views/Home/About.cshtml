@@ -2,43 +2,218 @@
 @{
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
     ViewData["Title"] = isAr ? "من نحن" : "About Us";
+    Layout = "_Layout";
 }
 
-<section class="section-padding">
+<style>
+    /* =========================================
+           PREMIUM ABOUT STYLES (Light & Dark)
+           ========================================= */
+    :root {
+        /* Light Theme */
+        --ab-bg-body: #f8fafc;
+        --ab-card-bg: #ffffff;
+        --ab-stat-bg: #f8fafc;
+        --ab-text-main: #0f172a;
+        --ab-text-muted: #64748b;
+        --ab-border: #e2e8f0;
+        --ab-primary: #0F172A;
+        --ab-accent: #FACC15;
+        --ab-shadow: 0 10px 40px -10px rgba(0,0,0,0.08);
+    }
+
+    [data-bs-theme="dark"] {
+        /* Dark Theme */
+        --ab-bg-body: #020617; /* Deep Dark */
+        --ab-card-bg: #1e293b; /* Slate 800 */
+        --ab-stat-bg: #0f172a; /* Slate 900 */
+        --ab-text-main: #f8fafc; /* Light Text */
+        --ab-text-muted: #94a3b8; /* Muted Text */
+        --ab-border: rgba(255, 255, 255, 0.08);
+        --ab-primary: #f8fafc; /* Headings become white */
+        --ab-accent: #FACC15; /* Gold remains */
+        --ab-shadow: 0 20px 40px -10px rgba(0,0,0,0.4);
+    }
+
+    body {
+        background-color: var(--ab-bg-body);
+        transition: background-color 0.3s ease;
+    }
+
+    .section-padding {
+        padding: 60px 0;
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+    }
+
+    .about-content {
+        background: var(--ab-card-bg);
+        padding: 60px 40px;
+        border-radius: 24px;
+        text-align: center;
+        box-shadow: var(--ab-shadow);
+        max-width: 900px;
+        margin: 0 auto;
+        border: 1px solid var(--ab-border);
+        transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .logo-icon {
+        margin: 0 auto 30px;
+        width: 100px;
+        height: 100px;
+        font-size: 3rem;
+        background: rgba(250, 204, 21, 0.15); /* Accent tint */
+        color: var(--ab-accent);
+        border-radius: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 900;
+        transform: rotate(-10deg);
+        transition: transform 0.3s ease;
+    }
+
+    .about-content:hover .logo-icon {
+        transform: rotate(0deg) scale(1.1);
+    }
+
+    .about-title {
+        color: var(--ab-primary);
+        margin-bottom: 25px;
+        font-weight: 800;
+        font-size: 2.5rem;
+    }
+
+    .about-desc {
+        color: var(--ab-text-muted);
+        margin-bottom: 50px;
+        font-size: 1.15rem;
+        line-height: 1.8;
+        max-width: 750px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 25px;
+    }
+
+    .stat-box {
+        background: var(--ab-stat-bg);
+        padding: 30px 20px;
+        border-radius: 16px;
+        border: 1px solid var(--ab-border);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+        .stat-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px -5px rgba(0,0,0,0.1);
+            border-color: var(--ab-accent);
+        }
+
+    [data-bs-theme="dark"] .stat-box:hover {
+        box-shadow: 0 10px 20px -5px rgba(0,0,0,0.5);
+    }
+
+    .stat-number {
+        color: var(--ab-accent);
+        font-size: 2.8rem;
+        margin: 0 0 5px;
+        font-weight: 900;
+        line-height: 1;
+    }
+
+    .stat-label {
+        font-weight: 700;
+        color: var(--ab-text-main);
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* Animation */
+    .fade-up {
+        animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @@keyframes fadeUp {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .about-content
+
+    {
+        padding: 40px 20px;
+    }
+
+    .about-title {
+        font-size: 2rem;
+    }
+
+    .about-desc {
+        font-size: 1rem;
+    }
+
+    .stat-number {
+        font-size: 2.2rem;
+    }
+
+    }
+</style>
+
+<section class="section-padding fade-up">
     <div class="container">
-        <!-- التصميم الأصلي مع التنسيقات المضمنة لضمان الشكل -->
-        <div class="about-content" style="background: #fff; padding: 40px; border-radius: 15px; text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.05); max-width: 900px; margin: 0 auto;">
+
+        <div class="about-content">
 
             <!-- أيقونة النسبة المئوية المميزة -->
-            <div class="logo-icon" style="margin: 0 auto 20px; width: 80px; height: 80px; font-size: 2.5rem; background: var(--accent); color: var(--primary); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+            <div class="logo-icon">
                 %
             </div>
 
-            <h1 style="color: var(--primary); margin-bottom: 20px; font-weight: 800;">
+            <h1 class="about-title">
                 @(isAr ? "عن منصة DISKA" : "About DISKA")
             </h1>
 
-            <p style="color: #666; margin-bottom: 40px; font-size: 1.1rem; line-height: 1.8;">
+            <p class="about-desc">
                 @(isAr ?
                                 "ديسكا هي المنصة الرقمية الأولى في مصر المتخصصة في سوق الجملة (B2B). هدفنا هو تمكين أصحاب المحلات وتجار التجزئة من الوصول إلى آلاف المنتجات بأسعار المصنع مباشرة، بدون وسطاء."
                                 :
                                 "DISKA is Egypt's leading B2B wholesale platform. We aim to empower merchants and shop owners to access the best prices directly from factories and suppliers without intermediaries.")
             </p>
 
-            <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
-                <div class="stat-box" style="background: #f8fafc; padding: 20px; border-radius: 10px; border: 1px solid #eee; transition: 0.3s;">
-                    <h2 style="color: var(--accent); font-size: 2.5rem; margin: 0; font-weight: 900;">+5000</h2>
-                    <span style="font-weight: bold; color: var(--primary);">@(isAr ? "منتج متنوع" : "Products")</span>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <h2 class="stat-number">+5000</h2>
+                    <span class="stat-label">@(isAr ? "منتج متنوع" : "Products")</span>
                 </div>
-                <div class="stat-box" style="background: #f8fafc; padding: 20px; border-radius: 10px; border: 1px solid #eee; transition: 0.3s;">
-                    <h2 style="color: var(--accent); font-size: 2.5rem; margin: 0; font-weight: 900;">+1000</h2>
-                    <span style="font-weight: bold; color: var(--primary);">@(isAr ? "تاجر ومورد" : "Merchants")</span>
+                <div class="stat-box">
+                    <h2 class="stat-number">+1000</h2>
+                    <span class="stat-label">@(isAr ? "تاجر ومورد" : "Merchants")</span>
                 </div>
-                <div class="stat-box" style="background: #f8fafc; padding: 20px; border-radius: 10px; border: 1px solid #eee; transition: 0.3s;">
-                    <h2 style="color: var(--accent); font-size: 2.5rem; margin: 0; font-weight: 900;">24/7</h2>
-                    <span style="font-weight: bold; color: var(--primary);">@(isAr ? "دعم فني" : "Support")</span>
+                <div class="stat-box">
+                    <h2 class="stat-number">24/7</h2>
+                    <span class="stat-label">@(isAr ? "دعم فني" : "Support")</span>
                 </div>
             </div>
+
         </div>
     </div>
 </section>
