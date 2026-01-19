@@ -26,11 +26,12 @@ namespace Diska.Areas.Merchant.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return RedirectToAction("Login", "Account", new { area = "" });
 
-            var requests = await _context.RestockSubscriptions
-                .Include(r => r.Product)
-                .ThenInclude(r => r.Merchant)
-                .Where(r => r.Product.MerchantId == user.Id)
-                .OrderByDescending(r => r.RequestDate)
+            var requests = await _context.Products
+                .Include(p => p.Merchant)
+                .Include(p => p.Category)
+                .Where(p => p.MerchantId == user.Id)
+                .Where(p => p.StockQuantity <= p.LowStockThreshold)
+                .OrderBy(p => p.StockQuantity)
                 .ToListAsync();
 
             return View(requests);

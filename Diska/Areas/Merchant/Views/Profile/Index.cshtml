@@ -135,3 +135,33 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            
+
+            if (successMsg) {
+                Swal.fire({
+                    icon: 'success',
+                    title: '@(isAr ? "تم الحفظ" : "Saved")',
+                    timer: 2000,
+                    showConfirmButton: false,
+                    position: 'top-end',
+                    toast: true,
+                    timerProgressBar: true
+                });
+            }
+
+            if (errorMsg) {
+                Swal.fire({
+                    icon: 'error',
+                    title: '@(isAr ? "خطأ" : "Error")',
+                    confirmButtonText: '@(isAr ? "حسناً" : "OK")',
+                    confirmButtonColor: '#d33'
+                });
+            }
+        });
+    </script>
+}

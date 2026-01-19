@@ -1,101 +1,512 @@
-﻿@model IEnumerable<Diska.Models.RestockSubscription>
+﻿@model IEnumerable<Diska.Models.Product>
 @using System.Globalization
 @{
-    ViewData["Title"] = "نواقص المخزون";
+    ViewData["Title"] = "إدارة المخزون";
     Layout = "_MerchantLayout";
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h2 class="fw-bold mb-1" style="color:var(--text-main)">طلبات توفير المنتج</h2>
-        <p class="text-muted small mb-0">عملاء ينتظرون توفر منتجاتك النافذة</p>
-    </div>
-</div>
-
 <style>
-    .restock-card {
-        background: var(--bg-card);
-        border: 1px solid var(--border-color);
-        border-radius: 16px;
-        box-shadow: var(--shadow-sm);
+    /* =========================================
+           PREMIUM RESTOCK STYLES (Light & Dark)
+           ========================================= */
+    :root {
+        --rs-bg: #f8fafc;
+        --rs-card-bg: #ffffff;
+        --rs-text-main: #0f172a;
+        --rs-text-muted: #64748b;
+        --rs-border: #e2e8f0;
+        --rs-primary: #0F172A;
+        --rs-accent: #FACC15;
+        --rs-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+        --rs-input-bg: #f8fafc;
     }
 
+    [data-bs-theme="dark"] {
+        --rs-bg: #020617;
+        --rs-card-bg: #1e293b;
+        --rs-text-main: #f8fafc;
+        --rs-text-muted: #94a3b8;
+        --rs-border: rgba(255, 255, 255, 0.08);
+        --rs-primary: #f8fafc;
+        --rs-accent: #FACC15;
+        --rs-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        --rs-input-bg: #0f172a;
+    }
+
+    body {
+        background-color: var(--rs-bg);
+        transition: background-color 0.3s ease;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .page-title {
+        margin: 0;
+        color: var(--rs-primary);
+        font-weight: 800;
+        font-size: 1.8rem;
+    }
+
+    .page-desc {
+        color: var(--rs-text-muted);
+        margin: 5px 0 0;
+    }
+
+ 
+
+    /* Card & Table */
+    .table-card {
+        background: var(--rs-card-bg);
+        border-radius: 16px;
+        border: 1px solid var(--rs-border);
+        box-shadow: var(--rs-shadow);
+        overflow: hidden;
+    }
+
+    .card-header {
+        background: var(--rs-card-bg);
+        border-bottom: 1px solid var(--rs-border);
+        padding: 20px 25px;
+    }
+
+    .card-title-text {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--rs-text-main);
+        margin: 0;
+    }
+
+    .table th {
+        background: var(--rs-bg);
+        color: var(--rs-text-muted);
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        padding: 15px 25px;
+        border-bottom: 1px solid var(--rs-border);
+    }
+
+    .table td {
+        padding: 15px 25px;
+        color: var(--rs-text-main);
+        border-bottom: 1px solid var(--rs-border);
+        vertical-align: middle;
+    }
+
+    .table tr:hover {
+        background-color: var(--rs-bg);
+    }
+
+    /* Product Icon */
     .prod-icon {
         width: 45px;
         height: 45px;
         border-radius: 10px;
-        background: var(--bg-body);
-        border: 1px solid var(--border-color);
+        background: var(--rs-card-bg);
+        border: 1px solid var(--rs-border);
         padding: 2px;
         object-fit: contain;
     }
 
-    .user-avatar-sm {
-        width: 30px;
-        height: 30px;
-        background: #e0f2fe;
-        color: #0284c7;
-        border-radius: 50%;
+    /* Stock Input */
+    .stock-input-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .stock-input {
+        width: 80px;
+        padding: 8px;
+        border: 1px solid var(--rs-border);
+        border-radius: 8px;
+        text-align: center;
+        background: var(--rs-input-bg);
+        color: var(--rs-text-main);
+        font-weight: 700;
+        outline: none;
+        transition: 0.2s;
+    }
+
+        .stock-input:focus {
+            border-color: var(--rs-accent);
+        }
+
+    .btn-save-stock {
+        background: var(--rs-primary);
+        color: #fff;
+        border: none;
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: bold;
-        font-size: 0.8rem;
+        transition: 0.2s;
+    }
+
+    [data-bs-theme="dark"] .btn-save-stock {
+        background: var(--rs-accent);
+        color: #000;
+    }
+
+    .btn-save-stock:hover {
+        transform: scale(1.05);
+        opacity: 0.9;
+    }
+
+    /* Modals */
+    .modal-content {
+        background-color: var(--rs-card-bg);
+        border: 1px solid var(--rs-border);
+        border-radius: 20px;
+        box-shadow: var(--rs-shadow);
+    }
+
+    .modal-header {
+        border-bottom: 1px solid var(--rs-border);
+        padding: 20px 25px;
+    }
+
+    .modal-title {
+        color: var(--rs-text-main);
+        font-weight: 800;
+    }
+
+    .modal-body {
+        padding: 25px;
+        color: var(--rs-text-main);
+    }
+
+    .modal-footer {
+        border-top: 1px solid var(--rs-border);
+        padding: 20px 25px;
+    }
+
+    [data-bs-theme="dark"] .btn-close {
+        filter: invert(1) grayscale(100%) brightness(200%);
+    }
+
+    .form-label {
+        font-weight: 700;
+        color: var(--rs-text-main);
+        margin-bottom: 8px;
+    }
+
+    .form-control {
+        background-color: var(--rs-input-bg);
+        border: 1px solid var(--rs-border);
+        color: var(--rs-text-main);
+        border-radius: 10px;
+        padding: 12px;
+    }
+
+        .form-control:focus {
+            border-color: var(--rs-accent);
+            box-shadow: 0 0 0 4px rgba(250, 204, 21, 0.15);
+            background-color: var(--rs-card-bg);
+        }
+
+    .btn-primary-modal {
+        background: var(--rs-primary);
+        color: #fff;
+        border: none;
+        padding: 10px 25px;
+        border-radius: 50px;
+        font-weight: 700;
+        transition: 0.2s;
+    }
+
+    [data-bs-theme="dark"] .btn-primary-modal {
+        background: var(--rs-accent);
+        color: #000;
+    }
+
+    .btn-primary-modal:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    .btn-secondary-modal {
+        background: transparent;
+        border: 1px solid var(--rs-border);
+        color: var(--rs-text-muted);
+        padding: 10px 25px;
+        border-radius: 50px;
+        font-weight: 700;
+        transition: 0.2s;
+    }
+
+        .btn-secondary-modal:hover {
+            background: var(--rs-bg);
+            color: var(--rs-text-main);
+        }
+
+    /* Empty State */
+    .empty-state {
+        padding: 60px;
+        text-align: center;
+        color: var(--rs-text-muted);
+    }
+
+    .empty-icon {
+        font-size: 3rem;
+        margin-bottom: 20px;
+        opacity: 0.3;
+    }
+
+    /* Badges */
+    .stock-badge {
+        font-size: 0.75rem;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-weight: 700;
+        display: inline-block;
+    }
+
+    .st-out {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .st-low {
+        background: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+        border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    [data-bs-theme="dark"] .st-out {
+        color: #f87171;
+        border-color: rgba(248, 113, 113, 0.2);
+    }
+
+    [data-bs-theme="dark"] .st-low {
+        color: #fbbf24;
+        border-color: rgba(251, 191, 36, 0.2);
+    }
+
+    .wait-count {
+        background: #eff6ff;
+        color: #3b82f6;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        border: 1px solid #dbeafe;
+    }
+
+    [data-bs-theme="dark"] .wait-count {
+        background: rgba(59, 130, 246, 0.15);
+        color: #60a5fa;
+        border-color: rgba(59, 130, 246, 0.2);
     }
 </style>
 
-@if (!Model.Any())
-{
-    <div class="text-center py-5 rounded-4 border border-dashed" style="border-color: var(--border-color)!important;">
-        <div class="text-muted opacity-25 mb-3"><i class="fas fa-bell-slash fa-4x"></i></div>
-        <h4 class="text-muted">لا توجد طلبات انتظار</h4>
-        <p class="text-muted small">جميع منتجاتك متوفرة أو لا يوجد عملاء في قائمة الانتظار.</p>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="page-title">@(isAr ? "إدارة المخزون والتنبيهات" : "Inventory & Alerts")</h2>
+        <p class="page-desc">@(isAr ? "متابعة نواقص المخزون وطلبات العملاء" : "Track low stock and customer requests")</p>
     </div>
-}
-else
-{
-    <div class="restock-card overflow-hidden">
+</div>
+
+<div class="table-card">
+    <div class="card-header">
+        <h5 class="card-title-text">@(isAr ? "قائمة المنتجات الناقصة" : "Low Stock Products")</h5>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="empty-state">
+            <i class="fas fa-check-circle empty-icon"></i>
+            <p>@(isAr ? "المخزون بحالة جيدة. لا توجد منتجات ناقصة حالياً." : "Inventory is healthy. No low stock items.")</p>
+        </div>
+    }
+    else
+    {
         <div class="table-responsive">
-            <table class="table align-middle mb-0" style="color:var(--text-main)">
-                <thead style="background:rgba(0,0,0,0.02); border-bottom:1px solid var(--border-color);">
+            <table class="table">
+                <thead>
                     <tr>
-                        <th class="ps-4 py-3 text-muted text-uppercase small fw-bold">المنتج</th>
-                        <th class="text-muted text-uppercase small fw-bold">تاريخ الطلب</th>
-                        <th class="text-end pe-4 text-muted text-uppercase small fw-bold">إجراء</th>
+                        <th class="ps-4">@(isAr ? "المنتج" : "Product")</th>
+                        <th>@(isAr ? "حالة المخزون" : "Stock Status")</th>
+                        <th>@(isAr ? "تحديث الكمية" : "Update Quantity")</th>
+                        <th class="text-end pe-4">@(isAr ? "الإجراء" : "Action")</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var item in Model)
                     {
-                        <tr style="border-bottom:1px solid var(--border-color);">
-                            <td class="ps-4 py-3">
+                        <tr>
+                            <td class="ps-4">
                                 <div class="d-flex align-items-center gap-3">
-                                    <img src="~/@item.Product?.ImageUrl" class="prod-icon" onerror="this.src='/images/default.png'">
+                                    <img src="~/@item.ImageUrl" class="prod-icon" onerror="this.src='/images/default.png'">
                                     <div>
-                                        <div class="fw-bold">@item.Product?.Name</div>
-                                        @if (item.Product?.StockQuantity == 0)
-                                        {
-                                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25" style="font-size:0.65rem">نافذ (0)</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25" style="font-size:0.65rem">توفر (@item.Product.StockQuantity)</span>
-                                        }
+                                        <div class="fw-bold">@(isAr? item.Name: item.NameEn)</div>
+                                        <small class="text-muted">SKU: @item.SKU</small>
                                     </div>
                                 </div>
                             </td>
-                            
-                            <td class="text-muted small">@item.RequestDate.ToString("yyyy-MM-dd")</td>
+                            <td>
+                                @if (item.StockQuantity == 0)
+                                {
+                                    <span class="stock-badge st-out">@(isAr ? "نافذ" : "Out of Stock")</span>
+                                }
+                                else
+                                {
+                                    <span class="stock-badge st-low">@(isAr ? "منخفض" : "Low") (@item.StockQuantity)</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="stock-input-group">
+                                    <input type="number" id="stock-@item.Id" value="@item.StockQuantity" min="0" class="stock-input">
+                                    <button class="btn-save-stock" onclick="updateStock(@item.Id)" title="@(isAr ? "حفظ" : "Save")">
+                                        <i class="fas fa-save"></i>
+                                    </button>
+                                </div>
+                            </td>
+                           
                             <td class="text-end pe-4">
-                                <a href="/Merchant/Product/Edit/@item.ProductId" class="btn btn-sm btn-primary fw-bold px-3 rounded-pill">
-                                    <i class="fas fa-plus-circle me-1"></i> تحديث المخزون
-                                </a>
+                                <button class="btn btn-sm btn-outline-primary" onclick="openStockModal(@item.Id, '@item.Name', @item.StockQuantity)">
+                                    <i class="fas fa-edit"></i> @(isAr ? "تعديل" : "Edit")
+                                </button>
                             </td>
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
+    }
+</div>
+
+<!-- Modal: Update Stock -->
+<div class="modal fade" id="stockModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="stockForm" onsubmit="return false;">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(isAr ? "تحديث المخزون" : "Update Stock")</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="id" id="stockProdId">
+                    <div class="text-center mb-4">
+                        <div style="font-size:3rem; color:var(--rs-accent); margin-bottom:10px;">
+                            <i class="fas fa-boxes"></i>
+                        </div>
+                        <h5 id="stockProdName" style="color:var(--rs-text-main); margin-bottom:5px;"></h5>
+                        <small class="text-muted">@(isAr ? "أدخل الكمية الجديدة المتاحة" : "Enter new available quantity")</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">@(isAr ? "الكمية الجديدة" : "New Quantity")</label>
+                        <input type="number" name="newQuantity" id="stockQty" class="form-control form-control-lg text-center fw-bold" required min="0">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary-modal" data-bs-dismiss="modal">@(isAr ? "إلغاء" : "Cancel")</button>
+                    <button type="button" onclick="submitStockUpdate()" class="btn-primary-modal">@(isAr ? "حفظ التغييرات" : "Save Changes")</button>
+                </div>
+            </form>
+        </div>
     </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        function updateStock(id) {
+            const input = document.getElementById('stock-' + id);
+            const qty = input.value;
+            const btn = input.nextElementSibling;
+
+            const originalIcon = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btn.disabled = true;
+
+            // Using fetch to avoid jQuery dependency
+            fetch('/Merchant/Product/UpdateStockDirectly', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `id=${id}&newQuantity=${qty}`
+            })
+            .then(response => response.json())
+            .then(res => {
+                btn.disabled = false;
+                btn.innerHTML = originalIcon;
+
+                if (res.success) {
+                    Swal.fire({
+                        toast: true, position: 'top-end', icon: 'success',
+                        title: res.message, showConfirmButton: false, timer: 1500
+                    });
+
+                    input.style.borderColor = '#22c55e';
+                    setTimeout(() => input.style.borderColor = '', 2000);
+                } else {
+                    Swal.fire({ icon: 'error', title: 'خطأ', text: res.message });
+                }
+            })
+            .catch(error => {
+                btn.disabled = false;
+                btn.innerHTML = originalIcon;
+                Swal.fire({ icon: 'error', title: 'خطأ', text: 'حدث خطأ في الاتصال' });
+            });
+        }
+
+        function openStockModal(id, name, qty) {
+            document.getElementById('stockProdId').value = id;
+            document.getElementById('stockProdName').innerText = name;
+            document.getElementById('stockQty').value = qty;
+            new bootstrap.Modal(document.getElementById('stockModal')).show();
+        }
+
+        function submitStockUpdate() {
+            const id = document.getElementById('stockProdId').value;
+            const qty = document.getElementById('stockQty').value;
+            const btn = document.querySelector('.btn-primary-modal');
+            const originalText = btn.innerText;
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            fetch('/Merchant/Product/UpdateStockDirectly', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `id=${id}&newQuantity=${qty}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '@(isAr ? "تم التحديث" : "Updated")',
+                        text: data.message,
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => location.reload());
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: '@(isAr ? "خطأ" : "Error")',
+                        text: data.message
+                    });
+                    btn.disabled = false;
+                    btn.innerText = originalText;
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                btn.disabled = false;
+                btn.innerText = originalText;
+            });
+        }
+    </script>
 }

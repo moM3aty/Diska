@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using System.Text.Json;
 using Diska.Services;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using System.Text.RegularExpressions; // إضافة لاستخدام Regex في توليد الـ Slug
+using System.Text.RegularExpressions;
 
 namespace Diska.Areas.Merchant.Controllers
 {
@@ -45,7 +45,7 @@ namespace Diska.Areas.Merchant.Controllers
         public IActionResult Create()
         {
             ViewBag.Categories = new SelectList(_context.Categories, "Id", "Name");
-            return View(new Product { Status = "Draft", ProductionDate = DateTime.Now, ExpiryDate = DateTime.Now.AddMonths(6) });
+            return View(new Product { Status = "Active", ProductionDate = DateTime.Now, ExpiryDate = DateTime.Now.AddMonths(6) });
         }
 
         [HttpPost]
@@ -55,45 +55,28 @@ namespace Diska.Areas.Merchant.Controllers
             var user = await _userManager.GetUserAsync(User);
 
             ModelState.Remove("Merchant");
+            ModelState.Remove("MerchantId");
             ModelState.Remove("Category");
             ModelState.Remove("ImageUrl");
             ModelState.Remove("Slug");
             ModelState.Remove("Color");
-            ModelState.Remove("MerchantId");
 
             if (ModelState.IsValid)
             {
                 model.MerchantId = user.Id;
-                model.Status = "Pending";
+                model.Status = "Active"; // تفعيل مباشر
 
-                // --- إصلاح مشكلة Slug cannot be null ---
-                // إذا لم يدخل التاجر Slug، نقوم بتوليده من الاسم الإنجليزي أو العربي
                 if (string.IsNullOrWhiteSpace(model.Slug))
                 {
                     string slugSource = !string.IsNullOrWhiteSpace(model.NameEn) ? model.NameEn : model.Name;
-                    // تحويل النص إلى Slug (حروف صغيرة، استبدال المسافات بشرطة)
-                    model.Slug = Regex.Replace(slugSource.Trim(), @"[^a-zA-Z0-9\u0600-\u06FF\s-]", "") // السماح بالعربية والإنجليزية والأرقام
-                                      .Replace(" ", "-")
-                                      .ToLower();
-
-                    // التأكد من أن الـ Slug ليس فارغاً (في حال كان الاسم رموز فقط)
-                    if (string.IsNullOrWhiteSpace(model.Slug))
-                    {
-                        model.Slug = $"product-{Guid.NewGuid().ToString().Substring(0, 8)}";
-                    }
-
-                    // (اختياري) يمكن هنا إضافة كود للتحقق من عدم تكرار الـ Slug في الداتا بيز وإضافة رقم إذا لزم الأمر
+                    model.Slug = Regex.Replace(slugSource.Trim(), @"[^a-zA-Z0-9\u0600-\u06FF\s-]", "").Replace(" ", "-").ToLower();
+                    if (string.IsNullOrWhiteSpace(model.Slug)) model.Slug = $"product-{Guid.NewGuid().ToString().Substring(0, 8)}";
                 }
-                // -------------------------------------
 
                 if (productColorsName != null && productColorsName.Length > 0 && !string.IsNullOrWhiteSpace(productColorsName[0]))
-                {
                     model.Color = productColorsName[0];
-                }
                 else
-                {
-                    model.Color = "Standard"; // قيمة افتراضية لتجنب خطأ قاعدة البيانات
-                }
+                    model.Color = "Standard";
 
                 if (mainImage != null) model.ImageUrl = await SaveFile(mainImage);
                 else model.ImageUrl = "images/default-product.png";
@@ -101,7 +84,7 @@ namespace Diska.Areas.Merchant.Controllers
                 _context.Products.Add(model);
                 await _context.SaveChangesAsync();
 
-                // --- حفظ صور المعرض (Gallery) ---
+                // حفظ الصور والألوان... (كما في الكود السابق)
                 if (galleryImages != null && galleryImages.Any())
                 {
                     foreach (var file in galleryImages)
@@ -109,40 +92,29 @@ namespace Diska.Areas.Merchant.Controllers
                         if (file.Length > 0)
                         {
                             var imgPath = await SaveFile(file);
-                            var prodImg = new ProductImage
-                            {
-                                ProductId = model.Id,
-                                ImageUrl = imgPath
-                            };
-                            _context.ProductImages.Add(prodImg);
+                            _context.ProductImages.Add(new ProductImage { ProductId = model.Id, ImageUrl = imgPath });
                         }
                     }
                 }
 
-                // --- حفظ الألوان (Variants) ---
                 if (productColorsName != null && productColorsName.Length > 0)
                 {
                     for (int i = 0; i < productColorsName.Length; i++)
                     {
                         if (!string.IsNullOrWhiteSpace(productColorsName[i]))
                         {
-                            var color = new ProductColor
+                            _context.ProductColors.Add(new ProductColor
                             {
                                 ProductId = model.Id,
                                 ColorName = productColorsName[i],
                                 ColorHex = (productColorsHex != null && productColorsHex.Length > i) ? productColorsHex[i] : "#000000"
-                            };
-                            _context.ProductColors.Add(color);
+                            });
                         }
                     }
                 }
 
                 await _context.SaveChangesAsync();
-
-                await _auditService.LogAsync(user.Id, "Create Product Request", "Product", model.Id.ToString(), $"طلب إضافة منتج: {model.Name}", HttpContext.Connection.RemoteIpAddress?.ToString());
-                await _notificationService.NotifyAdminsAsync("طلب إضافة منتج", $"التاجر {user.ShopName} أضاف منتجاً جديداً.");
-
-                TempData["Success"] = "تم إضافة المنتج وهو قيد المراجعة.";
+                TempData["Success"] = "تم إضافة المنتج بنجاح.";
                 return RedirectToAction(nameof(Index));
             }
 
@@ -150,7 +122,33 @@ namespace Diska.Areas.Merchant.Controllers
             return View(model);
         }
 
-        // طلب تعديل سعر (Workflow)
+        // --- تحديث المخزون مباشرة (بدون موافقة) ---
+        [HttpPost]
+        public async Task<IActionResult> UpdateStockDirectly(int id, int newQuantity)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == id && p.MerchantId == user.Id);
+
+            if (product == null) return Json(new { success = false, message = "المنتج غير موجود" });
+
+            if (newQuantity < 0) return Json(new { success = false, message = "الكمية لا يمكن أن تكون بالسالب" });
+
+            // تحديث مباشر في الجدول
+            product.StockQuantity = newQuantity;
+
+            // (اختياري) إذا كانت الكمية 0 نغير الحالة، أو نتركها Active
+            if (newQuantity == 0) { /* product.Status = "OutOfStock"; */ }
+
+            _context.Products.Update(product);
+            await _context.SaveChangesAsync();
+
+            // إشعار للأدمن للعلم فقط (اختياري)
+            // await _auditService.LogAsync(...);
+
+            return Json(new { success = true, message = "تم تحديث المخزون بنجاح" });
+        }
+
+        // طلب تعديل السعر (ما زال يحتاج موافقة - يمكن تغييره ليصبح مباشراً بالمثل)
         [HttpPost]
         public async Task<IActionResult> RequestUpdate(int id, decimal newPrice)
         {
@@ -175,47 +173,10 @@ namespace Diska.Areas.Merchant.Controllers
 
             _context.PendingMerchantActions.Add(action);
             await _context.SaveChangesAsync();
-
             await _notificationService.NotifyAdminsAsync("طلب تعديل سعر", $"التاجر {user.ShopName} يطلب تعديل سعر منتج.");
 
             TempData["Success"] = "تم إرسال طلب تعديل السعر للإدارة.";
             return RedirectToAction(nameof(Index));
-        }
-
-        // طلب إضافة قسم جديد (Ajax)
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> RequestCategory(string name)
-        {
-            if (string.IsNullOrWhiteSpace(name)) return BadRequest();
-
-            var user = await _userManager.GetUserAsync(User);
-
-            if (await _context.Categories.AnyAsync(c => c.Name == name || c.NameEn == name))
-            {
-                return Json(new { success = false, message = "هذا القسم موجود بالفعل" });
-            }
-
-            var action = new PendingMerchantAction
-            {
-                MerchantId = user.Id,
-                ActionType = "AddCategoryRequest",
-                EntityName = "Category",
-                EntityId = "New",
-                NewValueJson = JsonSerializer.Serialize(new { Name = name }),
-                OldValueJson = "{}",
-                Status = "Pending",
-                RequestDate = DateTime.Now,
-                ActionByAdminId = string.Empty,
-                AdminComment = string.Empty
-            };
-
-            _context.PendingMerchantActions.Add(action);
-            await _context.SaveChangesAsync();
-
-            await _notificationService.NotifyAdminsAsync("طلب إضافة قسم", $"التاجر {user.ShopName} يقترح إضافة قسم: {name}");
-
-            return Json(new { success = true });
         }
 
         private async Task<string> SaveFile(IFormFile file)

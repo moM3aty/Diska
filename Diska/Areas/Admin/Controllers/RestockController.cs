@@ -81,7 +81,7 @@ namespace Diska.Areas.Admin.Controllers
                     : message;
 
                 // إرسال إشعار للنظام
-                await _notificationService.NotifyUserAsync(product.MerchantId, msgTitle, msgBody, "Alert", "/Merchant/Index");
+                await _notificationService.NotifyUserAsync(product.MerchantId, msgTitle, msgBody, "Alert", "/Merchant/Restock/Index");
                 await _context.SaveChangesAsync();
                 TempData["Success"] = $"تم إرسال طلب التوريد للتاجر {product.Merchant.ShopName}.";
             }
@@ -102,9 +102,7 @@ namespace Diska.Areas.Admin.Controllers
                 product.StockQuantity = newQuantity;
                 await _context.SaveChangesAsync();
 
-                // التحقق مما إذا كان هناك عملاء ينتظرون هذا المنتج وإشعارهم تلقائياً (اختياري)
-                // var waitingUsers = _context.RestockSubscriptions.Where(r => r.ProductId == productId && !r.IsNotified);
-                // ... logic to notify them
+         
 
                 TempData["Success"] = $"تم تحديث مخزون '{product.Name}' إلى {newQuantity}.";
             }

@@ -21,7 +21,7 @@ namespace Diska.Models
   
 
     
-
+        
     // 4. شرائح الأسعار (للجملة)
     public class PriceTier
     {

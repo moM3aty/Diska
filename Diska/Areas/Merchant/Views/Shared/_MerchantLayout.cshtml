@@ -309,10 +309,7 @@
 
                 <div class="menu-label">@(isAr ? "الإعدادات" : "Settings")</div>
 
-                <a href="/Merchant/Users" class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Users" ? "active" : "")">
-                    <i class="fas fa-users"></i> <span>@(isAr ? "فريق العمل" : "Staff")</span>
-                </a>
-
+               
                 <a href="/Merchant/Profile" class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Profile" ? "active" : "")">
                     <i class="fas fa-user-circle"></i> <span>@(isAr ? "الملف الشخصي" : "Profile")</span>
                 </a>
