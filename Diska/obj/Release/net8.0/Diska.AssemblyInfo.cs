@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Diska")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+28effbf15ffb3bd3c4998a9befd52d85f072c269")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e78c966331929b1d3102b83054545ccf2cb50d0c")]
 [assembly: System.Reflection.AssemblyProductAttribute("Diska")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Diska")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

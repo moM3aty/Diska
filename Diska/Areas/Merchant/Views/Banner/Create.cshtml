@@ -1,0 +1,355 @@
+﻿@model Diska.Models.Banner
+@{
+    ViewData["Title"] = "إضافة إعلان جديد";
+    Layout = "_MerchantLayout";
+    bool isAr = System.Globalization.CultureInfo.CurrentCulture.Name.StartsWith("ar");
+}
+
+<style>
+    /* --- Premium Form Styles (Matching Index) --- */
+    :root {
+        --b-card-bg: #ffffff;
+        --b-border: #f1f5f9;
+        --b-text: #0f172a;
+        --b-muted: #64748b;
+        --b-primary: #4f46e5;
+        --b-input-bg: #f8fafc;
+        --b-focus: rgba(79, 70, 229, 0.15);
+    }
+
+    [data-bs-theme="dark"] {
+        --b-card-bg: #1e293b;
+        --b-border: #334155;
+        --b-text: #f8fafc;
+        --b-muted: #94a3b8;
+        --b-input-bg: #0f172a;
+        --b-focus: rgba(99, 102, 241, 0.2);
+    }
+
+    .form-card {
+        background: var(--b-card-bg);
+        border-radius: 20px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        border: 1px solid var(--b-border);
+        padding: 40px;
+        animation: fadeUp 0.4s ease-out;
+    }
+
+    .form-label {
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: var(--b-text);
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .form-control, .form-select {
+        background-color: var(--b-input-bg);
+        border: 1px solid var(--b-border);
+        color: var(--b-text);
+        padding: 12px 16px;
+        border-radius: 12px;
+        font-size: 0.95rem;
+        transition: 0.3s;
+    }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--b-primary);
+            box-shadow: 0 0 0 4px var(--b-focus);
+            outline: none;
+            background-color: var(--b-card-bg);
+        }
+
+    /* Upload Area */
+    .upload-box {
+        border: 2px dashed var(--b-border);
+        border-radius: 16px;
+        padding: 30px;
+        text-align: center;
+        background-color: var(--b-input-bg);
+        transition: 0.3s;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .upload-box:hover {
+            border-color: var(--b-primary);
+            background-color: rgba(79, 70, 229, 0.02);
+        }
+
+    .upload-icon {
+        font-size: 3rem;
+        color: var(--b-muted);
+        margin-bottom: 15px;
+        transition: 0.3s;
+    }
+
+    .upload-box:hover .upload-icon {
+        color: var(--b-primary);
+        transform: translateY(-5px);
+    }
+
+    .preview-img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: none;
+        z-index: 2;
+    }
+
+    /* Section Divider */
+    .form-divider {
+        height: 1px;
+        background-color: var(--b-border);
+        margin: 30px 0;
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: var(--b-primary);
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .btn-submit {
+        background: var(--b-primary);
+        color: #fff;
+        border: none;
+        padding: 14px 30px;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 1rem;
+        transition: 0.3s;
+        box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(79, 70, 229, 0.4);
+        }
+
+    .btn-cancel {
+        background: transparent;
+        border: 1px solid var(--b-border);
+        color: var(--b-muted);
+        padding: 14px 30px;
+        border-radius: 50px;
+        font-weight: 700;
+        transition: 0.3s;
+        text-decoration: none;
+    }
+
+        .btn-cancel:hover {
+            background-color: var(--b-input-bg);
+            color: var(--b-text);
+        }
+
+    @@keyframes fadeUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+<div class="container-fluid px-0">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1" style="color:var(--b-text)">@(isAr ? "إضافة إعلان جديد" : "Add New Banner")</h2>
+            <p class="text-muted small mb-0">@(isAr ? "أنشئ إعلاناً جديداً للترويج لمنتجاتك" : "Create a new banner to promote your products")</p>
+        </div>
+        <a asp-action="Index" class="btn-cancel">
+            <i class="fas @(isAr ? "fa-arrow-right" : "fa-arrow-left")"></i> @(isAr ? "رجوع" : "Back")
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-8">
+            <form asp-action="Create" method="post" enctype="multipart/form-data" class="form-card">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3 small fw-bold"></div>
+
+                <!-- 1. Image Upload -->
+                <div class="mb-4">
+                    <label class="form-label">@(isAr ? "صورة الإعلان (Desktop)" : "Banner Image (Desktop)")</label>
+                    <div class="upload-box" onclick="document.getElementById('imageFile').click()">
+                        <input type="file" name="imageFile" id="imageFile" class="d-none" accept="image/*" onchange="previewImage(this, 'imgPreview')">
+                        <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                        <h6 class="fw-bold" style="color:var(--b-text)">@(isAr ? "اضغط لرفع الصورة" : "Click to Upload Image")</h6>
+                        <p class="small text-muted mb-0">PNG, JPG, WEBP (Max 2MB)</p>
+                        <img id="imgPreview" class="preview-img" alt="Preview">
+                    </div>
+                    <span asp-validation-for="ImageDesktop" class="text-danger small mt-1 d-block"></span>
+                </div>
+
+                <div class="form-divider"></div>
+
+                <!-- 2. Basic Info -->
+                <div class="section-title">
+                    <i class="fas fa-heading"></i> @(isAr ? "البيانات الأساسية" : "Basic Information")
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="Title" class="form-label"></label>
+                        <input asp-for="Title" class="form-control" placeholder="@(isAr ? "مثال: عروض الصيف" : "Ex: Summer Sale")" />
+                        <span asp-validation-for="Title" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="TitleEn" class="form-label"></label>
+                        <input asp-for="TitleEn" class="form-control" placeholder="Ex: Summer Sale" />
+                        <span asp-validation-for="TitleEn" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="Subtitle" class="form-label">@(isAr ? "العنوان الفرعي (عربي)" : "Subtitle (Ar)")</label>
+                        <input asp-for="Subtitle" class="form-control" placeholder="@(isAr ? "خصم يصل إلى 50%" : "Up to 50% OFF")" />
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="SubtitleEn" class="form-label">@(isAr ? "العنوان الفرعي (إنجليزي)" : "Subtitle (En)")</label>
+                        <input asp-for="SubtitleEn" class="form-control" placeholder="Up to 50% OFF" />
+                    </div>
+                </div>
+
+                <div class="form-divider"></div>
+
+                <!-- 3. Scheduling & Linking -->
+                <div class="section-title">
+                    <i class="far fa-calendar-alt"></i> @(isAr ? "التوقيت والروابط" : "Schedule & Links")
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="StartDate" class="form-label">@(isAr ? "تاريخ البدء" : "Start Date")</label>
+                        <input asp-for="StartDate" type="datetime-local" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="EndDate" class="form-label">@(isAr ? "تاريخ الانتهاء" : "End Date")</label>
+                        <input asp-for="EndDate" type="datetime-local" class="form-control" />
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label">@(isAr ? "نوع الرابط" : "Link Type")</label>
+                        <select asp-for="LinkType" class="form-select" id="LinkTypeSelector" onchange="toggleLinkInputs()">
+                            <option value="External">@(isAr ? "رابط خارجي" : "External Link")</option>
+                            <option value="Product">@(isAr ? "منتج" : "Product")</option>
+                            <option value="Category">@(isAr ? "قسم" : "Category")</option>
+                        </select>
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label">@(isAr ? "اختر الهدف" : "Target")</label>
+
+                        <!-- Input for External Link -->
+                        <input type="text" id="inputExternal" class="form-control link-input" placeholder="https://..." oninput="updateLinkId(this.value)" />
+
+                        <!-- Select for Product -->
+                        <select id="inputProduct" class="form-select link-input" style="display:none;" asp-items="@(ViewBag.Products as SelectList)" onchange="updateLinkId(this.value)">
+                            <option value="">@(isAr ? "-- اختر المنتج --" : "-- Select Product --")</option>
+                        </select>
+
+                        <!-- Select for Category -->
+                        <select id="inputCategory" class="form-select link-input" style="display:none;" asp-items="@(ViewBag.Categories as SelectList)" onchange="updateLinkId(this.value)">
+                            <option value="">@(isAr ? "-- اختر القسم --" : "-- Select Category --")</option>
+                        </select>
+
+                        <!-- Hidden Field Binding -->
+                        <input type="hidden" asp-for="LinkId" id="finalLinkId" />
+                        <span asp-validation-for="LinkId" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label asp-for="ButtonText" class="form-label">@(isAr ? "نص الزر (عربي)" : "Button Text (Ar)")</label>
+                        <input asp-for="ButtonText" class="form-control" value="تسوق الآن" />
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="ButtonTextEn" class="form-label">@(isAr ? "نص الزر (إنجليزي)" : "Button Text (En)")</label>
+                        <input asp-for="ButtonTextEn" class="form-control" value="Shop Now" />
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 pt-3 border-top" style="border-color:var(--b-border)!important;">
+                    <button type="submit" class="btn-submit">
+                        <i class="fas fa-paper-plane"></i> @(isAr ? "إرسال للمراجعة" : "Submit for Review")
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function previewImage(input, imgId) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    var img = document.getElementById(imgId);
+                    img.src = e.target.result;
+                    img.style.display = 'block';
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function toggleLinkInputs() {
+            var type = document.getElementById('LinkTypeSelector').value;
+            var inputs = document.querySelectorAll('.link-input');
+
+            // Hide all first
+            inputs.forEach(el => el.style.display = 'none');
+
+            // Show relevant input
+            if (type === 'Product') {
+                document.getElementById('inputProduct').style.display = 'block';
+                // Update hidden field with current select value (if any)
+                updateLinkId(document.getElementById('inputProduct').value);
+            } else if (type === 'Category') {
+                document.getElementById('inputCategory').style.display = 'block';
+                updateLinkId(document.getElementById('inputCategory').value);
+            } else {
+                document.getElementById('inputExternal').style.display = 'block';
+                updateLinkId(document.getElementById('inputExternal').value);
+            }
+        }
+
+        function updateLinkId(val) {
+            document.getElementById('finalLinkId').value = val;
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleLinkInputs();
+
+            // Pre-fill visual inputs if LinkId has value (Edit mode scenario)
+            var currentLinkId = document.getElementById('finalLinkId').value;
+            var currentType = document.getElementById('LinkTypeSelector').value;
+
+            if(currentLinkId) {
+                if(currentType === 'Product') document.getElementById('inputProduct').value = currentLinkId;
+                else if(currentType === 'Category') document.getElementById('inputCategory').value = currentLinkId;
+                else document.getElementById('inputExternal').value = currentLinkId;
+            }
+        });
+    </script>
+}

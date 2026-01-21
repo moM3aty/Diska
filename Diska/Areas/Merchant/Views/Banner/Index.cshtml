@@ -1,0 +1,404 @@
+﻿@model IEnumerable<Diska.Models.Banner>
+@using System.Globalization
+@{
+    ViewData["Title"] = "إدارة الإعلانات";
+    Layout = "_MerchantLayout";
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+}
+
+<style>
+    /* =========================================
+           PREMIUM BANNER LIST STYLES
+           ========================================= */
+    :root {
+        --b-bg: #f8fafc;
+        --b-card-bg: #ffffff;
+        --b-text: #0f172a;
+        --b-muted: #64748b;
+        --b-border: #e2e8f0;
+        --b-primary: #0F172A;
+        --b-accent: #4f46e5;
+        --b-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+        --b-hover: #f1f5f9;
+        --st-active-bg: rgba(16, 185, 129, 0.1);
+        --st-active-txt: #10b981;
+        --st-pending-bg: rgba(245, 158, 11, 0.1);
+        --st-pending-txt: #d97706;
+        --st-rejected-bg: rgba(239, 68, 68, 0.1);
+        --st-rejected-txt: #ef4444;
+    }
+
+    [data-bs-theme="dark"] {
+        --b-bg: #020617;
+        --b-card-bg: #1e293b;
+        --b-text: #f8fafc;
+        --b-muted: #94a3b8;
+        --b-border: rgba(255, 255, 255, 0.08);
+        --b-primary: #f8fafc;
+        --b-accent: #4f46e5;
+        --b-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        --b-hover: rgba(255, 255, 255, 0.05);
+        --st-active-bg: rgba(16, 185, 129, 0.15);
+        --st-active-txt: #4ade80;
+        --st-pending-bg: rgba(245, 158, 11, 0.15);
+        --st-pending-txt: #fbbf24;
+        --st-rejected-bg: rgba(239, 68, 68, 0.15);
+        --st-rejected-txt: #f87171;
+    }
+
+    body {
+        background-color: var(--b-bg);
+        transition: background-color 0.3s ease;
+    }
+
+    /* Header */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .page-title {
+        margin: 0;
+        color: var(--b-primary);
+        font-weight: 800;
+        font-size: 1.8rem;
+    }
+
+    .page-desc {
+        color: var(--b-muted);
+        margin: 5px 0 0;
+        font-size: 0.95rem;
+    }
+
+    .btn-create {
+        background: var(--b-primary);
+        color: #fff;
+        padding: 10px 24px;
+        border-radius: 50px;
+        text-decoration: none;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        transition: 0.3s;
+    }
+
+    [data-bs-theme="dark"] .btn-create {
+        background: var(--b-accent);
+        color: #000;
+    }
+
+    .btn-create:hover {
+        transform: translateY(-2px);
+        opacity: 0.9;
+        color: #fff;
+    }
+
+    [data-bs-theme="dark"] .btn-create:hover {
+        color: #000;
+    }
+
+    /* Grid */
+    .banners-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 25px;
+    }
+
+    /* Banner Card */
+    .banner-card {
+        background: var(--b-card-bg);
+        border: 1px solid var(--b-border);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: var(--b-shadow);
+        transition: 0.3s;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+        .banner-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px -5px rgba(0,0,0,0.1);
+            border-color: var(--b-muted);
+        }
+
+    [data-bs-theme="dark"] .banner-card:hover {
+        box-shadow: 0 15px 30px -5px rgba(0,0,0,0.4);
+    }
+
+    .banner-img-container {
+        height: 160px;
+        position: relative;
+        overflow: hidden;
+        background: #000;
+    }
+
+    .banner-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.8;
+        transition: 0.5s;
+    }
+
+    .banner-card:hover .banner-img {
+        transform: scale(1.05);
+        opacity: 0.6;
+    }
+
+    .banner-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 15px;
+        background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+        color: #fff;
+    }
+
+    .banner-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin: 0;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+
+    .banner-body {
+        padding: 20px;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        font-size: 0.9rem;
+        color: var(--b-muted);
+    }
+
+        .info-row i {
+            color: var(--b-text);
+            width: 20px;
+            text-align: center;
+        }
+
+    /* Badges */
+    .status-badge {
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        display: inline-block;
+    }
+
+    .st-Approved {
+        background: var(--st-active-bg);
+        color: var(--st-active-txt);
+    }
+
+    .st-Pending {
+        background: var(--st-pending-bg);
+        color: var(--st-pending-txt);
+    }
+
+    .st-Rejected {
+        background: var(--st-rejected-bg);
+        color: var(--st-rejected-txt);
+    }
+
+    .device-badge {
+        font-size: 0.7rem;
+        background: var(--b-hover);
+        color: var(--b-text);
+        padding: 3px 8px;
+        border-radius: 4px;
+    }
+
+    /* Actions */
+    .card-footer {
+        padding: 15px 20px;
+        border-top: 1px solid var(--b-border);
+        background: var(--b-card-bg);
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+    }
+
+    .btn-icon {
+        width: 35px;
+        height: 35px;
+        border-radius: 8px;
+        border: 1px solid var(--b-border);
+        background: transparent;
+        color: var(--b-muted);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: 0.2s;
+        cursor: pointer;
+    }
+
+        .btn-icon:hover {
+            border-color: var(--b-primary);
+            color: var(--b-primary);
+            background: var(--b-hover);
+        }
+
+    .btn-delete:hover {
+        border-color: var(--b-danger);
+        color: var(--b-danger);
+        background: rgba(239, 68, 68, 0.05);
+    }
+
+    .admin-note {
+        margin-top: 10px;
+        padding: 10px;
+        border-radius: 8px;
+        background: rgba(239, 68, 68, 0.05);
+        border: 1px dashed var(--b-danger);
+        color: var(--b-danger);
+        font-size: 0.85rem;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 80px 20px;
+        color: var(--b-muted);
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.3;
+    }
+
+    /* Animation */
+    .fade-up {
+        animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @@keyframes fadeUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+<div class="container-fluid py-4 fade-up">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">@(isAr ? "إدارة الإعلانات" : "Banners Management")</h1>
+            <p class="page-desc">@(isAr ? "التحكم في البنرات والعروض الترويجية للمتجر" : "Manage store banners and promotions")</p>
+        </div>
+        <a asp-action="Create" class="btn-create">
+            <i class="fas fa-plus"></i> @(isAr ? "إعلان جديد" : "New Banner")
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success rounded-3 mb-4 border-0 shadow-sm d-flex align-items-center gap-2" style="background:#dcfce7; color:#166534;">
+            <i class="fas fa-check-circle"></i> @TempData["Success"]
+        </div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="card border-0 shadow-sm empty-state" style="background:var(--b-card-bg);">
+            <i class="fas fa-images empty-icon"></i>
+            <h4>@(isAr ? "لا توجد إعلانات" : "No banners found")</h4>
+            <p>@(isAr ? "ابدأ بإضافة أول بنر إعلاني لمتجرك." : "Start by adding your first promotional banner.")</p>
+        </div>
+    }
+    else
+    {
+        <div class="banners-grid">
+            @foreach (var item in Model)
+            {
+                <div class="banner-card">
+                    <div class="banner-img-container">
+                        <img src="~/@item.ImageDesktop" onerror="this.src='/images/default-banner.png'" class="banner-img">
+                        <div class="banner-overlay">
+                            <h5 class="banner-title">@item.Title</h5>
+                        </div>
+                    </div>
+
+                    <div class="banner-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="status-badge st-@item.Status">
+                                @(isAr ? (item.Status == "Approved" ? "نشط" : item.Status == "Rejected" ? "مرفوض" : "قيد المراجعة") : item.Status)
+                            </span>
+                            <div class="d-flex gap-1">
+                                <span class="device-badge"><i class="fas fa-desktop"></i></span>
+                                @if (!string.IsNullOrEmpty(item.ImageMobile))
+                                {
+                                    <span class="device-badge"><i class="fas fa-mobile-alt"></i></span>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="info-row">
+                            <span><i class="far fa-calendar-alt"></i> @(isAr ? "البدء" : "Start")</span>
+                            <span>@item.StartDate.ToString("dd MMM yyyy")</span>
+                        </div>
+                        <div class="info-row">
+                            <span><i class="far fa-calendar-times"></i> @(isAr ? "الانتهاء" : "End")</span>
+                            <span>@item.EndDate.ToString("dd MMM yyyy")</span>
+                        </div>
+                        <div class="info-row">
+                            <span><i class="fas fa-link"></i> @(isAr ? "الرابط" : "Link")</span>
+                            <span class="text-truncate" style="max-width:120px;" title="@item.LinkId">@item.LinkType</span>
+                        </div>
+
+                        @if (item.Status == "Rejected" && !string.IsNullOrEmpty(item.AdminComment))
+                        {
+                            <div class="admin-note">
+                                <strong><i class="fas fa-exclamation-circle"></i> @(isAr ? "سبب الرفض" : "Rejection Reason"):</strong><br>
+                                @item.AdminComment
+                            </div>
+                        }
+                    </div>
+
+                    <div class="card-footer">
+                        <!-- حذف فقط لأنه لا يمكن التعديل بعد الإرسال عادةً، أو يمكن تفعيل التعديل -->
+                        <form asp-action="Delete" method="post" onsubmit="return confirm('@(isAr?"حذف الإعلان؟":"Delete Banner?")')">
+                            <input type="hidden" name="id" value="@item.Id" />
+                            <button type="submit" class="btn-icon btn-delete" title="@(isAr ? "حذف" : "Delete")">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        // Optional: Auto-hide alerts
+        setTimeout(function() {
+            var alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                alert.style.transition = "opacity 0.5s ease";
+                alert.style.opacity = 0;
+                setTimeout(function() { alert.style.display = 'none'; }, 500);
+            });
+        }, 4000);
+    </script>
+}

@@ -44,16 +44,16 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQWRtaW5cVmlld3NcQXVkaXRcSW5kZXguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/MOHAMED ABO-ELM3ATY/Downloads/B2B/Diska/Diska/Areas/Admin/Views/Banners/Create.cshtml]
-build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQWRtaW5cVmlld3NcQmFubmVyc1xDcmVhdGUuY3NodG1s
+[C:/Users/MOHAMED ABO-ELM3ATY/Downloads/B2B/Diska/Diska/Areas/Admin/Views/Banner/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQWRtaW5cVmlld3NcQmFubmVyXENyZWF0ZS5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/MOHAMED ABO-ELM3ATY/Downloads/B2B/Diska/Diska/Areas/Admin/Views/Banners/Edit.cshtml]
-build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQWRtaW5cVmlld3NcQmFubmVyc1xFZGl0LmNzaHRtbA==
+[C:/Users/MOHAMED ABO-ELM3ATY/Downloads/B2B/Diska/Diska/Areas/Admin/Views/Banner/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQWRtaW5cVmlld3NcQmFubmVyXEVkaXQuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/MOHAMED ABO-ELM3ATY/Downloads/B2B/Diska/Diska/Areas/Admin/Views/Banners/Index.cshtml]
-build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQWRtaW5cVmlld3NcQmFubmVyc1xJbmRleC5jc2h0bWw=
+[C:/Users/MOHAMED ABO-ELM3ATY/Downloads/B2B/Diska/Diska/Areas/Admin/Views/Banner/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQWRtaW5cVmlld3NcQmFubmVyXEluZGV4LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/MOHAMED ABO-ELM3ATY/Downloads/B2B/Diska/Diska/Areas/Admin/Views/Categories/Create.cshtml]
@@ -222,6 +222,14 @@ build_metadata.AdditionalFiles.CssScope =
 
 [C:/Users/MOHAMED ABO-ELM3ATY/Downloads/B2B/Diska/Diska/Areas/Admin/Views/_ViewStart.cshtml]
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQWRtaW5cVmlld3NcX1ZpZXdTdGFydC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/MOHAMED ABO-ELM3ATY/Downloads/B2B/Diska/Diska/Areas/Merchant/Views/Banner/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcTWVyY2hhbnRcVmlld3NcQmFubmVyXENyZWF0ZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/MOHAMED ABO-ELM3ATY/Downloads/B2B/Diska/Diska/Areas/Merchant/Views/Banner/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcTWVyY2hhbnRcVmlld3NcQmFubmVyXEluZGV4LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/MOHAMED ABO-ELM3ATY/Downloads/B2B/Diska/Diska/Areas/Merchant/Views/Dashboard/Index.cshtml]

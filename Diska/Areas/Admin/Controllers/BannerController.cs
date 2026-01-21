@@ -1,62 +1,77 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using Diska.Data;
-using Diska.Models;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
+using Diska.Services;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using System.IO;
+using System;
+using Diska.Models;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Diska.Areas.Admin.Controllers
 {
     [Area("Admin")]
     [Authorize(Roles = "Admin")]
-    public class BannersController : Controller
+    public class BannerController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly INotificationService _notificationService;
         private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public BannersController(ApplicationDbContext context, IWebHostEnvironment webHostEnvironment)
+        public BannerController(ApplicationDbContext context, INotificationService notificationService, IWebHostEnvironment webHostEnvironment)
         {
             _context = context;
+            _notificationService = notificationService;
             _webHostEnvironment = webHostEnvironment;
         }
 
-        // --- عرض البنرات ---
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string status = "All")
         {
-            var banners = await _context.Banners
-                .OrderByDescending(b => b.Priority)
-                .ThenByDescending(b => b.Id)
-                .ToListAsync();
-            return View(banners);
+            var banners = _context.Banners
+                .Include(b => b.Merchant)
+                .AsQueryable();
+
+            if (status != "All")
+                banners = banners.Where(b => b.Status == status);
+
+            ViewBag.CurrentStatus = status;
+            return View(await banners.OrderByDescending(b => b.Priority).ThenByDescending(b => b.Id).ToListAsync());
         }
 
-        // --- إنشاء بنر جديد ---
         [HttpGet]
         public IActionResult Create()
         {
             PrepareViewBags();
-            return View(new Banner { StartDate = DateTime.Now, EndDate = DateTime.Now.AddDays(7) });
+            return View(new Banner { StartDate = DateTime.Now, EndDate = DateTime.Now.AddDays(7), IsActive = true });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Banner banner, IFormFile desktopFile, IFormFile mobileFile)
         {
-            // إزالة التحقق من الصور لأننا سنتعامل معها يدوياً
             ModelState.Remove("ImageMobile");
             ModelState.Remove("ImageDesktop");
+            ModelState.Remove("Merchant");
+            ModelState.Remove("MerchantId");
+            ModelState.Remove("AdminComment");
 
             if (ModelState.IsValid)
             {
-                // رفع الصور
+                banner.ApprovalStatus = "Approved";
+
                 if (desktopFile != null) banner.ImageDesktop = await SaveFile(desktopFile);
-                else banner.ImageDesktop = "images/default-banner.png"; // صورة افتراضية في حال عدم الرفع
+                else banner.ImageDesktop = "images/default-banner.png";
 
                 if (mobileFile != null) banner.ImageMobile = await SaveFile(mobileFile);
-                else banner.ImageMobile = banner.ImageDesktop; // استخدام صورة الديسكتوب للموبايل كبديل
+                else banner.ImageMobile = banner.ImageDesktop; 
 
                 _context.Banners.Add(banner);
                 await _context.SaveChangesAsync();
+
                 TempData["Success"] = "تم إضافة البنر بنجاح";
                 return RedirectToAction(nameof(Index));
             }
@@ -65,7 +80,6 @@ namespace Diska.Areas.Admin.Controllers
             return View(banner);
         }
 
-        // --- تعديل البنر ---
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
@@ -82,9 +96,11 @@ namespace Diska.Areas.Admin.Controllers
         {
             if (id != banner.Id) return NotFound();
 
-            // نتجاهل التحقق من الصور لأنها قد تكون موجودة مسبقاً ولا نحتاج لرفعها مجدداً
             ModelState.Remove("ImageMobile");
             ModelState.Remove("ImageDesktop");
+            ModelState.Remove("Merchant");
+            ModelState.Remove("MerchantId");
+            ModelState.Remove("AdminComment");
             ModelState.Remove("mobileFile");
             ModelState.Remove("desktopFile");
 
@@ -92,19 +108,14 @@ namespace Diska.Areas.Admin.Controllers
             {
                 try
                 {
-                    // جلب البيانات القديمة (بدون تتبع لتجنب تعارض التحديث)
                     var existing = await _context.Banners.AsNoTracking().FirstOrDefaultAsync(b => b.Id == id);
+                    if (existing == null) return NotFound();
 
-                    if (existing == null)
-                    {
-                        return NotFound();
-                    }
-
-                    // المنطق للحفاظ على الصور القديمة:
-                    // إذا تم رفع ملف جديد (desktopFile != null)، نستخدمه.
-                    // وإلا، نستخدم المسار القديم المحفوظ في قاعدة البيانات (existing.ImageDesktop).
                     banner.ImageDesktop = desktopFile != null ? await SaveFile(desktopFile) : existing.ImageDesktop;
                     banner.ImageMobile = mobileFile != null ? await SaveFile(mobileFile) : existing.ImageMobile;
+
+                    banner.MerchantId = existing.MerchantId;
+                    if (string.IsNullOrEmpty(banner.Status)) banner.ApprovalStatus = existing.Status;
 
                     _context.Update(banner);
                     await _context.SaveChangesAsync();
@@ -122,17 +133,12 @@ namespace Diska.Areas.Admin.Controllers
             return View(banner);
         }
 
-        // --- حذف البنر ---
         [HttpPost]
         public async Task<IActionResult> Delete(int id)
         {
             var banner = await _context.Banners.FindAsync(id);
             if (banner != null)
             {
-                // خياري: حذف الصور الفعلية من السيرفر لتوفير المساحة
-                // DeleteFile(banner.ImageDesktop);
-                // DeleteFile(banner.ImageMobile);
-
                 _context.Banners.Remove(banner);
                 await _context.SaveChangesAsync();
                 TempData["Success"] = "تم حذف البنر";
@@ -140,7 +146,45 @@ namespace Diska.Areas.Admin.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // --- دوال مساعدة ---
+        [HttpPost]
+        public async Task<IActionResult> Approve(int id)
+        {
+            var banner = await _context.Banners.FindAsync(id);
+            if (banner == null) return NotFound();
+
+            banner.ApprovalStatus = "Approved";
+            banner.IsActive = true;
+            await _context.SaveChangesAsync();
+
+            if (!string.IsNullOrEmpty(banner.MerchantId))
+            {
+                await _notificationService.NotifyUserAsync(banner.MerchantId, "تمت الموافقة ✅", $"تمت الموافقة على إعلانك '{banner.Title}' ونشره.", "Banner");
+            }
+
+            TempData["Success"] = "تمت الموافقة على الإعلان.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Reject(int id, string reason)
+        {
+            var banner = await _context.Banners.FindAsync(id);
+            if (banner == null) return NotFound();
+
+            banner.ApprovalStatus = "Rejected";
+            banner.IsActive = false;
+            banner.AdminComment = reason;
+            await _context.SaveChangesAsync();
+
+            if (!string.IsNullOrEmpty(banner.MerchantId))
+            {
+                await _notificationService.NotifyUserAsync(banner.MerchantId, "تم الرفض ❌", $"تم رفض إعلانك '{banner.Title}'. السبب: {reason}", "Banner");
+            }
+
+            TempData["Success"] = "تم رفض الإعلان.";
+            return RedirectToAction(nameof(Index));
+        }
+
         private async Task<string> SaveFile(IFormFile file)
         {
             string folder = "images/banners/";
@@ -159,10 +203,8 @@ namespace Diska.Areas.Admin.Controllers
 
         private void PrepareViewBags()
         {
-            // لتعبئة القوائم المنسدلة عند الربط (للاقسام، المنتجات، الصفقات)
             ViewBag.Categories = new SelectList(_context.Categories, "Id", "Name");
             ViewBag.Products = new SelectList(_context.Products.Take(100), "Id", "Name");
-            ViewBag.Deals = new SelectList(_context.GroupDeals.Where(d => d.IsActive), "Id", "Id");
         }
     }
 }

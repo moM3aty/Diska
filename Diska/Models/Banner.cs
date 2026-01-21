@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Diska.Models
 {
@@ -19,15 +20,15 @@ namespace Diska.Models
         public string SubtitleEn { get; set; }
 
         public string ImageDesktop { get; set; }
-        public string ImageMobile { get; set; }  
+        public string ImageMobile { get; set; }
 
-        public string LinkType { get; set; } = "External"; 
-        public string LinkId { get; set; } 
+        public string LinkType { get; set; } = "External";
+        public string LinkId { get; set; }
 
         public string ButtonText { get; set; } = "تسوق الآن";
         public string ButtonTextEn { get; set; } = "Shop Now";
 
-        public int Priority { get; set; } = 0; 
+        public int Priority { get; set; } = 0;
         public bool IsActive { get; set; } = true;
 
         [DataType(DataType.DateTime)]
@@ -36,6 +37,16 @@ namespace Diska.Models
         [DataType(DataType.DateTime)]
         public DateTime EndDate { get; set; } = DateTime.Now.AddDays(30);
 
+        public string? MerchantId { get; set; }
+
+        [ForeignKey("MerchantId")]
+        public virtual ApplicationUser Merchant { get; set; }
+
+        public string ApprovalStatus { get; set; } = "Pending"; 
+
+        public string? AdminComment { get; set; } 
+
+        [NotMapped]
         public string Status
         {
             get

@@ -2,6 +2,7 @@
 @using System.Globalization
 @using Diska.Data
 @using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
 @inject ApplicationDbContext _context
 @inject UserManager<Diska.Models.ApplicationUser> UserManager
 
@@ -10,8 +11,25 @@
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
     ViewData["Title"] = isAr ? "الرئيسية" : "Home";
 
+    // 1. معالجة الأقسام (جلب مباشر إذا لم تتوفر في ViewBag)
     var categories = ViewBag.Categories as IEnumerable<Diska.Models.Category>;
+    if (categories == null || !categories.Any())
+    {
+        categories = _context.Categories
+            .Where(c => c.ParentId == null && c.IsActive)
+            .OrderBy(c => c.DisplayOrder)
+            .ToList();
+    }
+
+    // 2. معالجة البنرات
     var banners = ViewBag.Banners as IEnumerable<Diska.Models.Banner>;
+    if (banners == null || !banners.Any())
+    {
+        banners = _context.Banners
+            .Where(b => b.IsActive && b.StartDate <= DateTime.Now && b.EndDate >= DateTime.Now && b.Status == "Approved")
+            .OrderBy(b => b.Priority)
+            .ToList();
+    }
 
     // Wishlist Logic
     var user = await UserManager.GetUserAsync(User);
@@ -35,6 +53,8 @@
         --home-accent: #FACC15;
         --home-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
         --home-card-hover-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
+        --home-input-bg: #f8fafc;
+        /* Category Colors */
         --cat-bg-0: #e0f2fe;
         --cat-icon-0: #0284c7;
         --cat-bg-1: #fef3c7;
@@ -62,6 +82,7 @@
         --home-accent: #FACC15;
         --home-shadow: 0 10px 40px -5px rgba(0, 0, 0, 0.4);
         --home-card-hover-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.6);
+        --home-input-bg: #0f172a;
         --cat-bg-0: rgba(14, 165, 233, 0.15);
         --cat-icon-0: #38bdf8;
         --cat-bg-1: rgba(245, 158, 11, 0.15);
@@ -89,25 +110,29 @@
         margin-bottom: 60px;
         overflow: hidden;
         padding-top: 20px;
+        min-height: 400px;
     }
 
     .banner-slide {
         display: none;
         animation: fadeEffect 1s;
+        width: 100%;
     }
 
         .banner-slide.active {
             display: block;
         }
-
     @@keyframes fadeEffect {
-        from {
-            opacity: 0.4;
-        }
+        from
 
-        to {
-            opacity: 1;
-        }
+    {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+
     }
 
     .banner-card {
@@ -122,6 +147,7 @@
         overflow: hidden;
         box-shadow: var(--home-shadow);
         border: 1px solid rgba(255,255,255,0.1);
+        min-height: 350px;
     }
 
     [data-bs-theme="dark"] .banner-card {
@@ -227,7 +253,7 @@
             width: 25px;
         }
 
-    /* --- Categories Section --- */
+    /* --- Categories --- */
     .categories-section {
         padding: 30px 0;
     }
@@ -298,7 +324,7 @@
             color: var(--home-text-main);
         }
 
-    /* --- Products Section --- */
+    /* --- Products --- */
     .products-section {
         padding: 50px 0;
     }
@@ -504,6 +530,7 @@
             color: #ef4444;
         }
 
+    /* Quantity & Add to Cart */
     .add-to-cart {
         margin-top: auto;
         display: flex;
@@ -518,14 +545,15 @@
         border: 1px solid var(--home-border);
         border-radius: 50px;
         overflow: hidden;
-        background: var(--home-bg);
+        background: var(--home-input-bg);
+        height: 40px; /* Same height as add button */
     }
 
     .qty-btn {
         background: transparent;
         border: none;
         width: 30px;
-        height: 35px;
+        height: 100%;
         font-weight: bold;
         color: var(--home-text-main);
         cursor: pointer;
@@ -542,7 +570,7 @@
     }
 
     .qty-val {
-        width: 35px;
+        width: 40px;
         text-align: center;
         border: none;
         background: transparent;
@@ -551,7 +579,13 @@
         outline: none;
         -moz-appearance: textfield;
         font-size: 0.9rem;
+        height: 100%;
+        cursor: text;
     }
+
+        .qty-val:focus {
+            background: var(--home-card-bg);
+        }
 
         .qty-val::-webkit-outer-spin-button, .qty-val::-webkit-inner-spin-button {
             -webkit-appearance: none;
@@ -645,8 +679,8 @@
             string href = "#";
             if (banner.LinkType == "External") { href = banner.LinkId; }
             else if (banner.LinkType == "Product") { href = Url.Action("Details", "Product", new { id = banner.LinkId }); }
-            else if (banner.LinkType == "Category") { href = Url.Action("Category", "Product", new { id = banner.LinkId }); }
-            else if (banner.LinkType == "Deal") { href = Url.Action("Deals", "Index"); }
+            else if (banner.LinkType == "Category") { href = Url.Action("Index", "Product", new { categoryId = banner.LinkId }); }
+            else if (banner.LinkType == "Deal") { href = Url.Action("Index", "Deal"); }
 
             string imgSrc = !string.IsNullOrEmpty(banner.ImageDesktop) ? banner.ImageDesktop : "images/banner-img.png";
 
@@ -674,6 +708,7 @@
     }
     else
     {
+        <!-- Fallback Banner if no banners in DB -->
         <div class="banner-card">
             <div class="banner-content">
                 <span class="tag">HOT</span>
@@ -702,7 +737,7 @@
                 }
                 @foreach (var cat in categories)
                 {
-                    <a asp-controller="Product" asp-action="Index" asp-route-id="@cat.Id" class="cat-item">
+                    <a asp-controller="Product" asp-action="Index" asp-route-categoryId="@cat.Id" class="cat-item">
                         <div class="icon" style="background-color: var(--cat-bg-@(i % 6)); color: var(--cat-icon-@(i % 6)); box-shadow: var(--home-shadow);">
                             <i class="@(cat.IconClass ?? "fas fa-box")"></i>
                         </div>
@@ -710,7 +745,7 @@
                     </a>
                     i++;
                 }
-                <a asp-controller="Deals" asp-action="Index" class="cat-item">
+                <a asp-controller="Deal" asp-action="Index" class="cat-item">
                     <div class="icon" style="background-color: var(--cat-special-bg); color: var(--cat-special-icon); box-shadow: var(--home-shadow);">
                         <i class="fas fa-fire"></i>
                     </div>
@@ -779,15 +814,15 @@
                             </div>
 
                             <div class="add-to-cart">
-                                <div class="qty-input-group">
-                                    <button type="button" class="qty-btn" onclick="updateCardQty(this, -1)">-</button>
-                                    <!-- تفعيل الكتابة في حقل الكمية -->
-                                    <input type="number" id="qty-@item.Id" value="1" min="1" max="@item.StockQuantity" class="qty-val" onchange="validateQty(this)" onkeyup="if(event.key === 'Enter') validateQty(this)">
-                                    <button type="button" class="qty-btn" onclick="updateCardQty(this, 1)">+</button>
-                                </div>
-
                                 @if (item.StockQuantity > 0)
                                 {
+                                    <div class="qty-input-group">
+                                        <button type="button" class="qty-btn" onclick="updateCardQty(this, -1)">-</button>
+                                        <!-- تم تفعيل الكتابة في حقل الكمية -->
+                                        <input type="number" id="qty-@item.Id" value="1" min="1" max="@item.StockQuantity" class="qty-val" onchange="validateQty(this)" onkeyup="if(event.key === 'Enter') validateQty(this)">
+                                        <button type="button" class="qty-btn" onclick="updateCardQty(this, 1)">+</button>
+                                    </div>
+
                                     <button class="add-btn" onclick="addToCart(@item.Id, this)">
                                         @(isAr ? "أضف" : "Add") <i class="fas fa-cart-plus"></i>
                                     </button>
@@ -818,37 +853,48 @@
         // Banner Logic
         let slideIndex = 0;
         let slideTimer;
-        function showSlides() {
+
+        function showSlides(n) {
             const slides = document.querySelectorAll('.banner-slide');
             const dots = document.querySelectorAll('.dot');
             if(slides.length === 0) return;
+
+            if (n !== undefined) {
+                slideIndex = n;
+            } else {
+                slideIndex++;
+            }
+
+            if (slideIndex >= slides.length) { slideIndex = 0; }
+            if (slideIndex < 0) { slideIndex = slides.length - 1; }
+
             slides.forEach(slide => slide.classList.remove('active'));
             dots.forEach(dot => dot.classList.remove('active'));
-            slideIndex++;
-            if (slideIndex > slides.length) {slideIndex = 1}
-            slides[slideIndex-1].classList.add('active');
-            if(dots.length > 0) dots[slideIndex-1].classList.add('active');
+
+            slides[slideIndex].classList.add('active');
+            if(dots.length > 0) dots[slideIndex].classList.add('active');
+
             clearTimeout(slideTimer);
-            slideTimer = setTimeout(showSlides, 5000);
+            slideTimer = setTimeout(() => showSlides(), 5000);
         }
+
         window.currentSlide = function(n) {
-            slideIndex = n;
-            const slides = document.querySelectorAll('.banner-slide');
-            const dots = document.querySelectorAll('.dot');
-            slides.forEach(slide => slide.classList.remove('active'));
-            dots.forEach(dot => dot.classList.remove('active'));
-            slides[n].classList.add('active');
-            dots[n].classList.add('active');
-            clearTimeout(slideTimer);
-            slideTimer = setTimeout(showSlides, 5000);
+            showSlides(n);
         }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if(document.querySelectorAll('.banner-slide').length > 0) {
+                slideIndex = -1; // Reset to start from 0 on first call
+                showSlides();
+            }
+        });
 
         // Qty Logic
         function updateCardQty(btn, change) {
             let input = btn.parentElement.querySelector('input');
             let currentVal = parseInt(input.value) || 0;
             let newVal = currentVal + change;
-            input.value = newVal; // Update then validate
+            input.value = newVal;
             validateQty(input);
         }
 
@@ -870,7 +916,7 @@
 
         function addToCart(id, btn) {
             let qtyInput = document.getElementById('qty-' + id);
-            validateQty(qtyInput); // Final validation
+            validateQty(qtyInput);
             let qty = qtyInput.value;
 
             if(typeof addItemToCart === 'function') {
@@ -894,9 +940,5 @@
                 }
             } catch(e) { console.error(e); }
         }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            if(document.querySelectorAll('.banner-slide').length > 0) showSlides();
-        });
     </script>
 }

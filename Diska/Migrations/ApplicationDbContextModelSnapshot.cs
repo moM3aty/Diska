@@ -157,6 +157,13 @@ namespace Diska.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("AdminComment")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ApprovalStatus")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("ButtonText")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -187,6 +194,9 @@ namespace Diska.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("MerchantId")
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<int>("Priority")
                         .HasColumnType("int");
 
@@ -210,6 +220,8 @@ namespace Diska.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("MerchantId");
 
                     b.ToTable("Banners");
                 });
@@ -1320,6 +1332,15 @@ namespace Diska.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("Diska.Models.Banner", b =>
+                {
+                    b.HasOne("Diska.Models.ApplicationUser", "Merchant")
+                        .WithMany()
+                        .HasForeignKey("MerchantId");
+
+                    b.Navigation("Merchant");
                 });
 
             modelBuilder.Entity("Diska.Models.Category", b =>

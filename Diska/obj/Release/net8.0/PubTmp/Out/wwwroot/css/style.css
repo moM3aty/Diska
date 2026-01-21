@@ -3594,3 +3594,25 @@ body.dark-mode {
         background-color: #1E293B;
         color: #FACC15;
     }
+    .mqL{
+        display:block;
+    }
+    .mqS{
+        display:none;
+    }
+    @media(Max-width:768px){
+        .mqL{
+            display:none;
+        }
+        .mqS {
+            display: block;
+        }
+    }
+@media(Max-width:430px) {
+    .mqS {
+        display: none;
+    }
+    .search-box{
+        margin-top:60px;
+    }
+}

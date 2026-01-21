@@ -294,6 +294,9 @@
                 <a href="/Merchant/Restock" class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Restock" ? "active" : "")">
                     <i class="fas fa-cubes"></i> <span>@(isAr ? "نواقص المخزون" : "Restock Requests")</span>
                 </a>
+                <a href="/Merchant/Banner" class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Banner" ? "active" : "")">
+                    <i class="fas fa-images"></i>  <span>@(isAr ? "بنرات" : "Banners")</span>
+                </a>
 
                 <div class="menu-label">@(isAr ? "العمليات" : "Operations")</div>
 
