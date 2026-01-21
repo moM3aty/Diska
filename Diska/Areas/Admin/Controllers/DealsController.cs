@@ -1,11 +1,13 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Diska.Data;
 using Diska.Models;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Diska.Services;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using System.Threading.Tasks;
 using System.Linq;
+using System.Threading.Tasks;
 using System;
 using System.Collections.Generic;
 
@@ -13,27 +15,39 @@ namespace Diska.Areas.Admin.Controllers
 {
     [Area("Admin")]
     [Authorize(Roles = "Admin")]
-    public class DealsController : Controller
+    public class DealController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly INotificationService _notificationService;
 
-        public DealsController(ApplicationDbContext context)
+        public DealController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, INotificationService notificationService)
         {
             _context = context;
+            _userManager = userManager;
+            _notificationService = notificationService;
         }
 
-        // 1. Index
-        public async Task<IActionResult> Index()
+        // 1. عرض الصفقات (Index)
+        public async Task<IActionResult> Index(string status = "All")
         {
-            var deals = await _context.GroupDeals
-                .Include(d => d.Product)
+            var dealsQuery = _context.GroupDeals
+                .Include(d => d.Product).ThenInclude(p => p.Merchant)
                 .Include(d => d.Category)
-                .OrderByDescending(d => d.EndDate)
-                .ToListAsync();
+                .AsQueryable();
+
+            if (status != "All")
+            {
+                dealsQuery = dealsQuery.Where(d => d.Status == status);
+            }
+
+            var deals = await dealsQuery.OrderByDescending(d => d.Id).ToListAsync();
+
+            ViewBag.CurrentStatus = status;
             return View(deals);
         }
 
-        // 2. Create (GET)
+        // 2. إنشاء صفقة (Create GET)
         [HttpGet]
         public IActionResult Create()
         {
@@ -46,7 +60,7 @@ namespace Diska.Areas.Admin.Controllers
             });
         }
 
-        // 3. Create (POST)
+        // 3. إنشاء صفقة (Create POST)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(GroupDeal model)
@@ -56,54 +70,18 @@ namespace Diska.Areas.Admin.Controllers
 
             if (ModelState.IsValid)
             {
-                // قائمة المنتجات التي سيطبق عليها العرض
-                var productsToUpdate = new List<Product>();
+                // إذا أنشأ الأدمن الصفقة، فهي معتمدة تلقائياً
+                model.Status = "Approved";
 
-                if (model.ProductId.HasValue)
+                if (model.IsActive)
                 {
-                    var p = await _context.Products.FindAsync(model.ProductId);
-                    if (p != null) productsToUpdate.Add(p);
-                }
-                else if (model.CategoryId.HasValue)
-                {
-                    productsToUpdate = await _context.Products
-                        .Where(p => p.CategoryId == model.CategoryId)
-                        .ToListAsync();
-                }
-
-                // تطبيق الخصم على المنتجات
-                foreach (var product in productsToUpdate)
-                {
-                    // 1. حساب السعر الجديد
-                    decimal newPrice;
-                    if (model.IsPercentage)
-                        newPrice = product.Price - (product.Price * (model.DiscountValue / 100));
-                    else
-                        newPrice = product.Price - model.DiscountValue;
-
-                    // 2. تحديث المنتج (إذا كان العرض نشطاً)
-                    if (model.IsActive)
-                    {
-                        // حفظ السعر القديم إذا لم يكن محفوظاً (لتجنب ضياع السعر الأساسي)
-                        if (product.OldPrice == null || product.OldPrice == 0)
-                        {
-                            product.OldPrice = product.Price;
-                        }
-
-                        // اعتماد السعر الجديد ليظهر في الموقع
-                        product.Price = newPrice;
-                        _context.Products.Update(product);
-                    }
-
-                    // (اختياري) حفظ سعر العرض في موديل الصفقة للعرض فقط
-                    // في حالة القسم، هذا السعر قد يكون غير دقيق لأنه يختلف من منتج لآخر، لكنه مؤشر
-                    model.DealPrice = newPrice;
+                    await ApplyDealPrices(model);
                 }
 
                 _context.GroupDeals.Add(model);
                 await _context.SaveChangesAsync();
 
-                TempData["Success"] = $"تم إضافة العرض وتحديث {productsToUpdate.Count} منتج.";
+                TempData["Success"] = "تم إضافة العرض بنجاح.";
                 return RedirectToAction(nameof(Index));
             }
 
@@ -111,7 +89,7 @@ namespace Diska.Areas.Admin.Controllers
             return View(model);
         }
 
-        // 4. Edit (GET)
+        // 4. تعديل صفقة (Edit GET)
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
@@ -122,7 +100,7 @@ namespace Diska.Areas.Admin.Controllers
             return View(deal);
         }
 
-        // 5. Edit (POST)
+        // 5. تعديل صفقة (Edit POST)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, GroupDeal model)
@@ -136,69 +114,23 @@ namespace Diska.Areas.Admin.Controllers
             {
                 try
                 {
-                    // أ) استرجاع النسخة القديمة من العرض (قبل التعديل) لإلغاء تأثيرها
+                    // استرجاع الصفقة القديمة لإلغاء تأثيرها أولاً
                     var oldDeal = await _context.GroupDeals.AsNoTracking().FirstOrDefaultAsync(d => d.Id == id);
-                    if (oldDeal == null) return NotFound();
-
-                    // --- خطوة 1: استرجاع الأسعار الأصلية (Revert Old Deal) ---
-                    var productsToRevert = new List<Product>();
-                    if (oldDeal.ProductId.HasValue)
+                    if (oldDeal != null)
                     {
-                        var p = await _context.Products.FindAsync(oldDeal.ProductId);
-                        if (p != null) productsToRevert.Add(p);
-                    }
-                    else if (oldDeal.CategoryId.HasValue)
-                    {
-                        productsToRevert = await _context.Products.Where(p => p.CategoryId == oldDeal.CategoryId).ToListAsync();
+                        await RevertDealPrices(oldDeal);
                     }
 
-                    foreach (var p in productsToRevert)
+                    // تطبيق التغييرات الجديدة
+                    if (model.IsActive && model.Status == "Approved")
                     {
-                        // إذا كان للمنتج سعر قديم محفوظ، نسترجعه
-                        if (p.OldPrice != null && p.OldPrice > 0)
-                        {
-                            p.Price = p.OldPrice.Value;
-                            p.OldPrice = null;
-                            _context.Products.Update(p);
-                        }
-                    }
-                    // حفظ التغييرات (إعادة الأسعار لطبيعتها) قبل تطبيق العرض الجديد
-                    await _context.SaveChangesAsync();
-
-
-                    // --- خطوة 2: تطبيق العرض الجديد (Apply New Deal) ---
-                    if (model.IsActive)
-                    {
-                        var productsToApply = new List<Product>();
-                        if (model.ProductId.HasValue)
-                        {
-                            // نعيد جلب المنتج لضمان أحدث بيانات بعد الـ Revert
-                            var p = await _context.Products.FindAsync(model.ProductId);
-                            if (p != null) productsToApply.Add(p);
-                        }
-                        else if (model.CategoryId.HasValue)
-                        {
-                            productsToApply = await _context.Products.Where(p => p.CategoryId == model.CategoryId).ToListAsync();
-                        }
-
-                        foreach (var p in productsToApply)
-                        {
-                            decimal discountAmount = model.IsPercentage
-                                ? p.Price * (model.DiscountValue / 100)
-                                : model.DiscountValue;
-
-                            // السعر الحالي (الذي هو الأصلي الآن بعد الـ Revert) يصبح هو القديم
-                            p.OldPrice = p.Price;
-                            p.Price = p.Price - discountAmount;
-
-                            _context.Products.Update(p);
-                        }
+                        await ApplyDealPrices(model);
                     }
 
                     _context.GroupDeals.Update(model);
                     await _context.SaveChangesAsync();
 
-                    TempData["Success"] = "تم تحديث العرض وتعديل أسعار المنتجات.";
+                    TempData["Success"] = "تم تحديث العرض بنجاح.";
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -212,7 +144,66 @@ namespace Diska.Areas.Admin.Controllers
             return View(model);
         }
 
-        // 6. Delete
+        // 6. الموافقة على صفقة (Approve) - للأدمن
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Approve(int id)
+        {
+            var deal = await _context.GroupDeals
+                .Include(d => d.Product)
+                .FirstOrDefaultAsync(d => d.Id == id);
+
+            if (deal == null) return NotFound();
+
+            // تطبيق الأسعار عند الموافقة
+            deal.Status = "Approved";
+            deal.IsActive = true;
+            await ApplyDealPrices(deal);
+
+            _context.GroupDeals.Update(deal);
+            await _context.SaveChangesAsync();
+
+            // إشعار للتاجر
+            string merchantId = deal.Product?.MerchantId;
+            if (!string.IsNullOrEmpty(merchantId))
+            {
+                await _notificationService.NotifyUserAsync(merchantId, "تمت الموافقة ✅", $"تمت الموافقة على صفقتك '{deal.Title}' وتطبيق الخصومات.", "Deal");
+            }
+
+            TempData["Success"] = "تمت الموافقة وتطبيق الأسعار.";
+            return RedirectToAction(nameof(Index), new { status = "Pending" });
+        }
+
+        // 7. رفض صفقة (Reject)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Reject(int id)
+        {
+            var deal = await _context.GroupDeals.Include(d => d.Product).FirstOrDefaultAsync(d => d.Id == id);
+            if (deal == null) return NotFound();
+
+            // إذا كانت مفعلة سابقاً، نلغي تأثيرها
+            if (deal.Status == "Approved" || deal.IsActive)
+            {
+                await RevertDealPrices(deal);
+            }
+
+            deal.Status = "Rejected";
+            deal.IsActive = false;
+
+            await _context.SaveChangesAsync();
+
+            string merchantId = deal.Product?.MerchantId;
+            if (!string.IsNullOrEmpty(merchantId))
+            {
+                await _notificationService.NotifyUserAsync(merchantId, "تم الرفض ❌", $"تم رفض صفقتك '{deal.Title}'.", "Deal");
+            }
+
+            TempData["Success"] = "تم رفض الصفقة.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        // 8. حذف صفقة (Delete)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
@@ -220,34 +211,71 @@ namespace Diska.Areas.Admin.Controllers
             var deal = await _context.GroupDeals.FindAsync(id);
             if (deal != null)
             {
-                // استرجاع الأسعار الأصلية عند الحذف
-                var productsToRevert = new List<Product>();
-
-                if (deal.ProductId.HasValue)
-                {
-                    var p = await _context.Products.FindAsync(deal.ProductId);
-                    if (p != null) productsToRevert.Add(p);
-                }
-                else if (deal.CategoryId.HasValue)
-                {
-                    productsToRevert = await _context.Products.Where(p => p.CategoryId == deal.CategoryId).ToListAsync();
-                }
-
-                foreach (var p in productsToRevert)
-                {
-                    if (p.OldPrice != null && p.OldPrice > 0)
-                    {
-                        p.Price = p.OldPrice.Value;
-                        p.OldPrice = null;
-                        _context.Products.Update(p);
-                    }
-                }
+                // استعادة الأسعار الأصلية قبل الحذف
+                await RevertDealPrices(deal);
 
                 _context.GroupDeals.Remove(deal);
                 await _context.SaveChangesAsync();
-                TempData["Success"] = "تم حذف العرض واستعادة الأسعار الأصلية.";
+                TempData["Success"] = "تم حذف الصفقة واستعادة الأسعار الأصلية.";
             }
             return RedirectToAction(nameof(Index));
+        }
+
+        // --- دوال مساعدة (Helpers) ---
+
+        // دالة لتطبيق الخصم على المنتجات
+        private async Task ApplyDealPrices(GroupDeal deal)
+        {
+            var products = await GetProductsForDeal(deal);
+
+            foreach (var p in products)
+            {
+                // حفظ السعر القديم فقط إذا لم يكن محفوظاً (لتجنب الكتابة عليه بخصم فوق خصم)
+                if (p.OldPrice == null || p.OldPrice == 0)
+                {
+                    p.OldPrice = p.Price;
+                }
+
+                decimal discountAmount = deal.IsPercentage
+                    ? p.OldPrice.Value * (deal.DiscountValue / 100)
+                    : deal.DiscountValue;
+
+                p.Price = p.OldPrice.Value - discountAmount;
+                if (p.Price < 0) p.Price = 0; // حماية
+
+                _context.Products.Update(p);
+            }
+            // ملاحظة: الحفظ يتم في الدالة المستدعية (Save outside loop usually better, but here we update context tracking)
+        }
+
+        // دالة لاستعادة الأسعار الأصلية
+        private async Task RevertDealPrices(GroupDeal deal)
+        {
+            var products = await GetProductsForDeal(deal);
+
+            foreach (var p in products)
+            {
+                if (p.OldPrice != null && p.OldPrice > 0)
+                {
+                    p.Price = p.OldPrice.Value;
+                    p.OldPrice = null; // إزالة السعر القديم لأنه عاد لسعره الأصلي
+                    _context.Products.Update(p);
+                }
+            }
+        }
+
+        private async Task<List<Product>> GetProductsForDeal(GroupDeal deal)
+        {
+            if (deal.ProductId.HasValue)
+            {
+                var p = await _context.Products.FindAsync(deal.ProductId);
+                return p != null ? new List<Product> { p } : new List<Product>();
+            }
+            else if (deal.CategoryId.HasValue)
+            {
+                return await _context.Products.Where(p => p.CategoryId == deal.CategoryId).ToListAsync();
+            }
+            return new List<Product>();
         }
 
         private void PrepareDropdowns(int? selectedProduct = null, int? selectedCategory = null)

@@ -351,7 +351,7 @@
                     else if (n.type === 'Request') { iconClass = 'icon-info'; faIcon = 'fa-bullhorn'; }
 
                     const html = `
-                        <div class="notif-card ${n.isRead ? '' : 'unread'}" id="notif-${n.id}" onclick="goToLink('${n.link}', ${n.id})">
+                        <div class="notif-card ${n.isRead ? '' : 'unread'}" id="notif-${n.id}">
                             <div class="notif-icon-box ${iconClass}"><i class="fas ${faIcon}"></i></div>
                             <div class="notif-content">
                                 <div class="notif-top">
@@ -368,14 +368,7 @@
             } catch (error) { container.innerHTML = `<p class="text-center text-danger">${loc.loadError}</p>`; }
         }
 
-        function goToLink(url, id) {
-            if (url && url !== '#') {
-                // Mark as read then redirect
-                fetch(`/Notification/MarkAsRead?id=${id}`, { method: 'POST' }).finally(() => {
-                     window.location.href = url;
-                });
-            }
-        }
+     
 
         async function markAsRead(id, btn) {
             await fetch(`/Notification/MarkAsRead?id=${id}`, { method: 'POST' });

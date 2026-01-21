@@ -48,8 +48,9 @@ namespace Diska.Models
                 if (!IsActive) return "Inactive";
                 if (DateTime.Now < StartDate) return "Scheduled";
                 if (DateTime.Now > EndDate) return "Expired";
-                return "Active";
+                return "Active"; 
             }
+            set { }
         }
     }
 }

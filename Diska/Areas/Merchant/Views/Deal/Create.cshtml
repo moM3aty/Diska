@@ -1,0 +1,198 @@
+﻿@model Diska.Models.GroupDeal
+@using System.Globalization
+@{
+    ViewData["Title"] = "إضافة صفقة جديدة";
+    Layout = "_MerchantLayout";
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+}
+
+<style>
+    /* Premium Form Styles */
+    :root {
+        --form-bg: #ffffff;
+        --form-text: #0f172a;
+        --form-border: #e2e8f0;
+        --form-input: #f8fafc;
+    }
+
+    [data-bs-theme="dark"] {
+        --form-bg: #1e293b;
+        --form-text: #f8fafc;
+        --form-border: rgba(255,255,255,0.08);
+        --form-input: #0f172a;
+    }
+
+    .form-card {
+        background: var(--form-bg);
+        border-radius: 16px;
+        padding: 40px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        border: 1px solid var(--form-border);
+        color: var(--form-text);
+    }
+
+    .form-label {
+        font-weight: 700;
+        margin-bottom: 8px;
+        font-size: 0.9rem;
+    }
+
+    .form-control, .form-select {
+        background: var(--form-input);
+        border: 1px solid var(--form-border);
+        color: var(--form-text);
+        padding: 12px;
+        border-radius: 10px;
+        transition: 0.3s;
+    }
+
+        .form-control:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.15);
+        }
+
+    [data-bs-theme="dark"] .form-control:focus {
+        border-color: #4f46e5;
+        box-shadow: 0 0 0 4px rgba(250, 204, 21, 0.15);
+    }
+
+    .btn-submit {
+        background: #0F172A;
+        color: #fff;
+        width: 100%;
+        padding: 15px;
+        border-radius: 50px;
+        font-weight: 700;
+        border: none;
+        margin-top: 20px;
+        transition: 0.3s;
+    }
+
+    [data-bs-theme="dark"] .btn-submit {
+        background: #4f46e5;
+        color: #000;
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+
+    /* Type Switcher */
+    .type-switch {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 25px;
+    }
+
+    .type-option {
+        flex: 1;
+        text-align: center;
+        padding: 12px;
+        border: 1px solid var(--form-border);
+        border-radius: 12px;
+        cursor: pointer;
+        transition: 0.2s;
+        font-weight: 700;
+    }
+
+        .type-option.active {
+            background: #0F172A;
+            color: #fff;
+            border-color: #0F172A;
+        }
+
+    [data-bs-theme="dark"] .type-option.active {
+        background: #4f46e5;
+        color: #000;
+        border-color: #4f46e5;
+    }
+</style>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="fw-bold m-0" style="color:var(--text-main)">@(isAr ? "إضافة صفقة" : "New Deal")</h3>
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3">@(isAr ? "إلغاء" : "Cancel")</a>
+        </div>
+
+        <div class="form-card">
+            <form asp-action="Create" method="post">
+
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger rounded-3 mb-4">@TempData["Error"]</div>
+                }
+
+                <!-- نوع الصفقة -->
+                <div class="mb-4">
+                    <label class="form-label">@(isAr ? "نوع الصفقة" : "Deal Type")</label>
+                    <div class="type-switch">
+                        <div class="type-option active">@(isAr ? "منتج محدد" : "Specific Product")</div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">@(isAr ? "العنوان (عربي)" : "Title (Ar)")</label>
+                        <input asp-for="Title" class="form-control" required placeholder="مثال: عرض خاص" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">@(isAr ? "العنوان (إنجليزي)" : "Title (En)")</label>
+                        <input asp-for="TitleEn" class="form-control" placeholder="Ex: Special Offer" />
+                    </div>
+                </div>
+
+                <!-- اختيار المنتج -->
+                <div class="mb-3" id="productSelectDiv">
+                    <label class="form-label">@(isAr ? "اختر المنتج" : "Select Product")</label>
+                    <select asp-for="ProductId" class="form-select" asp-items="ViewBag.Products">
+                        <option value="">@(isAr ? "-- اختر المنتج --" : "-- Select Product --")</option>
+                    </select>
+                </div>
+
+                <!-- اختيار القسم -->
+                <div class="mb-3" id="categorySelectDiv" style="display:none;">
+                    <label class="form-label">@(isAr ? "اختر القسم" : "Select Category")</label>
+                    <select asp-for="CategoryId" class="form-select" asp-items="ViewBag.Categories">
+                        <option value="">@(isAr ? "-- اختر القسم --" : "-- Select Category --")</option>
+                    </select>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">@(isAr ? "الكمية المستهدفة" : "Target Qty")</label>
+                        <input asp-for="TargetQuantity" type="number" class="form-control" placeholder="1000" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">@(isAr ? "قيمة الخصم/السعر" : "Discount/Price")</label>
+                        <div class="input-group">
+                            <input asp-for="DiscountValue" type="number" class="form-control" placeholder="0.00" step="0.01" required />
+                            <div class="input-group-text bg-transparent border-start-0">
+                                <div class="form-check m-0">
+                                    <input class="form-check-input" type="checkbox" asp-for="IsPercentage">
+                                    <label class="form-check-label small" for="IsPercentage">%</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">@(isAr ? "تاريخ البداية" : "Start Date")</label>
+                        <input asp-for="StartDate" type="datetime-local" class="form-control" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">@(isAr ? "تاريخ الانتهاء" : "End Date")</label>
+                        <input asp-for="EndDate" type="datetime-local" class="form-control" required />
+                    </div>
+                </div>
+
+      
+
+                <button type="submit" class="btn-submit">@(isAr ? "إرسال للمراجعة" : "Submit for Review")</button>
+            </form>
+        </div>
+    </div>
+</div>

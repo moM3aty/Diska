@@ -1,201 +1,542 @@
 ﻿@model Diska.Areas.Admin.Controllers.UserDetailsViewModel
+@using System.Globalization
 @{
     ViewData["Title"] = "ملف المستخدم";
     Layout = "_AdminLayout";
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
     var role = ViewBag.UserRole as string;
 }
 
-<div style="margin-bottom:20px;">
-    <a asp-action="Index" style="text-decoration:none; color:#64748b; font-weight:bold;">
-        <i class="fas fa-arrow-right"></i> العودة لقائمة المستخدمين
-    </a>
-</div>
+<style>
+    /* ... (نفس الستايل السابق Premium Style) ... */
+    /* ... لا تغيير في الستايل الأساسي ... */
 
-<div class="row g-4">
-    <!-- Left: Profile Info -->
-    <div class="col-md-4">
-        <div class="card text-center mb-4">
-            <div class="card-body">
-                <div style="width:100px; height:100px; background:#f1f5f9; border-radius:50%; margin:0 auto 15px; display:flex; align-items:center; justify-content:center; font-size:2.5rem; color:var(--primary);">
-                    @(Model.User.FullName?.FirstOrDefault().ToString().ToUpper())
+    :root {
+        --adm-bg: #f8fafc;
+        --adm-card-bg: #ffffff;
+        --adm-text: #0f172a;
+        --adm-muted: #64748b;
+        --adm-border: #e2e8f0;
+        --adm-primary: #0F172A;
+        --adm-accent: #FACC15;
+        --adm-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+        --adm-hover: #f1f5f9;
+        --adm-input-bg: #f8fafc;
+    }
+
+    [data-bs-theme="dark"] {
+        --adm-bg: #020617;
+        --adm-card-bg: #1e293b;
+        --adm-text: #f8fafc;
+        --adm-muted: #94a3b8;
+        --adm-border: rgba(255, 255, 255, 0.08);
+        --adm-primary: #f8fafc;
+        --adm-accent: #FACC15;
+        --adm-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        --adm-hover: rgba(255, 255, 255, 0.05);
+        --adm-input-bg: #0f172a;
+    }
+
+    .admin-details-page {
+        padding: 30px 0;
+        font-family: 'Cairo', sans-serif;
+    }
+
+    .back-link {
+        text-decoration: none;
+        color: var(--adm-muted);
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: 0.2s;
+        margin-bottom: 20px;
+    }
+
+        .back-link:hover {
+            color: var(--adm-primary);
+            transform: translateX( @(isAr ? "5px" : "-5px") );
+        }
+
+    .admin-card {
+        background: var(--adm-card-bg);
+        border-radius: 16px;
+        border: 1px solid var(--adm-border);
+        box-shadow: var(--adm-shadow);
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+
+    .profile-avatar {
+        width: 100px;
+        height: 100px;
+        background: var(--adm-hover);
+        border-radius: 50%;
+        margin: 0 auto 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        color: var(--adm-primary);
+        font-weight: 800;
+        border: 4px solid var(--adm-card-bg);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    [data-bs-theme="dark"] .profile-avatar {
+        color: var(--adm-accent);
+        background: rgba(250, 204, 21, 0.1);
+    }
+
+    .profile-name {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--adm-text);
+        margin-bottom: 5px;
+    }
+
+    .profile-meta {
+        color: var(--adm-muted);
+        font-size: 0.95rem;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .role-badge-box {
+        background: var(--adm-hover);
+        border: 1px solid var(--adm-border);
+        border-radius: 8px;
+        padding: 10px;
+        margin-bottom: 15px;
+        text-align: center;
+    }
+
+    .role-label {
+        font-size: 0.75rem;
+        color: var(--adm-muted);
+        text-transform: uppercase;
+        font-weight: 700;
+        display: block;
+        margin-bottom: 4px;
+    }
+
+    .role-val {
+        font-weight: 800;
+        color: var(--adm-text);
+        font-size: 1.1rem;
+    }
+
+    .merchant-details {
+        text-align: @(isAr ? "right" : "left");
+        font-size: 0.9rem;
+        border-top: 1px dashed var(--adm-border);
+        padding-top: 15px;
+        color: var(--adm-muted);
+    }
+
+        .merchant-details strong {
+            color: var(--adm-text);
+        }
+
+    .btn-action {
+        width: 100%;
+        border-radius: 8px;
+        font-weight: 700;
+        padding: 8px;
+        margin-top: 10px;
+    }
+
+    .wallet-header {
+        color: var(--adm-primary);
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 15px;
+    }
+
+    .wallet-balance {
+        font-size: 2rem;
+        font-weight: 900;
+        color: #16a34a;
+        text-align: center;
+        margin-bottom: 15px;
+    }
+
+    [data-bs-theme="dark"] .wallet-balance {
+        color: #4ade80;
+    }
+
+    .btn-toggle-balance {
+        width: 100%;
+        border: 1px solid var(--adm-border);
+        background: transparent;
+        color: var(--adm-muted);
+        font-weight: 600;
+        padding: 8px;
+        border-radius: 8px;
+        transition: 0.2s;
+    }
+
+        .btn-toggle-balance:hover {
+            background: var(--adm-hover);
+            color: var(--adm-text);
+        }
+
+    .balance-form {
+        background: var(--adm-hover);
+        padding: 15px;
+        border-radius: 12px;
+        margin-top: 15px;
+        border: 1px solid var(--adm-border);
+    }
+
+    .form-control-sm {
+        background-color: var(--adm-card-bg);
+        border: 1px solid var(--adm-border);
+        color: var(--adm-text);
+        border-radius: 6px;
+    }
+
+        .form-control-sm:focus {
+            border-color: var(--adm-accent);
+            box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.15);
+        }
+
+    .nav-tabs {
+        border-bottom: 1px solid var(--adm-border);
+    }
+
+    .nav-link {
+        color: var(--adm-muted);
+        font-weight: 700;
+        border: none;
+        padding: 12px 20px;
+        transition: 0.2s;
+    }
+
+        .nav-link:hover {
+            color: var(--adm-text);
+            background: var(--adm-hover);
+        }
+
+        .nav-link.active {
+            color: var(--adm-primary);
+            background: transparent;
+            border-bottom: 3px solid var(--adm-accent);
+        }
+
+    [data-bs-theme="dark"] .nav-link.active {
+        color: var(--adm-text);
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .table th {
+            background: var(--adm-hover);
+            color: var(--adm-muted);
+            font-weight: 700;
+            font-size: 0.8rem;
+            padding: 12px 15px;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--adm-border);
+        }
+
+        .table td {
+            padding: 12px 15px;
+            color: var(--adm-text);
+            border-bottom: 1px solid var(--adm-border);
+            vertical-align: middle;
+            font-size: 0.95rem;
+        }
+
+        .table tr:hover td {
+            background-color: var(--adm-hover);
+        }
+
+    .badge-status {
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    .bg-success {
+        background: rgba(34, 197, 94, 0.15) !important;
+        color: #16a34a !important;
+    }
+
+    .bg-danger {
+        background: rgba(239, 68, 68, 0.15) !important;
+        color: #ef4444 !important;
+    }
+
+    [data-bs-theme="dark"] .bg-success {
+        color: #4ade80 !important;
+    }
+
+    [data-bs-theme="dark"] .bg-danger {
+        color: #f87171 !important;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: var(--adm-muted);
+    }
+
+    .empty-icon {
+        font-size: 2rem;
+        opacity: 0.3;
+        margin-bottom: 10px;
+    }
+
+    .fade-up {
+        animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @("@keyframes") fadeUp {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+</style>
+
+<div class="admin-details-page fade-up">
+    <div class="container-fluid">
+
+        <div style="margin-bottom:20px;">
+            <a asp-action="Index" class="back-link">
+                <i class="fas @(isAr ? "fa-arrow-right" : "fa-arrow-left")"></i>
+                @(isAr ? "العودة لقائمة المستخدمين" : "Back to Users List")
+            </a>
+        </div>
+
+        <div class="row g-4">
+            <!-- Left: Profile Info -->
+            <div class="col-md-4">
+
+                <!-- Profile Card -->
+                <div class="admin-card text-center p-4">
+                    <div class="profile-avatar">
+                        @(Model.User.FullName?.FirstOrDefault().ToString().ToUpper())
+                    </div>
+                    <h3 class="profile-name">@Model.User.FullName</h3>
+                    <p class="profile-meta">
+                        @Model.User.PhoneNumber
+                        @if (!string.IsNullOrEmpty(Model.User.PhoneNumber))
+                        {
+                            var phone = Model.User.PhoneNumber.Replace("+", "").Replace(" ", "");
+                            if (phone.StartsWith("01")) { phone = "2" + phone; }
+                            <!-- تكبير الأيقونة هنا -->
+                            <a href="https://wa.me/@phone" target="_blank" style="color:#25D366; text-decoration:none;" title="WhatsApp">
+                                <i class="fab fa-whatsapp fa-2x"></i>
+                            </a>
+                        }
+                    </p>
+
+                    <div class="role-badge-box">
+                        <span class="role-label">@(isAr ? "الصلاحية" : "Role")</span>
+                        <div class="role-val">@role</div>
+                    </div>
+
+                    @if (role == "Merchant")
+                    {
+                        <div class="merchant-details">
+                            <p class="mb-1"><strong>@(isAr ? "المحل" : "Shop"):</strong> @Model.User.ShopName</p>
+                            <p class="mb-2"><strong>@(isAr ? "السجل" : "Reg"):</strong> @Model.User.CommercialRegister</p>
+
+                            <form asp-action="ToggleVerification" method="post" class="mt-3">
+                                <input type="hidden" name="id" value="@Model.User.Id" />
+                                @if (Model.User.IsVerifiedMerchant)
+                                {
+                                    <button class="btn btn-outline-danger btn-sm w-100 fw-bold">
+                                        <i class="fas fa-times me-1"></i> @(isAr ? "إلغاء التوثيق" : "Revoke Verification")
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-success btn-sm w-100 fw-bold text-white">
+                                        <i class="fas fa-check me-1"></i> @(isAr ? "توثيق الحساب" : "Verify Account")
+                                    </button>
+                                }
+                            </form>
+                        </div>
+                    }
                 </div>
-                <h3 class="card-title text-primary">@Model.User.FullName</h3>
-                <p class="text-muted">@Model.User.PhoneNumber</p>
 
-                <div class="bg-light rounded p-2 mb-3 border">
-                    <small class="text-muted d-block">الصلاحية</small>
-                    <strong>@role</strong>
+                <!-- Wallet Actions -->
+                <div class="admin-card p-4">
+                    <div class="wallet-header">
+                        <i class="fas fa-wallet"></i> @(isAr ? "المحفظة" : "Wallet")
+                    </div>
+                    <div class="wallet-balance">
+                        @Model.User.WalletBalance.ToString("N0") <small style="font-size:1rem; font-weight:600; color:var(--adm-muted);">@(isAr ? "ج.م" : "EGP")</small>
+                    </div>
+
+                    <button onclick="document.getElementById('balanceForm').style.display = document.getElementById('balanceForm').style.display === 'none' ? 'block' : 'none';" class="btn-toggle-balance">
+                        <i class="fas fa-edit me-1"></i> @(isAr ? "تعديل الرصيد" : "Adjust Balance")
+                    </button>
+
+                    <form id="balanceForm" asp-action="ManageBalance" method="post" style="display:none;" class="balance-form">
+                        <input type="hidden" name="id" value="@Model.User.Id" />
+                        <div class="btn-group w-100 mb-3" role="group">
+                            <input type="radio" class="btn-check" name="type" id="typeAdd" value="add" checked>
+                            <label class="btn btn-outline-success btn-sm fw-bold" for="typeAdd">@(isAr ? "إيداع (+)" : "Deposit (+)")</label>
+                            <input type="radio" class="btn-check" name="type" id="typeDeduct" value="deduct">
+                            <label class="btn btn-outline-danger btn-sm fw-bold" for="typeDeduct">@(isAr ? "خصم (-)" : "Deduct (-)")</label>
+                        </div>
+                        <input type="number" name="amount" class="form-control form-control-sm mb-2" placeholder="@(isAr ? "المبلغ" : "Amount")" required>
+                        <input type="text" name="reason" class="form-control form-control-sm mb-3" placeholder="@(isAr ? "السبب" : "Reason")" required>
+                        <button class="btn btn-primary btn-sm w-100 fw-bold">@(isAr ? "تنفيذ" : "Execute")</button>
+                    </form>
                 </div>
+            </div>
 
-                @if (role == "Merchant")
-                {
-                    <div class="text-end text-muted small border-top pt-2">
-                        <p class="mb-1"><strong>المحل:</strong> @Model.User.ShopName</p>
-                        <p class="mb-2"><strong>السجل:</strong> @Model.User.CommercialRegister</p>
+            <!-- Right: Tabs (Activity & Logs) -->
+            <div class="col-md-8">
+                <div class="admin-card">
+                    <div class="card-header bg-transparent border-bottom-0">
+                        <ul class="nav nav-tabs card-header-tabs" id="userTabs" role="tablist">
+                            <li class="nav-item">
+                                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#orders">
+                                    @(isAr ? "الطلبات" : "Orders") <span class="badge bg-light text-dark ms-1">@ViewBag.OrdersCount</span>
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#wallet">@(isAr ? "المعاملات المالية" : "Transactions")</button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#login">@(isAr ? "سجل الدخول" : "Login Logs") 🔒</button>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-body tab-content p-0">
 
-                        <form asp-action="ToggleVerification" method="post">
-                            <input type="hidden" name="id" value="@Model.User.Id" />
-                            @if (Model.User.IsVerifiedMerchant)
+                        <!-- Orders Tab -->
+                        <div class="tab-pane fade show active" id="orders">
+                            @if (Model.Orders != null && Model.Orders.Any())
                             {
-                                <button class="btn btn-danger btn-sm w-100">إلغاء التوثيق</button>
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead><tr><th>#</th><th>@(isAr ? "التاريخ" : "Date")</th><th>@(isAr ? "المبلغ" : "Amount")</th><th>@(isAr ? "الحالة" : "Status")</th></tr></thead>
+                                        <tbody>
+                                            @foreach (var o in Model.Orders)
+                                            {
+                                                <tr>
+                                                    <td class="fw-bold">#@o.Id</td>
+                                                    <td class="text-muted">@o.OrderDate.ToString("yyyy-MM-dd")</td>
+                                                    <td class="fw-bold">@o.TotalAmount.ToString("N0")</td>
+                                                    <td><span class="badge bg-secondary text-white">@o.Status</span></td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
                             }
                             else
                             {
-                                <button class="btn btn-success btn-sm w-100">توثيق الحساب</button>
+                                <div class="empty-state">
+                                    <i class="fas fa-box-open empty-icon"></i>
+                                    <p>@(isAr ? "لا توجد طلبات." : "No orders found.")</p>
+                                </div>
                             }
-                        </form>
+                        </div>
+
+                        <!-- Wallet Tab -->
+                        <div class="tab-pane fade" id="wallet">
+                            @if (Model.Transactions != null && Model.Transactions.Any())
+                            {
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead><tr><th>@(isAr ? "العملية" : "Type")</th><th>@(isAr ? "المبلغ" : "Amount")</th><th>@(isAr ? "التاريخ" : "Date")</th><th>@(isAr ? "البيان" : "Description")</th></tr></thead>
+                                        <tbody>
+                                            @foreach (var t in Model.Transactions)
+                                            {
+                                                <tr>
+                                                    <td>@(t.Type == "Deposit" ? (isAr ? "إيداع" : "Deposit") : (isAr ? "خصم" : "Deduct"))</td>
+                                                    <td class="@(t.Amount > 0 ? "text-success" : "text-danger") fw-bold">@t.Amount.ToString("N0")</td>
+                                                    <td class="text-muted">@t.TransactionDate.ToString("yyyy-MM-dd")</td>
+                                                    <td class="small text-muted">@t.Description</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="empty-state">
+                                    <i class="fas fa-wallet empty-icon"></i>
+                                    <p>@(isAr ? "لا توجد معاملات." : "No transactions found.")</p>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Login History Tab -->
+                        <div class="tab-pane fade" id="login">
+                            @if (Model.LoginLogs != null && Model.LoginLogs.Any())
+                            {
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>@(isAr ? "الوقت" : "Time")</th>
+                                                <th>IP</th>
+                                                <th>@(isAr ? "الجهاز" : "Device")</th>
+                                                <th>@(isAr ? "الحالة" : "Status")</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var log in Model.LoginLogs)
+                                            {
+                                                <tr>
+                                                    <td>@log.LoginTime.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                                    <td class="font-monospace text-muted">@log.IpAddress</td>
+                                                    <td class="small text-muted">@log.DeviceInfo</td>
+                                                    <td>
+                                                        @if (log.IsSuccess)
+                                                        {
+                                                            <span class="badge bg-success">@(isAr ? "ناجح" : "Success")</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="badge bg-danger" title="@log.FailureReason">@(isAr ? "فشل" : "Failed")</span>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="empty-state">
+                                    <i class="fas fa-history empty-icon"></i>
+                                    <p>@(isAr ? "سجل الدخول غير متوفر." : "No login history.")</p>
+                                </div>
+                            }
+                        </div>
+
                     </div>
-                }
-            </div>
-        </div>
-
-        <!-- Wallet Actions -->
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title text-primary"><i class="fas fa-wallet"></i> المحفظة</h5>
-                <div class="text-center my-3">
-                    <h2 class="text-success fw-bold">@Model.User.WalletBalance.ToString("N0") <small class="fs-6">ج.م</small></h2>
                 </div>
-                <button onclick="document.getElementById('balanceForm').style.display='block'; this.style.display='none';" class="btn btn-outline-secondary w-100 btn-sm">تعديل الرصيد</button>
-
-                <form id="balanceForm" asp-action="ManageBalance" method="post" style="display:none;" class="mt-3 bg-light p-3 rounded">
-                    <input type="hidden" name="id" value="@Model.User.Id" />
-                    <div class="btn-group w-100 mb-2" role="group">
-                        <input type="radio" class="btn-check" name="type" id="typeAdd" value="add" checked>
-                        <label class="btn btn-outline-success btn-sm" for="typeAdd">إيداع (+)</label>
-                        <input type="radio" class="btn-check" name="type" id="typeDeduct" value="deduct">
-                        <label class="btn btn-outline-danger btn-sm" for="typeDeduct">خصم (-)</label>
-                    </div>
-                    <input type="number" name="amount" class="form-control form-control-sm mb-2" placeholder="المبلغ" required>
-                    <input type="text" name="reason" class="form-control form-control-sm mb-2" placeholder="السبب" required>
-                    <button class="btn btn-primary btn-sm w-100">تنفيذ</button>
-                </form>
             </div>
-        </div>
-    </div>
 
-    <!-- Right: Tabs (Activity & Logs) -->
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header bg-white">
-                <ul class="nav nav-tabs card-header-tabs" id="userTabs" role="tablist">
-                    <li class="nav-item">
-                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#orders">الطلبات (@ViewBag.OrdersCount)</button>
-                    </li>
-                    <li class="nav-item">
-                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#wallet">المعاملات المالية</button>
-                    </li>
-                    <li class="nav-item">
-                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#login">سجل الدخول 🔒</button>
-                    </li>
-                </ul>
-            </div>
-            <div class="card-body tab-content">
-
-                <!-- Orders Tab -->
-                <div class="tab-pane fade show active" id="orders">
-                    @if (Model.Orders.Any())
-                    {
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0">
-                                <thead class="table-light"><tr><th>#</th><th>التاريخ</th><th>المبلغ</th><th>الحالة</th></tr></thead>
-                                <tbody>
-                                    @foreach (var o in Model.Orders)
-                                    {
-                                        <tr>
-                                            <td>#@o.Id</td>
-                                            <td>@o.OrderDate.ToString("yyyy-MM-dd")</td>
-                                            <td>@o.TotalAmount.ToString("N0")</td>
-                                            <td><span class="badge bg-secondary">@o.Status</span></td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                    else
-                    {
-
-                        <p class="text-center text-muted py-3">لا توجد طلبات.</p>
-                    }
-                </div>
-
-                <!-- Wallet Tab -->
-                <div class="tab-pane fade" id="wallet">
-                    @if (Model.Transactions.Any())
-                    {
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0">
-                                <thead class="table-light"><tr><th>العملية</th><th>المبلغ</th><th>التاريخ</th><th>البيان</th></tr></thead>
-                                <tbody>
-                                    @foreach (var t in Model.Transactions)
-                                    {
-                                        <tr>
-                                            <td>@(t.Type == "Deposit" ? "إيداع" : "خصم")</td>
-                                            <td class="@(t.Amount > 0 ? "text-success" : "text-danger")">@t.Amount.ToString("N0")</td>
-                                            <td>@t.TransactionDate.ToString("yyyy-MM-dd")</td>
-                                            <td class="small">@t.Description</td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                    else
-                    {
-
-                        <p class="text-center text-muted py-3">لا توجد معاملات.</p>
-                    }
-                </div>
-
-                <!-- Login History Tab (New) -->
-                <div class="tab-pane fade" id="login">
-                    @if (Model.LoginLogs != null && Model.LoginLogs.Any())
-                    {
-                        <div class="table-responsive">
-                            <table class="table table-sm table-hover mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>وقت الدخول</th>
-                                        <th>IP Address</th>
-                                        <th>الجهاز / المتصفح</th>
-                                        <th>الحالة</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var log in Model.LoginLogs)
-                                    {
-                                        <tr>
-                                            <td>@log.LoginTime.ToString("yyyy-MM-dd HH:mm:ss")</td>
-                                            <td><span class="font-monospace">@log.IpAddress</span></td>
-                                            <td class="small">@log.DeviceInfo</td>
-                                            <td>
-                                                @if (log.IsSuccess)
-                                                {
-                                                    <span class="badge bg-success">ناجح</span>
-                                                }
-                                                else
-                                                {
-
-                                                    <span class="badge bg-danger" title="@log.FailureReason">فشل</span>
-                                                }
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="text-center py-4 text-muted">
-                            <i class="fas fa-history fa-2x mb-2 opacity-50"></i>
-                            <p>سجل الدخول غير متوفر أو فارغ لهذا المستخدم.</p>
-                        </div>
-                    }
-                </div>
-
-            </div>
         </div>
     </div>
 </div>

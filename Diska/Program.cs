@@ -1,5 +1,5 @@
 ﻿using Diska.Data;
-using Diska.Services; // ضروري للوصول إلى AuditService وغيرها
+using Diska.Services; 
 using Diska.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
@@ -35,9 +35,11 @@ builder.Services.AddScoped<IShippingService, ShippingService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddHttpContextAccessor(); 
-builder.Services.AddScoped<IPermissionService, PermissionService>(); 
+builder.Services.AddScoped<IPermissionService, PermissionService>();
 
+builder.Services.AddScoped<IShippingService, ShippingService>();
 
+System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 // 4. اللغات (Localization)
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 builder.Services.AddControllersWithViews()

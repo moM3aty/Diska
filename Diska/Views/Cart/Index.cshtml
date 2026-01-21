@@ -5,13 +5,9 @@
     var dir = isAr ? "rtl" : "ltr";
 }
 
-<!-- --- Premium Cart Styles --- -->
 <style>
-    /* =========================================
-           PREMIUM STYLES (Light & Dark)
-           ========================================= */
+    /* ... (نفس الستايل Premium Dark Mode السابق) ... */
     :root {
-        /* Light Theme Defaults */
         --cart-bg-body: #f8fafc;
         --cart-card-bg: #ffffff;
         --cart-text-main: #1e293b;
@@ -24,16 +20,20 @@
     }
 
     [data-bs-theme="dark"] {
-        /* Dark Theme Overrides */
-        --cart-bg-body: #020617; /* Deep Dark */
-        --cart-card-bg: #1e293b; /* Slate 800 */
-        --cart-text-main: #f8fafc; /* Light Text */
-        --cart-text-muted: #94a3b8; /* Muted Text */
+        --cart-bg-body: #020617;
+        --cart-card-bg: #1e293b;
+        --cart-text-main: #f8fafc;
+        --cart-text-muted: #94a3b8;
         --cart-border: rgba(255, 255, 255, 0.08);
-        --cart-primary: #818cf8; /* Lighter Indigo */
-        --cart-accent: #facc15; /* Gold */
+        --cart-primary: #818cf8;
+        --cart-accent: #facc15;
         --cart-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-        --cart-input-bg: #0f172a; /* Slate 900 */
+        --cart-input-bg: #0f172a;
+    }
+
+    body {
+        background-color: var(--cart-bg-body);
+        transition: background-color 0.3s ease;
     }
 
     .cart-page-wrapper {
@@ -41,7 +41,6 @@
         min-height: 85vh;
         padding: 50px 0;
         font-family: 'Cairo', sans-serif;
-        transition: background-color 0.3s ease;
     }
 
     .cart-grid {
@@ -51,7 +50,6 @@
         align-items: start;
     }
 
-    /* Section Headers */
     .cart-header {
         display: flex;
         justify-content: space-between;
@@ -74,7 +72,6 @@
         font-size: 1rem;
     }
 
-    /* Cart Item Card */
     .item-card {
         background: var(--cart-card-bg);
         border-radius: 16px;
@@ -84,27 +81,25 @@
         gap: 25px;
         margin-bottom: 20px;
         transition: all 0.3s ease;
-        position: relative;
         border: 1px solid var(--cart-border);
         align-items: center;
     }
 
         .item-card:hover {
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.01);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05);
             transform: translateY(-3px);
             border-color: var(--cart-border);
         }
 
     [data-bs-theme="dark"] .item-card:hover {
         border-color: var(--cart-primary);
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
     }
 
     .item-img-wrapper {
         width: 110px;
         height: 110px;
         flex-shrink: 0;
-        background: #fff; /* Keep image bg white for product visibility */
+        background: #fff;
         border-radius: 12px;
         border: 1px solid var(--cart-border);
         display: flex;
@@ -152,7 +147,6 @@
         margin-bottom: 15px;
     }
 
-    /* Price & Actions Row */
     .item-actions-row {
         display: flex;
         align-items: center;
@@ -166,7 +160,6 @@
         font-size: 1.3rem;
     }
 
-    /* Quantity Selector */
     .qty-selector {
         display: inline-flex;
         align-items: center;
@@ -208,7 +201,6 @@
         pointer-events: none;
     }
 
-    /* Remove Button */
     .remove-btn {
         color: var(--cart-text-muted);
         background: transparent;
@@ -225,7 +217,6 @@
             background: rgba(239, 68, 68, 0.1);
         }
 
-    /* Summary Sidebar */
     .cart-summary {
         background: var(--cart-card-bg);
         padding: 25px;
@@ -275,7 +266,6 @@
             color: var(--cart-primary);
         }
 
-    /* Button */
     .checkout-btn {
         background: var(--cart-primary);
         color: #fff;
@@ -308,7 +298,6 @@
         color: #000;
     }
 
-    /* Empty State */
     .empty-cart-state {
         text-align: center;
         padding: 80px 20px;
@@ -331,82 +320,64 @@
         font-size: 3rem;
     }
 
-    /* Responsive */
     @@media (max-width: 992px) {
-        .cart-grid
+        .cart-grid {
+            grid-template-columns: 1fr;
+        }
 
-    {
-        grid-template-columns: 1fr;
-    }
-
-    .cart-summary {
-        position: static;
-        margin-top: 30px;
-    }
-
+        .cart-summary {
+            position: static;
+            margin-top: 30px;
+        }
     }
 
     @@media (max-width: 768px) {
-        .item-card
+        .item-card {
+            flex-direction: column;
+            align-items: flex-start;
+        }
 
-    {
-        flex-direction: column;
-        align-items: flex-start;
-    }
+        .item-img-wrapper {
+            width: 100%;
+            height: 180px;
+        }
 
-    .item-img-wrapper {
-        width: 100%;
-        height: 180px;
-    }
-
-    .item-actions-row {
-        width: 100%;
-        margin-top: 15px;
-    }
-
+        .item-actions-row {
+            width: 100%;
+            margin-top: 15px;
+        }
     }
 </style>
 
 <div class="cart-page-wrapper">
     <div class="container">
-
         <div id="cartContentWrapper">
-            <!-- Loading State -->
             <div class="text-center py-5">
                 <i class="fas fa-spinner fa-spin fa-3x" style="color:var(--cart-primary);"></i>
                 <p class="mt-4 text-muted fw-bold">@(isAr ? "جاري تحميل السلة..." : "Loading cart...")</p>
             </div>
         </div>
-
     </div>
 </div>
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
     <script>
-        // تعريف المتغيرات المحلية
         const CART_KEY_LOCAL = 'DISKA_CART';
         const isArPage = '@isAr' === 'True';
 
         function renderCartPageModern() {
             const container = document.getElementById('cartContentWrapper');
-            // قراءة السلة من LocalStorage
             const cart = JSON.parse(localStorage.getItem(CART_KEY_LOCAL)) || [];
 
             if (cart.length === 0) {
                 container.innerHTML = `
                     <div class="empty-cart-state">
-                        <div class="empty-icon-box">
-                            <i class="fas fa-shopping-cart"></i>
-                        </div>
+                        <div class="empty-icon-box"><i class="fas fa-shopping-cart"></i></div>
                         <h2 style="color:var(--cart-text-main); font-weight:800; margin-bottom:15px;">@(isAr ? "سلة المشتريات فارغة" : "Your Cart is Empty")</h2>
-                        <p style="color:var(--cart-text-muted); margin-bottom:35px; font-size:1.1rem;">@(isAr ? "يبدو أنك لم تضف أي منتجات بعد. تصفح المتجر واكتشف عروضنا." : "Looks like you haven't added anything yet. Browse our store and find great deals.")</p>
-                        <a href="/" class="btn" style="background:var(--cart-primary); color:#fff; padding:15px 50px; font-size:1.1rem; border-radius:50px; text-decoration:none; font-weight:bold;">
-                            @(isAr ? "ابدأ التسوق" : "Start Shopping")
-                        </a>
-                    </div>
-                `;
+                        <p style="color:var(--cart-text-muted); margin-bottom:35px; font-size:1.1rem;">@(isAr ? "يبدو أنك لم تضف أي منتجات بعد." : "Looks like you haven't added anything yet.")</p>
+                        <a href="/" class="btn" style="background:var(--cart-primary); color:#fff; padding:15px 50px; font-size:1.1rem; border-radius:50px; text-decoration:none; font-weight:bold;">@(isAr ? "ابدأ التسوق" : "Start Shopping")</a>
+                    </div>`;
                 return;
             }
 
@@ -416,165 +387,84 @@
             cart.forEach((item, index) => {
                 let itemTotal = item.price * item.qty;
                 subtotal += itemTotal;
-
                 itemsHtml += `
                     <div class="item-card">
-                        <div class="item-img-wrapper">
-                            <img src="/${item.image}" onerror="this.src='/images/default.png'" class="item-img" alt="${item.name}">
-                        </div>
-
+                        <div class="item-img-wrapper"><img src="/${item.image}" onerror="this.src='/images/default.png'" class="item-img" alt="${item.name}"></div>
                         <div class="item-details">
                             <div style="display:flex; justify-content:space-between; align-items:start; width:100%;">
-                                <div>
-                                    <a href="/Product/Details/${item.id}" class="item-title">${item.name}</a>
-                                    <div class="item-meta">SKU: #${item.id}</div>
-                                </div>
-                                <button type="button" class="remove-btn" onclick="removeItemModern(${index})" title="@(isAr ? "حذف" : "Remove")">
-                                    <i class="fas fa-trash-alt"></i>
-                                </button>
+                                <div><a href="/Product/Details/${item.id}" class="item-title">${item.name}</a><div class="item-meta">SKU: #${item.id}</div></div>
+                                <button type="button" class="remove-btn" onclick="removeItemModern(${index})"><i class="fas fa-trash-alt"></i></button>
                             </div>
-
                             <div class="item-actions-row">
                                 <div class="qty-selector">
                                     <button type="button" class="qty-btn" onclick="changeQtyModern(${index}, -1)"><i class="fas fa-minus" style="font-size:0.7rem;"></i></button>
                                     <input type="text" class="qty-input" value="${item.qty}">
                                     <button type="button" class="qty-btn" onclick="changeQtyModern(${index}, 1)"><i class="fas fa-plus" style="font-size:0.7rem;"></i></button>
                                 </div>
-
-                                <div class="item-price">
-                                    ${itemTotal.toLocaleString()} <small style="font-size:0.85rem; font-weight:600; color:var(--cart-text-muted);">@(isAr ? "ج.م" : "EGP")</small>
-                                </div>
+                                <div class="item-price">${itemTotal.toLocaleString()} <small style="font-size:0.85rem; font-weight:600; color:var(--cart-text-muted);">@(isAr ? "ج.م" : "EGP")</small></div>
                             </div>
                         </div>
-                    </div>
-                `;
+                    </div>`;
             });
+
+            // حساب الضريبة (14%)
+            const tax = subtotal * 0.14;
+            const total = subtotal + tax;
 
             const summaryHtml = `
                 <div class="cart-summary">
                     <h3 class="summary-title">@(isAr ? "ملخص الطلب" : "Order Summary")</h3>
-
+                    <div class="summary-row"><span>@(isAr ? "عدد المنتجات" : "Items Count")</span><span class="fw-bold">${cart.length}</span></div>
+                    <div class="summary-row"><span>@(isAr ? "المجموع الفرعي" : "Subtotal")</span><span>${subtotal.toLocaleString()} @(isAr ? "ج.م" : "EGP")</span></div>
                     <div class="summary-row">
-                        <span>@(isAr ? "عدد المنتجات" : "Items Count")</span>
-                        <span class="fw-bold">${cart.length}</span>
+                        <span>@(isAr ? "الضريبة (14%)" : "VAT (14%)")</span>
+                        <span class="fw-bold" style="color:var(--cart-text-main)">${tax.toLocaleString()} @(isAr ? "ج.م" : "EGP")</span>
                     </div>
-                    <div class="summary-row">
-                        <span>@(isAr ? "المجموع الفرعي" : "Subtotal")</span>
-                        <span>${subtotal.toLocaleString()} @(isAr ? "ج.م" : "EGP")</span>
-                    </div>
-                    <div class="summary-row">
-                        <span>@(isAr ? "الضريبة" : "VAT (14%)")</span>
-                        <span style="color:var(--success); font-weight:bold; background:rgba(34,197,94,0.1); padding:2px 8px; border-radius:4px; font-size:0.8rem;">@(isAr ? "شاملة" : "Included")</span>
-                    </div>
-
                     <div class="summary-row total">
                         <span>@(isAr ? "الإجمالي" : "Total")</span>
-                        <span>${subtotal.toLocaleString()} <small style="font-size:1rem; color:var(--cart-text-muted); font-weight:600;">@(isAr ? "ج.م" : "EGP")</small></span>
+                        <span>${total.toLocaleString()} <small style="font-size:1rem; color:var(--cart-text-muted); font-weight:600;">@(isAr ? "ج.م" : "EGP")</small></span>
                     </div>
-
-                    <a href="/Cart/Checkout" class="checkout-btn">
-                        @(isAr ? "إتمام الشراء" : "Checkout") <i class="fas @(isAr ? "fa-arrow-left" : "fa-arrow-right")"></i>
-                    </a>
-
+                    <a href="/Cart/Checkout" class="checkout-btn">@(isAr ? "إتمام الشراء" : "Checkout") <i class="fas @(isAr ? "fa-arrow-left" : "fa-arrow-right")"></i></a>
                     <div style="text-align:center; margin-top:20px; color:var(--cart-text-muted); font-size:0.85rem; display:flex; align-items:center; justify-content:center; gap:6px;">
-                        <i class="fas fa-shield-alt" style="color:var(--success);"></i> @(isAr ? "تسوق آمن ومحمي 100%" : "100% Secure Checkout")
+                        <i class="fas fa-shield-alt" style="color:var(--cart-success);"></i> @(isAr ? "تسوق آمن ومحمي 100%" : "100% Secure Checkout")
                     </div>
-                </div>
-            `;
+                </div>`;
 
-            container.innerHTML = `
-                <div class="cart-grid">
-                    <div>
-                        <div class="cart-header">
-                            <h2>@(isAr ? "عربة التسوق" : "My Cart")</h2>
-                            <span class="cart-count">${cart.length} @(isAr ? "عناصر" : "Items")</span>
-                        </div>
-                        ${itemsHtml}
-                    </div>
-                    <div>
-                        ${summaryHtml}
-                    </div>
-                </div>
-            `;
-
-            // محاولة تحديث عداد السلة في الهيدر إذا كانت الدالة متاحة
+            container.innerHTML = `<div class="cart-grid"><div><div class="cart-header"><h2>@(isAr ? "عربة التسوق" : "My Cart")</h2><span class="cart-count">${cart.length} @(isAr ? "عناصر" : "Items")</span></div>${itemsHtml}</div><div>${summaryHtml}</div></div>`;
             if(typeof updateCartBadge === 'function') updateCartBadge();
         }
 
-        // Helper Functions
         function changeQtyModern(index, change) {
             let cart = JSON.parse(localStorage.getItem(CART_KEY_LOCAL)) || [];
             let item = cart[index];
             let newQty = parseInt(item.qty) + change;
-
-            if (item.maxStock && newQty > item.maxStock) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: isArPage ? 'عفواً' : 'Oops',
-                    text: isArPage ? 'لقد وصلت للحد الأقصى للمخزون' : 'Max stock reached',
-                    confirmButtonColor: '#4f46e5'
-                });
-                return;
-            }
-
-            if (newQty < 1) {
-                removeItemModern(index);
-                return;
-            }
-
+            if (item.maxStock && newQty > item.maxStock) { Swal.fire({ icon: 'warning', title: isArPage ? 'عفواً' : 'Oops', text: isArPage ? 'لقد وصلت للحد الأقصى للمخزون' : 'Max stock reached', confirmButtonColor: '#4f46e5' }); return; }
+            if (newQty < 1) { removeItemModern(index); return; }
             item.qty = newQty;
             localStorage.setItem(CART_KEY_LOCAL, JSON.stringify(cart));
             renderCartPageModern();
         }
 
         function removeItemModern(index) {
-            const confirmMsg = isArPage ? 'هل أنت متأكد من حذف هذا المنتج؟' : 'Are you sure you want to remove this item?';
-            const titleMsg = isArPage ? 'حذف المنتج؟' : 'Remove Item?';
-            const yesBtn = isArPage ? 'نعم، احذفه' : 'Yes, remove it';
-            const noBtn = isArPage ? 'إلغاء' : 'Cancel';
-
-            // Check theme for styling
-            const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
-            const colors = isDark ? {
-                bg: '#1e293b', text: '#f8fafc', confirm: '#ef4444', cancel: '#64748b'
-            } : {
-                bg: '#ffffff', text: '#1f2937', confirm: '#ef4444', cancel: '#6b7280'
-            };
-
             Swal.fire({
-                title: titleMsg,
-                text: confirmMsg,
+                title: isArPage ? 'حذف المنتج؟' : 'Remove Item?',
+                text: isArPage ? 'هل أنت متأكد من حذف هذا المنتج؟' : 'Are you sure?',
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: colors.confirm,
-                cancelButtonColor: colors.cancel,
-                confirmButtonText: yesBtn,
-                cancelButtonText: noBtn,
-                background: colors.bg,
-                color: colors.text
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: isArPage ? 'نعم، احذفه' : 'Yes',
+                cancelButtonText: isArPage ? 'إلغاء' : 'Cancel'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    performRemove(index);
-                    Swal.fire({
-                        title: isArPage ? 'تم الحذف!' : 'Deleted!',
-                        text: isArPage ? 'تم حذف المنتج من السلة.' : 'Item has been removed.',
-                        icon: 'success',
-                        background: colors.bg,
-                        color: colors.text,
-                        confirmButtonColor: '#4f46e5'
-                    });
+                    let cart = JSON.parse(localStorage.getItem(CART_KEY_LOCAL)) || [];
+                    cart.splice(index, 1);
+                    localStorage.setItem(CART_KEY_LOCAL, JSON.stringify(cart));
+                    renderCartPageModern();
+                    Swal.fire({ title: isArPage ? 'تم الحذف!' : 'Deleted!', icon: 'success', confirmButtonColor: '#4f46e5' });
                 }
             });
         }
-
-        function performRemove(index) {
-            let cart = JSON.parse(localStorage.getItem(CART_KEY_LOCAL)) || [];
-            cart.splice(index, 1);
-            localStorage.setItem(CART_KEY_LOCAL, JSON.stringify(cart));
-            renderCartPageModern();
-        }
-
-        // Init
         document.addEventListener('DOMContentLoaded', renderCartPageModern);
     </script>
 }

@@ -48,6 +48,7 @@ namespace Diska.Data
         // جداول صلاحيات التجار
         public DbSet<MerchantPermission> MerchantPermissions { get; set; }
         public DbSet<PendingMerchantAction> PendingMerchantActions { get; set; }
+        public DbSet<ShippingRate> ShippingRates { get; set; }
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {

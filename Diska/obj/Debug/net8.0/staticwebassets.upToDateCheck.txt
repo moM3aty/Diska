@@ -47,7 +47,6 @@ wwwroot\images\شاى العروسه.webp
 wwwroot\images\مشروبات.webp
 wwwroot\js\admin.js
 wwwroot\js\cart.js
-wwwroot\js\checkout-data.js
 wwwroot\js\merchant.js
 wwwroot\js\script.js
 wwwroot\js\survey.js
@@ -109,3 +108,4 @@ wwwroot\lib\jquery\dist\jquery.js
 wwwroot\lib\jquery\dist\jquery.min.js
 wwwroot\lib\jquery\dist\jquery.min.map
 wwwroot\lib\jquery\LICENSE.txt
+wwwroot\images\Precent.png

@@ -1,0 +1,230 @@
+﻿@model IEnumerable<Diska.Models.GroupDeal>
+@using System.Globalization
+@{
+    ViewData["Title"] = "إدارة الصفقات";
+    Layout = "_MerchantLayout";
+    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
+}
+
+<style>
+    /* Premium Styles */
+    :root {
+        --dl-bg: #f8fafc;
+        --dl-card: #ffffff;
+        --dl-text: #0f172a;
+        --dl-border: #e2e8f0;
+        --dl-primary: #0F172A;
+        --dl-accent: #4f46e5;
+    }
+
+    [data-bs-theme="dark"] {
+        --dl-bg: #020617;
+        --dl-card: #1e293b;
+        --dl-text: #f8fafc;
+        --dl-border: rgba(255, 255, 255, 0.08);
+        --dl-primary: #f8fafc;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .page-title {
+        margin: 0;
+        color: var(--dl-primary);
+        font-weight: 800;
+        font-size: 1.8rem;
+    }
+
+    .btn-add {
+        background: var(--dl-primary);
+        color: #fff;
+        padding: 10px 24px;
+        border-radius: 50px;
+        text-decoration: none;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: 0.3s;
+    }
+
+    [data-bs-theme="dark"] .btn-add {
+        background: var(--dl-accent);
+        color: #000;
+    }
+
+    .btn-add:hover {
+        transform: translateY(-2px);
+        opacity: 0.9;
+        color: #fff;
+    }
+
+    [data-bs-theme="dark"] .btn-add:hover {
+        color: #000;
+    }
+
+    .deal-card {
+        background: var(--dl-card);
+        border-radius: 16px;
+        border: 1px solid var(--dl-border);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        overflow: hidden;
+        margin-bottom: 20px;
+        transition: 0.3s;
+    }
+
+        .deal-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        }
+
+    .deal-header {
+        padding: 15px 20px;
+        border-bottom: 1px solid var(--dl-border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(0,0,0,0.02);
+    }
+
+    .deal-body {
+        padding: 20px;
+    }
+
+    .badge-status {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    .st-Pending {
+        background: rgba(245, 158, 11, 0.1);
+        color: #b45309;
+    }
+
+    .st-Approved {
+        background: rgba(34, 197, 94, 0.1);
+        color: #16a34a;
+    }
+
+    .st-Rejected {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+    }
+
+    [data-bs-theme="dark"] .st-Pending {
+        color: #fbbf24;
+    }
+
+    [data-bs-theme="dark"] .st-Approved {
+        color: #4ade80;
+    }
+
+    [data-bs-theme="dark"] .st-Rejected {
+        color: #f87171;
+    }
+
+    .deal-title {
+        font-weight: 800;
+        font-size: 1.1rem;
+        color: var(--dl-text);
+        margin-bottom: 5px;
+    }
+
+    .deal-meta {
+        font-size: 0.85rem;
+        color: #64748b;
+        display: flex;
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+
+    .progress-bar-bg {
+        height: 6px;
+        background: var(--dl-border);
+        border-radius: 3px;
+        overflow: hidden;
+        margin-top: 10px;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
+        background: var(--dl-primary);
+        border-radius: 3px;
+    }
+
+    [data-bs-theme="dark"] .progress-bar-fill {
+        background: var(--dl-accent);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px;
+        color: #64748b;
+    }
+</style>
+
+<div class="page-header">
+    <div>
+        <h2 class="page-title">@(isAr ? "إدارة الصفقات" : "Manage Deals")</h2>
+        <p class="m-0 text-muted">@(isAr ? "أنشئ صفقات وتخفيضات لجذب المزيد من العملاء" : "Create deals and discounts to attract more customers")</p>
+    </div>
+    <a asp-action="Create" class="btn-add text-white">
+        <i class="fas fa-plus"></i> @(isAr ? "إضافة صفقة" : "Add Deal")
+    </a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="deal-card empty-state">
+        <i class="fas fa-tags fa-4x mb-3" style="opacity:0.3;"></i>
+        <h4>@(isAr ? "لا توجد صفقات حالياً" : "No deals found")</h4>
+        <p>@(isAr ? "ابدأ بإضافة أول صفقة لك لزيادة مبيعاتك." : "Start by adding your first deal to boost sales.")</p>
+    </div>
+}
+else
+{
+    <div class="row">
+        @foreach (var item in Model)
+        {
+            var percent = item.TargetQuantity > 0 ? (double)item.ReservedQuantity / item.TargetQuantity * 100 : 0;
+            <div class="col-md-6 col-lg-4">
+                <div class="deal-card">
+                    <div class="deal-header">
+                        <span class="badge-status st-@item.Status">@item.Status</span>
+                        <small class="text-muted">@item.StartDate.ToString("dd/MM") - @item.EndDate.ToString("dd/MM")</small>
+                    </div>
+                    <div class="deal-body">
+                        <h4 class="deal-title">@item.Title</h4>
+                        <div class="deal-meta">
+                            <span><i class="fas fa-box me-1"></i> @(item.Product?.Name ?? item.Category?.Name ?? "General")</span>
+                            <span><i class="fas fa-tag me-1"></i> @(item.IsPercentage ? $"{item.DiscountValue:0}%" : $"{item.DiscountValue:N0} EGP")</span>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-1 text-muted small">
+                            <span>@(isAr ? "المحجوز" : "Reserved"): @item.ReservedQuantity</span>
+                            <span>@(isAr ? "الهدف" : "Target"): @item.TargetQuantity</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" style="width:@Math.Min(percent, 100)%"></div>
+                        </div>
+
+                        <div class="mt-3 text-end">
+                            <form asp-action="Delete" method="post" style="display:inline;" onsubmit="return confirm('@(isAr?"حذف الصفقة؟":"Delete Deal?")')">
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger border-0">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

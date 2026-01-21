@@ -6,6 +6,7 @@
 @inject UserManager<Diska.Models.ApplicationUser> UserManager
 
 @{
+    Layout = "_Layout";
     bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
     ViewData["Title"] = isAr ? "الرئيسية" : "Home";
 
@@ -34,7 +35,6 @@
         --home-accent: #FACC15;
         --home-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
         --home-card-hover-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
-        /* Category Colors (Light) */
         --cat-bg-0: #e0f2fe;
         --cat-icon-0: #0284c7;
         --cat-bg-1: #fef3c7;
@@ -53,16 +53,15 @@
 
     [data-bs-theme="dark"] {
         /* Dark Theme Overrides */
-        --home-bg: #020617; /* Deep Dark */
-        --home-card-bg: #1e293b; /* Slate 800 */
-        --home-text-main: #f8fafc; /* Light Text */
-        --home-text-muted: #94a3b8; /* Muted Text */
+        --home-bg: #020617;
+        --home-card-bg: #1e293b;
+        --home-text-main: #f8fafc;
+        --home-text-muted: #94a3b8;
         --home-border: rgba(255, 255, 255, 0.08);
-        --home-primary: #f8fafc; /* Headings become white */
-        --home-accent: #FACC15; /* Gold remains */
+        --home-primary: #f8fafc;
+        --home-accent: #FACC15;
         --home-shadow: 0 10px 40px -5px rgba(0, 0, 0, 0.4);
         --home-card-hover-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.6);
-        /* Category Colors (Dark - More muted/transparent) */
         --cat-bg-0: rgba(14, 165, 233, 0.15);
         --cat-icon-0: #38bdf8;
         --cat-bg-1: rgba(245, 158, 11, 0.15);
@@ -100,21 +99,19 @@
         .banner-slide.active {
             display: block;
         }
+
     @@keyframes fadeEffect {
-        from
+        from {
+            opacity: 0.4;
+        }
 
-    {
-        opacity: 0.4;
-    }
-
-    to {
-        opacity: 1;
-    }
-
+        to {
+            opacity: 1;
+        }
     }
 
     .banner-card {
-        background: linear-gradient(135deg, #0F172A 0%, #1e293b 100%); /* Always dark for contrast with white text */
+        background: linear-gradient(135deg, #0F172A 0%, #1e293b 100%);
         border-radius: 24px;
         padding: 50px 60px;
         color: #fff;
@@ -131,7 +128,6 @@
         background: linear-gradient(135deg, #020617 0%, #1e293b 100%);
     }
 
-    /* Decorative Circle */
     .banner-card::after {
         content: '';
         position: absolute;
@@ -276,8 +272,8 @@
         align-items: center;
         text-decoration: none;
         transition: 0.3s;
-        padding:10px;
-        border-radius:25px;
+        padding: 10px;
+        border-radius: 25px;
     }
 
         .cat-item:hover {
@@ -294,7 +290,6 @@
             justify-content: center;
             font-size: 1.8rem;
             transition: 0.3s;
-            /* Dynamic colors handled by inline styles with CSS vars */
         }
 
         .cat-item span {
@@ -332,7 +327,6 @@
             transform: translateY(-8px);
         }
 
-    /* Product Badges */
     .badge-container {
         position: absolute;
         top: 15px; @(isAr
@@ -361,7 +355,6 @@
         background: #ef4444;
     }
 
-    /* Fav Button */
     .fav-btn {
         position: absolute;
         top: 15px; @(isAr
@@ -396,21 +389,19 @@
         background: rgba(239, 68, 68, 0.1);
     }
 
-    /* Product Image */
     .product-img {
         height: 200px;
         display: flex;
         align-items: center;
         justify-content: center;
         margin-bottom: 15px;
-        background: #fff; /* Always white for product visibility */
+        background: #fff;
         border-radius: 12px;
         padding: 20px;
         position: relative;
         overflow: hidden;
     }
 
-    /* Ensure image bg is white even in dark mode for clean product display */
     [data-bs-theme="dark"] .product-img {
         background: transparent;
     }
@@ -426,7 +417,6 @@
         transform: scale(1.08);
     }
 
-    /* Info */
     .product-info {
         flex: 1;
         display: flex;
@@ -489,7 +479,6 @@
         font-weight: 600;
     }
 
-    /* Meta & Actions */
     .product-meta {
         display: flex;
         justify-content: space-between;
@@ -564,6 +553,11 @@
         font-size: 0.9rem;
     }
 
+        .qty-val::-webkit-outer-spin-button, .qty-val::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
     .add-btn {
         background: var(--home-primary);
         color: #fff;
@@ -597,9 +591,9 @@
         color: var(--home-text-muted) !important;
         cursor: not-allowed;
         box-shadow: none;
+        transform: none;
     }
 
-    /* Button Primary (Hero) */
     .btn.primary {
         background: var(--home-accent);
         color: #000;
@@ -618,30 +612,26 @@
             color: #000;
         }
 
-    /* Responsive */
     @@media (max-width: 900px) {
-        .banner-card
+        .banner-card {
+            flex-direction: column-reverse;
+            text-align: center;
+            padding: 40px 20px;
+        }
 
-    {
-        flex-direction: column-reverse;
-        text-align: center;
-        padding: 40px 20px;
-    }
+        .banner-content {
+            text-align: center;
+        }
 
-    .banner-content {
-        text-align: center;
-    }
+        .banner-image img {
+            margin-bottom: 20px;
+            width: 100%;
+            transform: rotate(0);
+        }
 
-    .banner-image img {
-        margin-bottom: 20px;
-        width: 100%;
-        transform: rotate(0);
-    }
-
-    .main-headline {
-        font-size: 2rem;
-    }
-
+        .main-headline {
+            font-size: 2rem;
+        }
     }
 </style>
 
@@ -663,9 +653,7 @@
             <div class="banner-slide @(slideIndex == 0 ? "active" : "")" id="slide-@slideIndex">
                 <div class="banner-card">
                     <div class="banner-content">
-                        <div class="tag-box">
-                            <span class="tag">@(isAr ? "عروض حصرية 🔥" : "Hot Deals 🔥")</span>
-                        </div>
+                        <div class="tag-box"><span class="tag">@(isAr ? "عروض حصرية 🔥" : "Hot Deals 🔥")</span></div>
                         <h2 class="main-headline">@(isAr? banner.Title: banner.TitleEn)</h2>
                         <p class="slogan-desc">@(isAr? banner.Subtitle: banner.SubtitleEn)</p>
                         <a href="@href" class="btn primary">@(isAr? banner.ButtonText: banner.ButtonTextEn)</a>
@@ -677,8 +665,6 @@
             </div>
             slideIndex++;
         }
-
-        <!-- Dots Navigation -->
         <div class="slider-dots">
             @for (int i = 0; i < banners.Count(); i++)
             {
@@ -688,7 +674,6 @@
     }
     else
     {
-        <!-- Fallback Banner -->
         <div class="banner-card">
             <div class="banner-content">
                 <span class="tag">HOT</span>
@@ -754,22 +739,15 @@
                     int discountProd = 0;
 
                     <div class="product-card" data-id="@item.Id" data-stock="@item.StockQuantity">
-
-                        <!-- Badges & Wishlist -->
                         <div class="badge-container">
                             @if (isBestSeller)
                             {
-                                <span class="badge-bestseller">
-                                    <i class="fas fa-crown"></i> @(isAr ? "الأكثر مبيعاً" : "Best Seller")
-                                </span>
+                                <span class="badge-bestseller"><i class="fas fa-crown"></i> @(isAr ? "الأكثر مبيعاً" : "Best Seller")</span>
                             }
-
                             @if (item.OldPrice.HasValue && item.OldPrice > item.Price)
                             {
                                 discountProd = (int)Math.Round(((item.OldPrice.Value - item.Price) / item.OldPrice.Value) * 100);
-                                <span class="badge-discount">
-                                    @(isAr ? "خصم" : "Sale") @discountProd%
-                                </span>
+                                <span class="badge-discount">@(isAr ? "خصم" : "Sale") @discountProd%</span>
                             }
                         </div>
 
@@ -777,59 +755,46 @@
                             <i class="fas @(isLiked ? "fa-heart" : "fa-heart")"></i>
                         </button>
 
-                        <!-- Product Image -->
                         <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id" class="product-img">
                             <img src="~/@item.ImageUrl" alt="@item.Name" onerror="this.src='/images/default.png'">
                         </a>
 
-                        <!-- Product Info -->
                         <div class="product-info">
                             <span class="pro-cat">@(isAr? item.Category?.Name : item.Category?.NameEn)</span>
-
                             <a asp-controller="Product" asp-action="Details" asp-route-id="@item.Id" style="text-decoration:none; color:inherit;">
                                 <h4>@(isAr? item.Name: item.NameEn)</h4>
                             </a>
-
                             <div class="pricing">
                                 <span class="current-price">@item.Price.ToString("N0") <small>@(isAr ? "ج.م" : "EGP")</small></span>
-                                @if (item.OldPrice.HasValue)
+                                @if (item.OldPrice.HasValue && item.OldPrice > item.Price)
                                 {
                                     <span class="old-price">@item.OldPrice.Value.ToString("N0")</span>
                                 }
                             </div>
-
-                            <!-- Meta -->
                             <div class="product-meta">
                                 <span class="unit"><i class="fas fa-box"></i> @item.UnitsPerCarton</span>
-                                @if (item.StockQuantity > 0)
-                                {
-                                    <span class="stock-info">@(isAr ? "متوفر" : "In Stock")</span>
-                                }
-                                else
-                                {
-                                    <span class="stock-info low">@(isAr ? "نافذ" : "Out of Stock")</span>
-                                }
+                                <span class="stock-info @(item.StockQuantity <= 0 ? "low" : "")">
+                                    @(item.StockQuantity > 0 ? (isAr ? "متوفر" : "In Stock") : (isAr ? "نافذ" : "Out of Stock"))
+                                </span>
                             </div>
 
-                            <!-- Actions -->
                             <div class="add-to-cart">
                                 <div class="qty-input-group">
                                     <button type="button" class="qty-btn" onclick="updateCardQty(this, -1)">-</button>
-                                    <input type="number" id="qty-@item.Id" value="1" min="1" max="@item.StockQuantity" class="qty-val" readonly>
+                                    <!-- تفعيل الكتابة في حقل الكمية -->
+                                    <input type="number" id="qty-@item.Id" value="1" min="1" max="@item.StockQuantity" class="qty-val" onchange="validateQty(this)" onkeyup="if(event.key === 'Enter') validateQty(this)">
                                     <button type="button" class="qty-btn" onclick="updateCardQty(this, 1)">+</button>
                                 </div>
 
                                 @if (item.StockQuantity > 0)
                                 {
-                                    <button class="add-btn" onclick="addToCart(this, @item.Id)">
+                                    <button class="add-btn" onclick="addToCart(@item.Id, this)">
                                         @(isAr ? "أضف" : "Add") <i class="fas fa-cart-plus"></i>
                                     </button>
                                 }
                                 else
                                 {
-                                    <button class="add-btn bg-secondary" disabled>
-                                        @(isAr ? "غير متوفر" : "Out of Stock")
-                                    </button>
+                                    <button class="add-btn bg-secondary" disabled>@(isAr ? "غير متوفر" : "Out")</button>
                                 }
                             </div>
                         </div>
@@ -848,29 +813,24 @@
 
 @section Scripts {
     <partial name="_SurveyPopup" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        // دوال التحكم في السلايدر
+        // Banner Logic
         let slideIndex = 0;
         let slideTimer;
-
         function showSlides() {
             const slides = document.querySelectorAll('.banner-slide');
             const dots = document.querySelectorAll('.dot');
             if(slides.length === 0) return;
-
             slides.forEach(slide => slide.classList.remove('active'));
             dots.forEach(dot => dot.classList.remove('active'));
-
             slideIndex++;
             if (slideIndex > slides.length) {slideIndex = 1}
-
             slides[slideIndex-1].classList.add('active');
             if(dots.length > 0) dots[slideIndex-1].classList.add('active');
-
             clearTimeout(slideTimer);
             slideTimer = setTimeout(showSlides, 5000);
         }
-
         window.currentSlide = function(n) {
             slideIndex = n;
             const slides = document.querySelectorAll('.banner-slide');
@@ -883,22 +843,36 @@
             slideTimer = setTimeout(showSlides, 5000);
         }
 
-        // تشغيل السلايدر عند التحميل
-        document.addEventListener('DOMContentLoaded', () => {
-            if(document.querySelectorAll('.banner-slide').length > 0) showSlides();
-        });
-
-        // دوال الكمية والإضافة
+        // Qty Logic
         function updateCardQty(btn, change) {
             let input = btn.parentElement.querySelector('input');
-            let val = parseInt(input.value) + change;
-            let max = parseInt(input.getAttribute('max'));
-            if (val >= 1 && val <= max) input.value = val;
+            let currentVal = parseInt(input.value) || 0;
+            let newVal = currentVal + change;
+            input.value = newVal; // Update then validate
+            validateQty(input);
         }
 
-        function addToCart(btn, id) {
+        function validateQty(input) {
+            let val = parseInt(input.value);
+            let max = parseInt(input.getAttribute('max'));
+
+            if (isNaN(val) || val < 1) {
+                input.value = 1;
+            } else if (val > max) {
+                input.value = max;
+                Swal.fire({
+                    toast: true, position: 'top-end', icon: 'warning',
+                    title: '@(isAr ? "عفواً، الكمية المتاحة محدودة" : "Limited Stock")',
+                    showConfirmButton: false, timer: 1500
+                });
+            }
+        }
+
+        function addToCart(id, btn) {
             let qtyInput = document.getElementById('qty-' + id);
-            let qty = qtyInput ? qtyInput.value : 1;
+            validateQty(qtyInput); // Final validation
+            let qty = qtyInput.value;
+
             if(typeof addItemToCart === 'function') {
                 addItemToCart(id, qty, btn);
             }
@@ -908,50 +882,21 @@
             try {
                 const icon = btn.querySelector('i');
                 const isCurrentlyActive = btn.classList.contains('active');
+                if(isCurrentlyActive) { btn.classList.remove('active'); icon.classList.remove('fas'); icon.classList.add('far'); }
+                else { btn.classList.add('active'); icon.classList.remove('far'); icon.classList.add('fas'); btn.style.transform = "scale(1.2)"; setTimeout(() => btn.style.transform = "scale(1)", 200); }
 
-                // Optimistic UI Update
-                if(isCurrentlyActive) {
-                    btn.classList.remove('active'); icon.classList.remove('fas'); icon.classList.add('far');
-                } else {
-                    btn.classList.add('active'); icon.classList.remove('far'); icon.classList.add('fas');
-                    // Pulse animation
-                    btn.style.transform = "scale(1.2)";
-                    setTimeout(() => btn.style.transform = "scale(1)", 200);
+                const response = await fetch('/Wishlist/Toggle', { method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body: `productId=${id}` });
+                if(response.status === 401) { window.location.href = '/Account/Login'; return; }
+                const res = await response.json();
+                if(!res.success) {
+                    if(isCurrentlyActive) { btn.classList.add('active'); icon.classList.add('fas'); }
+                    else { btn.classList.remove('active'); icon.classList.remove('fas'); }
                 }
-
-                const response = await fetch('/Wishlist/Toggle', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: `productId=${id}`
-                });
-
-                if (response.status === 401) {
-                    // Revert UI
-                    if(isCurrentlyActive) { btn.classList.add('active'); icon.classList.add('fas'); icon.classList.remove('far'); }
-                    else { btn.classList.remove('active'); icon.classList.remove('fas'); icon.classList.add('far'); }
-
-                    Swal.fire({
-                        title: '@(isAr ? "تنبيه" : "Alert")',
-                        text: '@(isAr ? "يجب عليك تسجيل الدخول أولاً." : "Please login first.")',
-                        icon: 'warning',
-                        confirmButtonText: '@(isAr ? "دخول" : "Login")'
-                    }).then((r) => { if(r.isConfirmed) window.location.href='/Account/Login'; });
-                    return;
-                }
-
-                const result = await response.json();
-                if (!result.success) {
-                    // Revert UI on failure
-                     if(isCurrentlyActive) { btn.classList.add('active'); icon.classList.add('fas'); icon.classList.remove('far'); }
-                     else { btn.classList.remove('active'); icon.classList.remove('fas'); icon.classList.add('far'); }
-                } else {
-                    const msg = result.status === 'added' ? '@(isAr ? "تمت الإضافة للمفضلة" : "Added to Wishlist")' : '@(isAr ? "تم الحذف من المفضلة" : "Removed from Wishlist")';
-                    const Toast = Swal.mixin({
-                        toast: true, position: 'top-end', showConfirmButton: false, timer: 1500, timerProgressBar: true
-                    });
-                    Toast.fire({ icon: 'success', title: msg });
-                }
-            } catch (error) { console.error(error); }
+            } catch(e) { console.error(e); }
         }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if(document.querySelectorAll('.banner-slide').length > 0) showSlides();
+        });
     </script>
 }

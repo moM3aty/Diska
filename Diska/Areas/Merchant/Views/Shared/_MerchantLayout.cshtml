@@ -272,7 +272,7 @@
     <div class="app-container">
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <h4 class="m-0 fw-bold">DISKA <span style="color:var(--primary-color); font-size:0.7em;">MERCHANT</span></h4>
+                <h4 class="m-0 fw-bold">DISKA <span style="color:var(--primary-color); font-size:0.7em;">MERCHANT</span> <img style="margin:5px" src="~/images/Precent.png" alt="Diska" width="20px" /></h4>
             </div>
             <div class="sidebar-menu">
                 <a href="/Merchant/Dashboard" class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Dashboard" ? "active" : "")">
@@ -288,7 +288,9 @@
                 <a href="/Merchant/MerchantOrder" class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "MerchantOrder" ? "active" : "")">
                     <i class="fas fa-shopping-bag"></i> <span>@(isAr ? "الطلبات الواردة" : "Orders")</span>
                 </a>
-
+                <a href="/Merchant/Deal" class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Deal" ? "active" : "")">
+                    <i class="fas fa-tags"></i> <span>@(isAr ? "الصفقات والعروض" : "Deals & Offers")</span>
+                </a>
                 <a href="/Merchant/Restock" class="nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Restock" ? "active" : "")">
                     <i class="fas fa-cubes"></i> <span>@(isAr ? "نواقص المخزون" : "Restock Requests")</span>
                 </a>

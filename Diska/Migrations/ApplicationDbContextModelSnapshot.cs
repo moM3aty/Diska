@@ -922,6 +922,30 @@ namespace Diska.Migrations
                     b.ToTable("RestockSubscriptions");
                 });
 
+            modelBuilder.Entity("Diska.Models.ShippingRate", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("Cost")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Governorate")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ShippingRates");
+                });
+
             modelBuilder.Entity("Diska.Models.Survey", b =>
                 {
                     b.Property<int>("Id")

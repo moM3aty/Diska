@@ -867,7 +867,7 @@
                                     <div class="add-to-cart">
                                         <div class="qty-control-card">
                                             <button onclick="updateQty(this, -1)">-</button>
-                                            <input type="number" id="qty-@item.Id" value="1" min="1" max="@item.StockQuantity" readonly>
+                                            <input type="number" id="qty-@item.Id" value="1" min="1" max="@item.StockQuantity" onchange="validateQty(this)" onkeyup="if(event.key === 'Enter') validateQty(this)">
                                             <button onclick="updateQty(this, 1)">+</button>
                                         </div>
 
@@ -898,8 +898,27 @@
     <script>
         function updateQty(btn, n) {
             const el = btn.parentElement.querySelector('input');
-            let v = parseInt(el.value) + n;
-            if(v >= 1 && v <= parseInt(el.getAttribute('max'))) el.value = v;
+            let v = parseInt(el.value) || 0;
+            // يتم التحقق داخل validateQty بعد التغيير
+            el.value = v + n;
+            validateQty(el);
+        }
+
+        function validateQty(input) {
+            let val = parseInt(input.value);
+            let max = parseInt(input.getAttribute('max'));
+
+            if (isNaN(val) || val < 1) {
+                input.value = 1;
+            } else if (val > max) {
+                input.value = max;
+                // Optional: Show simple toast
+                Swal.fire({
+                    toast: true, position: 'top-end', icon: 'warning',
+                    title: '@(isAr ? "عفواً، الكمية المتاحة محدودة" : "Limited Stock")',
+                    showConfirmButton: false, timer: 1500
+                });
+            }
         }
 
         function addToCart(id, btn) {

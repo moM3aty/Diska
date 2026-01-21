@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Diska.Controllers
 {
@@ -25,116 +26,155 @@ namespace Diska.Controllers
             _shippingService = shippingService;
         }
 
-        // 1. عرض صفحة السلة
         public IActionResult Index()
         {
             return View();
         }
 
-        // 2. التحقق من المنتج وإضافته (API) - المصحح
         [HttpPost]
         public async Task<IActionResult> AddItem(int productId, int quantity, string colorHex = null, string colorName = null)
         {
-            var product = await _context.Products
-                .Include(p => p.ProductColors)
-                .FirstOrDefaultAsync(p => p.Id == productId);
+            var product = await _context.Products.Include(p => p.ProductColors).FirstOrDefaultAsync(p => p.Id == productId);
 
             if (product == null || product.Status != "Active")
-            {
-                return Json(new { success = false, message = "عفواً، هذا المنتج غير متاح حالياً." });
-            }
+                return Json(new { success = false, message = "عفواً، المنتج غير متاح." });
 
             if (product.StockQuantity < quantity)
-            {
-                return Json(new { success = false, message = $"الكمية المتاحة فقط {product.StockQuantity} قطعة." });
-            }
+                return Json(new { success = false, message = $"الكمية المتاحة: {product.StockQuantity}" });
 
-            // --- تصحيح منطق الألوان ---
-            // نعتمد القيم القادمة من الطلب أولاً (لأن المستخدم اختارها)
-            string finalColorName = colorName;
-            string finalColorHex = colorHex;
+            string finalColorName = colorName ?? (product.ProductColors.FirstOrDefault()?.ColorName ?? (product.Color ?? "Default"));
+            string finalColorHex = colorHex ?? (product.ProductColors.FirstOrDefault()?.ColorHex ?? (product.Color ?? "#000000"));
 
-            // إذا كانت القيم فارغة (لم يختر المستخدم شيئاً)، نستخدم الافتراضي للمنتج
-            if (string.IsNullOrEmpty(finalColorName) && string.IsNullOrEmpty(finalColorHex))
-            {
-                var firstColor = product.ProductColors.FirstOrDefault();
-                if (firstColor != null)
-                {
-                    finalColorName = firstColor.ColorName;
-                    finalColorHex = firstColor.ColorHex;
-                }
-                else
-                {
-                    finalColorName = product.Color ?? "Default";
-                    finalColorHex = product.Color ?? "#000000";
-                }
-            }
-
-            // ضمان عدم وجود Null
-            if (string.IsNullOrEmpty(finalColorHex)) finalColorHex = "#000000";
+            // Safety check for nulls before returning
             if (string.IsNullOrEmpty(finalColorName)) finalColorName = "Standard";
+            if (string.IsNullOrEmpty(finalColorHex)) finalColorHex = "#000000";
 
             return Json(new
             {
                 success = true,
-                message = "تمت الإضافة للسلة بنجاح",
+                message = "تمت الإضافة للسلة",
                 product = new
                 {
                     id = product.Id,
-                    name = System.Threading.Thread.CurrentThread.CurrentCulture.Name.StartsWith("ar") ? product.Name : product.NameEn,
+                    name = product.Name,
                     price = product.Price,
                     image = product.ImageUrl,
-                    stock = product.StockQuantity,
-                    // إرجاع اللون المختار ليتم تخزينه في المتصفح
                     colorName = finalColorName,
                     colorHex = finalColorHex
                 }
             });
         }
 
-        // 3. صفحة الدفع
+        [HttpPost]
+        public async Task<IActionResult> GetCartDetails([FromBody] List<CartItemDto> items)
+        {
+            if (items == null || !items.Any()) return Json(new List<object>());
+
+            var ids = new List<int>();
+            foreach (var i in items) { if (int.TryParse(i.Id, out int pid)) ids.Add(pid); }
+
+            var products = await _context.Products
+                .Include(p => p.PriceTiers)
+                .Where(p => ids.Contains(p.Id))
+                .ToListAsync();
+
+            var isAr = System.Threading.Thread.CurrentThread.CurrentCulture.Name.StartsWith("ar");
+            var result = new List<object>();
+
+            foreach (var item in items)
+            {
+                if (!int.TryParse(item.Id, out int pid)) continue;
+
+                var product = products.FirstOrDefault(p => p.Id == pid);
+                if (product != null)
+                {
+                    decimal finalPrice = product.Price;
+                    if (product.PriceTiers != null && product.PriceTiers.Any())
+                    {
+                        var tier = product.PriceTiers.OrderBy(t => t.UnitPrice)
+                            .FirstOrDefault(t => item.Qty >= t.MinQuantity && item.Qty <= t.MaxQuantity);
+                        if (tier != null) finalPrice = tier.UnitPrice;
+                    }
+
+                    result.Add(new
+                    {
+                        id = product.Id,
+                        name = isAr ? product.Name : (product.NameEn ?? product.Name),
+                        image = product.ImageUrl,
+                        price = finalPrice,
+                        qty = item.Qty,
+                        colorName = item.ColorName,
+                        colorHex = item.ColorHex
+                    });
+                }
+            }
+            return Json(result);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetCities(string governorate)
+        {
+            if (string.IsNullOrEmpty(governorate)) return Json(new List<string>());
+
+            var cities = await _context.ShippingRates
+                .Where(r => r.Governorate == governorate && !string.IsNullOrEmpty(r.City) && r.City != "All")
+                .Select(r => r.City)
+                .Distinct()
+                .OrderBy(c => c)
+                .ToListAsync();
+
+            return Json(cities);
+        }
+
+        [HttpGet]
+        public IActionResult GetShippingCost(string governorate, string city)
+        {
+            try
+            {
+                decimal cost = _shippingService.CalculateCost(governorate, city);
+                return Json(new { cost = cost });
+            }
+            catch { return Json(new { cost = 0 }); }
+        }
+
         [Authorize]
         public async Task<IActionResult> Checkout()
         {
             var user = await _userManager.GetUserAsync(User);
-
             ViewBag.FullName = user.FullName;
             ViewBag.Phone = user.PhoneNumber;
             ViewBag.ShopName = user.ShopName;
 
-            var defaultAddress = await _context.UserAddresses
-                .OrderByDescending(a => a.IsDefault)
-                .ThenByDescending(a => a.Id)
-                .FirstOrDefaultAsync(a => a.UserId == user.Id);
+            var governorates = await _context.ShippingRates.Select(r => r.Governorate).Distinct().OrderBy(g => g).ToListAsync();
+            ViewBag.GovernoratesList = new SelectList(governorates);
 
+            var defaultAddress = await _context.UserAddresses.OrderByDescending(a => a.IsDefault).FirstOrDefaultAsync(a => a.UserId == user.Id);
             if (defaultAddress != null)
             {
                 ViewBag.Address = defaultAddress.Street;
                 ViewBag.Governorate = defaultAddress.Governorate;
                 ViewBag.City = defaultAddress.City;
             }
-
             return View();
         }
 
-        // 4. تنفيذ الطلب (PlaceOrder) - المصحح
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> PlaceOrder([FromBody] OrderSubmissionModel model)
         {
-            if (model == null || !model.Items.Any())
-                return Json(new { success = false, message = "السلة فارغة." });
+            if (model == null || !model.Items.Any()) return Json(new { success = false, message = "السلة فارغة." });
 
             var user = await _userManager.GetUserAsync(User);
-
             using var transaction = _context.Database.BeginTransaction();
 
             try
             {
+                decimal shippingCost = _shippingService.CalculateCost(model.Governorate, model.City);
+
                 var order = new Order
                 {
                     UserId = user.Id,
-                    CustomerName = !string.IsNullOrEmpty(model.ShopName) ? model.ShopName : user.FullName,
+                    CustomerName = model.ShopName ?? user.FullName,
                     Phone = model.Phone,
                     Governorate = model.Governorate,
                     City = model.City,
@@ -144,7 +184,7 @@ namespace Diska.Controllers
                     PaymentMethod = model.PaymentMethod,
                     Status = "Pending",
                     OrderDate = DateTime.Now,
-                    ShippingCost = _shippingService.CalculateCost(model.Governorate, model.City)
+                    ShippingCost = shippingCost
                 };
 
                 decimal subTotal = 0;
@@ -159,41 +199,60 @@ namespace Diska.Controllers
                             .Include(p => p.ProductColors)
                             .FirstOrDefaultAsync(p => p.Id == pid);
 
-                        if (product == null || product.Status != "Active")
-                            return Json(new { success = false, message = $"المنتج {pid} غير متاح." });
+                        if (product == null || product.Status != "Active") continue; // Skip invalid
 
                         if (product.StockQuantity < itemDto.Qty)
-                            return Json(new { success = false, message = $"الكمية غير متوفرة لـ {product.Name}." });
+                            return Json(new { success = false, message = $"المنتج {product.Name} غير متوفر بالكمية المطلوبة." });
 
+                        // Deduct Stock
                         product.StockQuantity -= itemDto.Qty;
                         _context.Update(product);
 
+                        // Price Logic
                         decimal finalPrice = product.Price;
-                        if (product.PriceTiers != null && product.PriceTiers.Any())
+                        if (product.PriceTiers != null)
                         {
-                            var tier = product.PriceTiers.OrderBy(t => t.UnitPrice).FirstOrDefault(t => itemDto.Qty >= t.MinQuantity && itemDto.Qty <= t.MaxQuantity);
+                            var tier = product.PriceTiers.OrderBy(t => t.UnitPrice)
+                                .FirstOrDefault(t => itemDto.Qty >= t.MinQuantity && itemDto.Qty <= t.MaxQuantity);
                             if (tier != null) finalPrice = tier.UnitPrice;
                         }
 
                         subTotal += finalPrice * itemDto.Qty;
 
-                        // حفظ اللون المختار في الطلب
-                        // الأولوية لما جاء من الـ DTO (الواجهة)، وإلا نستخدم الافتراضي
-                        string cName = !string.IsNullOrEmpty(itemDto.ColorName) ? itemDto.ColorName : (product.ProductColors.FirstOrDefault()?.ColorName ?? "Standard");
-                        string cHex = !string.IsNullOrEmpty(itemDto.ColorHex) ? itemDto.ColorHex : (product.ProductColors.FirstOrDefault()?.ColorHex ?? "#000000");
+                        // --- FIX: Ensure Color Name is never null ---
+                        string cName = itemDto.ColorName;
+                        string cHex = itemDto.ColorHex;
+
+                        if (string.IsNullOrEmpty(cName))
+                        {
+                            // Try to fallback to product default color
+                            cName = product.ProductColors.FirstOrDefault()?.ColorName ?? product.Color ?? "Standard";
+                        }
+
+                        if (string.IsNullOrEmpty(cHex))
+                        {
+                            cHex = product.ProductColors.FirstOrDefault()?.ColorHex ?? product.Color ?? "#000000";
+                        }
+
+                        // Final safety check
+                        if (string.IsNullOrEmpty(cName)) cName = "Standard";
+                        if (string.IsNullOrEmpty(cHex)) cHex = "#000000";
 
                         orderItems.Add(new OrderItem
                         {
                             ProductId = pid,
                             Quantity = itemDto.Qty,
                             UnitPrice = finalPrice,
-                            SelectedColorName = cName,
+                            SelectedColorName = cName, // Must not be null
                             SelectedColorHex = cHex
                         });
                     }
                 }
 
-                order.TotalAmount = subTotal + order.ShippingCost;
+                if (subTotal == 0) return Json(new { success = false, message = "حدث خطأ في حساب الإجمالي." });
+
+                decimal taxAmount = subTotal * 0.14m;
+                order.TotalAmount = subTotal + shippingCost + taxAmount;
                 order.OrderItems = orderItems;
 
                 if (model.PaymentMethod == "Wallet")
@@ -216,7 +275,9 @@ namespace Diska.Controllers
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                return Json(new { success = false, message = "خطأ: " + ex.Message });
+                // Log the inner exception for details
+                var msg = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                return Json(new { success = false, message = "خطأ: " + msg });
             }
         }
 
@@ -234,7 +295,6 @@ namespace Diska.Controllers
         public string PaymentMethod { get; set; }
         public string DeliverySlot { get; set; }
         public string Notes { get; set; }
-        public decimal ShippingCost { get; set; }
         public List<CartItemDto> Items { get; set; }
     }
 
