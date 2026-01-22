@@ -25,8 +25,8 @@
 
 <style>
     /* =========================================
-           PREMIUM CATALOG STYLES (Light & Dark)
-           ========================================= */
+       PREMIUM CATALOG STYLES (Light & Dark)
+       ========================================= */
     :root {
         /* Light Theme Defaults */
         --cat-bg: #f8fafc;
@@ -105,9 +105,9 @@
         transition: 0.2s;
     }
 
-        .sort-select:hover {
-            border-color: var(--cat-primary);
-        }
+    .sort-select:hover {
+        border-color: var(--cat-primary);
+    }
 
     [data-bs-theme="dark"] .sort-select option {
         background-color: var(--cat-card-bg);
@@ -139,11 +139,11 @@
         padding-bottom: 20px;
     }
 
-        .filter-group:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
+    .filter-group:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
 
     .filter-title {
         font-size: 1rem;
@@ -168,20 +168,20 @@
         font-weight: 600;
     }
 
-        .category-link:hover {
-            color: var(--cat-primary);
-            background-color: var(--cat-input-bg);
-        }
+    .category-link:hover {
+        color: var(--cat-primary);
+        background-color: var(--cat-input-bg);
+    }
 
-        .category-link.active {
-            color: var(--cat-primary);
-            background-color: rgba(79, 70, 229, 0.1);
-            font-weight: 700;
-        }
+    .category-link.active {
+        color: var(--cat-primary);
+        background-color: rgba(79, 70, 229, 0.1);
+        font-weight: 700;
+    }
 
     [data-bs-theme="dark"] .category-link.active {
-        background-color: rgba(250, 204, 21, 0.1);
-        color: var(--cat-accent);
+         background-color: rgba(250, 204, 21, 0.1);
+         color: var(--cat-accent);
     }
 
     .cat-icon {
@@ -192,13 +192,8 @@
         color: var(--cat-text-muted);
     }
 
-    .category-link.active .cat-icon {
-        color: var(--cat-primary);
-    }
-
-    [data-bs-theme="dark"] .category-link.active .cat-icon {
-        color: var(--cat-accent);
-    }
+    .category-link.active .cat-icon { color: var(--cat-primary); }
+    [data-bs-theme="dark"] .category-link.active .cat-icon { color: var(--cat-accent); }
 
     /* Sub Categories */
     .sub-cats {
@@ -209,37 +204,17 @@
         margin-bottom: 10px;
         display: none;
     }
-
-        .sub-cats.open {
-            display: block;
-        }
+    .sub-cats.open { display: block; }
 
     .sub-link {
-        display: flex;
-        align-items: center;
-        padding: 8px 12px;
-        color: var(--cat-text-muted);
-        text-decoration: none;
-        font-size: 0.9rem;
-        border-radius: 6px;
-        transition: 0.2s;
+        display: flex; align-items: center;
+        padding: 8px 12px; color: var(--cat-text-muted);
+        text-decoration: none; font-size: 0.9rem;
+        border-radius: 6px; transition: 0.2s;
     }
-
-        .sub-link:hover {
-            color: var(--cat-primary);
-            background-color: var(--cat-input-bg);
-        }
-
-        .sub-link.active {
-            color: var(--cat-primary);
-            font-weight: 700;
-            background: rgba(79, 70, 229, 0.1);
-        }
-
-    [data-bs-theme="dark"] .sub-link.active {
-        background: rgba(250, 204, 21, 0.1);
-        color: var(--cat-accent);
-    }
+    .sub-link:hover { color: var(--cat-primary); background-color: var(--cat-input-bg); }
+    .sub-link.active { color: var(--cat-primary); font-weight: 700; background: rgba(79, 70, 229, 0.1); }
+    [data-bs-theme="dark"] .sub-link.active { background: rgba(250, 204, 21, 0.1); color: var(--cat-accent); }
 
     /* Price Inputs */
     .price-inputs {
@@ -260,9 +235,9 @@
         outline: none;
     }
 
-        .price-input:focus {
-            border-color: var(--cat-accent);
-        }
+    .price-input:focus {
+        border-color: var(--cat-accent);
+    }
 
     /* Checkboxes */
     .checkbox-label {
@@ -281,10 +256,7 @@
         accent-color: var(--cat-primary);
         cursor: pointer;
     }
-
-    [data-bs-theme="dark"] .checkbox-input {
-        accent-color: var(--cat-accent);
-    }
+    [data-bs-theme="dark"] .checkbox-input { accent-color: var(--cat-accent); }
 
     /* Sidebar Buttons */
     .btn-filter {
@@ -320,10 +292,10 @@
         transition: 0.2s;
     }
 
-        .btn-reset:hover {
-            color: var(--cat-primary);
-            text-decoration: underline;
-        }
+    .btn-reset:hover {
+        color: var(--cat-primary);
+        text-decoration: underline;
+    }
 
     /* --- Product Cards --- */
     .products-grid {
@@ -344,12 +316,11 @@
         box-shadow: var(--cat-shadow);
     }
 
-        .product-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.08);
-            border-color: var(--cat-primary);
-        }
-
+    .product-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+        border-color: var(--cat-primary);
+    }
     [data-bs-theme="dark"] .product-card:hover {
         box-shadow: 0 15px 30px rgba(0,0,0,0.4);
         border-color: var(--cat-accent);
@@ -366,15 +337,12 @@
         border-bottom: 1px solid var(--cat-border);
     }
 
-    [data-bs-theme="dark"] .product-img {
-        background: transparent;
+    .product-img img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     }
-        .product-img img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-            transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        }
 
     .product-card:hover .product-img img {
         transform: scale(1.1);
@@ -384,7 +352,7 @@
     .badge-container {
         position: absolute;
         top: 15px;
-        @(isAr ? "right" : "left") : 15px;
+        @(isAr ? "right" : "left"): 15px;
         z-index: 2;
         display: flex;
         flex-direction: column;
@@ -401,44 +369,19 @@
         text-align: center;
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
-
-    .badge-discount {
-        background: #ef4444;
-    }
-
-    .badge-bestseller {
-        background: linear-gradient(135deg, #FFD700, #FDB931);
-    }
+    .badge-discount { background: #ef4444; }
+    .badge-bestseller { background: linear-gradient(135deg, #FFD700, #FDB931); }
 
     .fav-btn {
-        position: absolute;
-        top: 15px; @(isAr
-                ? "left" : "right") : 15px;
-        width: 35px;
-        height: 35px;
-        background: rgba(255,255,255,0.9);
-        border-radius: 50%;
-        border: 1px solid #e2e8f0;
-        color: #94a3b8;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        z-index: 3;
-        transition: 0.3s;
+        position: absolute; top: 15px; @(isAr ? "left" : "right"): 15px;
+        width: 35px; height: 35px; background: rgba(255,255,255,0.9);
+        border-radius: 50%; border: 1px solid #e2e8f0;
+        color: #94a3b8; display: flex; align-items: center; justify-content: center;
+        cursor: pointer; z-index: 3; transition: 0.3s;
         box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     }
-
-        .fav-btn:hover {
-            transform: scale(1.1);
-            color: #ef4444;
-        }
-
-        .fav-btn.active {
-            color: #ef4444;
-            background: #fee2e2;
-            border-color: #ef4444;
-        }
+    .fav-btn:hover { transform: scale(1.1); color: #ef4444; }
+    .fav-btn.active { color: #ef4444; background: #fee2e2; border-color: #ef4444; }
 
     /* Info */
     .product-info {
@@ -470,14 +413,8 @@
         height: 40px;
         transition: color 0.2s;
     }
-
-    .product-card:hover h4 {
-        color: var(--cat-primary);
-    }
-
-    [data-bs-theme="dark"] .product-card:hover h4 {
-        color: var(--cat-accent);
-    }
+    .product-card:hover h4 { color: var(--cat-primary); }
+    [data-bs-theme="dark"] .product-card:hover h4 { color: var(--cat-accent); }
 
     .pricing {
         font-size: 1.2rem;
@@ -489,10 +426,7 @@
         justify-content: center;
         gap: 6px;
     }
-
-    [data-bs-theme="dark"] .pricing {
-        color: #f8fafc;
-    }
+    [data-bs-theme="dark"] .pricing { color: #f8fafc; }
 
     .old-price {
         text-decoration: line-through;
@@ -512,14 +446,8 @@
         color: var(--cat-text-muted);
     }
 
-    .stock-info {
-        font-weight: 700;
-        color: #16a34a;
-    }
-
-        .stock-info.low {
-            color: #ef4444;
-        }
+    .stock-info { font-weight: 700; color: #16a34a; }
+    .stock-info.low { color: #ef4444; }
 
     /* Actions */
     .add-to-cart {
@@ -531,90 +459,43 @@
         transform: translateY(10px);
         transition: 0.3s;
     }
-
-    .product-card:hover .add-to-cart {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    .product-card:hover .add-to-cart { opacity: 1; transform: translateY(0); }
 
     /* Mobile: Always show actions */
     @@media (max-width: 768px) {
-        .add-to-cart {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        .add-to-cart { opacity: 1; transform: translateY(0); }
     }
 
     .qty-control-card {
-        display: flex;
-        border: 1px solid var(--cat-border);
-        border-radius: 8px;
-        overflow: hidden;
-        background: var(--cat-input-bg);
-        height: 35px;
+        display: flex; border: 1px solid var(--cat-border); border-radius: 8px; overflow: hidden; background: var(--cat-input-bg); height: 35px;
     }
-
-        .qty-control-card button {
-            width: 30px;
-            height: 100%;
-            border: none;
-            background: transparent;
-            cursor: pointer;
-            color: var(--cat-text-main);
-            font-weight: bold;
-            transition: 0.2s;
-        }
-
-            .qty-control-card button:hover {
-                background: rgba(0,0,0,0.05);
-            }
-
-        .qty-control-card input {
-            width: 35px;
-            border: none;
-            text-align: center;
-            font-weight: 700;
-            color: var(--cat-text-main);
-            outline: none;
-            background: transparent;
-            font-size: 0.9rem;
-        }
+    .qty-control-card button { width: 30px; height: 100%; border: none; background: transparent; cursor: pointer; color: var(--cat-text-main); font-weight: bold; transition: 0.2s; }
+    .qty-control-card button:hover { background: rgba(0,0,0,0.05); }
+    .qty-control-card input {
+        width: 45px;
+        border: none;
+        text-align: center;
+        font-weight: 700;
+        color: var(--cat-text-main);
+        outline: none;
+        background: transparent;
+        font-size: 0.9rem;
+        -moz-appearance: textfield; /* Remove spinner firefox */
+    }
+    /* Remove spinner chrome/safari/edge */
+    .qty-control-card input::-webkit-outer-spin-button,
+    .qty-control-card input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
 
     .add-btn {
-        flex: 1;
-        background: var(--cat-primary);
-        color: #fff;
-        border: none;
-        padding: 0 10px;
-        height: 35px;
-        border-radius: 8px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: 0.2s;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 5px;
-        font-size: 0.85rem;
+        flex: 1; background: var(--cat-primary); color: #fff; border: none; padding: 0 10px; height: 35px; border-radius: 8px;
+        font-weight: 700; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 0.85rem;
     }
-
-    [data-bs-theme="dark"] .add-btn {
-        background: var(--cat-accent);
-        color: #000;
-    }
-
-    .add-btn:hover {
-        transform: translateY(-2px);
-        opacity: 0.9;
-    }
-
-    .add-btn:disabled {
-        background: var(--cat-border);
-        cursor: not-allowed;
-        color: var(--cat-text-muted);
-        box-shadow: none;
-        transform: none;
-    }
+    [data-bs-theme="dark"] .add-btn { background: var(--cat-accent); color: #000; }
+    .add-btn:hover { transform: translateY(-2px); opacity: 0.9; }
+    .add-btn:disabled { background: var(--cat-border); cursor: not-allowed; color: var(--cat-text-muted); box-shadow: none; transform: none; }
 
     /* Empty State */
     .empty-state {
@@ -625,41 +506,16 @@
         border: 2px dashed var(--cat-border);
         grid-column: 1 / -1;
     }
-
-    .empty-icon {
-        font-size: 4rem;
-        color: var(--cat-text-muted);
-        opacity: 0.3;
-        margin-bottom: 20px;
-    }
+    .empty-icon { font-size: 4rem; color: var(--cat-text-muted); opacity: 0.3; margin-bottom: 20px; }
 
     /* Animation */
-    .fade-up {
-        animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    @@keyframes fadeUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
+    .fade-up { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+    @@keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
     /* Responsive */
     @@media (max-width: 992px) {
-        .catalog-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .filter-sidebar {
-            position: static;
-            margin-bottom: 30px;
-        }
+        .catalog-grid { grid-template-columns: 1fr; }
+        .filter-sidebar { position: static; margin-bottom: 30px; }
     }
 </style>
 
@@ -803,6 +659,11 @@
                         {
                             bool isBestSeller = item.StockQuantity > 0 && item.StockQuantity < 20;
                             bool isLiked = wishlistIds.Contains(item.Id);
+                            int discountPct = 0;
+                            if (item.OldPrice.HasValue && item.OldPrice > item.Price)
+                            {
+                                discountPct = (int)Math.Round(((item.OldPrice.Value - item.Price) / item.OldPrice.Value) * 100);
+                            }
 
                             <div class="product-card" data-id="@item.Id" data-stock="@item.StockQuantity">
 
@@ -815,11 +676,10 @@
                                         </span>
                                     }
 
-                                    @if (item.OldPrice.HasValue && item.OldPrice > item.Price)
+                                    @if (discountPct > 0)
                                     {
-                                        discount = (int)Math.Round(((item.OldPrice.Value - item.Price) / item.OldPrice.Value) * 100);
                                         <span class="badge-discount">
-                                            @(isAr ? "خصم" : "Sale") @discount%
+                                            @(isAr ? "خصم" : "Sale") @discountPct%
                                         </span>
                                     }
                                 </div>
@@ -867,7 +727,7 @@
                                     <div class="add-to-cart">
                                         <div class="qty-control-card">
                                             <button onclick="updateQty(this, -1)">-</button>
-                                            <input type="number" id="qty-@item.Id" value="1" min="1" max="@item.StockQuantity" onchange="validateQty(this)" onkeyup="if(event.key === 'Enter') validateQty(this)">
+                                            <input type="number" id="qty-@item.Id" value="1" min="1" max="@item.StockQuantity" class="qty-val" onchange="validateQty(this)" onkeyup="if(event.key === 'Enter') validateQty(this)">
                                             <button onclick="updateQty(this, 1)">+</button>
                                         </div>
 
@@ -898,9 +758,8 @@
     <script>
         function updateQty(btn, n) {
             const el = btn.parentElement.querySelector('input');
-            let v = parseInt(el.value) || 0;
-            // يتم التحقق داخل validateQty بعد التغيير
-            el.value = v + n;
+            let v = (parseInt(el.value) || 0) + n;
+            el.value = v;
             validateQty(el);
         }
 
@@ -912,7 +771,6 @@
                 input.value = 1;
             } else if (val > max) {
                 input.value = max;
-                // Optional: Show simple toast
                 Swal.fire({
                     toast: true, position: 'top-end', icon: 'warning',
                     title: '@(isAr ? "عفواً، الكمية المتاحة محدودة" : "Limited Stock")',
@@ -921,6 +779,7 @@
             }
         }
 
+        // --- Single Merchant Logic ---
         function addToCart(id, btn) {
             let qty = document.getElementById('qty-' + id).value;
             let original = btn.innerHTML;
@@ -934,55 +793,76 @@
             fetch('/Cart/AddItem', { method: 'POST', body: formData })
             .then(r => r.json())
             .then(res => {
+                btn.disabled = false;
+                btn.innerHTML = original;
+
                 if(res.success) {
-                    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: res.message, showConfirmButton: false, timer: 1500 });
-
+                    // Check local cart for different merchant
                     let cart = JSON.parse(localStorage.getItem('DISKA_CART')) || [];
-                    // Simple cart update for grid (no color logic here yet)
-                    let uniqueId = id + '_def';
-                    let existing = cart.find(i => i.uniqueId === uniqueId);
 
-                    if(existing) existing.qty += parseInt(qty);
-                    else cart.push({
-                         id: res.product.id, uniqueId: uniqueId, qty: parseInt(qty),
-                         name: res.product.name, price: res.product.price, image: res.product.image
-                    });
+                    if (cart.length > 0 && cart[0].merchantId && res.product.merchantId && cart[0].merchantId !== res.product.merchantId) {
+                        Swal.fire({
+                            title: '@(isAr ? "تاجر مختلف" : "Different Merchant")',
+                            text: '@Html.Raw(isAr ? "سلتك تحتوي على منتجات من تاجر آخر. هل تريد إفراغ السلة وإضافة هذا المنتج؟" : "Cart has items from another merchant. Clear and add this item?")',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#d33',
+                            confirmButtonText: '@(isAr ? "نعم، أفرغ السلة وأضف" : "Yes, clear and add")',
+                            cancelButtonText: '@(isAr ? "إلغاء" : "Cancel")'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                cart = [];
+                                addItemToLocal(cart, res, qty, id);
+                            }
+                        });
+                        return; // Stop
+                    }
 
-                    localStorage.setItem('DISKA_CART', JSON.stringify(cart));
-                    if(typeof updateCartBadge === 'function') updateCartBadge();
+                    addItemToLocal(cart, res, qty, id);
+
                 } else {
-                    Swal.fire({ icon: 'warning', title: 'تنبيه', text: res.message });
+                    Swal.fire({ icon: 'warning', title: 'Note', text: res.message });
                 }
             })
-            .catch(e => console.error(e))
-            .finally(() => {
+            .catch(e => {
+                console.error(e);
                 btn.disabled = false;
                 btn.innerHTML = original;
             });
         }
 
+        function addItemToLocal(cart, res, qty, id) {
+            let uniqueId = id + '_def';
+            let existing = cart.find(i => i.uniqueId === uniqueId);
+
+            if(existing) existing.qty += parseInt(qty);
+            else cart.push({
+                 id: res.product.id, uniqueId: uniqueId, qty: parseInt(qty),
+                 name: res.product.name, price: res.product.price, image: res.product.image,
+                 merchantId: res.product.merchantId, shopName: res.product.shopName
+            });
+
+            localStorage.setItem('DISKA_CART', JSON.stringify(cart));
+            if(typeof updateCartBadge === 'function') updateCartBadge();
+
+            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: res.message, showConfirmButton: false, timer: 1500 });
+        }
+
         async function toggleWishlist(id, btn) {
             try {
                 const icon = btn.querySelector('i');
-                const response = await fetch('/Wishlist/Toggle', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                    body: `productId=${id}`
-                });
+                const isCurrentlyActive = btn.classList.contains('active');
+                if(isCurrentlyActive) { btn.classList.remove('active'); icon.classList.remove('fas'); icon.classList.add('far'); }
+                else { btn.classList.add('active'); icon.classList.remove('far'); icon.classList.add('fas'); btn.style.transform = "scale(1.2)"; setTimeout(() => btn.style.transform = "scale(1)", 200); }
 
+                const response = await fetch('/Wishlist/Toggle', { method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body: `productId=${id}` });
                 if(response.status === 401) { window.location.href = '/Account/Login'; return; }
                 const res = await response.json();
-                if(res.success) {
-                    if(res.status === 'added') {
-                        icon.classList.remove('far'); icon.classList.add('fas'); btn.classList.add('active');
-                        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'تمت الإضافة للمفضلة', showConfirmButton: false, timer: 1500 });
-                    } else {
-                        icon.classList.remove('fas'); icon.classList.add('far'); btn.classList.remove('active');
-                        Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: 'تم الحذف من المفضلة', showConfirmButton: false, timer: 1500 });
-                    }
+                if(!res.success) {
+                    if(isCurrentlyActive) { btn.classList.add('active'); icon.classList.add('fas'); }
+                    else { btn.classList.remove('active'); icon.classList.remove('fas'); }
                 }
             } catch(e) { console.error(e); }
         }
     </script>
-}
 }

@@ -5,59 +5,182 @@
 }
 
 <style>
+    :root {
+        --ap-bg: #f8fafc;
+        --ap-card: #ffffff;
+        --ap-border: #e2e8f0;
+        --ap-text: #0f172a;
+        --ap-muted: #64748b;
+        --ap-primary: #4f46e5;
+    }
+
+    [data-bs-theme="dark"] {
+        --ap-bg: #020617;
+        --ap-card: #1e293b;
+        --ap-border: rgba(255, 255, 255, 0.08);
+        --ap-text: #f8fafc;
+        --ap-muted: #94a3b8;
+        --ap-primary: #818cf8;
+    }
+
     .approval-card {
         border: none;
         border-radius: 16px;
         box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-        background: var(--bg-card);
+        background: var(--ap-card);
         overflow: hidden;
         margin-bottom: 20px;
     }
 
     .nav-pills .nav-link {
-        color: var(--text-muted) !important;
+        color: var(--ap-muted) !important;
         font-weight: 700;
         padding: 12px 25px;
         border-radius: 50px;
         margin-right: 10px;
         transition: all 0.3s;
+        border: 1px solid var(--ap-border);
     }
 
         .nav-pills .nav-link.active {
-            background-color: var(--primary-color);
-            color: #fff;
+            background-color: var(--ap-primary);
+            color: #fff !important;
+            border-color: var(--ap-primary);
             box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
         }
 
     .item-row {
-        border-bottom: 1px solid var(--border-color);
+        border-bottom: 1px solid var(--ap-border);
         padding: 20px;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        background: var(--bg-body);
+        background: var(--ap-card);
         margin-bottom: 15px;
-        border-radius: 12px;
-        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        border: 1px solid var(--ap-border);
+        transition: 0.3s;
     }
 
-        .item-row:last-child {
-            margin-bottom: 0;
+        .item-row:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
         }
 
+    .item-info-group {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
     .item-icon {
-        width: 50px;
-        height: 50px;
-        border-radius: 12px;
+        width: 55px;
+        height: 55px;
+        border-radius: 14px;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 1.5rem;
         flex-shrink: 0;
     }
+
+    .actions-group {
+        display: flex;
+        gap: 10px;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    /* --- Media Query --- */
+    @("@media") (max-width: 768px) {
+        .item-row
+
+    {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+    }
+
+    .item-info-group {
+        width: 100%;
+    }
+
+    .actions-group {
+        width: 100%;
+    }
+
+        /* توزيع الأزرار بالتساوي */
+        .actions-group > * {
+            flex: 1;
+        }
+
+        .actions-group button, .actions-group .btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+    .nav-pills {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 10px;
+        gap: 5px;
+    }
+
+        .nav-pills .nav-link {
+            margin-right: 0;
+            white-space: nowrap;
+        }
+
+    }
+
+    /* --- Extra Small Screens (<= 478px) --- */
+    @("@media") (max-width: 478px) {
+        .item-row
+
+    {
+        padding: 15px; /* تقليل الحواف */
+    }
+
+    .item-icon {
+        width: 45px;
+        height: 45px;
+        font-size: 1.2rem;
+        border-radius: 10px;
+    }
+
+    .item-info-group {
+        gap: 10px;
+    }
+
+    /* ترتيب الأزرار فوق بعضها في الشاشات الصغيرة جداً */
+    .actions-group {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .page-header h2 {
+        font-size: 1.5rem;
+    }
+
+    .page-header .badge {
+        width: 100%;
+        display: block;
+        text-align: center;
+        margin-top: 5px;
+    }
+
+    }
 </style>
 
-<div class="d-flex justify-content-between align-items-center mb-4 fade-up">
+<div class="page-header fade-up">
     <div>
         <h2 class="fw-bold mb-1" style="color:var(--text-main)">مركز الموافقات</h2>
         <p class="text-muted small mb-0">مراجعة واعتماد طلبات التجار والمنتجات</p>
@@ -112,24 +235,25 @@
             @foreach (var item in Model.NewMerchants)
             {
                 <div class="item-row">
-                    <div class="d-flex align-items-center gap-3">
+                    <div class="item-info-group">
                         <div class="item-icon bg-warning bg-opacity-10 text-warning">
                             <i class="fas fa-user-plus"></i>
                         </div>
                         <div>
-                            <h5 class="fw-bold mb-1 text-main">@item.ShopName</h5>
+                            <h5 class="fw-bold mb-1" style="color:var(--text-main)">@item.ShopName</h5>
                             <div class="text-muted small">
                                 <i class="fas fa-user me-1"></i> @item.FullName
-                                <span class="mx-2">|</span>
+                                <span class="mx-2 d-none d-md-inline">|</span>
+                                <br class="d-md-none" />
                                 <i class="fas fa-phone me-1"></i> @item.PhoneNumber
                             </div>
-                            <div class="mt-1 small">
-                                <span class="badge bg-light text-dark border">سجل: @item.CommercialRegister</span>
-                                <span class="badge bg-light text-dark border">ضريبي: @item.TaxCard</span>
+                            <div class="mt-2 small d-flex flex-wrap gap-2">
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary border">سجل: @item.CommercialRegister</span>
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary border">ضريبي: @item.TaxCard</span>
                             </div>
                         </div>
                     </div>
-                    <div class="d-flex gap-2">
+                    <div class="actions-group">
                         <form asp-action="ApproveMerchant" method="post">
                             <input type="hidden" name="id" value="@item.Id" />
                             <button class="btn btn-success fw-bold px-4 rounded-pill"><i class="fas fa-check me-2"></i> توثيق</button>
@@ -158,19 +282,20 @@
             @foreach (var item in Model.PendingProducts)
             {
                 <div class="item-row">
-                    <div class="d-flex align-items-center gap-3">
+                    <div class="item-info-group">
                         <img src="~/@item.ImageUrl" class="item-icon object-fit-cover bg-white border" onerror="this.src='/images/default.png'">
                         <div>
-                            <h5 class="fw-bold mb-1 text-main">@item.Name</h5>
+                            <h5 class="fw-bold mb-1" style="color:var(--text-main)">@item.Name</h5>
                             <div class="text-muted small">
                                 <i class="fas fa-store me-1"></i> @item.Merchant?.ShopName
                                 <span class="mx-2">|</span>
                                 <i class="fas fa-tag me-1"></i> @item.Category?.Name
                             </div>
+                            <div class="mt-1 fw-bold text-success">@item.Price.ToString("N0") ج.م</div>
                         </div>
                     </div>
-                    <div class="d-flex gap-2">
-                        <a href="Approvals/ProductDetails/@item.Id" target="_blank" class="btn btn-light border rounded-pill" title="معاينة"><i class="fas fa-eye"></i></a>
+                    <div class="actions-group">
+                        <a href="/Admin/Approvals/ProductDetails/@item.Id" target="_blank" class="btn btn-light border rounded-pill" title="معاينة"><i class="fas fa-eye"></i></a>
                         <form asp-action="ApproveProduct" method="post">
                             <input type="hidden" name="id" value="@item.Id" />
                             <button class="btn btn-success fw-bold px-3 rounded-pill"><i class="fas fa-check"></i> نشر</button>
@@ -199,24 +324,22 @@
             @foreach (var item in Model.OtherActions)
             {
                 <div class="item-row">
-                    <div class="d-flex align-items-center gap-3">
+                    <div class="item-info-group">
                         <div class="item-icon bg-info bg-opacity-10 text-info">
                             <i class="fas fa-sliders-h"></i>
                         </div>
                         <div>
-                            <h5 class="fw-bold mb-1 text-main">
+                            <h5 class="fw-bold mb-1" style="color:var(--text-main)">
                                 @if (item.ActionType == "UpdateProductPrice")
                                 {
                                     <span>تعديل سعر منتج</span>
                                 }
                                 else if (item.ActionType == "WithdrawRequest")
                                 {
-
                                     <span>طلب سحب رصيد</span>
                                 }
                                 else
                                 {
-
                                     <span>@item.ActionType</span>
                                 }
                             </h5>
@@ -232,13 +355,12 @@
                                 }
                                 else
                                 {
-
                                     <span>@item.NewValueJson</span>
                                 }
                             </div>
                         </div>
                     </div>
-                    <div class="d-flex gap-2">
+                    <div class="actions-group">
                         <form asp-action="ApproveAction" method="post">
                             <input type="hidden" name="id" value="@item.Id" />
                             <button class="btn btn-success fw-bold px-4 rounded-pill"><i class="fas fa-check me-2"></i> موافقة</button>

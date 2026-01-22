@@ -8,19 +8,183 @@
     int totalItems = ViewBag.TotalItems ?? 0;
 }
 
+<style>
+    /* =========================================
+           PREMIUM ADMIN PRODUCTS STYLES
+           ========================================= */
+
+    /* Search Box Style */
+    .search-input-group {
+        position: relative;
+        flex: 1;
+        min-width: 250px;
+    }
+
+        .search-input-group input {
+            padding-right: 40px; /* Space for icon in RTL */
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-body);
+            color: var(--text-main);
+        }
+
+        .search-input-group i {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+    /* Filter Bar */
+    .filter-bar {
+        background: var(--bg-card);
+        padding: 20px;
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
+        margin-bottom: 25px;
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        flex-wrap: wrap;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+    }
+
+    /* Table Styles */
+    .table-card {
+        background: var(--bg-card);
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+        overflow: hidden;
+    }
+
+    .product-img-box {
+        width: 45px;
+        height: 45px;
+        border-radius: 10px;
+        object-fit: cover;
+        border: 1px solid var(--border-color);
+        background: #fff;
+        padding: 2px;
+    }
+
+    /* --- Media Queries (Responsive Fixes) --- */
+
+    /* Tablet & Small Laptop (max-width: 991px) */
+    @("@media") (max-width: 991.98px) {
+        .filter-bar > div:not(.search-input-group)
+
+    {
+        flex: 1; /* Distribute space evenly */
+        width: auto !important; /* Override inline styles */
+        min-width: 140px;
+    }
+
+    .filter-bar button, .filter-bar a.btn {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    }
+
+    /* Mobile (max-width: 768px) */
+    @("@media") (max-width: 767.98px) {
+        /* Header Stack */
+        .page-header-flex
+
+    {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 15px;
+        text-align: center;
+    }
+
+    .header-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+        .header-actions .btn, .header-actions form {
+            width: 100%;
+        }
+
+            .header-actions form button {
+                width: 100%;
+            }
+
+    /* Filter Stack */
+    .filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 15px;
+        gap: 12px;
+    }
+
+        .filter-bar > div,
+        .filter-bar > .search-input-group,
+        .filter-bar button,
+        .filter-bar a.btn {
+            width: 100% !important; /* Force full width */
+            margin: 0 !important;
+        }
+
+    .search-input-group {
+        min-width: 100%;
+    }
+
+    /* Table Responsive Adjustments */
+    .table thead {
+        display: none; /* Hide headers on mobile for cleaner look if needed, or keep scrolling */
+    }
+
+        /* Alternative: Keep headers but hide less important columns */
+        .table thead th:nth-child(4), .table tbody td:nth-child(4), /* القسم */
+        .table thead th:nth-child(5), .table tbody td:nth-child(5), /* التاجر */
+        .table thead th:nth-child(6), .table tbody td:nth-child(6) /* الحالة */ {
+            display: none;
+        }
+
+    .table td {
+        display: block;
+        text-align: right;
+        border: none;
+        padding: 5px 15px;
+    }
+
+        .table td:first-child {
+            padding-top: 15px;
+        }
+
+        .table td:last-child {
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+        }
+
+    .product-img-box {
+        width: 60px;
+        height: 60px;
+    }
+
+    }
+</style>
 
 <!-- Header -->
-<div class="d-flex justify-content-between align-items-center mb-4 fade-up">
+<div class="d-flex justify-content-between align-items-center mb-4 fade-up page-header-flex">
     <div>
-        <h2 class="text-dark fw-bold mb-1">إدارة المنتجات</h2>
+        <h2 class="fw-bold mb-1" style="color:var(--text-main)">إدارة المنتجات</h2>
         <p class="text-muted small mb-0">عرض وإدارة مخزون المتجر</p>
     </div>
-    <div class="d-flex gap-2">
-        <button class="btn btn-outline-success btn-excel export-Excel shadow-sm bg-white" data-bs-toggle="modal" data-bs-target="#importModal">
+    <div class="d-flex gap-2 header-actions">
+        <button class="btn btn-outline-success btn-excel shadow-sm bg-white" data-bs-toggle="modal" data-bs-target="#importModal">
             <i class="fas fa-file-import"></i> استيراد
         </button>
-        <form asp-action="ExportToExcel" method="post" >
-            <button type="submit" class="btn btn-success btn-excel shadow-sm">
+        <form asp-action="ExportToExcel" method="post" class="d-inline-block">
+            <button type="submit" class="btn btn-success btn-excel shadow-sm w-100">
                 <i class="fas fa-file-excel"></i> تصدير Excel
             </button>
         </form>
@@ -58,15 +222,16 @@
         </select>
     </div>
 
-    <button type="submit" class="btn btn-primary px-3"><i class="fas fa-filter"></i></button>
-    <a asp-action="Index" class="btn btn-light border px-3"><i class="fas fa-undo"></i></a>
+    <button type="submit" class="btn btn-primary px-3 fw-bold">تصفية <i class="fas fa-filter"></i></button>
+    <a asp-action="Index" class="btn btn-light border px-3" title="إعادة تعيين"><i class="fas fa-undo"></i></a>
 </form>
 
 <!-- Table -->
 <div class="table-card fade-up" style="animation-delay: 0.2s;">
     <div class="table-responsive">
-        <table class="table table-hover mb-0">
-            <thead>
+        <table class="table table-hover mb-0" style="min-width: 600px;">
+            <!-- Min width forces scroll on small screens for better view if needed -->
+            <thead class="bg-light">
                 <tr>
                     <th class="ps-4">المنتج</th>
                     <th>السعر</th>
@@ -96,7 +261,7 @@
                             <div class="d-flex align-items-center gap-3">
                                 <img src="~/@item.ImageUrl" class="product-img-box" onerror="this.src='/images/default.png'">
                                 <div>
-                                    <div class="fw-bold text-dark">@item.Name</div>
+                                    <div class="fw-bold text-main">@item.Name</div>
                                     @if (!string.IsNullOrEmpty(item.SKU))
                                     {
                                         <small class="text-muted font-monospace bg-light px-1 rounded border">@item.SKU</small>
@@ -120,7 +285,7 @@
                             }
                         </td>
                         <td><span class="badge bg-light text-dark border">@item.Category?.Name</span></td>
-                        <td><small class="fw-bold">@(item.Merchant?.ShopName ?? "الإدارة")</small></td>
+                        <td><small class="fw-bold text-muted">@(item.Merchant?.ShopName ?? "الإدارة")</small></td>
                         <td>
                             @if (item.Status == "Active")
                             {
@@ -133,10 +298,10 @@
                         </td>
                         <td class="text-end pe-4">
                             <div class="d-flex justify-content-end gap-2">
-                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn-action btn-edit" title="تعديل">
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-primary btn-sm rounded-pill" title="تعديل">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <button type="button" class="btn-action btn-delete" onclick="confirmDelete(@item.Id, '@item.Name')" title="حذف">
+                                <button type="button" class="btn btn-outline-danger btn-sm rounded-pill" onclick="confirmDelete(@item.Id, '@item.Name')" title="حذف">
                                     <i class="fas fa-trash-alt"></i>
                                 </button>
                             </div>
@@ -153,18 +318,26 @@
     <!-- Pagination -->
     @if (totalPages > 1)
     {
-        <div class="p-3 border-top d-flex justify-content-between align-items-center">
+        <div class="p-3 border-top d-flex justify-content-between align-items-center flex-wrap gap-2">
             <span class="text-muted small">عرض @Model.Count() من أصل @totalItems منتج</span>
             <nav>
                 <ul class="pagination pagination-sm mb-0">
                     <li class="page-item @(currentPage == 1 ? "disabled" : "")">
                         <a class="page-link" href="@Url.Action("Index", new { page = currentPage - 1, search = ViewBag.Search, categoryId = ViewBag.FilterCategoryId, merchantId = ViewBag.FilterMerchantId, status = ViewBag.FilterStatus })">&laquo;</a>
                     </li>
+                    <!-- Logic to show limited page numbers can be added here -->
                     @for (int i = 1; i <= totalPages; i++)
                     {
-                        <li class="page-item @(i == currentPage ? "active" : "")">
-                            <a class="page-link" href="@Url.Action("Index", new { page = i, search = ViewBag.Search, categoryId = ViewBag.FilterCategoryId, merchantId = ViewBag.FilterMerchantId, status = ViewBag.FilterStatus })">@i</a>
-                        </li>
+                        if (i == 1 || i == totalPages || (i >= currentPage - 2 && i <= currentPage + 2))
+                        {
+                            <li class="page-item @(i == currentPage ? "active" : "")">
+                                <a class="page-link" href="@Url.Action("Index", new { page = i, search = ViewBag.Search, categoryId = ViewBag.FilterCategoryId, merchantId = ViewBag.FilterMerchantId, status = ViewBag.FilterStatus })">@i</a>
+                            </li>
+                        }
+                        else if (i == currentPage - 3 || i == currentPage + 3)
+                        {
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        }
                     }
                     <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
                         <a class="page-link" href="@Url.Action("Index", new { page = currentPage + 1, search = ViewBag.Search, categoryId = ViewBag.FilterCategoryId, merchantId = ViewBag.FilterMerchantId, status = ViewBag.FilterStatus })">&raquo;</a>
@@ -175,19 +348,19 @@
     }
 </div>
 
-<!-- Import Modal -->
+<!-- Import Modal (Same as before) -->
 <div class="modal fade" id="importModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content border-0 shadow">
             <div class="modal-header border-bottom-0">
-                <h5 class="modal-title fw-bold">استيراد منتجات (Excel/CSV)</h5>
+                <h5 class="modal-title fw-bold text-dark">استيراد منتجات (Excel/CSV)</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form asp-action="ImportFromExcel" method="post" enctype="multipart/form-data">
                 <div class="modal-body text-center py-4">
-                    <div class="upload-zone border-dashed p-4 rounded bg-light mb-3" onclick="document.getElementById('excelFile').click()" style="cursor:pointer;">
+                    <div class="upload-zone border-dashed p-4 rounded bg-light mb-3" onclick="document.getElementById('excelFile').click()" style="cursor:pointer; border: 2px dashed #cbd5e1;">
                         <i class="fas fa-file-csv fa-3x text-success mb-3"></i>
-                        <p class="mb-1 fw-bold">اضغط لاختيار الملف</p>
+                        <p class="mb-1 fw-bold text-dark">اضغط لاختيار الملف</p>
                         <small class="text-muted">يقبل ملفات CSV فقط بالصيغة القياسية</small>
                         <input type="file" name="excelFile" id="excelFile" class="d-none" accept=".csv" required onchange="document.getElementById('fileName').innerText = this.files[0].name">
                     </div>
@@ -212,7 +385,10 @@
             confirmButtonColor: '#ef4444',
             cancelButtonColor: '#64748b',
             confirmButtonText: 'نعم، حذف',
-            cancelButtonText: 'إلغاء'
+            cancelButtonText: 'إلغاء',
+             customClass: {
+                popup: 'rounded-4 shadow-lg'
+            }
         }).then((result) => {
             if (result.isConfirmed) {
                 document.getElementById('deleteForm-' + id).submit();

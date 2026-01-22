@@ -1164,56 +1164,77 @@
             })
             .then(r => r.json())
             .then(res => {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+
                 if(res.success) {
-                    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: res.message, showConfirmButton: false, timer: 1500 });
-
-                    // Update Local Storage
+                    // Check local cart for different merchant
                     let cart = JSON.parse(localStorage.getItem('DISKA_CART')) || [];
-                    // Using compound ID to store different variants as distinct items
-                    let uniqueId = id + '_' + (res.product.colorHex || 'def');
-                    let existing = cart.find(i => i.uniqueId === uniqueId);
 
-                    if(existing) existing.qty += parseInt(qty);
-                    else cart.push({
-                         id: res.product.id, uniqueId: uniqueId, qty: parseInt(qty),
-                         name: res.product.name, price: res.product.price, image: res.product.image,
-                         maxStock: res.product.stock,
-                         colorName: res.product.colorName,
-                         colorHex: res.product.colorHex
-                    });
+                    if (cart.length > 0 && cart[0].merchantId && res.product.merchantId && cart[0].merchantId !== res.product.merchantId) {
+                        Swal.fire({
+                            title: '@(isAr ? "تاجر مختلف" : "Different Merchant")',
+                            text: '@Html.Raw(isAr ? "سلتك تحتوي على منتجات من تاجر آخر. هل تريد إفراغ السلة وإضافة هذا المنتج؟" : "Cart has items from another merchant. Clear and add this item?")',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#d33',
+                            confirmButtonText: '@(isAr ? "نعم، أفرغ السلة وأضف" : "Yes, clear and add")',
+                            cancelButtonText: '@(isAr ? "إلغاء" : "Cancel")'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                cart = [];
+                                addItemToLocal(cart, res, qty, id, cName, cHex);
+                            }
+                        });
+                        return; // Stop
+                    }
 
-                    localStorage.setItem('DISKA_CART', JSON.stringify(cart));
-                    if(typeof updateCartBadge === 'function') updateCartBadge();
+                    addItemToLocal(cart, res, qty, id, cName, cHex);
+
                 } else {
                     Swal.fire({ icon: 'warning', title: 'Warning', text: res.message });
                 }
             })
-            .catch(e => console.error(e))
-            .finally(() => {
+            .catch(e => {
+                console.error(e);
                 btn.disabled = false;
                 btn.innerHTML = originalText;
             });
         }
 
+        function addItemToLocal(cart, res, qty, id, cName, cHex) {
+            let uniqueId = id + '_' + (res.product.colorHex || 'def');
+            let existing = cart.find(i => i.uniqueId === uniqueId);
+
+            if(existing) existing.qty += parseInt(qty);
+            else cart.push({
+                 id: res.product.id, uniqueId: uniqueId, qty: parseInt(qty),
+                 name: res.product.name, price: res.product.price, image: res.product.image,
+                 maxStock: res.product.stock,
+                 colorName: res.product.colorName,
+                 colorHex: res.product.colorHex,
+                 merchantId: res.product.merchantId, shopName: res.product.shopName
+            });
+
+            localStorage.setItem('DISKA_CART', JSON.stringify(cart));
+            if(typeof updateCartBadge === 'function') updateCartBadge();
+
+            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: res.message, showConfirmButton: false, timer: 1500 });
+        }
+
         async function toggleWishlist(id, btn) {
             try {
                 const icon = btn.querySelector('i');
-                const response = await fetch('/Wishlist/Toggle', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                    body: `productId=${id}`
-                });
+                const isCurrentlyActive = btn.classList.contains('active');
+                if(isCurrentlyActive) { btn.classList.remove('active'); icon.classList.remove('fas'); icon.classList.add('far'); }
+                else { btn.classList.add('active'); icon.classList.remove('far'); icon.classList.add('fas'); btn.style.transform = "scale(1.2)"; setTimeout(() => btn.style.transform = "scale(1)", 200); }
 
+                const response = await fetch('/Wishlist/Toggle', { method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body: `productId=${id}` });
                 if(response.status === 401) { window.location.href = '/Account/Login'; return; }
                 const res = await response.json();
-                if(res.success) {
-                    if(res.status === 'added') {
-                        icon.classList.remove('far'); icon.classList.add('fas'); btn.classList.add('active');
-                        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'تمت الإضافة للمفضلة', showConfirmButton: false, timer: 1500 });
-                    } else {
-                        icon.classList.remove('fas'); icon.classList.add('far'); btn.classList.remove('active');
-                        Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: 'تم الحذف من المفضلة', showConfirmButton: false, timer: 1500 });
-                    }
+                if(!res.success) {
+                    if(isCurrentlyActive) { btn.classList.add('active'); icon.classList.add('fas'); }
+                    else { btn.classList.remove('active'); icon.classList.remove('fas'); }
                 }
             } catch(e) { console.error(e); }
         }
