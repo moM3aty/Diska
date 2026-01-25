@@ -6,7 +6,9 @@
 }
 
 <style>
-    /* ... (نفس الستايل Premium Dark Mode السابق) ... */
+    /* =========================================
+           PREMIUM CART STYLES
+           ========================================= */
     :root {
         --cart-bg-body: #f8fafc;
         --cart-card-bg: #ffffff;
@@ -37,7 +39,6 @@
     }
 
     .cart-page-wrapper {
-        background-color: var(--cart-bg-body);
         min-height: 85vh;
         padding: 50px 0;
         font-family: 'Cairo', sans-serif;
@@ -160,25 +161,26 @@
         font-size: 1.3rem;
     }
 
-    .qty-selector {
-        display: inline-flex;
+    /* --- New Quantity Selector Style (Matching Product Page) --- */
+    .qty-input-group {
+        display: flex;
         align-items: center;
-        background: var(--cart-input-bg);
         border: 1px solid var(--cart-border);
         border-radius: 50px;
-        padding: 4px;
+        overflow: hidden;
+        background: var(--cart-input-bg);
+        height: 40px;
+        width: fit-content;
     }
 
     .qty-btn {
-        width: 32px;
-        height: 32px;
+        background: transparent;
         border: none;
-        background: var(--cart-card-bg);
-        border-radius: 50%;
-        cursor: pointer;
+        width: 35px;
+        height: 100%;
         font-weight: bold;
         color: var(--cart-text-main);
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        cursor: pointer;
         transition: 0.2s;
         display: flex;
         align-items: center;
@@ -186,9 +188,13 @@
     }
 
         .qty-btn:hover {
-            background: var(--cart-accent);
-            color: #000;
+            background: rgba(0,0,0,0.05);
+            color: var(--cart-primary);
         }
+
+    [data-bs-theme="dark"] .qty-btn:hover {
+        background: rgba(255,255,255,0.1);
+    }
 
     .qty-input {
         width: 45px;
@@ -197,9 +203,22 @@
         background: transparent;
         font-weight: 700;
         color: var(--cart-text-main);
+        outline: none;
+        -moz-appearance: textfield;
         font-size: 1rem;
-        pointer-events: none;
+        height: 100%;
+        cursor: text;
     }
+
+        .qty-input:focus {
+            background: var(--cart-card-bg);
+        }
+
+        .qty-input::-webkit-outer-spin-button, .qty-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+    /* --------------------------------------------------------- */
 
     .remove-btn {
         color: var(--cart-text-muted);
@@ -252,18 +271,6 @@
             color: var(--cart-primary);
             border-top: 1px solid var(--cart-border);
             padding-top: 15px;
-        }
-
-    .continue-shopping {
-        display: block;
-        text-align: center;
-        margin-top: 15px;
-        color: var(--cart-text-muted);
-        font-size: 0.9rem;
-    }
-
-        .continue-shopping:hover {
-            color: var(--cart-primary);
         }
 
     .checkout-btn {
@@ -365,19 +372,80 @@
     <script>
         const CART_KEY_LOCAL = 'DISKA_CART';
         const isArPage = '@isAr' === 'True';
+        const getCartDetailsUrl = '@Url.Action("GetCartDetails", "Cart", new { area = "" })';
 
-        function renderCartPageModern() {
+        // 1. مزامنة البيانات عند التحميل
+        async function initCartPage() {
             const container = document.getElementById('cartContentWrapper');
+            let cart = [];
+
+            try {
+                const stored = localStorage.getItem(CART_KEY_LOCAL);
+                if (stored) cart = JSON.parse(stored);
+            } catch (e) { console.error(e); }
+
+            if (!cart || cart.length === 0) {
+                renderEmptyState(container);
+                return;
+            }
+
+            // عرض مبدئي
+            renderCartFromLocal(container);
+
+            try {
+                const payload = cart.map(item => ({
+                    Id: String(item.id),
+                    Qty: parseInt(item.qty),
+                    ColorName: item.colorName,
+                    ColorHex: item.colorHex
+                }));
+
+                const response = await fetch(getCartDetailsUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    const serverItems = await response.json();
+
+                    if (serverItems && serverItems.length > 0) {
+                        let updated = false;
+                        cart.forEach(localItem => {
+                            const serverItem = serverItems.find(si =>
+                                String(si.id) === String(localItem.id) &&
+                                (si.colorName || '') === (localItem.colorName || '') &&
+                                (si.colorHex || '') === (localItem.colorHex || '')
+                            );
+
+                            if (serverItem) {
+                                // تحديث المخزون والسعر من السيرفر
+                                localItem.maxStock = parseInt(serverItem.stock);
+                                localItem.price = serverItem.price;
+
+                                // تصحيح الكمية إذا تجاوزت المخزون الجديد
+                                if (localItem.qty > localItem.maxStock) {
+                                    localItem.qty = localItem.maxStock;
+                                    updated = true;
+                                }
+                            }
+                        });
+                        localStorage.setItem(CART_KEY_LOCAL, JSON.stringify(cart));
+                        // إعادة رسم السلة بالبيانات المحدثة
+                        renderCartFromLocal(container);
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to sync cart", e);
+            }
+        }
+
+        // 2. دالة العرض
+        function renderCartFromLocal(container) {
             const cart = JSON.parse(localStorage.getItem(CART_KEY_LOCAL)) || [];
 
             if (cart.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-cart-state">
-                        <div class="empty-icon-box"><i class="fas fa-shopping-cart"></i></div>
-                        <h2 style="color:var(--cart-text-main); font-weight:800; margin-bottom:15px;">@(isAr ? "سلة المشتريات فارغة" : "Your Cart is Empty")</h2>
-                        <p style="color:var(--cart-text-muted); margin-bottom:35px; font-size:1.1rem;">@(isAr ? "يبدو أنك لم تضف أي منتجات بعد." : "Looks like you haven't added anything yet.")</p>
-                        <a href="/" class="btn" style="background:var(--cart-primary); color:#fff; padding:15px 50px; font-size:1.1rem; border-radius:50px; text-decoration:none; font-weight:bold;">@(isAr ? "ابدأ التسوق" : "Start Shopping")</a>
-                    </div>`;
+                renderEmptyState(container);
                 return;
             }
 
@@ -387,6 +455,10 @@
             cart.forEach((item, index) => {
                 let itemTotal = item.price * item.qty;
                 subtotal += itemTotal;
+
+                // إضافة max للـ input
+                const maxAttr = item.maxStock ? `max="${item.maxStock}"` : '';
+
                 itemsHtml += `
                     <div class="item-card">
                         <div class="item-img-wrapper"><img src="/${item.image}" onerror="this.src='/images/default.png'" class="item-img" alt="${item.name}"></div>
@@ -396,10 +468,11 @@
                                 <button type="button" class="remove-btn" onclick="removeItemModern(${index})"><i class="fas fa-trash-alt"></i></button>
                             </div>
                             <div class="item-actions-row">
-                                <div class="qty-selector">
-                                    <button type="button" class="qty-btn" onclick="changeQtyModern(${index}, -1)"><i class="fas fa-minus" style="font-size:0.7rem;"></i></button>
-                                    <input type="text" class="qty-input" value="${item.qty}">
-                                    <button type="button" class="qty-btn" onclick="changeQtyModern(${index}, 1)"><i class="fas fa-plus" style="font-size:0.7rem;"></i></button>
+                                <!-- نفس ستايل صفحة المنتج بالضبط -->
+                                <div class="qty-input-group">
+                                    <button type="button" class="qty-btn" onclick="changeQtyModern(${index}, -1)">-</button>
+                                    <input type="number" class="qty-input" value="${item.qty}" min="1" ${maxAttr} onchange="updateQtyManual(${index}, this)" onkeyup="if(event.key === 'Enter') updateQtyManual(${index}, this)">
+                                    <button type="button" class="qty-btn" onclick="changeQtyModern(${index}, 1)">+</button>
                                 </div>
                                 <div class="item-price">${itemTotal.toLocaleString()} <small style="font-size:0.85rem; font-weight:600; color:var(--cart-text-muted);">@(isAr ? "ج.م" : "EGP")</small></div>
                             </div>
@@ -407,7 +480,6 @@
                     </div>`;
             });
 
-            // حساب الضريبة (14%)
             const tax = subtotal * 0.14;
             const total = subtotal + tax;
 
@@ -426,7 +498,7 @@
                     </div>
                     <a href="/Cart/Checkout" class="checkout-btn">@(isAr ? "إتمام الشراء" : "Checkout") <i class="fas @(isAr ? "fa-arrow-left" : "fa-arrow-right")"></i></a>
                     <div style="text-align:center; margin-top:20px; color:var(--cart-text-muted); font-size:0.85rem; display:flex; align-items:center; justify-content:center; gap:6px;">
-                        <i class="fas fa-shield-alt" style="color:var(--cart-success);"></i> @(isAr ? "تسوق آمن ومحمي 100%" : "100% Secure Checkout")
+                        <i class="fas fa-shield-alt" style="color:#10b981;"></i> @(isAr ? "تسوق آمن ومحمي 100%" : "100% Secure Checkout")
                     </div>
                 </div>`;
 
@@ -434,15 +506,70 @@
             if(typeof updateCartBadge === 'function') updateCartBadge();
         }
 
+        function renderEmptyState(container) {
+             container.innerHTML = `
+                <div class="empty-cart-state">
+                    <div class="empty-icon-box"><i class="fas fa-shopping-cart"></i></div>
+                    <h2 style="color:var(--cart-text-main); font-weight:800; margin-bottom:15px;">@(isAr ? "سلة المشتريات فارغة" : "Your Cart is Empty")</h2>
+                    <p style="color:var(--cart-text-muted); margin-bottom:35px; font-size:1.1rem;">@(isAr ? "يبدو أنك لم تضف أي منتجات بعد." : "Looks like you haven't added anything yet.")</p>
+                    <a href="/" class="btn" style="background:var(--cart-primary); color:#fff; padding:15px 50px; font-size:1.1rem; border-radius:50px; text-decoration:none; font-weight:bold;">@(isAr ? "ابدأ التسوق" : "Start Shopping")</a>
+                </div>`;
+        }
+
+        // 3. التغيير عبر الأزرار
         function changeQtyModern(index, change) {
             let cart = JSON.parse(localStorage.getItem(CART_KEY_LOCAL)) || [];
             let item = cart[index];
             let newQty = parseInt(item.qty) + change;
-            if (item.maxStock && newQty > item.maxStock) { Swal.fire({ icon: 'warning', title: isArPage ? 'عفواً' : 'Oops', text: isArPage ? 'لقد وصلت للحد الأقصى للمخزون' : 'Max stock reached', confirmButtonColor: '#4f46e5' }); return; }
+
+            let maxStock = parseInt(item.maxStock);
+
+            if (!isNaN(maxStock) && newQty > maxStock) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: isArPage ? 'تنبيه' : 'Warning',
+                    text: isArPage ? `الكمية المتاحة فقط ${maxStock} قطعة` : `Only ${maxStock} items available`,
+                    confirmButtonColor: '#4f46e5',
+                    timer: 2000
+                });
+                return;
+            }
+
             if (newQty < 1) { removeItemModern(index); return; }
+
             item.qty = newQty;
             localStorage.setItem(CART_KEY_LOCAL, JSON.stringify(cart));
-            renderCartPageModern();
+            renderCartFromLocal(document.getElementById('cartContentWrapper'));
+        }
+
+        // 4. التغيير اليدوي عبر الـ Input
+        function updateQtyManual(index, input) {
+            let cart = JSON.parse(localStorage.getItem(CART_KEY_LOCAL)) || [];
+            let item = cart[index];
+            let newQty = parseInt(input.value);
+            let maxStock = parseInt(item.maxStock);
+
+            if (isNaN(newQty) || newQty < 1) {
+                newQty = 1;
+                input.value = 1;
+            }
+
+            if (!isNaN(maxStock) && newQty > maxStock) {
+                newQty = maxStock;
+                input.value = maxStock;
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'warning',
+                    title: isArPage ? `عفواً، الكمية المتاحة ${maxStock} فقط` : `Only ${maxStock} available`,
+                    showConfirmButton: false,
+                    timer: 2000
+                });
+            }
+
+            item.qty = newQty;
+            localStorage.setItem(CART_KEY_LOCAL, JSON.stringify(cart));
+            renderCartFromLocal(document.getElementById('cartContentWrapper'));
         }
 
         function removeItemModern(index) {
@@ -460,11 +587,12 @@
                     let cart = JSON.parse(localStorage.getItem(CART_KEY_LOCAL)) || [];
                     cart.splice(index, 1);
                     localStorage.setItem(CART_KEY_LOCAL, JSON.stringify(cart));
-                    renderCartPageModern();
-                    Swal.fire({ title: isArPage ? 'تم الحذف!' : 'Deleted!', icon: 'success', confirmButtonColor: '#4f46e5' });
+                    renderCartFromLocal(document.getElementById('cartContentWrapper'));
+                    Swal.fire({ title: isArPage ? 'تم الحذف!' : 'Deleted!', icon: 'success', confirmButtonColor: '#4f46e5', timer: 1500, showConfirmButton: false });
                 }
             });
         }
-        document.addEventListener('DOMContentLoaded', renderCartPageModern);
+
+        document.addEventListener('DOMContentLoaded', initCartPage);
     </script>
 }

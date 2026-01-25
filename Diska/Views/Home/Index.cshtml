@@ -311,7 +311,7 @@
                 {
                     <a asp-controller="Product" asp-action="Index" asp-route-categoryId="@cat.Id" class="cat-item">
                         <div class="icon" style="background-color: var(--cat-bg-@(i % 6)); color: var(--cat-icon-@(i % 6)); box-shadow: var(--home-shadow);">
-                            <i class="@(cat.IconClass ?? "fas fa-box")"></i>
+                           <img src="@cat.ImageUrl" width="60px"/>
                         </div>
                         <span>@(isAr? cat.Name: cat.NameEn)</span>
                     </a>

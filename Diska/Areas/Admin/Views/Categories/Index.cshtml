@@ -18,13 +18,17 @@
     @foreach (var item in Model.OrderBy(c => c.ParentId).ThenBy(c => c.DisplayOrder))
     {
         <div class="col-md-6 col-xl-3">
-            <div class="card h-100 border-0 shadow-sm position-relative overflow-hidden hover-lift">
+            <div class="card h-100 border-0 shadow-sm position-relative overflow-hidden hover-lift" style="background:var(--bg-card);">
                 <div class="card-body text-center p-4">
 
-                    <!-- Icon Display -->
+                    <!-- Image Display -->
                     <div class="mb-3 d-inline-flex align-items-center justify-content-center position-relative"
-                         style="width: 70px; height: 70px; background: #eff6ff; border-radius: 50%; color: var(--primary); font-size: 1.8rem; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.1);">
-                        <i class="@(item.IconClass ?? "fas fa-folder")"></i>
+                         style="width: 80px; height: 80px; background: #fff; border-radius: 16px; border:1px solid var(--border-color); overflow:hidden;">
+                        <img src="~/@(item.ImageUrl ?? "images/default-category.png")"
+                             alt="@item.Name"
+                             style="width:100%; height:100%; object-fit:contain; padding:5px;"
+                             onerror="this.src='/images/default-category.png'">
+
                         @if (item.ParentId != null)
                         {
                             <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary" style="font-size:0.6rem;" title="قسم فرعي">
@@ -33,7 +37,7 @@
                         }
                     </div>
 
-                    <h5 class="fw-bold text-dark mb-1">@item.Name</h5>
+                    <h5 class="fw-bold text-main mb-1">@item.Name</h5>
                     <small class="text-muted d-block mb-2">@item.NameEn</small>
 
                     @if (item.Parent != null)
@@ -59,13 +63,11 @@
                         <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary w-100 fw-bold">
                             <i class="fas fa-edit me-1"></i> تعديل
                         </a>
-                        <!-- Delete Button with SweetAlert -->
                         <button type="button" class="btn btn-sm btn-light text-danger w-100 border" onclick="confirmDelete(@item.Id, '@item.Name')">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
 
-                    <!-- Hidden Form for Delete -->
                     <form id="delete-form-@item.Id" asp-action="Delete" method="post" class="d-none">
                         <input type="hidden" name="id" value="@item.Id" />
                     </form>
@@ -77,7 +79,7 @@
 
     <!-- Add New Placeholder -->
     <div class="col-md-6 col-xl-3">
-        <a asp-action="Create" class="card h-100 border-2 border-dashed border-light d-flex align-items-center justify-content-center text-decoration-none bg-transparent hover-border-primary" style="min-height: 280px;">
+        <a asp-action="Create" class="card h-100 border-2 border-dashed border-light d-flex align-items-center justify-content-center text-decoration-none bg-transparent hover-border-primary" style="min-height: 280px; border-color:var(--border-color)!important;">
             <div class="text-center text-muted">
                 <div class="mb-3"><i class="fas fa-plus-circle fa-3x opacity-50"></i></div>
                 <h6 class="fw-bold">إضافة قسم جديد</h6>
@@ -101,13 +103,13 @@
     }
 
         .hover-border-primary:hover {
-            border-color: var(--primary) !important;
-            color: var(--primary) !important;
-            background: #fff !important;
+            border-color: var(--primary-color) !important;
+            color: var(--primary-color) !important;
+            background: var(--bg-card) !important;
         }
 
             .hover-border-primary:hover .text-muted {
-                color: var(--primary) !important;
+                color: var(--primary-color) !important;
             }
 </style>
 

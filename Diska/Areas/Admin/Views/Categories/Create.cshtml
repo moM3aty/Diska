@@ -5,43 +5,79 @@
 }
 
 <style>
-    .icon-grid {
-        display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 10px;
-        max-height: 250px; overflow-y: auto; padding: 15px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;
+    /* Upload Box Style */
+    .upload-box {
+        border: 2px dashed var(--border-color);
+        border-radius: 16px;
+        padding: 30px;
+        text-align: center;
+        background-color: var(--bg-body);
+        transition: 0.3s;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
     }
-    .icon-option {
-        height: 50px; display: flex; align-items: center; justify-content: center; background: #fff;
-        border: 1px solid #e2e8f0; border-radius: 10px; cursor: pointer; font-size: 1.3rem; color: #64748b; transition: all 0.2s ease;
-    }
-    .icon-option:hover { border-color: var(--primary); color: var(--primary); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-    .icon-option.active { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3); }
 
-    .selected-icon-preview {
-        width: 90px; height: 90px; background: linear-gradient(135deg, #eff6ff 0%, #e0e7ff 100%);
-        color: var(--primary); border-radius: 50%;
-        display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin: 0 auto 15px;
-        box-shadow: 0 10px 25px rgba(79, 70, 229, 0.15); border: 4px solid #fff;
+        .upload-box:hover {
+            border-color: var(--primary-color);
+            background-color: rgba(79, 70, 229, 0.05);
+        }
+
+    .upload-icon {
+        font-size: 3rem;
+        color: var(--text-muted);
+        margin-bottom: 10px;
+        transition: 0.3s;
+    }
+
+    .upload-box:hover .upload-icon {
+        color: var(--primary-color);
+        transform: translateY(-5px);
+    }
+
+    .preview-img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        background: #fff;
+        padding: 10px;
+        display: none;
+        z-index: 2;
     }
 </style>
 
 <div class="row justify-content-center fade-up">
     <div class="col-md-8">
-        <div class="card border-0 shadow-sm" style="border-radius: 16px;">
-            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+        <div class="card border-0 shadow-sm" style="border-radius: 16px; background: var(--bg-card);">
+            <div class="card-header bg-transparent py-3 border-bottom d-flex justify-content-between align-items-center">
                 <h5 class="mb-0 text-primary fw-bold">إضافة قسم جديد</h5>
                 <a asp-action="Index" class="btn btn-sm btn-light border fw-bold text-muted">إلغاء</a>
             </div>
 
             <div class="card-body p-4">
-                <form asp-action="Create">
+                <form asp-action="Create" enctype="multipart/form-data">
                     <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-                    <!-- Icon Preview -->
-                    <div class="text-center mb-4">
-                        <div class="selected-icon-preview">
-                            <i id="previewIcon" class="fas fa-folder"></i>
+                    <!-- Image Upload -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small text-muted">صورة القسم</label>
+                        <div class="upload-box" onclick="document.getElementById('imageFile').click()">
+                            <input type="file" name="imageFile" id="imageFile" class="d-none" accept="image/*" onchange="previewImage(this)">
+                            <div id="uploadPlaceholder">
+                                <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                                <h6 class="fw-bold" style="color:var(--text-main)">اضغط لرفع صورة</h6>
+                                <p class="small text-muted mb-0">يفضل أن تكون مربعة (PNG, JPG)</p>
+                            </div>
+                            <img id="imgPreview" class="preview-img" alt="Preview">
                         </div>
-                        <p class="text-muted small fw-bold">اختر أيقونة للقسم</p>
                     </div>
 
                     <div class="row g-3">
@@ -49,10 +85,12 @@
                         <div class="col-md-6">
                             <label class="form-label fw-bold small text-muted">الاسم (عربي)</label>
                             <input asp-for="Name" class="form-control" required placeholder="مثال: إلكترونيات" />
+                            <span asp-validation-for="Name" class="text-danger small"></span>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold small text-muted">الاسم (إنجليزي)</label>
                             <input asp-for="NameEn" class="form-control" placeholder="Electronics" />
+                            <span asp-validation-for="NameEn" class="text-danger small"></span>
                         </div>
 
                         <!-- Parent Category -->
@@ -61,16 +99,6 @@
                             <select asp-for="ParentId" class="form-select" asp-items="ViewBag.Parents">
                                 <option value="">-- هذا قسم رئيسي --</option>
                             </select>
-                        </div>
-
-                        <!-- Icon Picker -->
-                        <div class="col-12">
-                            <label class="form-label fw-bold small text-muted">قائمة الأيقونات (ابحث واختر)</label>
-                            <!-- Search Icons (Optional simple filter) -->
-                            <input type="text" id="iconSearch" class="form-control mb-2 form-control-sm" placeholder="ابحث عن أيقونة (مثال: car, home)..." onkeyup="filterIcons()">
-
-                            <input type="hidden" asp-for="IconClass" id="IconClassInput" value="fas fa-folder">
-                            <div class="icon-grid" id="iconGrid"></div>
                         </div>
 
                         <!-- Other Fields -->
@@ -98,7 +126,9 @@
                     </div>
 
                     <div class="mt-4 pt-3 border-top text-end">
-                        <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm">حفظ القسم</button>
+                        <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm">
+                            <i class="fas fa-save me-2"></i> حفظ القسم
+                        </button>
                     </div>
                 </form>
             </div>
@@ -108,99 +138,17 @@
 
 @section Scripts {
     <script>
-        // Expanded Icon List
-        const icons = [
-            // General & UI
-            'fas fa-folder', 'fas fa-home', 'fas fa-bars', 'fas fa-star', 'fas fa-heart', 'fas fa-check',
-            'fas fa-cog', 'fas fa-user', 'fas fa-users', 'fas fa-search', 'fas fa-bell', 'fas fa-map-marker-alt',
-
-            // Electronics & Gadgets
-            'fas fa-laptop', 'fas fa-desktop', 'fas fa-mobile-alt', 'fas fa-tablet-alt', 'fas fa-tv',
-            'fas fa-camera', 'fas fa-video', 'fas fa-headphones', 'fas fa-microphone', 'fas fa-print',
-            'fas fa-plug', 'fas fa-battery-full', 'fas fa-microchip', 'fas fa-gamepad', 'fas fa-wifi',
-            'fas fa-server', 'fas fa-mouse', 'fas fa-keyboard', 'fas fa-hdd', 'fas fa-sd-card', 'fas fa-sim-card',
-
-            // Fashion & Clothing
-            'fas fa-tshirt', 'fas fa-user-tie', 'fas fa-socks', 'fas fa-hat-cowboy', 'fas fa-hat-wizard',
-            'fas fa-glasses', 'fas fa-ring', 'fas fa-gem', 'fas fa-vest', 'fas fa-shopping-bag',
-            'fas fa-shoe-prints', 'fas fa-mask', 'fas fa-mitten', 'fas fa-stopwatch',
-
-            // Home, Furniture & Decor
-            'fas fa-couch', 'fas fa-bed', 'fas fa-chair', 'fas fa-door-open', 'fas fa-door-closed',
-            'fas fa-bath', 'fas fa-shower', 'fas fa-toilet', 'fas fa-soap', 'fas fa-lightbulb',
-            'fas fa-fan', 'fas fa-blender', 'fas fa-utensils', 'fas fa-mug-hot', 'fas fa-glass-martini-alt',
-            'fas fa-box-open', 'fas fa-box', 'fas fa-seedling', 'fas fa-leaf', 'fas fa-fire',
-
-            // Grocery & Food
-            'fas fa-shopping-basket', 'fas fa-cart-plus', 'fas fa-carrot', 'fas fa-apple-alt', 'fas fa-lemon',
-            'fas fa-pepper-hot', 'fas fa-pizza-slice', 'fas fa-hamburger', 'fas fa-hotdog', 'fas fa-drumstick-bite',
-            'fas fa-fish', 'fas fa-egg', 'fas fa-cheese', 'fas fa-bread-slice', 'fas fa-ice-cream',
-            'fas fa-cookie', 'fas fa-candy-cane', 'fas fa-coffee', 'fas fa-wine-bottle', 'fas fa-beer',
-
-            // Health, Beauty & Medical
-            'fas fa-heartbeat', 'fas fa-stethoscope', 'fas fa-pills', 'fas fa-first-aid', 'fas fa-syringe',
-            'fas fa-thermometer', 'fas fa-eye', 'fas fa-tooth', 'fas fa-hand-holding-medical', 'fas fa-hospital',
-            'fas fa-spa', 'fas fa-cut', 'fas fa-spray-can', 'fas fa-pump-soap', 'fas fa-hand-sparkles',
-
-            // Sports & Fitness
-            'fas fa-dumbbell', 'fas fa-bicycle', 'fas fa-futbol', 'fas fa-basketball-ball', 'fas fa-volleyball-ball',
-            'fas fa-football-ball', 'fas fa-golf-ball', 'fas fa-table-tennis', 'fas fa-running', 'fas fa-swimmer',
-            'fas fa-skating', 'fas fa-skiing', 'fas fa-snowboarding', 'fas fa-medal', 'fas fa-trophy',
-
-            // Automotive & Tools
-            'fas fa-car', 'fas fa-motorcycle', 'fas fa-truck', 'fas fa-bus', 'fas fa-taxi',
-            'fas fa-gas-pump', 'fas fa-oil-can', 'fas fa-tools', 'fas fa-wrench', 'fas fa-hammer',
-            'fas fa-screwdriver', 'fas fa-paint-roller', 'fas fa-brush', 'fas fa-ruler-combined', 'fas fa-tachometer-alt',
-
-            // Kids & Toys
-            'fas fa-baby', 'fas fa-baby-carriage', 'fas fa-shapes', 'fas fa-puzzle-piece', 'fas fa-robot',
-            'fas fa-gamepad', 'fas fa-ghost', 'fas fa-dice', 'fas fa-chess-knight', 'fas fa-bicycle',
-
-            // Office & School
-            'fas fa-book', 'fas fa-pen', 'fas fa-pencil-alt', 'fas fa-eraser', 'fas fa-paperclip',
-            'fas fa-briefcase', 'fas fa-calculator', 'fas fa-calendar-alt', 'fas fa-envelope', 'fas fa-folder-open',
-
-            // Gifts & Occasions
-            'fas fa-gift', 'fas fa-birthday-cake', 'fas fa-ribbon', 'fas fa-tags', 'fas fa-ticket-alt'
-        ];
-
-        const grid = document.getElementById('iconGrid');
-        const input = document.getElementById('IconClassInput');
-        const preview = document.getElementById('previewIcon');
-
-        // Function to render icons
-        function renderIcons(filter = "") {
-            grid.innerHTML = "";
-            const current = input.value;
-
-            icons.forEach(iconClass => {
-                if (filter && !iconClass.includes(filter)) return;
-
-                const div = document.createElement('div');
-                div.className = 'icon-option';
-                if (current === iconClass) div.classList.add('active');
-
-                div.innerHTML = `<i class="${iconClass}"></i>`;
-                div.title = iconClass; // Tooltip
-
-                div.onclick = function() {
-                    document.querySelectorAll('.icon-option').forEach(el => el.classList.remove('active'));
-                    this.classList.add('active');
-                    input.value = iconClass;
-                    preview.className = iconClass;
-                };
-
-                grid.appendChild(div);
-            });
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    var img = document.getElementById('imgPreview');
+                    img.src = e.target.result;
+                    img.style.display = 'block';
+                    document.getElementById('uploadPlaceholder').style.opacity = '0';
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
         }
-
-        // Search Filter
-        function filterIcons() {
-            const val = document.getElementById('iconSearch').value.toLowerCase();
-            renderIcons(val);
-        }
-
-        // Init
-        renderIcons();
     </script>
 }
