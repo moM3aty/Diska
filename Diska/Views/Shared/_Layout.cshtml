@@ -33,6 +33,7 @@
 
     <!-- Styles -->
     <link rel="stylesheet" href="~/css/style.css">
+    <link rel="icon" type="image/x-icon" href="~/images/logo2.png">
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
 </head>
 <body class="@(theme == "dark" ? "dark-mode" : "")">
@@ -40,11 +41,15 @@
     <header class="main-header">
         <div class="container header-container">
 
-            <!-- Logo -->   
-            <a asp-area="" asp-controller="Home" asp-action="Index" class="logo">
-                <img class="mqL" src="~/images/logo2.png" alt="DISKA" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                <img class="mqS" src="~/images/precent.png" alt="DISKA" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                <h2 style="color:var(--accent); display:none; margin:0; font-size:1.5rem;">DISKA</h2>
+            <!-- Logo with Slogan -->
+            <a asp-area="" asp-controller="Home" asp-action="Index" class="logo" style="text-decoration: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;">
+                <div style="display: flex; align-items: center;">
+                    <img class="mqL" src="~/images/logo2.png" alt="DISKA" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <img class="mqS" src="~/images/precent.png" alt="DISKA" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                </div>
+                    <span style="font-size: 0.8rem; font-weight: 700; color: #64748b; white-space: nowrap;margin-top:-35px;">
+                        @(isAr ? "التجارة بقت هنا" : "Commerce is here")
+                    </span>
             </a>
 
             <!-- Search Box -->
@@ -63,7 +68,6 @@
                         <i class="fas fa-user"></i>
                         <div>
                             <span class="icon-label">@(isAr ? "مرحباً" : "Hello")</span>
-
                         </div>
                     </a>
                 }
@@ -130,7 +134,10 @@
     <!-- Mobile Sidebar -->
     <div class="mobile-sidebar" id="mobileSidebar">
         <div class="sidebar-header">
-            <h3 style="color:var(--primary); font-weight:800;">DISKA</h3>
+            <div style="display: flex; flex-direction: column;">
+                <h3 style="color:var(--primary); font-weight:800; margin: 0;">DISKA</h3>
+                <span style="font-size: 0.75rem; color: #64748b; font-weight: 600;">@(isAr ? "التجارة بقت هنا" : "Commerce is here")</span>
+            </div>
             <button class="close-menu" onclick="toggleMenu()"><i class="fas fa-times"></i></button>
         </div>
         <ul class="sidebar-links">
@@ -139,11 +146,11 @@
             {
                 @if (User.IsInRole("Admin"))
                 {
-                    <li><a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" ><i class="fas fa-cogs"></i> @(isAr ? "لوحة الإدارة" : "Admin Panel")</a></li>
+                    <li><a asp-area="Admin" asp-controller="Dashboard" asp-action="Index"><i class="fas fa-cogs"></i> @(isAr ? "لوحة الإدارة" : "Admin Panel")</a></li>
                 }
                 @if (User.IsInRole("Merchant"))
                 {
-                    <li><a asp-area="Merchant" asp-controller="Dashboard" asp-action="Index" ><i class="fas fa-store"></i> @(isAr ? "لوحة التاجر" : "Merchant Panel")</a></li>
+                    <li><a asp-area="Merchant" asp-controller="Dashboard" asp-action="Index"><i class="fas fa-store"></i> @(isAr ? "لوحة التاجر" : "Merchant Panel")</a></li>
                 }
             }
             else
@@ -207,7 +214,7 @@
         <div class="container">
             <div class="footer-grid">
                 <div style="text-align: @(isAr ? "right" : "left");">
-                     <img style="margin:-25px" src="~/images/logo2.png" alt="Diska" width="150px" />
+                    <img style="margin:-25px" src="~/images/logo2.png" alt="Diska" width="150px" />
                     <p>@(isAr ? "منصتك الأولى لتجارة الجملة في مصر. نربطك بأفضل الموردين بأفضل الأسعار." : "Your #1 wholesale platform in Egypt. Connecting you with top suppliers at best prices.")</p>
                 </div>
 

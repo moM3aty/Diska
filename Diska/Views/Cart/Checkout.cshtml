@@ -13,8 +13,8 @@
 
 <style>
     /* =========================================
-           PREMIUM CHECKOUT STYLES (Light & Dark)
-           ========================================= */
+               PREMIUM CHECKOUT STYLES (Light & Dark)
+               ========================================= */
     :root {
         /* Light Theme */
         --chk-bg: #f8fafc;
@@ -340,14 +340,17 @@
 
     /* Responsive */
     @@media (max-width: 992px) {
-        .checkout-container {
-            grid-template-columns: 1fr;
-        }
+        .checkout-container
 
-        .summary-sticky {
-            position: static;
-            margin-top: 30px;
-        }
+    {
+        grid-template-columns: 1fr;
+    }
+
+    .summary-sticky {
+        position: static;
+        margin-top: 30px;
+    }
+
     }
 
     /* Animation */
@@ -356,15 +359,18 @@
     }
 
     @@keyframes fadeUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
+        from
 
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+    {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
     }
 </style>
 
@@ -462,13 +468,31 @@
                                         </div>
                                     </label>
                                     <label class="payment-card" onclick="selectPayment(this)">
-                                        <input type="radio" name="payment" value="Wallet" style="display:none;">
+                                        <input type="radio" name="payment" value="BankTransfer" style="display:none;">
                                         <div class="d-flex align-items-center gap-3">
-                                            <i class="fas fa-wallet payment-icon mb-0" style="font-size:1.2rem;"></i>
-                                            <span class="payment-title">@(isAr ? "خصم من المحفظة" : "Wallet Balance")</span>
+                                            <i class="fas fa-university payment-icon mb-0" style="font-size:1.2rem;"></i>
+                                            <span class="payment-title">@(isAr ? "تحويل بنكي" : "Bank Transfer")</span>
                                         </div>
                                     </label>
                                 </div>
+
+                                <!-- Bank Details Box -->
+                                <div id="bankDetailsBox" style="display:none; margin-top: 15px; padding: 20px; background: var(--chk-input-bg); border: 1px solid var(--chk-border); border-radius: 12px;">
+                                    <h5 style="font-size: 1rem; font-weight: 800; margin-bottom: 15px; color: var(--chk-text); display:flex; align-items:center; gap:8px;">
+                                        <i class="fas fa-info-circle" style="color:var(--chk-accent);"></i> @(isAr ? "بيانات الحساب البنكي" : "Bank Account Details")
+                                    </h5>
+                                    <ul style="list-style: none; padding: 0; margin: 0; font-size: 0.95rem; color: var(--chk-text); line-height: 2;">
+                                        <li><strong>@(isAr ? "اسم البنك:" : "Bank Name:")</strong> البنك الأهلى المصرى</li>
+                                        <li><strong>@(isAr ? "اسم الحساب:" : "Account Name:")</strong> السمان للتصدير</li>
+                                        <li><strong>IBAN:</strong> 4393172138145900010</li>
+                                        <li><strong>@(isAr ? "سويفت كود:" : "Swift Code:")</strong> 21381459</li>
+                                        <li><strong>@(isAr ? "الفرع:" : "Branch:")</strong> السنبلاوين</li>
+                                    </ul>
+                                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--chk-border); font-size: 0.85rem; color: #ef4444; font-weight: 600;">
+                                        <i class="fas fa-exclamation-triangle"></i> @(isAr ? "يرجى تحويل إجمالي المبلغ على هذا الحساب لإكمال وتأكيد طلبك." : "Please transfer the total amount to this account to confirm your order.")
+                                    </div>
+                                </div>
+
                             </div>
                         </div>
                     </div>
@@ -549,7 +573,16 @@
         function selectPayment(el) {
             document.querySelectorAll('.payment-card').forEach(c => c.classList.remove('selected'));
             el.classList.add('selected');
-            el.querySelector('input').checked = true;
+            const radio = el.querySelector('input');
+            radio.checked = true;
+
+            // إظهار أو إخفاء بيانات البنك بناءً على الاختيار
+            const bankBox = document.getElementById('bankDetailsBox');
+            if (radio.value === 'BankTransfer') {
+                bankBox.style.display = 'block';
+            } else {
+                bankBox.style.display = 'none';
+            }
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -659,12 +692,12 @@
             const container = document.getElementById('checkoutItems');
 
             try {
-                // FIXED: Use PascalCase keys to match C# DTO exactly
+                // إضافة قيم افتراضية للون لتجنب خطأ NULL من قاعدة البيانات
                 const payload = cart.map(item => ({
                     Id: String(item.id),
                     Qty: parseInt(item.qty),
-                    ColorName: item.colorName,
-                    ColorHex: item.colorHex
+                    ColorName: item.colorName || 'Default',
+                    ColorHex: item.colorHex || '#000000'
                 }));
 
                 const response = await fetch(urls.details, {
@@ -716,7 +749,6 @@
             const cart = JSON.parse(localStorage.getItem('DISKA_CART')) || [];
             const shipping = toFloat(document.getElementById('shippingDisplay').innerText);
 
-            // FIXED: Use PascalCase keys to match C# DTO exactly
             const orderData = {
                 ShopName: document.getElementById('shopName').value,
                 Phone: document.getElementById('phone').value,
@@ -727,11 +759,12 @@
                 DeliverySlot: document.getElementById('deliverySlot').value,
                 Notes: document.getElementById('orderNotes').value,
                 ShippingCost: shipping,
+                // إضافة قيم افتراضية للون لتجنب إرسال Null وتسبب خطأ في الـ Backend
                 Items: cart.map(i => ({
                     Id: String(i.id),
                     Qty: parseInt(i.qty),
-                    ColorName: i.colorName,
-                    ColorHex: i.colorHex
+                    ColorName: i.colorName || 'Default',
+                    ColorHex: i.colorHex || '#000000'
                 }))
             };
 
@@ -742,7 +775,6 @@
                     body: JSON.stringify(orderData)
                 });
 
-                // التأكد من أن الرد هو JSON
                 const contentType = res.headers.get("content-type");
                 if (contentType && contentType.indexOf("application/json") !== -1) {
                     const result = await res.json();
@@ -756,7 +788,7 @@
                 } else {
                     const text = await res.text();
                     console.error("Server Response:", text);
-                    Swal.fire({ icon: 'error', title: 'Server Error', text: 'Check console for details (DB Error likely)' });
+                    Swal.fire({ icon: 'error', title: 'Server Error', text: 'Check console for details' });
                     btn.disabled = false; btn.innerHTML = originalText;
                 }
             } catch(e) {

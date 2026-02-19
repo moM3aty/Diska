@@ -31,7 +31,7 @@ namespace Diska.Controllers
             return View();
         }
 
-        // 2. إضافة عنصر (AddItem) - محدث لإرجاع بيانات التاجر
+        // إضافة عنصر (AddItem) - محدث لإرجاع بيانات التاجر
         [HttpPost]
         public async Task<IActionResult> AddItem(int productId, int quantity, string colorHex = null, string colorName = null)
         {
@@ -68,7 +68,6 @@ namespace Diska.Controllers
             });
         }
 
-        // ... (باقي الكنترولر كما هو بدون تغيير: GetCartDetails, GetCities, Checkout, PlaceOrder) ...
         [HttpPost]
         public async Task<IActionResult> GetCartDetails([FromBody] List<CartItemDto> items)
         {
@@ -171,6 +170,7 @@ namespace Diska.Controllers
                     OrderDate = DateTime.Now,
                     ShippingCost = shippingCost
                 };
+
                 decimal subTotal = 0;
                 var orderItems = new List<OrderItem>();
                 foreach (var itemDto in model.Items)
@@ -191,18 +191,19 @@ namespace Diska.Controllers
                         orderItems.Add(new OrderItem { ProductId = pid, Quantity = itemDto.Qty, UnitPrice = finalPrice, SelectedColorName = itemDto.ColorName, SelectedColorHex = itemDto.ColorHex });
                     }
                 }
+
                 if (subTotal == 0) return Json(new { success = false, message = "خطأ في الحساب." });
                 decimal taxAmount = subTotal * 0.14m;
                 order.TotalAmount = subTotal + shippingCost + taxAmount;
                 order.OrderItems = orderItems;
-                if (model.PaymentMethod == "Wallet")
+
+                // تعديل طريقة الدفع للتحويل البنكي
+                if (model.PaymentMethod == "BankTransfer")
                 {
-                    if (user.WalletBalance < order.TotalAmount) return Json(new { success = false, message = "رصيد المحفظة لا يكفي." });
-                    user.WalletBalance -= order.TotalAmount;
-                    _context.WalletTransactions.Add(new WalletTransaction { UserId = user.Id, Amount = order.TotalAmount, Type = "Purchase", Description = "شراء طلب", TransactionDate = DateTime.Now });
-                    await _userManager.UpdateAsync(user);
-                    order.Status = "Confirmed";
+                    order.Status = "AwaitingPayment"; // حالة بانتظار الدفع
+                    order.Notes = string.IsNullOrEmpty(order.Notes) ? "[تحويل بنكي]" : order.Notes + " - [تحويل بنكي]";
                 }
+
                 _context.Orders.Add(order);
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
@@ -210,9 +211,30 @@ namespace Diska.Controllers
             }
             catch (Exception ex) { await transaction.RollbackAsync(); return Json(new { success = false, message = "خطأ: " + ex.Message }); }
         }
+
         public IActionResult OrderSuccess(int id) { ViewBag.OrderId = id; return View(); }
         public IActionResult OrderFailed(int id) { ViewBag.OrderId = id; return View(); }
     }
-    public class OrderSubmissionModel { public string ShopName { get; set; } public string Phone { get; set; } public string Governorate { get; set; } public string City { get; set; } public string Address { get; set; } public string PaymentMethod { get; set; } public string DeliverySlot { get; set; } public string Notes { get; set; } public decimal ShippingCost { get; set; } public List<CartItemDto> Items { get; set; } }
-    public class CartItemDto { public string Id { get; set; } public int Qty { get; set; } public string ColorName { get; set; } public string ColorHex { get; set; } }
+
+    public class OrderSubmissionModel
+    {
+        public string ShopName { get; set; }
+        public string Phone { get; set; }
+        public string Governorate { get; set; }
+        public string City { get; set; }
+        public string Address { get; set; }
+        public string PaymentMethod { get; set; }
+        public string DeliverySlot { get; set; }
+        public string Notes { get; set; }
+        public decimal ShippingCost { get; set; }
+        public List<CartItemDto> Items { get; set; }
+    }
+
+    public class CartItemDto
+    {
+        public string Id { get; set; }
+        public int Qty { get; set; }
+        public string ColorName { get; set; }
+        public string ColorHex { get; set; }
+    }
 }
