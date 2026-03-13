@@ -1,13 +1,18 @@
-﻿using Diska.Models;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Diska.Models;
 using Microsoft.AspNetCore.Http;
+using System.Threading.Tasks;
+using System.Threading;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Diska.Data
 {
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
+
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, IHttpContextAccessor httpContextAccessor)
             : base(options)
         {
@@ -50,17 +55,77 @@ namespace Diska.Data
         public DbSet<PendingMerchantAction> PendingMerchantActions { get; set; }
         public DbSet<ShippingRate> ShippingRates { get; set; }
 
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            base.OnModelCreating(builder);
+
+            // ضبط دقة الأرقام العشرية (Currency)
+            foreach (var property in builder.Model.GetEntityTypes()
+                .SelectMany(t => t.GetProperties())
+                .Where(p => p.ClrType == typeof(decimal) || p.ClrType == typeof(decimal?)))
+            {
+                property.SetColumnType("decimal(18,2)");
+            }
+
+            // --- حل مشكلة التكرار في مسارات الحذف (Cascade Paths) ---
+
+            builder.Entity<Order>()
+                .HasOne(o => o.User)
+                .WithMany()
+                .HasForeignKey(o => o.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<DealRequest>()
+               .HasOne(r => r.User)
+               .WithMany()
+               .HasForeignKey(r => r.UserId)
+               .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<MerchantOffer>()
+                .HasOne(m => m.Merchant)
+                .WithMany()
+                .HasForeignKey(m => m.MerchantId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<ProductReview>()
+                .HasOne(r => r.User)
+                .WithMany()
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            // 🟢 استخدام <ApplicationUser> مباشرة إذا كانت خاصية Navigation غير موجودة في الموديل
+            builder.Entity<RestockSubscription>()
+                .HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(s => s.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            // 🟢 استخدام <ApplicationUser> مباشرة إذا كانت خاصية Navigation غير موجودة في الموديل
+            builder.Entity<WishlistItem>()
+                .HasOne<ApplicationUser>()
+                .WithMany()
+                .HasForeignKey(w => w.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<WalletTransaction>()
+                .HasOne(t => t.User)
+                .WithMany()
+                .HasForeignKey(t => t.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<PendingMerchantAction>()
+                .HasOne(p => p.Merchant)
+                .WithMany()
+                .HasForeignKey(p => p.MerchantId)
+                .OnDelete(DeleteBehavior.NoAction);
+        }
+
+        // --- Audit Log Implementation ---
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
-            // استدعاء دالة التجهيز قبل الحفظ
             var auditEntries = OnBeforeSaveChanges();
-
-            // الحفظ الفعلي في الداتابيز
             var result = await base.SaveChangesAsync(cancellationToken);
-
-            // استكمال بيانات السجلات (للعمليات الجديدة التي لم يكن لها ID) وحفظها
             await OnAfterSaveChanges(auditEntries);
-
             return result;
         }
 
@@ -69,9 +134,12 @@ namespace Diska.Data
             ChangeTracker.DetectChanges();
             var auditEntries = new List<AuditEntry>();
 
-            // جلب المستخدم الحالي
-            var userId = _httpContextAccessor?.HttpContext?.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "Unkown";
-            var ip = _httpContextAccessor?.HttpContext?.Connection?.RemoteIpAddress?.ToString();
+            var userId = _httpContextAccessor?.HttpContext?.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "Unknown";
+
+            // ==========================================================
+            // ✅ التعديل الهام هنا: تجنب قيمة الـ Null في الـ IP Address
+            // ==========================================================
+            var ip = _httpContextAccessor?.HttpContext?.Connection?.RemoteIpAddress?.ToString() ?? "127.0.0.1";
 
             foreach (var entry in ChangeTracker.Entries())
             {
@@ -88,7 +156,6 @@ namespace Diska.Data
                 {
                     if (property.IsTemporary)
                     {
-                        // القيم المؤقتة (مثل ID قبل الحفظ) نعالجها لاحقاً
                         auditEntry.TemporaryProperties.Add(property);
                         continue;
                     }
@@ -121,7 +188,6 @@ namespace Diska.Data
                 }
             }
 
-            // حفظ السجلات التي لا تعتمد على قيم مؤقتة
             foreach (var auditEntry in auditEntries.Where(_ => !_.HasTemporaryProperties))
             {
                 AuditLogs.Add(auditEntry.ToAudit());
@@ -137,7 +203,6 @@ namespace Diska.Data
 
             foreach (var auditEntry in auditEntries)
             {
-                // تحديث القيم المؤقتة (مثل الـ ID الجديد)
                 foreach (var prop in auditEntry.TemporaryProperties)
                 {
                     if (prop.Metadata.IsPrimaryKey())
@@ -149,67 +214,10 @@ namespace Diska.Data
                         auditEntry.NewValues[prop.Metadata.Name] = prop.CurrentValue;
                     }
                 }
-
                 AuditLogs.Add(auditEntry.ToAudit());
             }
 
             return base.SaveChangesAsync();
-        }
-        protected override void OnModelCreating(ModelBuilder builder)
-        {
-            base.OnModelCreating(builder);
-
-            // ضبط دقة الأرقام العشرية (Currency)
-            foreach (var property in builder.Model.GetEntityTypes()
-                .SelectMany(t => t.GetProperties())
-                .Where(p => p.ClrType == typeof(decimal) || p.ClrType == typeof(decimal?)))
-            {
-                property.SetColumnType("decimal(18,2)");
-            }
-
-
-            builder.Entity<Order>()
-                .HasOne(o => o.User)
-                .WithMany()
-                .HasForeignKey(o => o.UserId)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            builder.Entity<DealRequest>()
-               .HasOne(r => r.User)
-               .WithMany()
-               .HasForeignKey(r => r.UserId)
-               .OnDelete(DeleteBehavior.NoAction);
-
-
-            builder.Entity<MerchantOffer>()
-                .HasOne(m => m.Merchant)
-                .WithMany()
-                .HasForeignKey(m => m.MerchantId)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            builder.Entity<ProductReview>()
-                .HasOne(r => r.User)
-                .WithMany()
-                .HasForeignKey(r => r.UserId)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            builder.Entity<RestockSubscription>()
-               .HasOne<ApplicationUser>()
-               .WithMany()
-               .HasForeignKey(s => s.UserId)
-               .OnDelete(DeleteBehavior.NoAction);
-
-            builder.Entity<WalletTransaction>()
-                .HasOne(t => t.User)
-                .WithMany()
-                .HasForeignKey(t => t.UserId)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            builder.Entity<PendingMerchantAction>()
-                .HasOne(p => p.Merchant)
-                .WithMany()
-                .HasForeignKey(p => p.MerchantId)
-                .OnDelete(DeleteBehavior.NoAction);
         }
     }
 }

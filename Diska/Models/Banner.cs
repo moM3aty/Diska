@@ -1,5 +1,4 @@
 ﻿using System;
-using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Diska.Models
@@ -7,45 +6,37 @@ namespace Diska.Models
     public class Banner
     {
         public int Id { get; set; }
-
-        [Display(Name = "العنوان (عربي)")]
-        [Required(ErrorMessage = "العنوان مطلوب")]
+        
         public string Title { get; set; }
+        public string? TitleEn { get; set; }
+        
+        public string? Subtitle { get; set; }
+        public string? SubtitleEn { get; set; }
 
-        [Display(Name = "العنوان (إنجليزي)")]
-        [Required(ErrorMessage = "العنوان مطلوب")]
-        public string TitleEn { get; set; }
+        public string? ImageDesktop { get; set; }
+        public string? ImageMobile { get; set; }
 
-        public string Subtitle { get; set; }
-        public string SubtitleEn { get; set; }
+        public string? ButtonText { get; set; }
+        public string? ButtonTextEn { get; set; }
 
-        public string ImageDesktop { get; set; }
-        public string ImageMobile { get; set; }
-
-        public string LinkType { get; set; } = "External";
-        public string LinkId { get; set; }
-
-        public string ButtonText { get; set; } = "تسوق الآن";
-        public string ButtonTextEn { get; set; } = "Shop Now";
+        // ✅ تم إضافة ? للسماح بالقيم الفارغة (NULL)
+        public string? LinkType { get; set; } // e.g., "Product", "Category", "External"
+        public string? LinkId { get; set; }   
 
         public int Priority { get; set; } = 0;
         public bool IsActive { get; set; } = true;
-
-        [DataType(DataType.DateTime)]
+        
         public DateTime StartDate { get; set; } = DateTime.Now;
-
-        [DataType(DataType.DateTime)]
-        public DateTime EndDate { get; set; } = DateTime.Now.AddDays(30);
+        public DateTime EndDate { get; set; } = DateTime.Now.AddMonths(1);
 
         public string? MerchantId { get; set; }
-
+        
+        // ✅ إضافة خاصية التنقل للتاجر لكي يعمل الـ Include بشكل صحيح
         [ForeignKey("MerchantId")]
-        public virtual ApplicationUser Merchant { get; set; }
+        public virtual ApplicationUser? Merchant { get; set; }
 
-        public string ApprovalStatus { get; set; } = "Pending"; 
-
-        public string? AdminComment { get; set; } 
-
+        public string? ApprovalStatus { get; set; } // "Pending", "Approved", "Rejected"
+        public string? AdminComment { get; set; }
         [NotMapped]
         public string Status
         {

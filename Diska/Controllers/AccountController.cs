@@ -4,6 +4,7 @@ using Diska.Models;
 using System.Threading.Tasks;
 using System.Linq;
 using Microsoft.AspNetCore.Authorization;
+using System;
 
 namespace Diska.Controllers
 {
@@ -87,7 +88,6 @@ namespace Diska.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        // تم إضافة taxCard هنا لاستقبال القيمة من الفورم وحل مشكلة قاعدة البيانات
         public async Task<IActionResult> Signup(string fullName, string shopName, string phone, string password, string type, string commercialReg, string taxCard)
         {
             // تنظيف المدخلات والتحقق من الهاتف
@@ -96,7 +96,7 @@ namespace Diska.Controllers
             if (string.IsNullOrEmpty(phone))
             {
                 ViewBag.Error = "رقم الهاتف مطلوب.";
-                return View(); // أو return RedirectToAction إذا كان الطلب من مكان آخر
+                return View();
             }
 
             var existingUser = await _userManager.FindByNameAsync(phone);
@@ -109,23 +109,24 @@ namespace Diska.Controllers
             // تحديد القيم الافتراضية بناءً على النوع
             string role = type == "Merchant" ? "Merchant" : "Customer";
 
-            // إصلاح مشكلة SQL Error: تعيين قيم افتراضية للحقول الإجبارية في قاعدة البيانات
-            // إذا لم يكن تاجر أو لم يرسل قيمة، نضع "000000" بدلاً من NULL
+            // تعيين قيم افتراضية للحقول الإجبارية في قاعدة البيانات
             string finalShopName = role == "Merchant" ? shopName : "عميل";
             string finalCommReg = !string.IsNullOrEmpty(commercialReg) ? commercialReg : "000000";
             string finalTaxCard = !string.IsNullOrEmpty(taxCard) ? taxCard : "000000";
 
             var user = new ApplicationUser
             {
-                UserName = phone, // هذا يحل مشكلة Parameter 'userName' cannot be null
+                UserName = phone,
                 PhoneNumber = phone,
                 FullName = fullName,
                 ShopName = finalShopName,
                 CommercialRegister = finalCommReg,
-                TaxCard = finalTaxCard, // تم إضافة هذا الحقل لحل مشكلة الإدخال في قاعدة البيانات
+                TaxCard = finalTaxCard,
                 IsVerifiedMerchant = false,
                 Email = $"{phone}@diska.local",
-                WalletBalance = 0
+                WalletBalance = 0,
+                UserType = role, // إضافة نوع المستخدم 
+                CreatedAt = DateTime.Now
             };
 
             var result = await _userManager.CreateAsync(user, password);
@@ -136,9 +137,8 @@ namespace Diska.Controllers
                 if (role == "Merchant")
                 {
                     // التاجر لا يدخل مباشرة
-                    // يمكن استخدام TempData لعرض رسالة نجاح في الصفحة التالية
                     TempData["Success"] = "تم تسجيل حساب التاجر بنجاح وهو قيد المراجعة.";
-                    return RedirectToAction("Index", "Home"); // توجيه للصفحة الرئيسية بدلاً من صفحة غير موجودة
+                    return RedirectToAction("Index", "Home");
                 }
 
                 // العميل يدخل مباشرة
@@ -149,6 +149,7 @@ namespace Diska.Controllers
             ViewBag.Error = string.Join(", ", result.Errors.Select(e => e.Description));
             return View();
         }
+
         // --- 3. Logout ---
         public async Task<IActionResult> Logout()
         {
@@ -176,12 +177,8 @@ namespace Diska.Controllers
                 return View("ForgotPasswordConfirmation");
             }
 
-            // هنا يجب إرسال رمز التحقق SMS أو رابط للإيميل
-            // للتبسيط حالياً سنقوم بتوليد التوكن وتوجيهه (محاكاة)
             var code = await _userManager.GeneratePasswordResetTokenAsync(user);
 
-            // في الواقع: SendSMS(user.PhoneNumber, code);
-            // للمحاكاة: سنمرر الكود للصفحة التالية مباشرة
             return RedirectToAction("ResetPassword", new { code = code, phone = phone });
         }
 
@@ -203,7 +200,6 @@ namespace Diska.Controllers
             var user = await _userManager.FindByNameAsync(model.Phone);
             if (user == null)
             {
-                // لا تكشف أن المستخدم غير موجود
                 return RedirectToAction("ResetPasswordConfirmation");
             }
 
@@ -231,6 +227,7 @@ namespace Diska.Controllers
         {
             return View();
         }
+
         [HttpGet]
         public IActionResult AccessDenied()
         {
@@ -264,5 +261,4 @@ namespace Diska.Controllers
         [System.ComponentModel.DataAnnotations.Compare("Password", ErrorMessage = "كلمة المرور غير متطابقة")]
         public string ConfirmPassword { get; set; }
     }
-
 }

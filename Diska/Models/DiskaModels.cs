@@ -4,26 +4,25 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Diska.Models
 {
-    // 1. توسيع هوية المستخدم (للتاجر والعميل)
     public class ApplicationUser : IdentityUser
     {
-        public string FullName { get; set; }
-        public string ShopName { get; set; }
-        public string CommercialRegister { get; set; } // رقم السجل التجاري
-        public string TaxCard { get; set; } // رقم البطاقة الضريبية
+        public string? FullName { get; set; }
+        public string? ShopName { get; set; }
+        public string? CommercialRegister { get; set; }
+        public string? TaxCard { get; set; }
+        public bool IsVerifiedMerchant { get; set; }
+        public decimal WalletBalance { get; set; }
+        public string? MerchantId { get; set; } 
+        public string? UserType { get; set; } // "Merchant", "Customer", "Staff"
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public bool IsActive { get; set; } = true;
 
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal WalletBalance { get; set; } = 0; // رصيد المحفظة
-
-        public bool IsVerifiedMerchant { get; set; } = false; // هل تم تفعيل حساب التاجر؟
+        public virtual ICollection<MerchantPermission>? Permissions { get; set; }
     }
 
-  
 
-    
-        
-    // 4. شرائح الأسعار (للجملة)
-    public class PriceTier
+// 4. شرائح الأسعار (للجملة)
+public class PriceTier
     {
         public int Id { get; set; }
         public int ProductId { get; set; }

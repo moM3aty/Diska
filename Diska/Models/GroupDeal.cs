@@ -13,7 +13,7 @@ namespace Diska.Models
         public string Title { get; set; }
 
         [Display(Name = "عنوان العرض (إنجليزي)")]
-        public string TitleEn { get; set; }
+        public string? TitleEn { get; set; }
 
         public int? ProductId { get; set; }
         [ForeignKey("ProductId")]
