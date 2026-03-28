@@ -417,7 +417,7 @@
                     </div>
 
                     <div class="card-footer">
-                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn-icon btn-edit" title="@(isAr ? "تعديل" : "Edit")">
+                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn-icon btn-edit text-center" title="@(isAr ? "تعديل" : "Edit")">
                             <i class="fas fa-edit"></i>
                         </a>
                         <form asp-action="Delete" method="post" onsubmit="return confirmDelete(@item.Id, '@item.Title')">

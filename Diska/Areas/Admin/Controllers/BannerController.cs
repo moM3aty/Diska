@@ -58,6 +58,8 @@ namespace Diska.Areas.Admin.Controllers
             ModelState.Remove("Merchant");
             ModelState.Remove("MerchantId");
             ModelState.Remove("AdminComment");
+            ModelState.Remove("mobileFile");
+            ModelState.Remove("desktopFile");
 
             if (ModelState.IsValid)
             {

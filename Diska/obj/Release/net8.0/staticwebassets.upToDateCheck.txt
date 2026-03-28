@@ -2,6 +2,8 @@ wwwroot\css\admin-style.css
 wwwroot\css\style.css
 wwwroot\favicon.ico
 wwwroot\images\banner-img.png
+wwwroot\images\banners\1f75cd8b-e6b1-4acd-b604-0d5efd74d5f7.jpg
+wwwroot\images\banners\2d69fa3c-3d36-4493-a538-c5687e177b67.jpg
 wwwroot\images\categories\2b3de861-286e-4d7d-94e7-fe07c2efc1a3.png
 wwwroot\images\categories\360efcd7-8583-4f6b-a792-75ede24c9473.png
 wwwroot\images\categories\3f171370-e631-483a-9338-7cee338bbcbb.png
