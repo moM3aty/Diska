@@ -1,244 +1,276 @@
-﻿@using System.Globalization
-@{
-    bool isAr = CultureInfo.CurrentCulture.Name.StartsWith("ar");
-    ViewData["Title"] = isAr ? "الشروط والأحكام" : "Terms & Conditions";
-    Layout = "_Layout";
+﻿@{
+    ViewData["Title"] = "سياسة الاستخدام";
+    Layout = "_Layout"; // تأكد من تفعيل الـ Layout الخاص بك
 }
 
 <style>
     /* =========================================
-       PREMIUM TERMS STYLES (Light & Dark)
-       ========================================= */
+           PREMIUM TERMS & CONDITIONS STYLES
+           ========================================= */
     :root {
-        /* Light Theme */
-        --pol-bg-body: #f8fafc;
-        --pol-card-bg: #ffffff;
-        --pol-text-main: #0f172a;
-        --pol-text-muted: #64748b;
-        --pol-border: #e2e8f0;
-        --pol-primary: #0F172A;
-        --pol-accent: #FACC15;
-        --pol-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
-        --pol-card-hover: 0 10px 25px -5px rgba(0,0,0,0.05);
+        --tc-bg-body: #f8fafc;
+        --tc-card-bg: #ffffff;
+        --tc-text-main: #0f172a;
+        --tc-text-muted: #64748b;
+        --tc-border: #e2e8f0;
+        --tc-primary: #4f46e5;
+        --tc-accent: #facc15;
+        --tc-danger: #ef4444;
+        --tc-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
     }
 
     [data-bs-theme="dark"] {
-        /* Dark Theme */
-        --pol-bg-body: #020617;     /* Deep Dark */
-        --pol-card-bg: #1e293b;     /* Slate 800 */
-        --pol-text-main: #f8fafc;   /* Light Text */
-        --pol-text-muted: #94a3b8;  /* Muted Text */
-        --pol-border: rgba(255, 255, 255, 0.08);
-        --pol-primary: #f8fafc;     /* Headings become white */
-        --pol-accent: #FACC15;      /* Gold remains */
-        --pol-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-        --pol-card-hover: 0 15px 30px -5px rgba(0,0,0,0.5);
+        --tc-bg-body: #020617;
+        --tc-card-bg: #1e293b;
+        --tc-text-main: #f8fafc;
+        --tc-text-muted: #94a3b8;
+        --tc-border: rgba(255, 255, 255, 0.08);
+        --tc-primary: #818cf8;
+        --tc-accent: #facc15;
+        --tc-danger: #f87171;
+        --tc-shadow: 0 10px 40px -5px rgba(0, 0, 0, 0.4);
     }
 
     body {
-        background-color: var(--pol-bg-body);
-        transition: background-color 0.3s ease;
+        background-color: var(--tc-bg-body);
+        transition: background-color 0.3s ease, color 0.3s ease;
+        font-family: 'Cairo', sans-serif;
     }
 
-    .section-padding {
+    .terms-page-wrapper {
         padding: 60px 0;
-        min-height: 80vh;
+        min-height: 85vh;
     }
 
-    /* Breadcrumb */
-    .breadcrumb-custom {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 40px;
-        font-size: 0.9rem;
-        color: var(--pol-text-muted);
+    .terms-header {
+        text-align: center;
+        margin-bottom: 50px;
     }
-    
-    .breadcrumb-custom a {
-        color: var(--pol-text-main);
-        font-weight: 700;
-        text-decoration: none;
-        transition: 0.2s;
-    }
-    
-    .breadcrumb-custom a:hover { color: var(--pol-accent); }
 
-    /* Policy Box */
-    .policy-box {
-        background: var(--pol-card-bg);
-        padding: 50px 40px;
+        .terms-header h1 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--tc-primary);
+            margin-bottom: 15px;
+        }
+
+        .terms-header p {
+            color: var(--tc-text-muted);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+    .term-card {
+        background: var(--tc-card-bg);
+        border: 1px solid var(--tc-border);
         border-radius: 20px;
+        padding: 35px;
         margin-bottom: 30px;
-        border: 1px solid var(--pol-border);
-        box-shadow: var(--pol-shadow);
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
+        box-shadow: var(--tc-shadow);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
 
-    /* Decorative Top Line */
-    .policy-box::before {
-        content: '';
-        position: absolute;
-        top: 0; left: 0; width: 100%; height: 6px;
-        background: linear-gradient(90deg, var(--pol-primary), var(--pol-accent));
+        .term-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
+            border-color: rgba(79, 70, 229, 0.3);
+        }
+
+    [data-bs-theme="dark"] .term-card:hover {
+        box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.6);
     }
 
-    .page-title {
-        color: var(--pol-primary);
-        margin-bottom: 40px;
-        border-bottom: 2px solid var(--pol-border);
-        display: inline-block;
-        padding-bottom: 15px;
-        font-size: 2rem;
-        font-weight: 900;
-    }
-
-    .terms-content {
-        line-height: 1.8;
-        color: var(--pol-text-muted);
-    }
-
-    .terms-content h3 {
-        color: var(--pol-text-main);
-        font-weight: 800;
-        font-size: 1.3rem;
-        margin-top: 30px;
-        margin-bottom: 15px;
+    .term-title {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 15px;
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: var(--tc-text-main);
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 2px dashed var(--tc-border);
     }
 
-    .terms-content h3::before {
-        content: '';
-        display: inline-block;
-        width: 8px;
-        height: 8px;
-        background-color: var(--pol-accent);
-        border-radius: 50%;
-    }
+        .term-title .icon-box {
+            width: 45px;
+            height: 45px;
+            background: rgba(79, 70, 229, 0.1);
+            color: var(--tc-primary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
 
-    .terms-content p {
-        margin-bottom: 15px;
+    .term-content {
+        color: var(--tc-text-muted);
         font-size: 1.05rem;
+        line-height: 1.8;
     }
 
-    .terms-content ul {
-        list-style: none;
-        padding: 0;
-        margin-bottom: 20px;
+        .term-content strong {
+            color: var(--tc-text-main);
+            font-weight: 700;
+        }
+
+        .term-content ul {
+            list-style: none;
+            padding: 0;
+            margin: 15px 0 0 0;
+        }
+
+            .term-content ul li {
+                position: relative;
+                padding-right: 25px; /* RTL padding */
+                margin-bottom: 12px;
+            }
+
+                .term-content ul li::before {
+                    content: '\f058'; /* FontAwesome check-circle */
+                    font-family: 'Font Awesome 5 Free';
+                    font-weight: 900;
+                    position: absolute;
+                    right: 0;
+                    top: 2px;
+                    color: var(--tc-primary);
+                    font-size: 1rem;
+                }
+
+    /* مادة إخلاء المسؤولية تأخذ لون تحذيري خفيف */
+    .disclaimer-card {
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        background: linear-gradient(to bottom, var(--tc-card-bg), rgba(239, 68, 68, 0.02));
     }
 
-    .terms-content li {
-        margin-bottom: 12px;
-        padding-inline-start: 25px;
-        position: relative;
-        font-size: 1rem;
-    }
-
-    .terms-content li::before {
-        content: '\f054'; /* FontAwesome chevron-right */
-        font-family: "Font Awesome 6 Free";
-        font-weight: 900;
-        position: absolute;
-        @(isAr ? "right" : "left"): 0;
-        top: 4px;
-        color: var(--pol-accent);
-        font-size: 0.8rem;
-    }
-    
-    html[dir="ltr"] .terms-content li::before {
-        content: '\f054'; 
-        transform: rotate(0deg); /* Adjust if needed */
-    }
-    html[dir="rtl"] .terms-content li::before {
-        content: '\f053'; /* chevron-left for RTL */
-    }
+        .disclaimer-card .icon-box {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--tc-danger);
+        }
 
     /* Animation */
-    .fade-up { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+    .fade-up {
+        animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
     @@keyframes fadeUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+
+    @@media (max-width: 768px) {
+        .term-card
+
+    {
+        padding: 25px;
+    }
+
+    .terms-header h1 {
+        font-size: 2rem;
+    }
+
     }
 </style>
 
-<section class="section-padding fade-up">
+<div class="terms-page-wrapper" dir="rtl">
     <div class="container">
-        
-        <div class="breadcrumb-custom">
-            <a asp-controller="Home" asp-action="Index">
-                <i class="fas fa-home"></i> @(isAr ? "الرئيسية" : "Home")
-            </a>
-            <span style="color:var(--pol-text-muted)">/</span>
-            <span>@(isAr ? "الشروط والأحكام" : "Terms & Conditions")</span>
+
+        <div class="terms-header fade-up">
+            <h1>سياسة الاستخدام والشروط</h1>
+            <p>باستخدامك لمنصة DISKA، فأنت توافق التزامك الكامل بالبنود والشروط الموضحة أدناه. يرجى قراءتها بعناية.</p>
         </div>
 
-        <div class="policy-box">
-            <h1 class="page-title">
-                @(isAr ? "الشروط والأحكام" : "Terms & Conditions")
-            </h1>
+        <div class="row justify-content-center">
+            <div class="col-lg-9">
 
-            <div class="terms-content">
-                @if (isAr)
-                {
-                    <h3>1. مقدمة</h3>
-                    <p>أهلاً بك في منصة DISKA. باستعمالك لهذا الموقع والتطبيق، فإنك توافق على الالتزام بالشروط والأحكام التالية. يرجى قراءتها بعناية.</p>
+                <div class="term-card fade-up" style="animation-delay: 0.1s;">
+                    <div class="term-title">
+                        <div class="icon-box"><i class="fas fa-book-open"></i></div>
+                        المادة الأولى: التعريفات والصفة القانونية
+                    </div>
+                    <div class="term-content">
+                        <p><strong>منصة DISKA:</strong> هي منصة إلكترونية تقنية وسيطة متخصصة حصراً في قطاع الأغذية والمشروبات والمنتجات الاستهلاكية، ومقرها الرئيسي محافظة الدقهلية، جمهورية مصر العربية.</p>
+                        <p><strong>طبيعة الخدمة:</strong> يقتصر دور المنصة على توفير "مساحة تقنية" للمستخدمين لعرض منتجاتهم. المنصة ليست طرفاً في أي عملية بيع أو شراء، ولا تضمن جودة المنتجات، ولا تتقاضى عمولات، ولا تمثل أي من الطرفين.</p>
+                    </div>
+                </div>
 
-                    <h3>2. حساب التاجر والعميل</h3>
-                    <ul>
-                        <li>يجب أن تكون البيانات المقدمة أثناء التسجيل (الاسم، رقم الهاتف، السجل التجاري) صحيحة وحديثة.</li>
-                        <li>تحتفظ إدارة المنصة بحق طلب وثائق إضافية للتحقق من هوية التاجر قبل تفعيل الحساب.</li>
-                        <li>يتحمل المستخدم مسؤولية الحفاظ على سرية بيانات الدخول الخاصة به.</li>
-                    </ul>
+                <div class="term-card disclaimer-card fade-up" style="animation-delay: 0.2s;">
+                    <div class="term-title">
+                        <div class="icon-box"><i class="fas fa-shield-alt"></i></div>
+                        المادة الثانية: إخلاء المسؤولية التام (بند عدم التدخل)
+                    </div>
+                    <div class="term-content">
+                        <p><strong>النزاعات بين المستخدمين:</strong> يقر المستخدم بأن منصة DISKA وإدارتها غير مسؤولة قانوناً أو مدنياً أو جنائياً عن أي خلافات أو حالات غش أو أضرار صحية ناتجة عن التعامل بين البائع والمشتري.</p>
+                        <p><strong>الجهات الأمنية والرقابية:</strong> المنصة ليست طرفاً في أي بلاغات تُقدم لمباحث الإنترنت أو جهاز حماية المستهلك أو غيرها. يقر المستخدم بأن مسؤوليته تجاه هذه الجهات هي مسؤولية شخصية مباشرة، ولا تلتزم المنصة بتقديم أي بيانات أو تقارير فنية لأي طرف إلا بموجب أمر قضائي ملزم وموجه رسمياً للإدارة.</p>
+                        <p><strong>سلامة المنتجات:</strong> تقع المسؤولية الكاملة عن تاريخ الصلاحية، شروط التخزين، وتراخيص تداول الأغذية على عاتق "المعلن" وحده.</p>
+                    </div>
+                </div>
 
-                    <h3>3. الطلبات والمخزون</h3>
-                    <ul>
-                        <li>جميع الطلبات تخضع لتوفر المنتج في المخزون.</li>
-                        <li>في حالة نفاد المخزون بعد تأكيد الطلب، سيتم إخطار العميل واقتراح بديل أو استرداد المبلغ إلى المحفظة.</li>
-                        <li>يحق للمنصة إلغاء أي طلب في حالة وجود خطأ تسعيري واضح أو شك في نشاط احتيالي.</li>
-                    </ul>
+                <div class="term-card fade-up" style="animation-delay: 0.3s;">
+                    <div class="term-title">
+                        <div class="icon-box"><i class="fas fa-box-open"></i></div>
+                        المادة الثالثة: شروط المحتوى (الأغذية فقط)
+                    </div>
+                    <div class="term-content">
+                        <p><strong>التخصص الحصري:</strong> يُحظر تماماً الإعلان عن العقارات، السيارات، المقاولات، الخدمات الهندسية، أو أي نشاط خارج نطاق الأغذية. سيتم حذف أي محتوى مخالف فوراً.</p>
+                        <p><strong>السلع الممنوعة:</strong> يمنع الإعلان عن (الخمور - التبغ والسجائر - الأدوية والمكملات الطبية - المنتجات مجهولة المصدر).</p>
+                        <p><strong>الصور والمعلومات:</strong> يجب أن تكون الصور حقيقية للمنتج الغذائي المعروض، وأن تكون المعلومات دقيقة وغير مضللة للمستهلك.</p>
+                    </div>
+                </div>
 
-                    <h3>4. الدفع والمحفظة</h3>
-                    <ul>
-                        <li>تتوفر طرق الدفع: الدفع عند الاستلام (كاش) والدفع عبر المحفظة الإلكترونية داخل التطبيق.</li>
-                        <li>رصيد المحفظة غير قابل للاستبدال نقداً خارج المنصة، ويستخدم فقط للمشتريات المستقبلية.</li>
-                    </ul>
+                <div class="term-card fade-up" style="animation-delay: 0.4s;">
+                    <div class="term-title">
+                        <div class="icon-box"><i class="fas fa-user-shield"></i></div>
+                        المادة الرابعة: الحظر والرقابة الفنية
+                    </div>
+                    <div class="term-content">
+                        <p>للمنصة الحق المطلق وبإرادتها المنفردة في حذف أي إعلان أو حظر أي حساب (Block) يتبين مخالفته لهذه السياسات أو يسيء استخدام المنصة، دون أدنى مسؤولية ودون الحاجة لإخطار المستخدم أو توضيح الأسباب.</p>
+                        <p>يوافق المستخدم على ظهور نظام التقييمات للعامة، وتعتبر التقييمات تعبيراً عن رأي أصحابها ولا تتحمل المنصة أي مسؤولية عن محتواها.</p>
+                    </div>
+                </div>
 
-                    <h3>5. الملكية الفكرية</h3>
-                    <p>جميع حقوق المحتوى، التصاميم، والشعارات محفوظة لمنصة DISKA ولا يجوز نسخها أو استخدامها دون إذن كتابي.</p>
-                }
-                else
-                {
-                    <h3>1. Introduction</h3>
-                    <p>Welcome to DISKA. By using this website and app, you agree to comply with the following terms and conditions. Please read them carefully.</p>
+                <div class="term-card fade-up" style="animation-delay: 0.5s;">
+                    <div class="term-title">
+                        <div class="icon-box"><i class="fas fa-check-double"></i></div>
+                        المادة الخامسة: نصائح أمان التعامل
+                    </div>
+                    <div class="term-content">
+                        <p>لضمان سلامة التعامل، ننصح المستخدمين بالآتي:</p>
+                        <ul>
+                            <li>إجراء المقابلات وعمليات الاستلام في أماكن عامة ومفتوحة.</li>
+                            <li>فحص المنتج الغذائي والتأكد من تاريخ الإنتاج والصلاحية قبل الدفع.</li>
+                            <li>استخدام خاصية "الحظر" (Block) داخل التطبيق في حال التعرض لأي إزعاج من مستخدم آخر.</li>
+                        </ul>
+                    </div>
+                </div>
 
-                    <h3>2. Accounts</h3>
-                    <ul>
-                        <li>Data provided during registration (Name, Phone, Commercial Register) must be accurate.</li>
-                        <li>Platform administration reserves the right to request additional documents for merchant verification.</li>
-                        <li>Users are responsible for maintaining the confidentiality of their login credentials.</li>
-                    </ul>
+                <div class="term-card fade-up" style="animation-delay: 0.6s;">
+                    <div class="term-title">
+                        <div class="icon-box"><i class="fas fa-gavel"></i></div>
+                        المادة السادسة: القانون السائد
+                    </div>
+                    <div class="term-content">
+                        <p>تخضع هذه الاتفاقية للقوانين المعمول بها في <strong>جمهورية مصر العربية</strong>، وفي حال نشوب أي نزاع حول تفسير هذه البنود، تكون المحاكم المختصة في <strong>محافظة الدقهلية</strong> هي صاحبة الاختصاص الحصري.</p>
+                        <hr class="my-4" style="border-color: var(--tc-border);">
+                        <p class="mb-0 text-center fw-bold" style="color: var(--tc-primary);">
+                            باستخدامك لمنصة DISKA، فأنت تقر بموافقتك الكاملة على هذه البنود، وتتعهد بعدم ملاحقة المنصة أو إدارتها قضائياً أو جنائياً عن أي تصرف ينتج عن مستخدمين آخرين.
+                        </p>
+                    </div>
+                </div>
 
-                    <h3>3. Orders & Inventory</h3>
-                    <ul>
-                        <li>All orders are subject to product availability.</li>
-                        <li>If stock runs out after confirmation, the customer will be notified with an alternative or a refund to the wallet.</li>
-                        <li>The platform reserves the right to cancel orders in case of pricing errors or suspected fraud.</li>
-                    </ul>
-
-                    <h3>4. Payment & Wallet</h3>
-                    <ul>
-                        <li>Available payment methods: Cash on Delivery (COD) and In-App Wallet.</li>
-                        <li>Wallet balance is non-refundable as cash and can only be used for future purchases on the platform.</li>
-                    </ul>
-                    
-                    <h3>5. Intellectual Property</h3>
-                    <p>All content rights, designs, and logos are reserved for DISKA platform and may not be copied or used without written permission.</p>
-                }
             </div>
         </div>
     </div>
-</section>
+</div>
