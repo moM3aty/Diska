@@ -1,6 +1,7 @@
 D:\Dev\Diska\Diska\obj\Release\net8.0\PubTmp\Out\Diska.exe
 D:\Dev\Diska\Diska\obj\Release\net8.0\PubTmp\Out\appsettings.Development.json
 D:\Dev\Diska\Diska\obj\Release\net8.0\PubTmp\Out\appsettings.json
+D:\Dev\Diska\Diska\obj\Release\net8.0\PubTmp\Out\Diska_Postman_Collection.json
 D:\Dev\Diska\Diska\obj\Release\net8.0\PubTmp\Out\Diska.dll
 D:\Dev\Diska\Diska\obj\Release\net8.0\PubTmp\Out\Diska.runtimeconfig.json
 D:\Dev\Diska\Diska\obj\Release\net8.0\PubTmp\Out\Diska.pdb

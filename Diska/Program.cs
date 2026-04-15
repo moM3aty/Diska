@@ -18,6 +18,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddRazorPages();
+
 // 2. إعدادات الهوية (Identity)
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
@@ -42,9 +43,14 @@ builder.Services.AddScoped<IPermissionService, PermissionService>();
 
 System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-// 4. اللغات (Localization)
+// 4. اللغات و JSON
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 builder.Services.AddControllersWithViews()
+    .AddJsonOptions(options =>
+    {
+        // منع مشكلة الدوران اللانهائي في الـ JSON
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    })
     .AddViewLocalization(LanguageViewLocationExpanderFormat.Suffix)
     .AddDataAnnotationsLocalization();
 
@@ -57,9 +63,20 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
+// 6. السماح لتطبيقات الموبايل وأي مكان بالاتصال (CORS)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 var app = builder.Build();
 
-
+// تهيئة قاعدة البيانات (Seeding)
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -68,7 +85,6 @@ using (var scope = app.Services.CreateScope())
         var context = services.GetRequiredService<ApplicationDbContext>();
         context.Database.Migrate();
 
-        // إنشاء الصلاحيات لمنع ظهور خطأ Role does not exist
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
         string[] roleNames = { "Admin", "Merchant", "Customer", "Staff" };
 
@@ -111,6 +127,9 @@ app.UseRequestLocalization(new RequestLocalizationOptions
 
 app.UseRouting();
 
+// 🚨 تفعيل الـ CORS يجب أن يكون هنا بالضبط
+app.UseCors("AllowAll");
+
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -125,5 +144,7 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.MapRazorPages();
+
+app.MapControllers();
 
 app.Run();
