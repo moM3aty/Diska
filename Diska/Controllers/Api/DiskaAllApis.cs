@@ -13,7 +13,6 @@ using System.Text.Json;
 
 namespace Diska.ApiControllers
 {
-
     // =========================================================================
     // 1. AUTHENTICATION API (المصادقة)
     // =========================================================================
@@ -23,41 +22,38 @@ namespace Diska.ApiControllers
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly ISmsService _smsService;
+        private readonly ISmsService _smsService; // ✅ إضافة خدمة الرسائل
 
-        public AuthApiController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager,ISmsService smsService)
+        public AuthApiController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, ISmsService smsService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
-            _smsService = smsService;
+            _smsService = smsService; // ✅ الحقن
         }
+
+        // 🚨 الدالة الجديدة لإرسال كود الـ OTP
         [HttpPost("send-otp")]
         public async Task<IActionResult> SendOtp([FromBody] ApiPhoneDto model)
         {
             if (string.IsNullOrEmpty(model.Phone))
                 return BadRequest(new { success = false, message = "رقم الهاتف مطلوب" });
 
-            var user = await _userManager.FindByNameAsync(model.Phone);
-            if (user == null)
-                return NotFound(new { success = false, message = "هذا الرقم غير مسجل لدينا" });
-
-            // توليد كود عشوائي من 6 أرقام (في التطبيق الحقيقي يجب حفظه في الداتابيز أو الكاش لمطابقته لاحقاً)
+            // توليد كود عشوائي من 6 أرقام
             Random rand = new Random();
             string otpCode = rand.Next(100000, 999999).ToString();
 
-            // 🚨 هنا نقوم باستدعاء الـ API الخاص بـ WhySMS
+            // استدعاء خدمة WhySMS (الدالة التي أضفناها ستتكفل بتنظيف الرقم)
             bool isSent = await _smsService.SendOtpAsync(model.Phone, otpCode);
 
             if (isSent)
             {
-                // ⚠️ للتطوير فقط: يمكنك إرجاع الكود في الرد لاختباره في بوستمان (في الإنتاج احذفه)
-                return Ok(new { success = true, message = "تم إرسال رمز التحقق إلى هاتفك بنجاح.", test_otp = otpCode });
+                // نرجع الـ OTP مؤقتاً في الـ JSON لتسهيل الاختبار من بوستمان (في الإنتاج احذفه)
+                return Ok(new { success = true, message = "تم إرسال رمز التحقق بنجاح.", test_otp = otpCode });
             }
-            else
-            {
-                return Ok(new { success = false, message = "حدث خطأ أثناء إرسال الرسالة، يرجى المحاولة لاحقاً." });
-            }
+
+            return Ok(new { success = false, message = "حدث خطأ أثناء إرسال الرسالة." });
         }
+
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] ApiLoginDto model)
         {
@@ -119,8 +115,13 @@ namespace Diska.ApiControllers
         {
             var user = await _userManager.FindByNameAsync(model.Phone!);
             if (user == null) return Ok(new { success = true, message = "إذا كان الرقم صحيحاً، سيتم إرسال كود التحقق." });
+
             var code = await _userManager.GeneratePasswordResetTokenAsync(user);
-            return Ok(new { success = true, code = code }); // يُفضل إرساله عبر SMS في الواقع
+
+            // إرسال كود إعادة التعيين في رسالة
+            await _smsService.SendSmsAsync(model.Phone, $"كود استعادة كلمة المرور الخاص بك هو: {code.Substring(0, 6)}");
+
+            return Ok(new { success = true, message = "تم إرسال كود الاستعادة" });
         }
 
         [HttpPost("reset-password")]
@@ -187,7 +188,6 @@ namespace Diska.ApiControllers
             await _context.SaveChangesAsync();
             return Ok(new { success = true });
         }
-
     }
 
     // =========================================================================

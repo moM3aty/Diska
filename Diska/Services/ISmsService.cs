@@ -1,4 +1,5 @@
-﻿using System.Net.Http;
+﻿using System;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -8,14 +9,12 @@ using Microsoft.Extensions.Logging;
 
 namespace Diska.Services
 {
-    // 1. الواجهة (Interface)
     public interface ISmsService
     {
         Task<bool> SendOtpAsync(string phoneNumber, string otpCode);
         Task<bool> SendSmsAsync(string phoneNumber, string message);
     }
 
-    // 2. الكلاس المنفذ (Implementation)
     public class WhySmsService : ISmsService
     {
         private readonly HttpClient _httpClient;
@@ -39,18 +38,14 @@ namespace Diska.Services
         {
             try
             {
-                // جلب الإعدادات من appsettings.json
-                var baseUrl = _configuration["WhySmsSettings:BaseUrl"];
-                var apiToken = _configuration["WhySmsSettings:ApiToken"];
-                var senderId = _configuration["WhySmsSettings:SenderId"];
+                // الإعدادات من الصورة التي أرسلتها
+                var baseUrl = _configuration["WhySmsSettings:BaseUrl"] ?? "https://bulk.whysms.com/api/v3/sms/";
+                var apiToken = _configuration["WhySmsSettings:ApiToken"] ?? "1138|UXdBboZ1il3eys99Ik1n1KBI4VyqqvGAknKV1fMj9905ebde";
+                var senderId = _configuration["WhySmsSettings:SenderId"] ?? "WhySMS Test";
 
-                // تنسيق رقم الهاتف (يجب أن يبدأ بكود الدولة لمصر 20)
-                if (phoneNumber.StartsWith("01"))
-                {
-                    phoneNumber = "2" + phoneNumber;
-                }
+                // 🚨 تنظيف الرقم وتحويله للصيغة المطلوبة (مثال: 201038459045)
+                phoneNumber = NormalizePhoneNumber(phoneNumber);
 
-                // تجهيز البيانات حسب الـ Documentation الخاص بـ WhySMS
                 var payload = new
                 {
                     recipient = phoneNumber,
@@ -62,37 +57,58 @@ namespace Diska.Services
                 string jsonPayload = JsonSerializer.Serialize(payload);
                 var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
 
-                // إعداد الـ Headers (Bearer Token)
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiToken);
                 _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-                // إرسال الطلب (POST)
                 var response = await _httpClient.PostAsync($"{baseUrl}send", content);
                 var responseString = await response.Content.ReadAsStringAsync();
 
                 if (response.IsSuccessStatusCode)
                 {
-                    // فحص الرد للتأكد من نجاح الإرسال من طرف WhySMS
                     using var doc = JsonDocument.Parse(responseString);
                     if (doc.RootElement.TryGetProperty("status", out var statusProp) && statusProp.GetString() == "success")
                     {
                         return true;
                     }
 
-                    _logger.LogWarning($"SMS API returned non-success status: {responseString}");
+                    _logger.LogWarning($"WhySMS Error: {responseString}");
                     return false;
                 }
                 else
                 {
-                    _logger.LogError($"SMS API Error: {response.StatusCode} - {responseString}");
+                    _logger.LogError($"API Failed: {response.StatusCode} - {responseString}");
                     return false;
                 }
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                _logger.LogError($"Failed to send SMS: {ex.Message}");
+                _logger.LogError($"SMS Exception: {ex.Message}");
                 return false;
             }
+        }
+
+        // 🚨 دالة ذكية لتحويل الأرقام العربية إلى إنجليزية وإضافة كود مصر
+        private string NormalizePhoneNumber(string phone)
+        {
+            if (string.IsNullOrWhiteSpace(phone)) return phone;
+
+            // 1. تحويل الأرقام العربية إلى إنجليزية
+            string[] arabicDigits = { "٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩" };
+            for (int i = 0; i < arabicDigits.Length; i++)
+            {
+                phone = phone.Replace(arabicDigits[i], i.ToString());
+            }
+
+            // 2. إزالة المسافات وعلامة الزائد
+            phone = phone.Replace(" ", "").Replace("+", "");
+
+            // 3. إضافة كود مصر إذا كان الرقم 11 خانة ويبدأ بـ 01
+            if (phone.StartsWith("01") && phone.Length == 11)
+            {
+                phone = "2" + phone;
+            }
+
+            return phone;
         }
     }
 }
