@@ -16,22 +16,6 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "Diska.ApiControllers.AdminApiController",
-    "Method": "ApproveMerchant",
-    "RelativePath": "api/admin/approvals/merchant",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "dto",
-        "Type": "Diska.ApiControllers.ApiStringIdDto",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
     "ContainingType": "Diska.Controllers.Api.AdminApiController",
     "Method": "ApproveMerchant",
     "RelativePath": "api/admin/approvals/merchant",
@@ -80,16 +64,6 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "Diska.ApiControllers.AdminApiController",
-    "Method": "GetDashboard",
-    "RelativePath": "api/admin/dashboard",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [],
-    "ReturnTypes": []
-  },
-  {
     "ContainingType": "Diska.Controllers.Api.AdminApiController",
     "Method": "GetDashboard",
     "RelativePath": "api/admin/dashboard",
@@ -97,22 +71,6 @@
     "IsController": true,
     "Order": 0,
     "Parameters": [],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "Diska.ApiControllers.AdminApiController",
-    "Method": "UpdateOrder",
-    "RelativePath": "api/admin/orders/status",
-    "HttpMethod": "PUT",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "dto",
-        "Type": "Diska.ApiControllers.ApiStatusUpdateDto",
-        "IsRequired": true
-      }
-    ],
     "ReturnTypes": []
   },
   {
@@ -228,22 +186,6 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "Diska.ApiControllers.AuthApiController",
-    "Method": "Login",
-    "RelativePath": "api/auth/login",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "model",
-        "Type": "Diska.ApiControllers.ApiLoginDto",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
     "ContainingType": "Diska.Controllers.Api.AuthApiController",
     "Method": "Login",
     "RelativePath": "api/auth/login",
@@ -257,16 +199,6 @@
         "IsRequired": true
       }
     ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "Diska.ApiControllers.AuthApiController",
-    "Method": "Logout",
-    "RelativePath": "api/auth/logout",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [],
     "ReturnTypes": []
   },
   {
@@ -296,22 +228,6 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "Diska.ApiControllers.AuthApiController",
-    "Method": "Signup",
-    "RelativePath": "api/auth/signup",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "model",
-        "Type": "Diska.ApiControllers.ApiSignupDto",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
     "ContainingType": "Diska.Controllers.Api.AuthApiController",
     "Method": "Signup",
     "RelativePath": "api/auth/signup",
@@ -328,32 +244,6 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "Diska.ApiControllers.CustomerApiController",
-    "Method": "GetAddresses",
-    "RelativePath": "api/customer/addresses",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "Diska.ApiControllers.CustomerApiController",
-    "Method": "AddAddress",
-    "RelativePath": "api/customer/addresses",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "addr",
-        "Type": "Diska.Models.UserAddress",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
     "ContainingType": "Diska.Controllers.Api.CustomerApiController",
     "Method": "GetAddresses",
     "RelativePath": "api/customer/addresses",
@@ -374,22 +264,6 @@
       {
         "Name": "addr",
         "Type": "Diska.Models.UserAddress",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "Diska.ApiControllers.CustomerApiController",
-    "Method": "Checkout",
-    "RelativePath": "api/customer/checkout",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "dto",
-        "Type": "Diska.ApiControllers.ApiCheckoutDto",
         "IsRequired": true
       }
     ],
@@ -415,16 +289,6 @@
     "ContainingType": "Diska.Controllers.Api.CustomerApiController",
     "Method": "GetNotifications",
     "RelativePath": "api/customer/notifications",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "Diska.ApiControllers.CustomerApiController",
-    "Method": "GetProfile",
-    "RelativePath": "api/customer/profile",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
@@ -469,27 +333,6 @@
         "Name": "rev",
         "Type": "Diska.Models.ProductReview",
         "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "Diska.ApiControllers.CustomerApiController",
-    "Method": "GetShipping",
-    "RelativePath": "api/customer/shipping-cost",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "gov",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "city",
-        "Type": "System.String",
-        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -590,22 +433,6 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "Diska.ApiControllers.CustomerApiController",
-    "Method": "ToggleWishlist",
-    "RelativePath": "api/customer/wishlist/toggle",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "dto",
-        "Type": "Diska.ApiControllers.ApiIdDto",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
     "ContainingType": "Diska.Controllers.Api.CustomerApiController",
     "Method": "ToggleWishlist",
     "RelativePath": "api/customer/wishlist/toggle",
@@ -638,16 +465,6 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "Diska.ApiControllers.MerchantApiController",
-    "Method": "GetDashboard",
-    "RelativePath": "api/merchant/dashboard",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [],
-    "ReturnTypes": []
-  },
-  {
     "ContainingType": "Diska.Controllers.Api.MerchantApiController",
     "Method": "GetDashboard",
     "RelativePath": "api/merchant/dashboard",
@@ -674,16 +491,6 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "Diska.ApiControllers.MerchantApiController",
-    "Method": "GetOrders",
-    "RelativePath": "api/merchant/orders",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [],
-    "ReturnTypes": []
-  },
-  {
     "ContainingType": "Diska.Controllers.Api.MerchantApiController",
     "Method": "GetOrders",
     "RelativePath": "api/merchant/orders",
@@ -691,22 +498,6 @@
     "IsController": true,
     "Order": 0,
     "Parameters": [],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "Diska.ApiControllers.MerchantApiController",
-    "Method": "AddProduct",
-    "RelativePath": "api/merchant/products",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "p",
-        "Type": "Diska.Models.Product",
-        "IsRequired": true
-      }
-    ],
     "ReturnTypes": []
   },
   {
@@ -720,22 +511,6 @@
       {
         "Name": "p",
         "Type": "Diska.Models.Product",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "Diska.ApiControllers.MerchantApiController",
-    "Method": "UpdateStock",
-    "RelativePath": "api/merchant/products/stock",
-    "HttpMethod": "PUT",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "dto",
-        "Type": "Diska.ApiControllers.ApiStockUpdateDto",
         "IsRequired": true
       }
     ],
@@ -790,9 +565,73 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "Diska.ApiControllers.PublicApiController",
-    "Method": "GetBanners",
-    "RelativePath": "api/public/banners",
+    "ContainingType": "Diska.ApiControllers.AdminApiController",
+    "Method": "ApproveAction",
+    "RelativePath": "api/mobile/admin/approvals/action",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "Diska.ApiControllers.ApiIdDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.AdminApiController",
+    "Method": "ApproveMerchant",
+    "RelativePath": "api/mobile/admin/approvals/merchant",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "Diska.ApiControllers.ApiStringIdDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.AdminApiController",
+    "Method": "ApproveProduct",
+    "RelativePath": "api/mobile/admin/approvals/product",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "Diska.ApiControllers.ApiIdDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.AdminApiController",
+    "Method": "AddCategory",
+    "RelativePath": "api/mobile/admin/categories",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "c",
+        "Type": "Diska.Models.Category",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.AdminApiController",
+    "Method": "GetDashboard",
+    "RelativePath": "api/mobile/admin/dashboard",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
@@ -800,9 +639,516 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "Diska.Controllers.Api.PublicApiController",
+    "ContainingType": "Diska.ApiControllers.AdminApiController",
+    "Method": "UpdateOrder",
+    "RelativePath": "api/mobile/admin/orders/status",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "Diska.ApiControllers.ApiStatusUpdateDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.AdminApiController",
+    "Method": "ToggleReview",
+    "RelativePath": "api/mobile/admin/reviews/toggle",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "Diska.ApiControllers.ApiIdDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.AdminApiController",
+    "Method": "SaveShipping",
+    "RelativePath": "api/mobile/admin/shipping",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "r",
+        "Type": "Diska.Models.ShippingRate",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.AdminApiController",
+    "Method": "ToggleSurvey",
+    "RelativePath": "api/mobile/admin/surveys/toggle",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "Diska.ApiControllers.ApiIdDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.AdminApiController",
+    "Method": "DeleteUser",
+    "RelativePath": "api/mobile/admin/users",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "Diska.ApiControllers.ApiStringIdDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.AdminApiController",
+    "Method": "AdjustWallet",
+    "RelativePath": "api/mobile/admin/wallet/adjust",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "Diska.ApiControllers.ApiWalletAdjustDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.AuthApiController",
+    "Method": "ForgotPassword",
+    "RelativePath": "api/mobile/auth/forgot-password",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "model",
+        "Type": "Diska.ApiControllers.ApiPhoneDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.AuthApiController",
+    "Method": "Login",
+    "RelativePath": "api/mobile/auth/login",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "model",
+        "Type": "Diska.ApiControllers.ApiLoginDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.AuthApiController",
+    "Method": "Logout",
+    "RelativePath": "api/mobile/auth/logout",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.AuthApiController",
+    "Method": "ResetPassword",
+    "RelativePath": "api/mobile/auth/reset-password",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "model",
+        "Type": "Diska.ApiControllers.ApiResetPassDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.AuthApiController",
+    "Method": "SendOtp",
+    "RelativePath": "api/mobile/auth/send-otp",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "model",
+        "Type": "Diska.ApiControllers.ApiPhoneDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.AuthApiController",
+    "Method": "Signup",
+    "RelativePath": "api/mobile/auth/signup",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "model",
+        "Type": "Diska.ApiControllers.ApiSignupDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.CustomerApiController",
+    "Method": "GetAddresses",
+    "RelativePath": "api/mobile/customer/addresses",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.CustomerApiController",
+    "Method": "AddAddress",
+    "RelativePath": "api/mobile/customer/addresses",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "addr",
+        "Type": "Diska.Models.UserAddress",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.CustomerApiController",
+    "Method": "Checkout",
+    "RelativePath": "api/mobile/customer/checkout",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "Diska.ApiControllers.ApiCheckoutDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.CustomerApiController",
+    "Method": "GetNotifications",
+    "RelativePath": "api/mobile/customer/notifications",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.CustomerApiController",
+    "Method": "GetProfile",
+    "RelativePath": "api/mobile/customer/profile",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.CustomerApiController",
+    "Method": "UpdateProfile",
+    "RelativePath": "api/mobile/customer/profile",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "Diska.ApiControllers.ApiUpdateProfileDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.CustomerApiController",
+    "Method": "AddReview",
+    "RelativePath": "api/mobile/customer/reviews",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "rev",
+        "Type": "Diska.Models.ProductReview",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.CustomerApiController",
+    "Method": "GetShipping",
+    "RelativePath": "api/mobile/customer/shipping-cost",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "gov",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "city",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.CustomerApiController",
+    "Method": "AddSpecialRequest",
+    "RelativePath": "api/mobile/customer/special-requests",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "req",
+        "Type": "Diska.Models.DealRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.CustomerApiController",
+    "Method": "AcceptOffer",
+    "RelativePath": "api/mobile/customer/special-requests/accept-offer",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "Diska.ApiControllers.ApiIdDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.CustomerApiController",
+    "Method": "SubmitSurvey",
+    "RelativePath": "api/mobile/customer/surveys/submit",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "Diska.ApiControllers.ApiSurveySubmitDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.CustomerApiController",
+    "Method": "TopUpWallet",
+    "RelativePath": "api/mobile/customer/wallet/topup",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "Diska.ApiControllers.ApiAmountDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.CustomerApiController",
+    "Method": "GetWishlist",
+    "RelativePath": "api/mobile/customer/wishlist",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.CustomerApiController",
+    "Method": "ToggleWishlist",
+    "RelativePath": "api/mobile/customer/wishlist/toggle",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "Diska.ApiControllers.ApiIdDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.MerchantApiController",
+    "Method": "AddBanner",
+    "RelativePath": "api/mobile/merchant/banners",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "b",
+        "Type": "Diska.Models.Banner",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.MerchantApiController",
+    "Method": "GetDashboard",
+    "RelativePath": "api/mobile/merchant/dashboard",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.MerchantApiController",
+    "Method": "AddDeal",
+    "RelativePath": "api/mobile/merchant/deals",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "d",
+        "Type": "Diska.Models.GroupDeal",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.MerchantApiController",
+    "Method": "GetOrders",
+    "RelativePath": "api/mobile/merchant/orders",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.MerchantApiController",
+    "Method": "AddProduct",
+    "RelativePath": "api/mobile/merchant/products",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "p",
+        "Type": "Diska.Models.Product",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.MerchantApiController",
+    "Method": "UpdateStock",
+    "RelativePath": "api/mobile/merchant/products/stock",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "Diska.ApiControllers.ApiStockUpdateDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.MerchantApiController",
+    "Method": "SubmitOffer",
+    "RelativePath": "api/mobile/merchant/requests/offer",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "Diska.ApiControllers.ApiOfferDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.MerchantApiController",
+    "Method": "Withdraw",
+    "RelativePath": "api/mobile/merchant/wallet/withdraw",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "Diska.ApiControllers.ApiAmountDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.PublicApiController",
     "Method": "GetBanners",
-    "RelativePath": "api/public/banners",
+    "RelativePath": "api/mobile/public/banners",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
@@ -812,7 +1158,64 @@
   {
     "ContainingType": "Diska.ApiControllers.PublicApiController",
     "Method": "GetCategories",
-    "RelativePath": "api/public/categories",
+    "RelativePath": "api/mobile/public/categories",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.PublicApiController",
+    "Method": "ContactUs",
+    "RelativePath": "api/mobile/public/contact",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "model",
+        "Type": "Diska.Models.ContactMessage",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.PublicApiController",
+    "Method": "GetDeals",
+    "RelativePath": "api/mobile/public/deals",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.ApiControllers.PublicApiController",
+    "Method": "GetProducts",
+    "RelativePath": "api/mobile/public/products",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "query",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "categoryId",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "Diska.Controllers.Api.PublicApiController",
+    "Method": "GetBanners",
+    "RelativePath": "api/public/banners",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
@@ -846,16 +1249,6 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "Diska.ApiControllers.PublicApiController",
-    "Method": "GetDeals",
-    "RelativePath": "api/public/deals",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [],
-    "ReturnTypes": []
-  },
-  {
     "ContainingType": "Diska.Controllers.Api.PublicApiController",
     "Method": "GetDeals",
     "RelativePath": "api/public/deals",
@@ -863,27 +1256,6 @@
     "IsController": true,
     "Order": 0,
     "Parameters": [],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "Diska.ApiControllers.PublicApiController",
-    "Method": "GetProducts",
-    "RelativePath": "api/public/products",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "query",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "categoryId",
-        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
-        "IsRequired": false
-      }
-    ],
     "ReturnTypes": []
   },
   {

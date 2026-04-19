@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using System;
+using Diska.Services; // ✅ استدعاء مجلد الخدمات
+using Microsoft.AspNetCore.Http; // ✅ للتعامل مع الـ Session
 
 namespace Diska.Controllers
 {
@@ -12,14 +14,19 @@ namespace Diska.Controllers
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ISmsService _smsService; // ✅ 1. تعريف خدمة الرسائل
 
-        public AccountController(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager)
+        // ✅ 2. حقن الخدمة في المشيد (Constructor)
+        public AccountController(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager, ISmsService smsService)
         {
             _signInManager = signInManager;
             _userManager = userManager;
+            _smsService = smsService;
         }
 
-        // --- 1. Login ---
+        // =========================================================
+        // 1. تسجيل الدخول
+        // =========================================================
         [HttpGet]
         public IActionResult Login(string returnUrl = null)
         {
@@ -43,32 +50,25 @@ namespace Diska.Controllers
                 return View();
             }
 
-            // البحث عن المستخدم (الاسم المستخدم هو رقم الهاتف)
             var user = await _userManager.FindByNameAsync(phone) ?? _userManager.Users.FirstOrDefault(u => u.PhoneNumber == phone);
 
             if (user != null)
             {
-                // التحقق من الحظر
                 if (await _userManager.IsLockedOutAsync(user))
                 {
                     ViewBag.Error = "هذا الحساب محظور مؤقتاً. يرجى التواصل مع الدعم.";
                     return View();
                 }
 
-                // محاولة الدخول
                 var result = await _signInManager.PasswordSignInAsync(user, password, rememberMe, lockoutOnFailure: true);
 
                 if (result.Succeeded)
                 {
-                    // التحقق الخاص بالتجار (Approval Check)
-                    if (await _userManager.IsInRoleAsync(user, "Merchant"))
+                    if (await _userManager.IsInRoleAsync(user, "Merchant") && !user.IsVerifiedMerchant)
                     {
-                        if (!user.IsVerifiedMerchant)
-                        {
-                            await _signInManager.SignOutAsync();
-                            ViewBag.Error = "حساب التاجر الخاص بك قيد المراجعة ولم يتم تفعيله بعد.";
-                            return View();
-                        }
+                        await _signInManager.SignOutAsync();
+                        ViewBag.Error = "حساب التاجر الخاص بك قيد المراجعة ولم يتم تفعيله بعد.";
+                        return View();
                     }
 
                     if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
@@ -82,7 +82,9 @@ namespace Diska.Controllers
             return View();
         }
 
-        // --- 2. Register (Signup) ---
+        // =========================================================
+        // 2. إنشاء حساب جديد
+        // =========================================================
         [HttpGet]
         public IActionResult Signup() => View();
 
@@ -90,7 +92,6 @@ namespace Diska.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Signup(string fullName, string shopName, string phone, string password, string type, string commercialReg, string taxCard)
         {
-            // تنظيف المدخلات والتحقق من الهاتف
             phone = phone?.Trim();
 
             if (string.IsNullOrEmpty(phone))
@@ -106,10 +107,8 @@ namespace Diska.Controllers
                 return View();
             }
 
-            // تحديد القيم الافتراضية بناءً على النوع
             string role = type == "Merchant" ? "Merchant" : "Customer";
 
-            // تعيين قيم افتراضية للحقول الإجبارية في قاعدة البيانات
             string finalShopName = role == "Merchant" ? shopName : "عميل";
             string finalCommReg = !string.IsNullOrEmpty(commercialReg) ? commercialReg : "000000";
             string finalTaxCard = !string.IsNullOrEmpty(taxCard) ? taxCard : "000000";
@@ -125,7 +124,7 @@ namespace Diska.Controllers
                 IsVerifiedMerchant = false,
                 Email = $"{phone}@diska.local",
                 WalletBalance = 0,
-                UserType = role, // إضافة نوع المستخدم 
+                UserType = role,
                 CreatedAt = DateTime.Now
             };
 
@@ -136,12 +135,10 @@ namespace Diska.Controllers
 
                 if (role == "Merchant")
                 {
-                    // التاجر لا يدخل مباشرة
                     TempData["Success"] = "تم تسجيل حساب التاجر بنجاح وهو قيد المراجعة.";
                     return RedirectToAction("Index", "Home");
                 }
 
-                // العميل يدخل مباشرة
                 await _signInManager.SignInAsync(user, isPersistent: true);
                 return RedirectToAction("Index", "Home");
             }
@@ -150,14 +147,36 @@ namespace Diska.Controllers
             return View();
         }
 
-        // --- 3. Logout ---
-        public async Task<IActionResult> Logout()
+        // =========================================================
+        // 3. API إرسال OTP عبر AJAX (للاستخدام في شاشات الموقع)
+        // =========================================================
+        [HttpPost]
+        public async Task<IActionResult> SendOtpAjax(string phone)
         {
-            await _signInManager.SignOutAsync();
-            return RedirectToAction("Index", "Home");
+            if (string.IsNullOrEmpty(phone)) return Json(new { success = false, message = "رقم الهاتف مطلوب" });
+
+            // توليد كود عشوائي من 6 أرقام
+            Random rand = new Random();
+            string otpCode = rand.Next(100000, 999999).ToString();
+
+            // حفظ الكود في Session لمطابقته لاحقاً إذا أردت
+            HttpContext.Session.SetString("VerifiedOTP", otpCode);
+
+            // إرسال الـ SMS عبر خدمة WhySMS
+            bool isSent = await _smsService.SendOtpAsync(phone, otpCode);
+
+            if (isSent)
+            {
+                return Json(new { success = true, message = "تم إرسال رمز التحقق إلى هاتفك.", test_otp = otpCode }); // test_otp للحظات التطوير فقط
+            }
+
+            return Json(new { success = false, message = "حدث خطأ أثناء إرسال الرسالة من المزود." });
         }
 
-        // --- 4. Forgot Password ---
+
+        // =========================================================
+        // 4. نسيت كلمة المرور (مع إرسال SMS حقيقي)
+        // =========================================================
         [HttpGet]
         public IActionResult ForgotPassword()
         {
@@ -177,12 +196,22 @@ namespace Diska.Controllers
                 return View("ForgotPasswordConfirmation");
             }
 
+            // توليد التوكن الخاص بـ Identity
             var code = await _userManager.GeneratePasswordResetTokenAsync(user);
 
-            return RedirectToAction("ResetPassword", new { code = code, phone = phone });
+            // ✅ 5. إرسال الـ SMS الفعلي للعميل يحتوي على رابط استعادة كلمة المرور
+            string resetLink = Url.Action("ResetPassword", "Account", new { code = code, phone = phone }, Request.Scheme);
+            string smsMessage = $"ديسكا: لاستعادة كلمة المرور، اضغط على الرابط: {resetLink}";
+
+            await _smsService.SendSmsAsync(phone, smsMessage);
+
+            // توجيه المستخدم لصفحة تأكيد الإرسال
+            return View("ForgotPasswordConfirmation");
         }
 
-        // --- 5. Reset Password ---
+        // =========================================================
+        // 5. استعادة كلمة المرور
+        // =========================================================
         [HttpGet]
         public IActionResult ResetPassword(string code = null, string phone = null)
         {
@@ -217,21 +246,18 @@ namespace Diska.Controllers
         }
 
         [HttpGet]
-        public IActionResult ResetPasswordConfirmation()
-        {
-            return View();
-        }
+        public IActionResult ResetPasswordConfirmation() => View();
 
         [HttpGet]
-        public IActionResult ForgotPasswordConfirmation()
-        {
-            return View();
-        }
+        public IActionResult ForgotPasswordConfirmation() => View();
 
         [HttpGet]
-        public IActionResult AccessDenied()
+        public IActionResult AccessDenied() => View();
+
+        public async Task<IActionResult> Logout()
         {
-            return View();
+            await _signInManager.SignOutAsync();
+            return RedirectToAction("Index", "Home");
         }
 
         // --- Helpers ---
