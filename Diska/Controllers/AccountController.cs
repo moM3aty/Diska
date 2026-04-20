@@ -162,15 +162,16 @@ namespace Diska.Controllers
             // حفظ الكود في Session لمطابقته لاحقاً إذا أردت
             HttpContext.Session.SetString("VerifiedOTP", otpCode);
 
-            // إرسال الـ SMS عبر خدمة WhySMS
-            bool isSent = await _smsService.SendOtpAsync(phone, otpCode);
+            // ✅ التعديل هنا: استقبال الحالة والرسالة معاً
+            var smsResult = await _smsService.SendOtpAsync(phone, otpCode);
 
-            if (isSent)
+            if (smsResult.IsSuccess)
             {
                 return Json(new { success = true, message = "تم إرسال رمز التحقق إلى هاتفك.", test_otp = otpCode }); // test_otp للحظات التطوير فقط
             }
 
-            return Json(new { success = false, message = "حدث خطأ أثناء إرسال الرسالة من المزود." });
+            // ✅ إرجاع سبب الفشل للـ Postman
+            return Json(new { success = false, message = "حدث خطأ أثناء إرسال الرسالة من المزود.", provider_error = smsResult.Message });
         }
 
 
@@ -199,11 +200,18 @@ namespace Diska.Controllers
             // توليد التوكن الخاص بـ Identity
             var code = await _userManager.GeneratePasswordResetTokenAsync(user);
 
-            // ✅ 5. إرسال الـ SMS الفعلي للعميل يحتوي على رابط استعادة كلمة المرور
+            // إرسال الـ SMS الفعلي للعميل يحتوي على رابط استعادة كلمة المرور
             string resetLink = Url.Action("ResetPassword", "Account", new { code = code, phone = phone }, Request.Scheme);
             string smsMessage = $"ديسكا: لاستعادة كلمة المرور، اضغط على الرابط: {resetLink}";
 
-            await _smsService.SendSmsAsync(phone, smsMessage);
+            // ✅ التعديل هنا: استقبال الحالة والرسالة
+            var smsResult = await _smsService.SendSmsAsync(phone, smsMessage);
+
+            if (!smsResult.IsSuccess)
+            {
+                TempData["Error"] = $"حدث خطأ أثناء إرسال الرسالة: {smsResult.Message}";
+                return View();
+            }
 
             // توجيه المستخدم لصفحة تأكيد الإرسال
             return View("ForgotPasswordConfirmation");
