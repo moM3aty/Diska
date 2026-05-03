@@ -1,7 +1,7 @@
 ﻿{
 	"info": {
-		"name": "DISKA Complete Mobile API v2",
-		"description": "جميع مسارات الموبايل المنفصلة شاملة التفاصيل (Admin, Merchant, Customer, Public, Auth)",
+		"name": "DISKA Complete Mobile API v3 (DTO Fix)",
+		"description": "جميع المسارات محدثة وتستخدم كائنات JSON مبسطة (DTOs) لمنع أخطاء 400 Bad Request.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [

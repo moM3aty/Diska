@@ -20,8 +20,8 @@
 
     <style>
         /* =========================================
-                   PREMIUM AUTH STYLES (Standalone)
-                   ========================================= */
+                           PREMIUM AUTH STYLES (Standalone)
+                           ========================================= */
         :root {
             --auth-bg: #f8fafc;
             --auth-card-bg: #ffffff;
@@ -259,6 +259,14 @@
                 </div>
             }
 
+            <!-- عرض رسائل الخطأ الخاصة بـ C# إذا وجدت -->
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert-error">
+                    <i class="fas fa-exclamation-circle"></i> @TempData["Error"]
+                </div>
+            }
+
             <form asp-action="Signup" method="post">
 
                 <div class="type-toggle">
@@ -280,9 +288,18 @@
 
                 <div class="form-group">
                     <label class="form-label">@(isAr ? "رقم الهاتف" : "Phone Number")</label>
-                    <input type="tel" name="phone" class="form-control" required
-                           placeholder="01xxxxxxxxx"
-                           style="direction:ltr; text-align:@(isAr ? "right" : "left");">
+                    <div style="display: flex; gap: 8px;">
+                        <input type="tel" name="phone" id="phoneInput" class="form-control" required
+                               placeholder="01xxxxxxxxx"
+                               style="direction:ltr; text-align:@(isAr ? "right" : "left");">
+
+                        <!-- ✅ زر الـ OTP الذكي الجديد -->
+                        <button type="button" onclick="sendOtp()" style="background: var(--auth-primary); color: white; border: none; border-radius: 12px; padding: 0 15px; cursor: pointer; font-weight: bold; white-space: nowrap; transition: 0.3s;">
+                            <i class="fas fa-paper-plane me-1"></i> @(isAr ? "إرسال كود" : "Send OTP")
+                        </button>
+                    </div>
+                    <!-- ✅ مربع سيظهر فيه سبب الخطأ من الشركة مباشرة -->
+                    <div id="otpMessage" style="margin-top: 10px; font-size: 0.85rem; display: none; padding: 10px; border-radius: 8px; font-weight: bold;"></div>
                 </div>
 
                 <!-- Merchant Only Fields -->
@@ -338,10 +355,59 @@
                 });
             }
         }
+
+        // ✅ كود الأياكس الذكي لإرسال الـ OTP وكشف الخطأ
+        function sendOtp() {
+            const phone = document.getElementById('phoneInput').value;
+            const msgDiv = document.getElementById('otpMessage');
+
+            if(!phone) {
+                msgDiv.style.display = 'block';
+                msgDiv.style.background = 'var(--danger-bg)';
+                msgDiv.style.color = 'var(--danger-text)';
+                msgDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> يرجى إدخال رقم الهاتف أولاً';
+                return;
+            }
+
+            msgDiv.style.display = 'block';
+            msgDiv.style.background = '#e0f2fe'; // لون أزرق فاتح للتحميل
+            msgDiv.style.color = '#0369a1';
+            msgDiv.style.border = '1px solid #bae6fd';
+            msgDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الاتصال بشركة WhySMS...';
+
+            fetch('/Account/SendOtpAjax', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'phone=' + encodeURIComponent(phone)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    msgDiv.style.background = '#dcfce7'; // أخضر للنجاح
+                    msgDiv.style.color = '#166534';
+                    msgDiv.style.border = '1px solid #bbf7d0';
+                    msgDiv.innerHTML = '<i class="fas fa-check-circle"></i> ' + data.message;
+                } else {
+                    msgDiv.style.background = 'var(--danger-bg)'; // أحمر للرفض
+                    msgDiv.style.color = 'var(--danger-text)';
+                    msgDiv.style.border = '1px solid var(--danger-border)';
+                    // 🚨 هنا سيطبع لك الخطأ الفعلي من شركة WhySMS
+                    msgDiv.innerHTML = '<i class="fas fa-times-circle"></i> ' + data.message +
+                                       '<br><small style="color:#b91c1c; margin-top:5px; display:block;">[WhySMS Error]: ' + (data.provider_error || 'خطأ غير معروف') + '</small>';
+                }
+            })
+            .catch(err => {
+                msgDiv.style.background = 'var(--danger-bg)';
+                msgDiv.style.color = 'var(--danger-text)';
+                msgDiv.innerHTML = '<i class="fas fa-wifi"></i> خطأ في الاتصال بالإنترنت أو السيرفر';
+            });
+        }
     </script>
 
     <style>
-        @("@keyframes") fadeIn {
+        @@keyframes fadeIn {
             from
 
         {

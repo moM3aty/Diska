@@ -1,0 +1,1413 @@
+﻿{
+	"info": {
+		"name": "DISKA Complete Mobile API v2",
+		"description": "جميع مسارات الموبايل المنفصلة شاملة التفاصيل (Admin, Merchant, Customer, Public, Auth)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Auth (المصادقة)",
+			"item": [
+				{
+					"name": "Send OTP",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"phone\": \"01000000000\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/auth/send-otp",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "auth", "send-otp" ]
+						}
+					}
+				},
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"phone\": \"01000000000\",\n  \"password\": \"123456\",\n  \"rememberMe\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/auth/login",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "auth", "login" ]
+						}
+					}
+				},
+				{
+					"name": "Signup",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"fullName\": \"Ahmed Ali\",\n  \"phone\": \"01111111111\",\n  \"password\": \"123456\",\n  \"type\": \"Customer\",\n  \"shopName\": \"\",\n  \"commercialReg\": \"\",\n  \"taxCard\": \"\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/auth/signup",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "auth", "signup" ]
+						}
+					}
+				},
+				{
+					"name": "Forgot Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"phone\": \"01000000000\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/auth/forgot-password",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "auth", "forgot-password" ]
+						}
+					}
+				},
+				{
+					"name": "Reset Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"phone\": \"01000000000\",\n  \"code\": \"TOKEN_HERE\",\n  \"password\": \"NewPassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/auth/reset-password",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "auth", "reset-password" ]
+						}
+					}
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/auth/logout",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "auth", "logout" ]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "2. Public (عام)",
+			"item": [
+				{
+					"name": "Get Categories",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/public/categories",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "public", "categories" ]
+						}
+					}
+				},
+				{
+					"name": "Get Products (With Filters)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/public/products?categoryId=&minPrice=&maxPrice=&sort=newest",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "public", "products" ]
+						}
+					}
+				},
+				{
+					"name": "Get Product Details",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/public/product/1",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "public", "product", "1" ]
+						}
+					}
+				},
+				{
+					"name": "Get Deals",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/public/deals",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "public", "deals" ]
+						}
+					}
+				},
+				{
+					"name": "Get Banners",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/public/banners",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "public", "banners" ]
+						}
+					}
+				},
+				{
+					"name": "Submit Contact Us",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"Name\": \"Test User\",\n  \"Phone\": \"01012345678\",\n  \"Email\": \"test@test.com\",\n  \"Subject\": \"Inquiry\",\n  \"Message\": \"Test message from Postman\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/public/contact",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "public", "contact" ]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "3. Customer (العميل)",
+			"item": [
+				{
+					"name": "Get Profile",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/customer/profile",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "customer", "profile" ]
+						}
+					}
+				},
+				{
+					"name": "Update Profile",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"fullName\": \"Ahmed Updated\",\n  \"currentPassword\": \"\",\n  \"newPassword\": \"\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/customer/profile",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "customer", "profile" ]
+						}
+					}
+				},
+				{
+					"name": "Top Up Wallet",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"amount\": 500\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/customer/wallet/topup",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "customer", "wallet", "topup" ]
+						}
+					}
+				},
+				{
+					"name": "Get Wallet Transactions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/customer/wallet/transactions",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "customer", "wallet", "transactions" ]
+						}
+					}
+				},
+				{
+					"name": "Get Addresses",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/customer/addresses",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "customer", "addresses" ]
+						}
+					}
+				},
+				{
+					"name": "Add Address",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Home\",\n  \"governorate\": \"Cairo\",\n  \"city\": \"Maadi\",\n  \"street\": \"Street 9\",\n  \"phoneNumber\": \"01111111111\",\n  \"isDefault\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/customer/addresses",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "customer", "addresses" ]
+						}
+					}
+				},
+				{
+					"name": "Set Default Address",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/customer/addresses/default",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "customer", "addresses", "default" ]
+						}
+					}
+				},
+				{
+					"name": "Delete Address",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/customer/addresses/1",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "customer", "addresses", "1" ]
+						}
+					}
+				},
+				{
+					"name": "Get Wishlist",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/customer/wishlist",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "customer", "wishlist" ]
+						}
+					}
+				},
+				{
+					"name": "Toggle Wishlist",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/customer/wishlist/toggle",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "customer", "wishlist", "toggle" ]
+						}
+					}
+				},
+				{
+					"name": "Sync Cart",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n  { \"id\": 1, \"qty\": 2, \"colorName\": \"Red\", \"colorHex\": \"#ff0000\" }\n]"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/customer/cart/sync",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "customer", "cart", "sync" ]
+						}
+					}
+				},
+				{
+					"name": "Get Shipping Cities",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/customer/shipping-cities?gov=Cairo",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "customer", "shipping-cities" ],
+							"query": [
+								{
+									"key": "gov",
+									"value": "Cairo"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Shipping Cost",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/customer/shipping-cost?gov=Cairo&city=Maadi",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "customer", "shipping-cost" ],
+							"query": [
+								{
+									"key": "gov",
+									"value": "Cairo"
+								},
+								{
+									"key": "city",
+									"value": "Maadi"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Checkout (Place Order)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Test\",\n  \"phone\": \"01111111111\",\n  \"governorate\": \"Cairo\",\n  \"city\": \"Maadi\",\n  \"address\": \"Street 9\",\n  \"paymentMethod\": \"Cash\",\n  \"deliverySlot\": \"Morning\",\n  \"notes\": \"Call before arrive\",\n  \"shippingCost\": 50,\n  \"items\": [\n    { \"id\": 1, \"qty\": 2, \"colorName\": \"Red\", \"colorHex\": \"#ff0000\" }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/customer/checkout",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "customer", "checkout" ]
+						}
+					}
+				},
+				{
+					"name": "Get My Orders",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/customer/orders?status=all",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "customer", "orders" ],
+							"query": [
+								{
+									"key": "status",
+									"value": "all"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Order Details",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/customer/orders/1",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "customer", "orders", "1" ]
+						}
+					}
+				},
+				{
+					"name": "Get My Reviews",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/customer/reviews",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "customer", "reviews" ]
+						}
+					}
+				},
+				{
+					"name": "Add Review",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"productId\": 1,\n  \"rating\": 5,\n  \"comment\": \"Excellent product!\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/customer/reviews",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "customer", "reviews" ]
+						}
+					}
+				},
+				{
+					"name": "Delete Review",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/customer/reviews/1",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "customer", "reviews", "1" ]
+						}
+					}
+				},
+				{
+					"name": "Get My Special Requests",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/customer/special-requests",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "customer", "special-requests" ]
+						}
+					}
+				},
+				{
+					"name": "Get Request Details (With Offers/Chat)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/customer/special-requests/1",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "customer", "special-requests", "1" ]
+						}
+					}
+				},
+				{
+					"name": "Submit Special Request",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"productName\": \"IPhone 15 Pro Max Bulk\",\n  \"targetQuantity\": 50,\n  \"dealPrice\": 45000,\n  \"location\": \"Cairo\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/customer/special-requests",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "customer", "special-requests" ]
+						}
+					}
+				},
+				{
+					"name": "Accept Merchant Offer",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/customer/special-requests/accept-offer",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "customer", "special-requests", "accept-offer" ]
+						}
+					}
+				},
+				{
+					"name": "Send Chat Message",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"requestId\": 1,\n  \"message\": \"Is it new?\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/customer/special-requests/message",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "customer", "special-requests", "message" ]
+						}
+					}
+				},
+				{
+					"name": "Get Notifications",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/customer/notifications",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "customer", "notifications" ]
+						}
+					}
+				},
+				{
+					"name": "Mark Notification Read",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/customer/notifications/read",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "customer", "notifications", "read" ]
+						}
+					}
+				},
+				{
+					"name": "Check Pending Surveys",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/customer/surveys/pending",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "customer", "surveys", "pending" ]
+						}
+					}
+				},
+				{
+					"name": "Submit Survey",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"surveyId\": 1,\n  \"answers\": {\"q_1\": \"Good\", \"q_2\": \"5\"}\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/customer/surveys/submit",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "customer", "surveys", "submit" ]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "4. Merchant (التاجر)",
+			"item": [
+				{
+					"name": "Get Dashboard Stats",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/merchant/dashboard",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "merchant", "dashboard" ]
+						}
+					}
+				},
+				{
+					"name": "Get My Products",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/merchant/products",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "merchant", "products" ]
+						}
+					}
+				},
+				{
+					"name": "Create Product",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"New Product\",\n  \"nameEn\": \"New Product En\",\n  \"price\": 1500,\n  \"stockQuantity\": 100,\n  \"categoryId\": 1,\n  \"description\": \"Description\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/merchant/products",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "merchant", "products" ]
+						}
+					}
+				},
+				{
+					"name": "Update Stock",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"productId\": 1,\n  \"quantity\": 50\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/merchant/products/stock",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "merchant", "products", "stock" ]
+						}
+					}
+				},
+				{
+					"name": "Request Price Update",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"requestId\": 1,\n  \"price\": 1600\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/merchant/products/request-price",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "merchant", "products", "request-price" ]
+						}
+					}
+				},
+				{
+					"name": "Get My Deals",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/merchant/deals",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "merchant", "deals" ]
+						}
+					}
+				},
+				{
+					"name": "Create Deal",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Summer Sale\",\n  \"productId\": 1,\n  \"discountValue\": 10,\n  \"isPercentage\": true,\n  \"targetQuantity\": 50,\n  \"startDate\": \"2024-06-01\",\n  \"endDate\": \"2024-06-30\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/merchant/deals",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "merchant", "deals" ]
+						}
+					}
+				},
+				{
+					"name": "Get My Banners",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/merchant/banners",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "merchant", "banners" ]
+						}
+					}
+				},
+				{
+					"name": "Create Banner",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"My Shop Ad\",\n  \"linkType\": \"Product\",\n  \"linkId\": \"1\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/merchant/banners",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "merchant", "banners" ]
+						}
+					}
+				},
+				{
+					"name": "Get Wallet Info",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/merchant/wallet",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "merchant", "wallet" ]
+						}
+					}
+				},
+				{
+					"name": "Request Withdraw",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"amount\": 5000\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/merchant/wallet/withdraw",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "merchant", "wallet", "withdraw" ]
+						}
+					}
+				},
+				{
+					"name": "Get Merchant Orders",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/merchant/orders?status=All",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "merchant", "orders" ],
+							"query": [
+								{
+									"key": "status",
+									"value": "All"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Order Details",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/merchant/orders/1",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "merchant", "orders", "1" ]
+						}
+					}
+				},
+				{
+					"name": "Get Special Requests Marketplace",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/merchant/requests",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "merchant", "requests" ]
+						}
+					}
+				},
+				{
+					"name": "Submit Offer for Request",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"requestId\": 1,\n  \"price\": 44000,\n  \"notes\": \"Available immediately\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/merchant/requests/offer",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "merchant", "requests", "offer" ]
+						}
+					}
+				},
+				{
+					"name": "Send Message to Request",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"requestId\": 1,\n  \"message\": \"I can deliver it today\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/merchant/requests/message",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "merchant", "requests", "message" ]
+						}
+					}
+				},
+				{
+					"name": "Get Low Stock Alerts",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/merchant/restock/alerts",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "merchant", "restock", "alerts" ]
+						}
+					}
+				},
+				{
+					"name": "Get My Product Reviews",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/merchant/reviews",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "merchant", "reviews" ]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "5. Admin (الإدارة)",
+			"item": [
+				{
+					"name": "Get Dashboard Stats",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/admin/dashboard",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "admin", "dashboard" ]
+						}
+					}
+				},
+				{
+					"name": "Get Pending Merchants",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/admin/approvals/merchants",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "admin", "approvals", "merchants" ]
+						}
+					}
+				},
+				{
+					"name": "Approve Merchant",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": \"USER_ID_HERE\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/admin/approvals/merchant",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "admin", "approvals", "merchant" ]
+						}
+					}
+				},
+				{
+					"name": "Get Pending Products",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/admin/approvals/products",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "admin", "approvals", "products" ]
+						}
+					}
+				},
+				{
+					"name": "Approve Product",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/admin/approvals/product",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "admin", "approvals", "product" ]
+						}
+					}
+				},
+				{
+					"name": "Get Pending Actions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/admin/approvals/actions",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "admin", "approvals", "actions" ]
+						}
+					}
+				},
+				{
+					"name": "Approve Action (Withdraw/Price)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/admin/approvals/action",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "admin", "approvals", "action" ]
+						}
+					}
+				},
+				{
+					"name": "Create Category",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Test Cat\",\n  \"nameEn\": \"Test\",\n  \"isActive\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/admin/categories",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "admin", "categories" ]
+						}
+					}
+				},
+				{
+					"name": "Approve Banner",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/admin/banners/approve",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "admin", "banners", "approve" ]
+						}
+					}
+				},
+				{
+					"name": "Approve Deal",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/admin/deals/approve",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "admin", "deals", "approve" ]
+						}
+					}
+				},
+				{
+					"name": "Get All Orders",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/admin/orders",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "admin", "orders" ]
+						}
+					}
+				},
+				{
+					"name": "Update Order Status",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": 1,\n  \"status\": \"Shipped\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/admin/orders/status",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "admin", "orders", "status" ]
+						}
+					}
+				},
+				{
+					"name": "Get Shipping Rates",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/admin/shipping",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "admin", "shipping" ]
+						}
+					}
+				},
+				{
+					"name": "Save Shipping Rate",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"governorate\": \"Alexandria\",\n  \"city\": \"\",\n  \"cost\": 60\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/admin/shipping",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "admin", "shipping" ]
+						}
+					}
+				},
+				{
+					"name": "Delete Shipping Rate",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/admin/shipping/1",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "admin", "shipping", "1" ]
+						}
+					}
+				},
+				{
+					"name": "Get Users",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/admin/users",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "admin", "users" ]
+						}
+					}
+				},
+				{
+					"name": "Delete User",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": \"USER_ID_HERE\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/admin/users",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "admin", "users" ]
+						}
+					}
+				},
+				{
+					"name": "Adjust Wallet Balance",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userId\": \"USER_ID_HERE\",\n  \"amount\": 1000,\n  \"type\": \"Deposit\",\n  \"description\": \"Admin Bonus\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/admin/wallet/adjust",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "admin", "wallet", "adjust" ]
+						}
+					}
+				},
+				{
+					"name": "Get Reviews",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/admin/reviews",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "admin", "reviews" ]
+						}
+					}
+				},
+				{
+					"name": "Toggle Review Visibility",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/admin/reviews/toggle",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "admin", "reviews", "toggle" ]
+						}
+					}
+				},
+				{
+					"name": "Get Surveys",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/admin/surveys",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "admin", "surveys" ]
+						}
+					}
+				},
+				{
+					"name": "Create Survey",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Feedback\",\n  \"targetAudience\": \"All\",\n  \"isActive\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/admin/surveys",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "admin", "surveys" ]
+						}
+					}
+				},
+				{
+					"name": "Toggle Survey Status",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/admin/surveys/toggle",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "admin", "surveys", "toggle" ]
+						}
+					}
+				},
+				{
+					"name": "Get Audit Logs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/admin/audit",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "admin", "audit" ]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "https://diska.online",
+			"type": "string"
+		}
+	]
+}	

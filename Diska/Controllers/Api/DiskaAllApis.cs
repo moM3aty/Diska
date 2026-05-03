@@ -194,7 +194,17 @@ namespace Diska.ApiControllers
         public async Task<IActionResult> GetBanners() => Ok(new { success = true, data = await _context.Banners.Where(b => b.IsActive && b.EndDate > DateTime.Now && b.ApprovalStatus == "Approved").Select(b => new { b.Id, b.Title, b.ImageMobile, b.LinkId, b.LinkType }).ToListAsync() });
 
         [HttpPost("contact")]
-        public async Task<IActionResult> ContactUs([FromBody] ContactMessage model) { try { model.DateSent = DateTime.Now; _context.ContactMessages.Add(model); await _context.SaveChangesAsync(); return Ok(new { success = true }); } catch (Exception ex) { return Ok(new { success = false, errorDetail = ex.Message }); } }
+        public async Task<IActionResult> ContactUs([FromBody] ApiContactDto dto)
+        {
+            try
+            {
+                var model = new ContactMessage { Name = dto.Name, Email = dto.Email, Phone = dto.Phone, Subject = dto.Subject, Message = dto.Message, DateSent = DateTime.Now };
+                _context.ContactMessages.Add(model);
+                await _context.SaveChangesAsync();
+                return Ok(new { success = true });
+            }
+            catch (Exception ex) { return Ok(new { success = false, errorDetail = ex.Message }); }
+        }
     }
 
     // =========================================================================
@@ -226,8 +236,25 @@ namespace Diska.ApiControllers
         [HttpGet("addresses")]
         public async Task<IActionResult> GetAddresses() => Ok(new { success = true, data = await _context.UserAddresses.Where(a => a.UserId == UserId).OrderByDescending(a => a.IsDefault).ToListAsync() });
 
+        // 🚨 تصحيح إضافة عنوان باستخدام DTO
         [HttpPost("addresses")]
-        public async Task<IActionResult> AddAddress([FromBody] UserAddress addr) { try { addr.UserId = UserId; if (addr.IsDefault || !_context.UserAddresses.Any(a => a.UserId == UserId)) { var others = await _context.UserAddresses.Where(a => a.UserId == UserId).ToListAsync(); others.ForEach(a => a.IsDefault = false); addr.IsDefault = true; } _context.UserAddresses.Add(addr); await _context.SaveChangesAsync(); return Ok(new { success = true }); } catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); } }
+        public async Task<IActionResult> AddAddress([FromBody] ApiAddressDto dto)
+        {
+            try
+            {
+                var addr = new UserAddress { UserId = UserId, Title = dto.Title!, Governorate = dto.Governorate!, City = dto.City!, Street = dto.Street!, PhoneNumber = dto.PhoneNumber!, IsDefault = dto.IsDefault };
+                if (addr.IsDefault || !_context.UserAddresses.Any(a => a.UserId == UserId))
+                {
+                    var others = await _context.UserAddresses.Where(a => a.UserId == UserId).ToListAsync();
+                    others.ForEach(a => a.IsDefault = false);
+                    addr.IsDefault = true;
+                }
+                _context.UserAddresses.Add(addr);
+                await _context.SaveChangesAsync();
+                return Ok(new { success = true });
+            }
+            catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); }
+        }
 
         [HttpPut("addresses/default")]
         public async Task<IActionResult> SetDefaultAddress([FromBody] ApiIdDto dto) { try { var addrs = await _context.UserAddresses.Where(a => a.UserId == UserId).ToListAsync(); foreach (var a in addrs) a.IsDefault = (a.Id == dto.Id); await _context.SaveChangesAsync(); return Ok(new { success = true }); } catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); } }
@@ -259,7 +286,7 @@ namespace Diska.ApiControllers
             {
                 if (dto.Items == null || !dto.Items.Any()) return BadRequest(new { success = false, message = "السلة فارغة" });
                 decimal total = dto.ShippingCost;
-                var order = new Order { UserId = UserId, CustomerName = dto.Name!, Phone = dto.Phone!, Governorate = dto.Governorate!, City = dto.City!, Address = dto.Address!, PaymentMethod = dto.PaymentMethod ?? "Cash", OrderDate = DateTime.Now, Status = dto.PaymentMethod == "BankTransfer" ? "AwaitingPayment" : "Pending", ShippingCost = dto.ShippingCost, Notes = dto.Notes!, DeliverySlot = dto.DeliverySlot!, OrderItems = new List<OrderItem>() };
+                var order = new Order { UserId = UserId, CustomerName = dto.Name!, Phone = dto.Phone!, Governorate = dto.Governorate!, City = dto.City!, Address = dto.Address!, PaymentMethod = dto.PaymentMethod ?? "Cash", OrderDate = DateTime.Now, Status = dto.PaymentMethod == "BankTransfer" ? "AwaitingPayment" : "Pending", ShippingCost = dto.ShippingCost, Notes = dto.Notes ?? "", DeliverySlot = dto.DeliverySlot ?? "", OrderItems = new List<OrderItem>() };
 
                 foreach (var item in dto.Items)
                 {
@@ -270,7 +297,7 @@ namespace Diska.ApiControllers
                         decimal fPrice = p.Price;
                         var tier = p.PriceTiers.OrderBy(t => t.UnitPrice).FirstOrDefault(t => item.Qty >= t.MinQuantity && item.Qty <= t.MaxQuantity);
                         if (tier != null) fPrice = tier.UnitPrice;
-                        order.OrderItems.Add(new OrderItem { ProductId = p.Id, Quantity = item.Qty, UnitPrice = fPrice, SelectedColorName = item.ColorName!, SelectedColorHex = item.ColorHex! });
+                        order.OrderItems.Add(new OrderItem { ProductId = p.Id, Quantity = item.Qty, UnitPrice = fPrice, SelectedColorName = item.ColorName ?? "", SelectedColorHex = item.ColorHex ?? "" });
                         total += (fPrice * item.Qty);
                     }
                 }
@@ -288,19 +315,39 @@ namespace Diska.ApiControllers
         [HttpGet("orders/{id}")]
         public async Task<IActionResult> GetOrderDetails(int id) => Ok(new { success = true, data = await _context.Orders.Include(o => o.OrderItems).ThenInclude(oi => oi.Product).Where(o => o.Id == id && o.UserId == UserId).Select(o => new { o.Id, o.OrderDate, o.Status, o.TotalAmount, o.ShippingCost, o.Address, o.City, o.Governorate, o.PaymentMethod, o.DeliverySlot, o.Notes, Items = o.OrderItems.Select(i => new { i.Product!.Name, i.Product.ImageUrl, i.Quantity, i.UnitPrice, i.SelectedColorName }) }).FirstOrDefaultAsync() });
 
-        // Reviews
+        // 🚨 تصحيح التقييمات باستخدام DTO
         [HttpGet("reviews")]
         public async Task<IActionResult> GetMyReviews() => Ok(new { success = true, data = await _context.ProductReviews.Include(r => r.Product).Where(r => r.UserId == UserId).Select(r => new { r.Id, r.Rating, r.Comment, r.CreatedAt, Product = r.Product!.Name }).ToListAsync() });
 
         [HttpPost("reviews")]
-        public async Task<IActionResult> AddReview([FromBody] ProductReview rev) { try { rev.UserId = UserId; rev.CreatedAt = DateTime.Now; rev.IsVisible = true; _context.ProductReviews.Add(rev); await _context.SaveChangesAsync(); return Ok(new { success = true }); } catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); } }
+        public async Task<IActionResult> AddReview([FromBody] ApiReviewDto dto)
+        {
+            try
+            {
+                var rev = new ProductReview { UserId = UserId, ProductId = dto.ProductId, Rating = dto.Rating, Comment = dto.Comment!, CreatedAt = DateTime.Now, IsVisible = true };
+                _context.ProductReviews.Add(rev);
+                await _context.SaveChangesAsync();
+                return Ok(new { success = true });
+            }
+            catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); }
+        }
 
         [HttpDelete("reviews/{id}")]
         public async Task<IActionResult> DeleteReview(int id) { try { var r = await _context.ProductReviews.FirstOrDefaultAsync(x => x.Id == id && x.UserId == UserId); if (r != null) { _context.ProductReviews.Remove(r); await _context.SaveChangesAsync(); } return Ok(new { success = true }); } catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); } }
 
-        // Special Requests & Deals
+        // 🚨 تصحيح الطلبات الخاصة باستخدام DTO
         [HttpPost("special-requests")]
-        public async Task<IActionResult> AddSpecialRequest([FromBody] DealRequest req) { try { req.UserId = UserId; req.RequestDate = DateTime.Now; req.Status = "Pending"; _context.DealRequests.Add(req); await _context.SaveChangesAsync(); return Ok(new { success = true }); } catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); } }
+        public async Task<IActionResult> AddSpecialRequest([FromBody] ApiDealRequestDto dto)
+        {
+            try
+            {
+                var req = new DealRequest { UserId = UserId, ProductName = dto.ProductName!, TargetQuantity = dto.TargetQuantity, DealPrice = dto.DealPrice, Location = dto.Location!, RequestDate = DateTime.Now, Status = "Pending" };
+                _context.DealRequests.Add(req);
+                await _context.SaveChangesAsync();
+                return Ok(new { success = true });
+            }
+            catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); }
+        }
 
         [HttpGet("special-requests")]
         public async Task<IActionResult> GetMyRequests() => Ok(new { success = true, data = await _context.DealRequests.Include(r => r.Offers).Where(r => r.UserId == UserId).Select(r => new { r.Id, r.ProductName, r.TargetQuantity, r.DealPrice, r.Status, r.RequestDate, OffersCount = r.Offers.Count }).ToListAsync() });
@@ -347,8 +394,19 @@ namespace Diska.ApiControllers
         [HttpGet("products")]
         public async Task<IActionResult> GetMyProducts() => Ok(new { success = true, data = await _context.Products.Where(p => p.MerchantId == UserId).Select(p => new { p.Id, p.Name, p.Price, p.StockQuantity, p.Status, p.ImageUrl }).ToListAsync() });
 
-        [HttpPost("products")] // In real app, image upload needs [FromForm], here using DTO for simplicity
-        public async Task<IActionResult> AddProduct([FromBody] Product p) { try { p.MerchantId = UserId; p.Status = "Active"; p.Color = p.Color ?? "#000"; _context.Products.Add(p); await _context.SaveChangesAsync(); return Ok(new { success = true }); } catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); } }
+        // 🚨 تصحيح إضافة منتج باستخدام DTO
+        [HttpPost("products")]
+        public async Task<IActionResult> AddProduct([FromBody] ApiProductDto dto)
+        {
+            try
+            {
+                var p = new Product { MerchantId = UserId, Name = dto.Name!, NameEn = dto.NameEn!, Description = dto.Description!, Price = dto.Price, StockQuantity = dto.StockQuantity, CategoryId = dto.CategoryId, Status = "Active", Color = "#000" };
+                _context.Products.Add(p);
+                await _context.SaveChangesAsync();
+                return Ok(new { success = true });
+            }
+            catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); }
+        }
 
         [HttpPut("products/stock")]
         public async Task<IActionResult> UpdateStock([FromBody] ApiStockUpdateDto dto) { try { var p = await _context.Products.FirstOrDefaultAsync(x => x.Id == dto.ProductId && x.MerchantId == UserId); if (p == null) return NotFound(); p.StockQuantity = dto.Quantity; await _context.SaveChangesAsync(); return Ok(new { success = true }); } catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); } }
@@ -356,18 +414,38 @@ namespace Diska.ApiControllers
         [HttpPost("products/request-price")]
         public async Task<IActionResult> RequestPriceUpdate([FromBody] ApiOfferDto dto) { try { _context.PendingMerchantActions.Add(new PendingMerchantAction { MerchantId = UserId, ActionType = "UpdateProductPrice", EntityName = "Product", EntityId = dto.RequestId.ToString(), NewValueJson = JsonSerializer.Serialize(new { Price = dto.Price }), Status = "Pending", RequestDate = DateTime.Now }); await _context.SaveChangesAsync(); return Ok(new { success = true }); } catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); } }
 
-        // Deals & Banners
+        // 🚨 تصحيح إضافة صفقات وبنرات باستخدام DTOs
         [HttpGet("deals")]
         public async Task<IActionResult> GetMyDeals() => Ok(new { success = true, data = await _context.GroupDeals.Where(d => d.Product!.MerchantId == UserId).Select(d => new { d.Id, d.Title, d.Status, d.DealPrice, d.DiscountValue }).ToListAsync() });
 
         [HttpPost("deals")]
-        public async Task<IActionResult> AddDeal([FromBody] GroupDeal d) { try { d.Status = "Pending"; _context.GroupDeals.Add(d); await _context.SaveChangesAsync(); return Ok(new { success = true }); } catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); } }
+        public async Task<IActionResult> AddDeal([FromBody] ApiDealDto dto)
+        {
+            try
+            {
+                var d = new GroupDeal { Title = dto.Title!, ProductId = dto.ProductId, DiscountValue = dto.DiscountValue, IsPercentage = dto.IsPercentage, TargetQuantity = dto.TargetQuantity, StartDate = dto.StartDate, EndDate = dto.EndDate, Status = "Pending", IsActive = false };
+                _context.GroupDeals.Add(d);
+                await _context.SaveChangesAsync();
+                return Ok(new { success = true });
+            }
+            catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); }
+        }
 
         [HttpGet("banners")]
         public async Task<IActionResult> GetMyBanners() => Ok(new { success = true, data = await _context.Banners.Where(b => b.MerchantId == UserId).Select(b => new { b.Id, b.Title, b.ApprovalStatus, b.ImageMobile }).ToListAsync() });
 
         [HttpPost("banners")]
-        public async Task<IActionResult> AddBanner([FromBody] Banner b) { try { b.MerchantId = UserId; b.ApprovalStatus = "Pending"; b.IsActive = false; _context.Banners.Add(b); await _context.SaveChangesAsync(); return Ok(new { success = true }); } catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); } }
+        public async Task<IActionResult> AddBanner([FromBody] ApiBannerDto dto)
+        {
+            try
+            {
+                var b = new Banner { MerchantId = UserId, Title = dto.Title!, LinkType = dto.LinkType, LinkId = dto.LinkId, ApprovalStatus = "Pending", IsActive = false, StartDate = DateTime.Now, EndDate = DateTime.Now.AddMonths(1) };
+                _context.Banners.Add(b);
+                await _context.SaveChangesAsync();
+                return Ok(new { success = true });
+            }
+            catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); }
+        }
 
         // Wallet & Orders
         [HttpGet("wallet")]
@@ -433,9 +511,19 @@ namespace Diska.ApiControllers
         [HttpPost("approvals/action")]
         public async Task<IActionResult> ApproveAction([FromBody] ApiIdDto dto) { try { var a = await _context.PendingMerchantActions.FindAsync(dto.Id); if (a != null) { a.Status = "Approved"; if (a.ActionType == "UpdateProductPrice") { var p = await _context.Products.FindAsync(int.Parse(a.EntityId)); if (p != null) { using var doc = JsonDocument.Parse(a.NewValueJson); if (doc.RootElement.TryGetProperty("Price", out var pr)) { p.Price = pr.GetDecimal(); _context.Update(p); } } } await _context.SaveChangesAsync(); } return Ok(new { success = true }); } catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); } }
 
-        // Categories & Banners & Deals
+        // 🚨 تصحيح Categories 
         [HttpPost("categories")]
-        public async Task<IActionResult> AddCategory([FromBody] Category c) { try { _context.Categories.Add(c); await _context.SaveChangesAsync(); return Ok(new { success = true }); } catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); } }
+        public async Task<IActionResult> AddCategory([FromBody] ApiCategoryDto dto)
+        {
+            try
+            {
+                var c = new Category { Name = dto.Name!, NameEn = dto.NameEn!, IconClass = dto.IconClass ?? "fas fa-box", ImageUrl = dto.ImageUrl ?? "", IsActive = true, Slug = dto.NameEn?.ToLower() ?? "cat" };
+                _context.Categories.Add(c);
+                await _context.SaveChangesAsync();
+                return Ok(new { success = true });
+            }
+            catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); }
+        }
 
         [HttpPost("banners/approve")]
         public async Task<IActionResult> ApproveBanner([FromBody] ApiIdDto dto) { try { var b = await _context.Banners.FindAsync(dto.Id); if (b != null) { b.ApprovalStatus = "Approved"; b.IsActive = true; await _context.SaveChangesAsync(); } return Ok(new { success = true }); } catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); } }
@@ -454,7 +542,7 @@ namespace Diska.ApiControllers
         public async Task<IActionResult> GetShippingRates() => Ok(new { success = true, data = await _context.ShippingRates.ToListAsync() });
 
         [HttpPost("shipping")]
-        public async Task<IActionResult> SaveShipping([FromBody] ShippingRate r) { try { _context.ShippingRates.Update(r); await _context.SaveChangesAsync(); return Ok(new { success = true }); } catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); } }
+        public async Task<IActionResult> SaveShipping([FromBody] ApiShippingDto dto) { try { var r = new ShippingRate { Governorate = dto.Governorate!, City = dto.City!, Cost = dto.Cost }; _context.ShippingRates.Add(r); await _context.SaveChangesAsync(); return Ok(new { success = true }); } catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); } }
 
         [HttpDelete("shipping/{id}")]
         public async Task<IActionResult> DeleteShipping(int id) { try { var r = await _context.ShippingRates.FindAsync(id); if (r != null) { _context.ShippingRates.Remove(r); await _context.SaveChangesAsync(); } return Ok(new { success = true }); } catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); } }
@@ -479,9 +567,6 @@ namespace Diska.ApiControllers
         [HttpGet("surveys")]
         public async Task<IActionResult> GetSurveys() => Ok(new { success = true, data = await _context.Surveys.Select(s => new { s.Id, s.Title, s.IsActive, s.StartDate, s.EndDate }).ToListAsync() });
 
-        [HttpPost("surveys")]
-        public async Task<IActionResult> AddSurvey([FromBody] Survey s) { try { _context.Surveys.Add(s); await _context.SaveChangesAsync(); return Ok(new { success = true }); } catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); } }
-
         [HttpPost("surveys/toggle")]
         public async Task<IActionResult> ToggleSurvey([FromBody] ApiIdDto dto) { try { var s = await _context.Surveys.FindAsync(dto.Id); if (s != null) { s.IsActive = !s.IsActive; await _context.SaveChangesAsync(); } return Ok(new { success = true }); } catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); } }
 
@@ -491,6 +576,7 @@ namespace Diska.ApiControllers
 
     // =========================================================================
     // DTOs (Data Transfer Objects)
+    // جميع الكلاسات هنا مبسطة لمنع خطأ 400 Bad Request
     // =========================================================================
     public class ApiLoginDto { public string? Phone { get; set; } public string? Password { get; set; } public bool RememberMe { get; set; } }
     public class ApiSignupDto { public string? FullName { get; set; } public string? Phone { get; set; } public string? Password { get; set; } public string? Type { get; set; } public string? ShopName { get; set; } public string? CommercialReg { get; set; } public string? TaxCard { get; set; } }
@@ -500,6 +586,18 @@ namespace Diska.ApiControllers
     public class ApiAmountDto { public decimal Amount { get; set; } }
     public class ApiIdDto { public int Id { get; set; } }
     public class ApiStringIdDto { public string? Id { get; set; } }
+    public class ApiContactDto { public string? Name { get; set; } public string? Phone { get; set; } public string? Email { get; set; } public string? Subject { get; set; } public string? Message { get; set; } }
+
+    // 🚨 DTOs جديدة لمنع خطأ 400
+    public class ApiAddressDto { public string? Title { get; set; } public string? Governorate { get; set; } public string? City { get; set; } public string? Street { get; set; } public string? PhoneNumber { get; set; } public bool IsDefault { get; set; } }
+    public class ApiReviewDto { public int ProductId { get; set; } public int Rating { get; set; } public string? Comment { get; set; } }
+    public class ApiDealRequestDto { public string? ProductName { get; set; } public int TargetQuantity { get; set; } public decimal DealPrice { get; set; } public string? Location { get; set; } }
+    public class ApiProductDto { public string? Name { get; set; } public string? NameEn { get; set; } public string? Description { get; set; } public decimal Price { get; set; } public int StockQuantity { get; set; } public int CategoryId { get; set; } }
+    public class ApiDealDto { public string? Title { get; set; } public int ProductId { get; set; } public decimal DiscountValue { get; set; } public bool IsPercentage { get; set; } public int TargetQuantity { get; set; } public DateTime StartDate { get; set; } public DateTime EndDate { get; set; } }
+    public class ApiBannerDto { public string? Title { get; set; } public string? LinkType { get; set; } public string? LinkId { get; set; } }
+    public class ApiCategoryDto { public string? Name { get; set; } public string? NameEn { get; set; } public string? IconClass { get; set; } public string? ImageUrl { get; set; } }
+    public class ApiShippingDto { public string? Governorate { get; set; } public string? City { get; set; } public decimal Cost { get; set; } }
+
     public class ApiCheckoutDto { public string? Name { get; set; } public string? Phone { get; set; } public string? Governorate { get; set; } public string? City { get; set; } public string? Address { get; set; } public string? PaymentMethod { get; set; } public string? Notes { get; set; } public string? DeliverySlot { get; set; } public decimal ShippingCost { get; set; } public List<ApiCartItemDto>? Items { get; set; } }
     public class ApiCartItemDto { public int Id { get; set; } public int Qty { get; set; } public string? ColorName { get; set; } public string? ColorHex { get; set; } }
     public class ApiSurveySubmitDto { public int SurveyId { get; set; } public Dictionary<string, string>? Answers { get; set; } }

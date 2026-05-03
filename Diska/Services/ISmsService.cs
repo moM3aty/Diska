@@ -9,14 +9,12 @@ using Microsoft.Extensions.Logging;
 
 namespace Diska.Services
 {
-    // 🚨 1. الانترفيس المحدث (يُرجع Tuple يحتوي على حالة النجاح والرسالة)
     public interface ISmsService
     {
         Task<(bool IsSuccess, string Message)> SendOtpAsync(string phoneNumber, string otpCode);
         Task<(bool IsSuccess, string Message)> SendSmsAsync(string phoneNumber, string message);
     }
 
-    // 🚨 2. كلاس الخدمة المحدث
     public class WhySmsService : ISmsService
     {
         private readonly HttpClient _httpClient;
@@ -40,14 +38,16 @@ namespace Diska.Services
         {
             try
             {
-                // الإعدادات (تأكد أنها موجودة في appsettings.json)
+                // 1. جلب الإعدادات
+                // تأكد من أن الرابط ينتهي بـ / (slash)
                 var baseUrl = _configuration["WhySmsSettings:BaseUrl"] ?? "https://bulk.whysms.com/api/v3/sms/";
                 var apiToken = _configuration["WhySmsSettings:ApiToken"] ?? "1138|UXdBboZ1il3eys99Ik1n1KBI4VyqqvGAknKV1fMj9905ebde";
                 var senderId = _configuration["WhySmsSettings:SenderId"] ?? "WhySMS Test";
 
-                // تنظيف الرقم (تحويله للأرقام الإنجليزية وإضافة 2 في البداية)
+                // 2. تنظيف رقم الهاتف
                 phoneNumber = NormalizePhoneNumber(phoneNumber);
 
+                // 3. تجهيز البيانات (Payload)
                 var payload = new
                 {
                     recipient = phoneNumber,
@@ -57,61 +57,66 @@ namespace Diska.Services
                 };
 
                 string jsonPayload = JsonSerializer.Serialize(payload);
-                var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
 
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiToken);
-                _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                // 4. بناء الطلب بطريقة آمنة جداً (HttpRequestMessage)
+                // دمج baseUrl مع كلمة send بشكل صحيح
+                string requestUrl = baseUrl.EndsWith("/") ? $"{baseUrl}send" : $"{baseUrl}/send";
 
-                // إرسال الطلب للشركة
-                var response = await _httpClient.PostAsync($"{baseUrl}send", content);
+                var request = new HttpRequestMessage(HttpMethod.Post, requestUrl);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiToken.Trim());
+                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                request.Content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+
+                // ==============================================================
+                // طباعة في الشاشة السوداء (Console) لمعرفة ماذا يحدث بالضبط
+                Console.WriteLine("========================================");
+                Console.WriteLine($"[SMS DEBUG] URL: {requestUrl}");
+                Console.WriteLine($"[SMS DEBUG] Token: Bearer {apiToken.Trim()}");
+                Console.WriteLine($"[SMS DEBUG] Payload: {jsonPayload}");
+                Console.WriteLine("========================================");
+                // ==============================================================
+
+                // 5. إرسال الطلب
+                var response = await _httpClient.SendAsync(request);
                 var responseString = await response.Content.ReadAsStringAsync();
+
+                // طباعة رد الشركة
+                Console.WriteLine($"[SMS RESPONSE] Status: {response.StatusCode}");
+                Console.WriteLine($"[SMS RESPONSE] Body: {responseString}");
+                Console.WriteLine("========================================");
 
                 if (response.IsSuccessStatusCode)
                 {
                     using var doc = JsonDocument.Parse(responseString);
-
                     if (doc.RootElement.TryGetProperty("status", out var statusProp) && statusProp.GetString() == "success")
                     {
                         return (true, "تم الإرسال بنجاح");
                     }
 
-                    // لو الرد مش success، نجيب الرسالة من الشركة
                     string apiError = doc.RootElement.TryGetProperty("message", out var msgProp) ? msgProp.GetString() : responseString;
-                    return (false, apiError);
+                    return (false, $"تم الرفض من الشركة: {apiError}");
                 }
                 else
                 {
-                    return (false, $"HTTP Error: {(int)response.StatusCode} - {responseString}");
+                    // لو الخطأ 401 أو 404 أو 500
+                    return (false, $"فشل الاتصال: {(int)response.StatusCode} - {responseString}");
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError($"SMS Exception: {ex.Message}");
-                return (false, $"Exception: {ex.Message}");
+                // لو فشل محلي قبل أن يخرج للانترنت (مثل مشكلة الـ SSL)
+                Console.WriteLine($"[SMS LOCAL CRASH] {ex.Message}");
+                return (false, $"خطأ محلي في السيرفر: {ex.Message}");
             }
         }
 
-        // دالة تنظيف رقم الهاتف وتجهيزه
         private string NormalizePhoneNumber(string phone)
         {
             if (string.IsNullOrWhiteSpace(phone)) return phone;
-
-            // 1. تحويل الأرقام الهندية (العربية) إلى إنجليزية
             string[] arabicDigits = { "٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩" };
-            for (int i = 0; i < arabicDigits.Length; i++)
-            {
-                phone = phone.Replace(arabicDigits[i], i.ToString());
-            }
-
-            // 2. إزالة المسافات وعلامة +
+            for (int i = 0; i < arabicDigits.Length; i++) { phone = phone.Replace(arabicDigits[i], i.ToString()); }
             phone = phone.Replace(" ", "").Replace("+", "");
-
-            // 3. التأكد من كود مصر (إضافة 2 للرقم الذي يبدأ بـ 01)
-            if (phone.StartsWith("01") && phone.Length == 11)
-            {
-                phone = "2" + phone;
-            }
-
+            if (phone.StartsWith("01") && phone.Length == 11) { phone = "2" + phone; }
             return phone;
         }
     }
