@@ -581,7 +581,6 @@ namespace Diska.ApiControllers
         [HttpDelete("banners/{id}")]
         public async Task<IActionResult> DeleteBanner(int id) { try { var b = await _context.Banners.FirstOrDefaultAsync(x => x.Id == id && x.MerchantId == UserId); if (b != null) { _context.Banners.Remove(b); await _context.SaveChangesAsync(); } return Ok(new { success = true }); } catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); } }
 
-        // 🚨 إصلاح مشكلة سحب الرصيد (Withdraw) للمحفظة
         [HttpGet("wallet")]
         public async Task<IActionResult> GetWallet() { try { var u = await _userManager.FindByIdAsync(UserId); var t = await _context.WalletTransactions.Where(x => x.UserId == UserId).OrderByDescending(x => x.TransactionDate).Select(x => new { x.Id, x.Amount, x.Type, x.Description, x.TransactionDate }).ToListAsync(); return Ok(new { success = true, data = new { balance = u!.WalletBalance, transactions = t } }); } catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); } }
 
@@ -593,14 +592,12 @@ namespace Diska.ApiControllers
                 var user = await _userManager.FindByIdAsync(UserId);
                 if (dto.Amount <= 0) return Ok(new { success = false, message = "المبلغ غير صحيح" });
 
-                // 🚨 التعديل 1: إظهار الرصيد الفعلي في رسالة الخطأ لتعرف لماذا يرفض السحب
                 if (dto.Amount > user!.WalletBalance)
                     return Ok(new { success = false, message = $"الرصيد لا يكفي! رصيدك الحالي هو: {user.WalletBalance} ج.م" });
 
                 // خصم فوري من المحفظة حتى ينعكس في الواجهة
                 user.WalletBalance -= dto.Amount;
 
-                // 🚨 التعديل 2: تغيير النوع إلى Withdraw ليطابق إحصائيات الويب تماماً
                 _context.WalletTransactions.Add(new WalletTransaction
                 {
                     UserId = UserId,
@@ -614,8 +611,10 @@ namespace Diska.ApiControllers
                 {
                     MerchantId = UserId,
                     ActionType = "WithdrawRequest",
+                    EntityName = "Wallet",      // ✅ تم إضافة هذا الحقل المفقود
+                    EntityId = UserId,          // ✅ تم إضافة هذا الحقل المفقود
                     Status = "Pending",
-                    NewValueJson = dto.Amount.ToString(),
+                    NewValueJson = JsonSerializer.Serialize(new { Amount = dto.Amount }), // ✅ تحويله لـ JSON سليم كما في الويب
                     OldValueJson = "{}",
                     RequestDate = DateTime.Now,
                     ActionByAdminId = "",
@@ -627,9 +626,13 @@ namespace Diska.ApiControllers
 
                 return Ok(new { success = true, message = "تم تسجيل طلب السحب وخصم الرصيد بنجاح", currentBalance = user.WalletBalance });
             }
-            catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); }
+            catch (Exception ex)
+            {
+                // إظهار سبب رفض الداتابيز الحقيقي إن وجد بدلاً من رسالة عامة
+                var actualError = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                return Ok(new { success = false, message = actualError });
+            }
         }
-
         // Orders
         [HttpGet("orders")]
         public async Task<IActionResult> GetOrders(string status = "All") { try { var q = _context.OrderItems.Include(oi => oi.Order).Include(oi => oi.Product).Where(oi => oi.Product!.MerchantId == UserId).AsQueryable(); if (status != "All") q = q.Where(oi => oi.Order!.Status == status); var data = await q.Select(oi => new { oi.Order!.Id, oi.Order.CustomerName, oi.Order.OrderDate, oi.Quantity, oi.UnitPrice, oi.Product!.Name, oi.Order.Status }).OrderByDescending(x => x.OrderDate).ToListAsync(); if (!data.Any()) return Ok(new { success = true, data = new[] { new { Id = 1, CustomerName = "عميل", Quantity = 2, UnitPrice = 150.0m, Name = "منتج", Status = "Pending", OrderDate = DateTime.Now } } }); return Ok(new { success = true, data }); } catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); } }
