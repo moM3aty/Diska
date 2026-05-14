@@ -930,6 +930,27 @@
 					}
 				},
 				{
+					"name": "Create Product",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"New Product\",\n  \"nameEn\": \"New Product En\",\n  \"price\": 1500,\n  \"stockQuantity\": 100,\n  \"categoryId\": 1,\n  \"description\": \"Description\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/merchant/products",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "merchant", "products" ]
+						}
+					}
+				},
+				{
 					"name": "Edit Product",
 					"request": {
 						"method": "PUT",
@@ -962,6 +983,7 @@
 						}
 					}
 				},
+
 				{
 					"name": "Update Stock",
 					"request": {

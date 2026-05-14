@@ -541,6 +541,9 @@ namespace Diska.ApiControllers
                     Status = "Active",
                     Color = "#000",
                     Slug = Guid.NewGuid().ToString(),
+                    MetaTitle = !string.IsNullOrEmpty(dto.Name) ? dto.Name : "منتج جديد",
+                    MetaDescription = !string.IsNullOrEmpty(dto.Description) ? dto.Description : "وصف المنتج",
+                    ImageUrl = "images/default-product.png",
                     // تجنب أخطاء التواريخ في قواعد بيانات SQL Server
                     ProductionDate = DateTime.Now,
                     ExpiryDate = DateTime.Now.AddYears(1)
@@ -1002,7 +1005,7 @@ namespace Diska.ApiControllers
     public class ApiAddressDto { public string? Title { get; set; } public string? Governorate { get; set; } public string? City { get; set; } public string? Street { get; set; } public string? PhoneNumber { get; set; } public bool IsDefault { get; set; } }
     public class ApiReviewDto { public int ProductId { get; set; } public int Rating { get; set; } public string? Comment { get; set; } }
     public class ApiDealRequestDto { public string? ProductName { get; set; } public int TargetQuantity { get; set; } public decimal DealPrice { get; set; } public string? Location { get; set; } }
-    public class ApiProductDto { public string? Name { get; set; } public string? NameEn { get; set; } public string? Description { get; set; } public string? DescriptionEn { get; set; } public decimal Price { get; set; } public decimal? OldPrice { get; set; } public decimal? CostPrice { get; set; } public int StockQuantity { get; set; } public int LowStockThreshold { get; set; } public int CategoryId { get; set; } public string? SKU { get; set; } public string? Barcode { get; set; } public string? Brand { get; set; } public decimal? Weight { get; set; } public int? UnitsPerCarton { get; set; } }
+    public class ApiProductDto { public string? Name { get; set; } public string? NameEn { get; set; } public string? Description { get; set; } public string? ImageUrl { get; set; }  public string? DescriptionEn { get; set; } public decimal Price { get; set; } public decimal? OldPrice { get; set; } public decimal? CostPrice { get; set; } public int StockQuantity { get; set; } public int LowStockThreshold { get; set; } public int CategoryId { get; set; } public string? SKU { get; set; } public string? Barcode { get; set; } public string? Brand { get; set; } public decimal? Weight { get; set; } public int? UnitsPerCarton { get; set; } }
     public class ApiDealDto { public string? Title { get; set; } public int ProductId { get; set; } public decimal DiscountValue { get; set; } public bool IsPercentage { get; set; } public int TargetQuantity { get; set; } public DateTime StartDate { get; set; } public DateTime EndDate { get; set; } }
     public class ApiBannerDto { public string? Title { get; set; } public string? LinkType { get; set; } public string? LinkId { get; set; } }
     public class ApiCategoryDto { public string? Name { get; set; } public string? NameEn { get; set; } public string? IconClass { get; set; } public string? ImageUrl { get; set; } }
