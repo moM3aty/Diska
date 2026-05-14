@@ -520,18 +520,99 @@ namespace Diska.ApiControllers
         {
             try
             {
-                var p = new Product { MerchantId = UserId, Name = dto.Name ?? "", NameEn = dto.NameEn ?? "", Description = dto.Description ?? "", DescriptionEn = dto.DescriptionEn ?? "", Price = dto.Price, OldPrice = dto.OldPrice, CostPrice = dto.CostPrice ?? 0, StockQuantity = dto.StockQuantity, LowStockThreshold = dto.LowStockThreshold > 0 ? dto.LowStockThreshold : 10, CategoryId = dto.CategoryId, SKU = dto.SKU ?? Guid.NewGuid().ToString().Substring(0, 8), Barcode = dto.Barcode, Brand = dto.Brand, Weight = (decimal)dto.Weight, UnitsPerCarton = (int)dto.UnitsPerCarton, Status = "Active", Color = "#000", Slug = Guid.NewGuid().ToString() };
-                _context.Products.Add(p); await _context.SaveChangesAsync(); return Ok(new { success = true });
+                var p = new Product
+                {
+                    MerchantId = UserId,
+                    Name = dto.Name ?? "بدون اسم",
+                    NameEn = dto.NameEn ?? "No Name",
+                    Description = dto.Description ?? "",
+                    DescriptionEn = dto.DescriptionEn ?? "",
+                    Price = dto.Price > 0 ? dto.Price : 0,
+                    OldPrice = dto.OldPrice,
+                    CostPrice = dto.CostPrice ?? 0,
+                    StockQuantity = dto.StockQuantity,
+                    LowStockThreshold = dto.LowStockThreshold > 0 ? dto.LowStockThreshold : 5,
+                    CategoryId = dto.CategoryId > 0 ? dto.CategoryId : 1, // حماية من الصفر
+                    SKU = !string.IsNullOrEmpty(dto.SKU) ? dto.SKU : Guid.NewGuid().ToString().Substring(0, 8),
+                    Barcode = dto.Barcode ?? "",
+                    Brand = dto.Brand ?? "عام",
+                    Weight = dto.Weight ?? 0, // تعويض القيمة الفارغة بصفر
+                    UnitsPerCarton = dto.UnitsPerCarton ?? 1, // تعويض القيمة الفارغة بـ 1
+                    Status = "Active",
+                    Color = "#000",
+                    Slug = Guid.NewGuid().ToString(),
+                    // تجنب أخطاء التواريخ في قواعد بيانات SQL Server
+                    ProductionDate = DateTime.Now,
+                    ExpiryDate = DateTime.Now.AddYears(1)
+                };
+
+                _context.Products.Add(p);
+                await _context.SaveChangesAsync();
+                return Ok(new { success = true, message = "تم إضافة المنتج بنجاح" });
             }
-            catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); }
+            catch (Exception ex)
+            {
+                // إظهار رسالة الخطأ الحقيقية من قاعدة البيانات
+                string errorMsg = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                return Ok(new { success = false, message = errorMsg });
+            }
         }
 
         [HttpPut("products/{id}")]
-        public async Task<IActionResult> EditProduct(int id, [FromBody] ApiProductDto dto) { try { var p = await _context.Products.FirstOrDefaultAsync(x => x.Id == id && x.MerchantId == UserId); if (p == null) return Ok(new { success = false, message = "المنتج غير موجود" }); p.Name = dto.Name ?? p.Name; p.NameEn = dto.NameEn ?? p.NameEn; p.Description = dto.Description ?? p.Description; p.DescriptionEn = dto.DescriptionEn ?? p.DescriptionEn; p.Price = dto.Price; p.OldPrice = dto.OldPrice; p.CostPrice = dto.CostPrice ?? p.CostPrice; p.StockQuantity = dto.StockQuantity; p.LowStockThreshold = dto.LowStockThreshold > 0 ? dto.LowStockThreshold : p.LowStockThreshold; p.CategoryId = dto.CategoryId; p.SKU = dto.SKU ?? p.SKU; p.Barcode = dto.Barcode ?? p.Barcode; p.Brand = dto.Brand ?? p.Brand; p.Weight = dto.Weight ?? p.Weight; p.UnitsPerCarton = dto.UnitsPerCarton ?? p.UnitsPerCarton; await _context.SaveChangesAsync(); return Ok(new { success = true }); } catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); } }
+        public async Task<IActionResult> EditProduct(int id, [FromBody] ApiProductDto dto)
+        {
+            try
+            {
+                var p = await _context.Products.FirstOrDefaultAsync(x => x.Id == id && x.MerchantId == UserId);
+                if (p == null) return Ok(new { success = false, message = "المنتج غير موجود" });
+
+                p.Name = dto.Name ?? p.Name;
+                p.NameEn = dto.NameEn ?? p.NameEn;
+                p.Description = dto.Description ?? p.Description;
+                p.DescriptionEn = dto.DescriptionEn ?? p.DescriptionEn;
+                p.Price = dto.Price > 0 ? dto.Price : p.Price;
+                p.OldPrice = dto.OldPrice;
+                p.CostPrice = dto.CostPrice ?? p.CostPrice;
+                p.StockQuantity = dto.StockQuantity;
+                p.LowStockThreshold = dto.LowStockThreshold > 0 ? dto.LowStockThreshold : p.LowStockThreshold;
+                if (dto.CategoryId > 0) p.CategoryId = dto.CategoryId;
+                p.SKU = dto.SKU ?? p.SKU;
+                p.Barcode = dto.Barcode ?? p.Barcode;
+                p.Brand = dto.Brand ?? p.Brand;
+                p.Weight = dto.Weight ?? p.Weight;
+                p.UnitsPerCarton = dto.UnitsPerCarton ?? p.UnitsPerCarton;
+
+                await _context.SaveChangesAsync();
+                return Ok(new { success = true, message = "تم التعديل بنجاح" });
+            }
+            catch (Exception ex)
+            {
+                string errorMsg = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                return Ok(new { success = false, message = errorMsg });
+            }
+        }
 
         [HttpDelete("products/{id}")]
-        public async Task<IActionResult> DeleteProduct(int id) { try { var p = await _context.Products.FirstOrDefaultAsync(x => x.Id == id && x.MerchantId == UserId); if (p != null) { _context.Products.Remove(p); await _context.SaveChangesAsync(); } return Ok(new { success = true }); } catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); } }
-
+        public async Task<IActionResult> DeleteProduct(int id)
+        {
+            try
+            {
+                var p = await _context.Products.FirstOrDefaultAsync(x => x.Id == id && x.MerchantId == UserId);
+                if (p != null)
+                {
+                    // 🚨 Soft Delete: إخفاء المنتج بدلاً من حذفه من الجذور لمنع تعطل الطلبات السابقة للعملاء
+                    p.Status = "Hidden";
+                    p.StockQuantity = 0; // تصفير المخزون
+                    await _context.SaveChangesAsync();
+                }
+                return Ok(new { success = true, message = "تم حذف (إخفاء) المنتج بنجاح" });
+            }
+            catch (Exception ex)
+            {
+                string errorMsg = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                return Ok(new { success = false, message = errorMsg });
+            }
+        }
         [HttpPut("products/stock")]
         public async Task<IActionResult> UpdateStock([FromBody] ApiStockUpdateDto dto) { try { var p = await _context.Products.FirstOrDefaultAsync(x => x.Id == dto.ProductId && x.MerchantId == UserId); if (p == null) return Ok(new { success = false, message = "المنتج غير موجود" }); p.StockQuantity = dto.Quantity; await _context.SaveChangesAsync(); return Ok(new { success = true }); } catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); } }
 
