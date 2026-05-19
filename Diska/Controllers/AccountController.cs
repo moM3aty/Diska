@@ -60,13 +60,6 @@ namespace Diska.Controllers
 
                 if (result.Succeeded)
                 {
-                    if (await _userManager.IsInRoleAsync(user, "Merchant") && !user.IsVerifiedMerchant)
-                    {
-                        await _signInManager.SignOutAsync();
-                        TempData["Error"] = "حساب التاجر الخاص بك قيد المراجعة ولم يتم تفعيله بعد.";
-                        return View();
-                    }
-
                     if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)) return Redirect(returnUrl);
                     return RedirectToRoleDashboard();
                 }
@@ -110,7 +103,7 @@ namespace Diska.Controllers
                 ShopName = role == "Merchant" ? shopName : "عميل",
                 CommercialRegister = !string.IsNullOrEmpty(commercialReg) ? commercialReg : "000000",
                 TaxCard = !string.IsNullOrEmpty(taxCard) ? taxCard : "000000",
-                IsVerifiedMerchant = false,
+                IsVerifiedMerchant = role == "Merchant" ? true : false,
                 Email = $"{phone}@diska.local",
                 WalletBalance = 0,
                 UserType = role,
@@ -121,12 +114,14 @@ namespace Diska.Controllers
             if (result.Succeeded)
             {
                 await _userManager.AddToRoleAsync(user, role);
+
+                await _signInManager.SignInAsync(user, isPersistent: true);
+
                 if (role == "Merchant")
                 {
-                    TempData["Success"] = "تم تسجيل حساب التاجر بنجاح وهو قيد المراجعة.";
-                    return RedirectToAction("Index", "Home");
+                    TempData["Success"] = "تم إنشاء حساب التاجر وتفعيله بنجاح.";
                 }
-                await _signInManager.SignInAsync(user, isPersistent: true);
+
                 return RedirectToAction("Index", "Home");
             }
 
@@ -135,7 +130,7 @@ namespace Diska.Controllers
         }
 
         // =========================================================
-        // 3. API إرسال OTP عبر AJAX (لشاشة التسجيل)
+        // 3. API إرسال OTP عبر AJAX (لشاشة التسجيل) - الوضع الحي (LIVE)
         // =========================================================
         [HttpPost]
         public async Task<IActionResult> SendOtpAjax(string phone)
@@ -145,6 +140,7 @@ namespace Diska.Controllers
             string otpCode = new Random().Next(100000, 999999).ToString();
             HttpContext.Session.SetString("VerifiedOTP", otpCode);
 
+            // الإرسال الفعلي لشركة الـ SMS
             var smsResult = await _smsService.SendOtpAsync(phone, otpCode);
 
             if (smsResult.IsSuccess)
@@ -152,11 +148,12 @@ namespace Diska.Controllers
                 return Json(new { success = true, message = "تم إرسال رمز التحقق بنجاح!" });
             }
 
-            return Json(new { success = false, message = "فشل الإرسال", provider_error = smsResult.Message });
+            // في حال فشل الإرسال (رصيد غير كافٍ أو خطأ في المزود)
+            return Json(new { success = false, message = "فشل إرسال رمز التحقق، يرجى المحاولة لاحقاً", provider_error = smsResult.Message });
         }
 
         // =========================================================
-        // 4. نسيت كلمة المرور
+        // 4. نسيت كلمة المرور - الوضع الحي (LIVE)
         // =========================================================
         [HttpGet]
         public IActionResult ForgotPassword() => View();
@@ -168,32 +165,36 @@ namespace Diska.Controllers
             if (string.IsNullOrEmpty(phone)) return View();
 
             var user = await _userManager.FindByNameAsync(phone);
-            if (user == null) return View("ForgotPasswordConfirmation");
+            // للحماية: إذا كان غير مسجل نوجهه وكأن العملية نجحت لمنع تخمين الأرقام
+            if (user == null) return RedirectToAction("ResetPassword", new { phone = phone });
 
-            var code = await _userManager.GeneratePasswordResetTokenAsync(user);
-            string resetLink = Url.Action("ResetPassword", "Account", new { code = code, phone = phone }, Request.Scheme);
-            string smsMessage = $"ديسكا: لاستعادة كلمة المرور، اضغط على الرابط: {resetLink}";
+            // 🚨 التعديل: إنشاء كود OTP من 6 أرقام بدلاً من الرابط الطويل
+            string otpCode = new Random().Next(100000, 999999).ToString();
+            HttpContext.Session.SetString($"ResetOTP_{phone}", otpCode);
 
+            string smsMessage = $"ديسكا: كود استعادة كلمة المرور الخاص بك هو: {otpCode}";
+
+            // الإرسال الفعلي لشركة الـ SMS
             var smsResult = await _smsService.SendSmsAsync(phone, smsMessage);
 
             if (!smsResult.IsSuccess)
             {
-                // هنا سيتم طباعة سبب الرفض من الشركة على الشاشة
-                TempData["Error"] = $"تم الرفض من شركة الاتصالات: {smsResult.Message}";
+                TempData["Error"] = $"تعذر إرسال رسالة الاستعادة: {smsResult.Message}";
                 return View();
             }
 
-            return View("ForgotPasswordConfirmation");
+            // 🚨 التوجيه لصفحة إدخال الكود وكلمة المرور الجديدة
+            return RedirectToAction("ResetPassword", new { phone = phone });
         }
 
         // =========================================================
         // 5. استعادة كلمة المرور
         // =========================================================
         [HttpGet]
-        public IActionResult ResetPassword(string code = null, string phone = null)
+        public IActionResult ResetPassword(string phone = null)
         {
-            if (code == null) return BadRequest("A code must be supplied for password reset.");
-            return View(new ResetPasswordViewModel { Code = code, Phone = phone });
+            if (string.IsNullOrEmpty(phone)) return RedirectToAction("ForgotPassword");
+            return View(new ResetPasswordViewModel { Phone = phone });
         }
 
         [HttpPost]
@@ -204,8 +205,24 @@ namespace Diska.Controllers
             var user = await _userManager.FindByNameAsync(model.Phone);
             if (user == null) return RedirectToAction("ResetPasswordConfirmation");
 
-            var result = await _userManager.ResetPasswordAsync(user, model.Code, model.Password);
-            if (result.Succeeded) return RedirectToAction("ResetPasswordConfirmation");
+            // 🚨 التعديل: التحقق من كود الـ OTP المدخل من المستخدم
+            var savedOtp = HttpContext.Session.GetString($"ResetOTP_{model.Phone}");
+            if (string.IsNullOrEmpty(savedOtp) || savedOtp != model.Code)
+            {
+                ModelState.AddModelError(string.Empty, "كود التحقق غير صحيح أو منتهي الصلاحية.");
+                return View(model);
+            }
+
+            // 🚨 إنشاء توكن الاستعادة الحقيقي الخاص بـ Identity وتغيير كلمة المرور فوراً
+            var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var result = await _userManager.ResetPasswordAsync(user, resetToken, model.Password);
+
+            if (result.Succeeded)
+            {
+                // مسح الكود من الجلسة بعد النجاح لحماية الحساب
+                HttpContext.Session.Remove($"ResetOTP_{model.Phone}");
+                return RedirectToAction("ResetPasswordConfirmation");
+            }
 
             foreach (var error in result.Errors) ModelState.AddModelError(string.Empty, error.Description);
             return View(model);
