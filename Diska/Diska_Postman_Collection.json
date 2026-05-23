@@ -1,7 +1,7 @@
 ﻿{
 	"info": {
-		"name": "DISKA Complete JSON API",
-		"description": "جميع الـ APIs الخاصة بمنصة DISKA (تعمل بصيغة JSON بالكامل) للموبايل وتطبيقات الـ SPA.",
+		"name": "DISKA Complete JSON API (Live OTP)",
+		"description": "جميع الـ APIs الخاصة بمنصة DISKA (تعمل بصيغة JSON بالكامل) للموبايل، محدثة لتدعم نظام الـ OTP الجديد من 6 أرقام.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -116,7 +116,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"phone\": \"01000000000\",\n  \"code\": \"TOKEN_HERE\",\n  \"password\": \"NewPassword123\"\n}"
+							"raw": "{\n  \"phone\": \"01000000000\",\n  \"code\": \"123456\",\n  \"password\": \"NewPassword123\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/mobile/auth/reset-password",
@@ -676,6 +676,30 @@
 					}
 				},
 				{
+					"name": "Check Pending Surveys",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/customer/surveys/pending",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "customer", "surveys", "pending" ]
+						}
+					}
+				},
+				{
+					"name": "Get Surveys",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/customer/surveys",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "customer", "surveys" ]
+						}
+					}
+				},
+				{
 					"name": "Submit Survey",
 					"request": {
 						"method": "POST",
@@ -693,30 +717,6 @@
 							"raw": "{{baseUrl}}/api/mobile/customer/surveys/submit",
 							"host": [ "{{baseUrl}}" ],
 							"path": [ "api", "mobile", "customer", "surveys", "submit" ]
-						}
-					}
-				},
-				{
-					"name": "Get Surveys",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/mobile/customer/surveys",
-							"host": [ "{{baseUrl}}" ],
-							"path": [ "api", "mobile", "customer", "surveys" ]
-						}
-					}
-				},
-				{
-					"name": "Get Pending Surveys",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/mobile/customer/surveys/pending",
-							"host": [ "{{baseUrl}}" ],
-							"path": [ "api", "mobile", "customer", "surveys", "pending" ]
 						}
 					}
 				},
@@ -819,7 +819,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"Test\",\n  \"phone\": \"01111111111\",\n  \"governorate\": \"القاهرة\",\n  \"city\": \"المعادي\",\n  \"address\": \"Street 9\",\n  \"shippingCost\": 50,\n  \"items\": [\n    { \"id\": 1, \"qty\": 2 }\n  ]\n}"
+							"raw": "{\n  \"name\": \"Test\",\n  \"phone\": \"01111111111\",\n  \"governorate\": \"القاهرة\",\n  \"city\": \"المعادي\",\n  \"address\": \"Street 9\",\n  \"paymentMethod\": \"Cash\",\n  \"deliverySlot\": \"Morning\",\n  \"shippingCost\": 50,\n  \"items\": [\n    { \"id\": 1, \"qty\": 2 }\n  ]\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/mobile/customer/checkout",
@@ -829,7 +829,7 @@
 					}
 				},
 				{
-					"name": "Get My Orders",
+					"name": "Get Orders",
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -893,27 +893,6 @@
 							"raw": "{{baseUrl}}/api/mobile/merchant/profile",
 							"host": [ "{{baseUrl}}" ],
 							"path": [ "api", "mobile", "merchant", "profile" ]
-						}
-					}
-				},
-				{
-					"name": "Create Product",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"New Product\",\n  \"nameEn\": \"New Product En\",\n  \"price\": 1500,\n  \"stockQuantity\": 100,\n  \"categoryId\": 1,\n  \"description\": \"Description\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/mobile/merchant/products",
-							"host": [ "{{baseUrl}}" ],
-							"path": [ "api", "mobile", "merchant", "products" ]
 						}
 					}
 				},
@@ -983,7 +962,6 @@
 						}
 					}
 				},
-
 				{
 					"name": "Update Stock",
 					"request": {
@@ -1027,6 +1005,18 @@
 					}
 				},
 				{
+					"name": "Get Deals",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/merchant/deals",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "merchant", "deals" ]
+						}
+					}
+				},
+				{
 					"name": "Create Deal",
 					"request": {
 						"method": "POST",
@@ -1040,18 +1030,6 @@
 							"mode": "raw",
 							"raw": "{\n  \"title\": \"Summer Sale\",\n  \"productId\": 1,\n  \"discountValue\": 10,\n  \"isPercentage\": true,\n  \"targetQuantity\": 50\n}"
 						},
-						"url": {
-							"raw": "{{baseUrl}}/api/mobile/merchant/deals",
-							"host": [ "{{baseUrl}}" ],
-							"path": [ "api", "mobile", "merchant", "deals" ]
-						}
-					}
-				},
-				{
-					"name": "Get Deals",
-					"request": {
-						"method": "GET",
-						"header": [],
 						"url": {
 							"raw": "{{baseUrl}}/api/mobile/merchant/deals",
 							"host": [ "{{baseUrl}}" ],
@@ -1093,6 +1071,18 @@
 					}
 				},
 				{
+					"name": "Get Banners",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/merchant/banners",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "merchant", "banners" ]
+						}
+					}
+				},
+				{
 					"name": "Create Banner",
 					"request": {
 						"method": "POST",
@@ -1114,18 +1104,6 @@
 					}
 				},
 				{
-					"name": "Get Banners",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/mobile/merchant/banners",
-							"host": [ "{{baseUrl}}" ],
-							"path": [ "api", "mobile", "merchant", "banners" ]
-						}
-					}
-				},
-				{
 					"name": "Delete Banner",
 					"request": {
 						"method": "DELETE",
@@ -1134,6 +1112,18 @@
 							"raw": "{{baseUrl}}/api/mobile/merchant/banners/1",
 							"host": [ "{{baseUrl}}" ],
 							"path": [ "api", "mobile", "merchant", "banners", "1" ]
+						}
+					}
+				},
+				{
+					"name": "Get Wallet",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/merchant/wallet",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "merchant", "wallet" ]
 						}
 					}
 				},
@@ -1149,24 +1139,12 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"amount\": 5000\n}"
+							"raw": "{\n  \"amount\": 2000\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/mobile/merchant/wallet/withdraw",
 							"host": [ "{{baseUrl}}" ],
 							"path": [ "api", "mobile", "merchant", "wallet", "withdraw" ]
-						}
-					}
-				},
-				{
-					"name": "Get Wallet",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/mobile/merchant/wallet",
-							"host": [ "{{baseUrl}}" ],
-							"path": [ "api", "mobile", "merchant", "wallet" ]
 						}
 					}
 				},
@@ -1191,6 +1169,18 @@
 							"raw": "{{baseUrl}}/api/mobile/merchant/orders/1",
 							"host": [ "{{baseUrl}}" ],
 							"path": [ "api", "mobile", "merchant", "orders", "1" ]
+						}
+					}
+				},
+				{
+					"name": "Get Requests Marketplace",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/mobile/merchant/requests",
+							"host": [ "{{baseUrl}}" ],
+							"path": [ "api", "mobile", "merchant", "requests" ]
 						}
 					}
 				},
@@ -1233,18 +1223,6 @@
 							"raw": "{{baseUrl}}/api/mobile/merchant/requests/message",
 							"host": [ "{{baseUrl}}" ],
 							"path": [ "api", "mobile", "merchant", "requests", "message" ]
-						}
-					}
-				},
-				{
-					"name": "Get Requests Marketplace",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/mobile/merchant/requests",
-							"host": [ "{{baseUrl}}" ],
-							"path": [ "api", "mobile", "merchant", "requests" ]
 						}
 					}
 				},
@@ -1500,7 +1478,7 @@
 					}
 				},
 				{
-					"name": "Approve Action (Withdraw/Price)",
+					"name": "Approve Action",
 					"request": {
 						"method": "POST",
 						"header": [
@@ -2004,11 +1982,20 @@
 					"name": "Delete User",
 					"request": {
 						"method": "DELETE",
-						"header": [],
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": \"USER_ID_HERE\"\n}"
+						},
 						"url": {
-							"raw": "{{baseUrl}}/api/mobile/admin/users/1",
+							"raw": "{{baseUrl}}/api/mobile/admin/users",
 							"host": [ "{{baseUrl}}" ],
-							"path": [ "api", "mobile", "admin", "users", "1" ]
+							"path": [ "api", "mobile", "admin", "users" ]
 						}
 					}
 				},
@@ -2090,7 +2077,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"title\": \"Survey\"\n}"
+							"raw": "{\n  \"title\": \"Feedback\",\n  \"targetAudience\": \"All\",\n  \"isActive\": true\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/mobile/admin/surveys",

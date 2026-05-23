@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
+using System.Collections.Concurrent;
 using Diska.Models;
 using Diska.Data;
 using Diska.Services;
@@ -13,9 +14,7 @@ using System.Text.Json;
 
 namespace Diska.ApiControllers
 {
-    // =========================================================================
-    // 1. AUTHENTICATION (المصادقة - كاملة ومحدثة)
-    // =========================================================================
+
     [Route("api/mobile/auth")]
     [ApiController]
     public class AuthApiController : ControllerBase
@@ -23,6 +22,9 @@ namespace Diska.ApiControllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly ISmsService _smsService;
+
+        // 🚨 قاموس آمن لتخزين أكواد الـ OTP مؤقتاً في الذاكرة (صلاحية 10 دقائق)
+        private static readonly ConcurrentDictionary<string, (string Code, DateTime Expiry)> _otpStore = new();
 
         public AuthApiController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, ISmsService smsService)
         {
@@ -35,9 +37,20 @@ namespace Diska.ApiControllers
             try
             {
                 if (string.IsNullOrEmpty(dto.Phone)) return Ok(new { success = false, message = "رقم الهاتف مطلوب" });
+
                 string otp = new Random().Next(100000, 999999).ToString();
-                var res = await _smsService.SendOtpAsync(dto.Phone, otp);
-                return Ok(new { success = true, message = "تم الإرسال", test_otp = otp }); // تجاهلنا خطأ الـ SMS لكي لا يعطل الموبايل
+                _otpStore[dto.Phone] = (otp, DateTime.Now.AddMinutes(10)); // حفظ الكود للمقارنة لاحقاً
+
+                var smsResult = await _smsService.SendOtpAsync(dto.Phone, otp);
+
+                // 🚨 التعديل: إزالة != null لأن الـ Tuple لا يمكن أن يكون Null
+                if (smsResult.IsSuccess)
+                {
+                    return Ok(new { success = true, message = "تم إرسال رمز التحقق بنجاح" });
+                }
+
+                // 🚨 التعديل: استخدام smsResult.Message مباشرة بدلاً من smsResult?.Message
+                return Ok(new { success = false, message = "فشل إرسال الرسالة، تأكد من الرصيد أو الرقم", error = smsResult.Message });
             }
             catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); }
         }
@@ -48,13 +61,12 @@ namespace Diska.ApiControllers
             try
             {
                 var user = await _userManager.FindByNameAsync(dto.Phone ?? "") ?? _userManager.Users.FirstOrDefault(u => u.PhoneNumber == dto.Phone);
-                if (user == null) return Ok(new { success = false, message = "المستخدم غير موجود" }); // Ok بدلاً من Unauthorized لتجنب مشاكل الموبايل
+                if (user == null) return Ok(new { success = false, message = "المستخدم غير موجود" });
                 if (await _userManager.IsLockedOutAsync(user)) return Ok(new { success = false, message = "الحساب محظور" });
 
                 var res = await _signInManager.PasswordSignInAsync(user, dto.Password ?? "", dto.RememberMe, true);
                 if (res.Succeeded)
                 {
-                    if (await _userManager.IsInRoleAsync(user, "Merchant") && !user.IsVerifiedMerchant) { await _signInManager.SignOutAsync(); return Ok(new { success = false, message = "حساب التاجر قيد المراجعة" }); }
                     var roles = await _userManager.GetRolesAsync(user);
                     return Ok(new { success = true, data = new { userId = user.Id, name = user.FullName, role = roles.FirstOrDefault() ?? user.UserType, balance = user.WalletBalance } });
                 }
@@ -81,7 +93,7 @@ namespace Diska.ApiControllers
                     ShopName = role == "Merchant" ? (dto.ShopName ?? "متجر جديد") : "عميل",
                     CommercialRegister = role == "Merchant" ? (dto.CommercialReg ?? "0") : "0",
                     TaxCard = role == "Merchant" ? (dto.TaxCard ?? "0") : "0",
-                    IsVerifiedMerchant = false,
+                    IsVerifiedMerchant = role == "Merchant" ? true : false,
                     Email = $"{dto.Phone}@diska.local",
                     UserType = role,
                     CreatedAt = DateTime.Now
@@ -91,17 +103,14 @@ namespace Diska.ApiControllers
                 if (res.Succeeded)
                 {
                     await _userManager.AddToRoleAsync(user, role);
+                    await _signInManager.SignInAsync(user, true);
 
-                    if (role == "Customer")
+                    return Ok(new
                     {
-                        await _signInManager.SignInAsync(user, true); // تسجيل الدخول تلقائياً للعميل
-                        return Ok(new { success = true, message = "تم إنشاء الحساب بنجاح" });
-                    }
-                    else
-                    {
-                        // التاجر يحتاج موافقة الإدارة، لذا نرسل رسالة توضح ذلك
-                        return Ok(new { success = true, message = "تم إنشاء حساب التاجر وهو قيد المراجعة الآن" });
-                    }
+                        success = true,
+                        message = "تم إنشاء الحساب وتسجيل الدخول بنجاح",
+                        data = new { userId = user.Id, name = user.FullName, role = role }
+                    });
                 }
                 return Ok(new { success = false, message = res.Errors.FirstOrDefault()?.Description });
             }
@@ -114,11 +123,23 @@ namespace Diska.ApiControllers
             try
             {
                 var user = await _userManager.FindByNameAsync(dto.Phone ?? "");
-                if (user == null) return Ok(new { success = false, message = "هذا الرقم غير مسجل لدينا" });
-                var fullToken = await _userManager.GeneratePasswordResetTokenAsync(user);
-                string shortCode = new Random().Next(100000, 999999).ToString();
-                await _smsService.SendSmsAsync(dto.Phone ?? "", $"كود الاستعادة: {shortCode}");
-                return Ok(new { success = true, token = fullToken, test_otp = shortCode });
+                // للحماية: نرجع نجاح حتى لو الرقم خطأ لمنع الهكر من معرفة الأرقام المسجلة
+                if (user == null) return Ok(new { success = true, message = "إذا كان الرقم مسجلاً، سيتم إرسال كود الاستعادة" });
+
+                string otpCode = new Random().Next(100000, 999999).ToString();
+                _otpStore[dto.Phone] = (otpCode, DateTime.Now.AddMinutes(10)); // حفظ الكود
+
+                string smsMessage = $"ديسكا: كود استعادة كلمة المرور الخاص بك هو: {otpCode}";
+                var smsResult = await _smsService.SendSmsAsync(dto.Phone, smsMessage);
+
+                // 🚨 التعديل: إزالة != null
+                if (smsResult.IsSuccess)
+                {
+                    return Ok(new { success = true, message = "تم إرسال كود الاستعادة في رسالة قصيرة" });
+                }
+
+                // 🚨 التعديل: استخدام smsResult.Message مباشرة
+                return Ok(new { success = false, message = "تعذر إرسال رسالة الاستعادة، تأكد من الرصيد", error = smsResult.Message });
             }
             catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); }
         }
@@ -128,12 +149,29 @@ namespace Diska.ApiControllers
         {
             try
             {
-                var user = await _userManager.FindByNameAsync(dto.Phone ?? "");
+                if (string.IsNullOrEmpty(dto.Phone) || string.IsNullOrEmpty(dto.Code) || string.IsNullOrEmpty(dto.Password))
+                    return Ok(new { success = false, message = "جميع البيانات مطلوبة" });
+
+                // 🚨 1. التحقق من الكود (OTP) المدخل من الموبايل
+                if (!_otpStore.TryGetValue(dto.Phone, out var otpData) || otpData.Code != dto.Code || otpData.Expiry < DateTime.Now)
+                {
+                    return Ok(new { success = false, message = "كود التحقق غير صحيح أو منتهي الصلاحية" });
+                }
+
+                var user = await _userManager.FindByNameAsync(dto.Phone);
                 if (user == null) return Ok(new { success = false, message = "المستخدم غير موجود" });
 
-                // 🚨 حل مشكلة الـ Reset Password: يجب إرسال التوكن الكامل الذي عاد في الخطوة السابقة
-                var res = await _userManager.ResetPasswordAsync(user, dto.Code ?? "", dto.Password ?? "");
-                return res.Succeeded ? Ok(new { success = true, message = "تم تغيير كلمة المرور" }) : Ok(new { success = false, message = "الرمز غير صحيح أو منتهي الصلاحية" });
+                // 🚨 2. إنشاء توكن الاستعادة الحقيقي داخلياً وتغيير الباسورد
+                var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+                var res = await _userManager.ResetPasswordAsync(user, resetToken, dto.Password);
+
+                if (res.Succeeded)
+                {
+                    _otpStore.TryRemove(dto.Phone, out _); // مسح الكود بعد النجاح لحماية الحساب
+                    return Ok(new { success = true, message = "تم تغيير كلمة المرور بنجاح" });
+                }
+
+                return Ok(new { success = false, message = res.Errors.FirstOrDefault()?.Description });
             }
             catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); }
         }
@@ -141,7 +179,6 @@ namespace Diska.ApiControllers
         [HttpPost("logout")]
         public async Task<IActionResult> Logout() { await _signInManager.SignOutAsync(); return Ok(new { success = true }); }
     }
-
     // =========================================================================
     // 2. PUBLIC API (البيانات العامة)
     // =========================================================================
