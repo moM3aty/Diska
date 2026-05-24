@@ -11,6 +11,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Text.Json;
+using Microsoft.AspNetCore.Http;
+using System.IO;
 
 namespace Diska.ApiControllers
 {
@@ -37,19 +39,18 @@ namespace Diska.ApiControllers
             try
             {
                 if (string.IsNullOrEmpty(dto.Phone)) return Ok(new { success = false, message = "رقم الهاتف مطلوب" });
+                string phone = dto.Phone!; // ✅ التأكد للمترجم أنه ليس Null
 
                 string otp = new Random().Next(100000, 999999).ToString();
-                _otpStore[dto.Phone] = (otp, DateTime.Now.AddMinutes(10)); // حفظ الكود للمقارنة لاحقاً
+                _otpStore[phone] = (otp, DateTime.Now.AddMinutes(10)); // حفظ الكود للمقارنة لاحقاً
 
-                var smsResult = await _smsService.SendOtpAsync(dto.Phone, otp);
+                var smsResult = await _smsService.SendOtpAsync(phone, otp);
 
-                // 🚨 التعديل: إزالة != null لأن الـ Tuple لا يمكن أن يكون Null
                 if (smsResult.IsSuccess)
                 {
                     return Ok(new { success = true, message = "تم إرسال رمز التحقق بنجاح" });
                 }
 
-                // 🚨 التعديل: استخدام smsResult.Message مباشرة بدلاً من smsResult?.Message
                 return Ok(new { success = false, message = "فشل إرسال الرسالة، تأكد من الرصيد أو الرقم", error = smsResult.Message });
             }
             catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); }
@@ -122,23 +123,24 @@ namespace Diska.ApiControllers
         {
             try
             {
-                var user = await _userManager.FindByNameAsync(dto.Phone ?? "");
+                if (string.IsNullOrEmpty(dto.Phone)) return Ok(new { success = false, message = "رقم الهاتف مطلوب" });
+                string phone = dto.Phone!; // ✅ تأكيد للمترجم
+
+                var user = await _userManager.FindByNameAsync(phone);
                 // للحماية: نرجع نجاح حتى لو الرقم خطأ لمنع الهكر من معرفة الأرقام المسجلة
                 if (user == null) return Ok(new { success = true, message = "إذا كان الرقم مسجلاً، سيتم إرسال كود الاستعادة" });
 
                 string otpCode = new Random().Next(100000, 999999).ToString();
-                _otpStore[dto.Phone] = (otpCode, DateTime.Now.AddMinutes(10)); // حفظ الكود
+                _otpStore[phone] = (otpCode, DateTime.Now.AddMinutes(10)); // حفظ الكود
 
                 string smsMessage = $"ديسكا: كود استعادة كلمة المرور الخاص بك هو: {otpCode}";
-                var smsResult = await _smsService.SendSmsAsync(dto.Phone, smsMessage);
+                var smsResult = await _smsService.SendSmsAsync(phone, smsMessage);
 
-                // 🚨 التعديل: إزالة != null
                 if (smsResult.IsSuccess)
                 {
                     return Ok(new { success = true, message = "تم إرسال كود الاستعادة في رسالة قصيرة" });
                 }
 
-                // 🚨 التعديل: استخدام smsResult.Message مباشرة
                 return Ok(new { success = false, message = "تعذر إرسال رسالة الاستعادة، تأكد من الرصيد", error = smsResult.Message });
             }
             catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); }
@@ -152,13 +154,15 @@ namespace Diska.ApiControllers
                 if (string.IsNullOrEmpty(dto.Phone) || string.IsNullOrEmpty(dto.Code) || string.IsNullOrEmpty(dto.Password))
                     return Ok(new { success = false, message = "جميع البيانات مطلوبة" });
 
+                string phone = dto.Phone!; // ✅ تأكيد للمترجم
+
                 // 🚨 1. التحقق من الكود (OTP) المدخل من الموبايل
-                if (!_otpStore.TryGetValue(dto.Phone, out var otpData) || otpData.Code != dto.Code || otpData.Expiry < DateTime.Now)
+                if (!_otpStore.TryGetValue(phone, out var otpData) || otpData.Code != dto.Code || otpData.Expiry < DateTime.Now)
                 {
                     return Ok(new { success = false, message = "كود التحقق غير صحيح أو منتهي الصلاحية" });
                 }
 
-                var user = await _userManager.FindByNameAsync(dto.Phone);
+                var user = await _userManager.FindByNameAsync(phone);
                 if (user == null) return Ok(new { success = false, message = "المستخدم غير موجود" });
 
                 // 🚨 2. إنشاء توكن الاستعادة الحقيقي داخلياً وتغيير الباسورد
@@ -167,7 +171,7 @@ namespace Diska.ApiControllers
 
                 if (res.Succeeded)
                 {
-                    _otpStore.TryRemove(dto.Phone, out _); // مسح الكود بعد النجاح لحماية الحساب
+                    _otpStore.TryRemove(phone, out _); // مسح الكود بعد النجاح لحماية الحساب
                     return Ok(new { success = true, message = "تم تغيير كلمة المرور بنجاح" });
                 }
 
@@ -179,6 +183,7 @@ namespace Diska.ApiControllers
         [HttpPost("logout")]
         public async Task<IActionResult> Logout() { await _signInManager.SignOutAsync(); return Ok(new { success = true }); }
     }
+
     // =========================================================================
     // 2. PUBLIC API (البيانات العامة)
     // =========================================================================
@@ -220,7 +225,6 @@ namespace Diska.ApiControllers
             catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); }
         }
 
-        // 🚨 مسار البحث المباشر (كما طلبت)
         [HttpGet("search")]
         public async Task<IActionResult> SearchProducts(string keyword)
         {
@@ -339,7 +343,6 @@ namespace Diska.ApiControllers
         {
             try
             {
-                // 🚨 حل مشكلة الجيزة / القليوبية
                 var cleanGov = gov?.Trim() ?? "";
                 var data = await _context.ShippingRates.Where(r => r.Governorate.Contains(cleanGov) && !string.IsNullOrEmpty(r.City)).Select(r => r.City).Distinct().ToListAsync();
                 if (!data.Any()) return Ok(new { success = true, data = new[] { "المدينة 1", "المدينة 2" } }); // Mock fallback
@@ -353,7 +356,6 @@ namespace Diska.ApiControllers
         {
             try
             {
-                // 🚨 حل مشكلة الجيزة / القليوبية
                 var cleanGov = gov?.Trim() ?? ""; var cleanCity = city?.Trim() ?? "";
                 var rate = await _context.ShippingRates.FirstOrDefaultAsync(r => r.Governorate.Contains(cleanGov) && r.City.Contains(cleanCity));
                 return Ok(new { success = true, cost = rate?.Cost ?? 50.0m });
@@ -403,7 +405,6 @@ namespace Diska.ApiControllers
             return Ok(new { success = true, data });
         }
 
-        // 🚨 حل خطأ 400 Bad Request
         [HttpPost("reviews")]
         public async Task<IActionResult> AddReview([FromBody] ApiReviewDto dto) { try { if (dto.ProductId <= 0 || dto.Rating < 1 || string.IsNullOrEmpty(dto.Comment)) return Ok(new { success = false, message = "بيانات غير مكتملة" }); _context.ProductReviews.Add(new ProductReview { UserId = UserId, ProductId = dto.ProductId, Rating = dto.Rating, Comment = dto.Comment!, CreatedAt = DateTime.Now, IsVisible = true }); await _context.SaveChangesAsync(); return Ok(new { success = true }); } catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); } }
 
@@ -414,7 +415,6 @@ namespace Diska.ApiControllers
         public async Task<IActionResult> DeleteReview(int id) { try { var r = await _context.ProductReviews.FirstOrDefaultAsync(x => x.Id == id && x.UserId == UserId); if (r != null) { _context.ProductReviews.Remove(r); await _context.SaveChangesAsync(); } return Ok(new { success = true }); } catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); } }
 
         // Special Requests
-        // 🚨 حل خطأ 400 للطلبات الخاصة
         [HttpPost("special-requests")]
         public async Task<IActionResult> AddSpecialRequest([FromBody] ApiDealRequestDto dto) { try { if (string.IsNullOrEmpty(dto.ProductName) || dto.TargetQuantity <= 0) return Ok(new { success = false, message = "بيانات غير مكتملة" }); _context.DealRequests.Add(new DealRequest { UserId = UserId, ProductName = dto.ProductName!, TargetQuantity = dto.TargetQuantity, DealPrice = dto.DealPrice, Location = dto.Location ?? "", RequestDate = DateTime.Now, Status = "Pending", AdminNotes = "" }); await _context.SaveChangesAsync(); return Ok(new { success = true }); } catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); } }
 
@@ -442,7 +442,6 @@ namespace Diska.ApiControllers
             }
             catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); }
         }
-
 
         [HttpPost("special-requests/message")]
         public async Task<IActionResult> SendMessage([FromBody] ApiMessageDto dto) { try { _context.RequestMessages.Add(new RequestMessage { DealRequestId = dto.RequestId, SenderId = UserId, Message = dto.Message ?? "", IsAdmin = false, CreatedAt = DateTime.Now }); await _context.SaveChangesAsync(); return Ok(new { success = true }); } catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); } }
@@ -527,7 +526,7 @@ namespace Diska.ApiControllers
             catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); }
         }
     }
-    
+
 
     // =========================================================================
     // 4. MERCHANT API (بوابة التاجر)
@@ -550,13 +549,52 @@ namespace Diska.ApiControllers
 
         // Products
         [HttpGet("products")]
-        public async Task<IActionResult> GetProducts() { var data = await _context.Products.Where(p => p.MerchantId == UserId).Select(p => new { p.Id, p.Name, p.Price, p.StockQuantity, p.Status, p.ImageUrl, p.CategoryId }).ToListAsync(); if (!data.Any()) return Ok(new { success = true, data = new[] { new { Id = 1, Name = "منتجك الأول", Price = 150.0m, StockQuantity = 20, Status = "Active", ImageUrl = "", CategoryId = 1 } } }); return Ok(new { success = true, data }); }
-
-        [HttpPost("products")]
-        public async Task<IActionResult> AddProduct([FromBody] ApiProductDto dto)
+        public async Task<IActionResult> GetProducts()
         {
             try
             {
+                var data = await _context.Products
+                    .Where(p => p.MerchantId == UserId && p.Status != "Hidden")
+                    .Select(p => new {
+                        p.Id,
+                        p.Name,
+                        p.NameEn,
+                        p.Price,
+                        p.StockQuantity,
+                        p.ImageUrl,
+                        p.CategoryId,
+                        p.Status,
+                        p.Description
+                    }).OrderByDescending(x => x.Id).ToListAsync();
+
+                return Ok(new { success = true, data });
+            }
+            catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); }
+        }
+
+        [HttpPost("products")]
+        public async Task<IActionResult> AddProduct([FromForm] ApiProductFormDto dto) // 🚨 استخدام FromForm بدلاً من FromBody
+        {
+            try
+            {
+                string mainImageUrl = "images/default-product.png";
+
+                // 🚨 معالجة رفع الصورة الرئيسية (MainImage)
+                if (dto.MainImage != null && dto.MainImage.Length > 0)
+                {
+                    var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "products");
+                    if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+                    var uniqueFileName = Guid.NewGuid().ToString() + "_" + dto.MainImage.FileName;
+                    var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                    using (var fileStream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await dto.MainImage.CopyToAsync(fileStream);
+                    }
+                    mainImageUrl = "/uploads/products/" + uniqueFileName;
+                }
+
                 var p = new Product
                 {
                     MerchantId = UserId,
@@ -569,37 +607,54 @@ namespace Diska.ApiControllers
                     CostPrice = dto.CostPrice ?? 0,
                     StockQuantity = dto.StockQuantity,
                     LowStockThreshold = dto.LowStockThreshold > 0 ? dto.LowStockThreshold : 5,
-                    CategoryId = dto.CategoryId > 0 ? dto.CategoryId : 1, // حماية من الصفر
+                    CategoryId = dto.CategoryId > 0 ? dto.CategoryId : 1,
                     SKU = !string.IsNullOrEmpty(dto.SKU) ? dto.SKU : Guid.NewGuid().ToString().Substring(0, 8),
                     Barcode = dto.Barcode ?? "",
                     Brand = dto.Brand ?? "عام",
-                    Weight = dto.Weight ?? 0, // تعويض القيمة الفارغة بصفر
-                    UnitsPerCarton = dto.UnitsPerCarton ?? 1, // تعويض القيمة الفارغة بـ 1
+                    Weight = dto.Weight ?? 0,
+                    UnitsPerCarton = dto.UnitsPerCarton ?? 1,
                     Status = "Active",
                     Color = "#000",
                     Slug = Guid.NewGuid().ToString(),
+                    ProductionDate = DateTime.Now,
+                    ExpiryDate = DateTime.Now.AddYears(1),
                     MetaTitle = !string.IsNullOrEmpty(dto.Name) ? dto.Name : "منتج جديد",
                     MetaDescription = !string.IsNullOrEmpty(dto.Description) ? dto.Description : "وصف المنتج",
-                    ImageUrl = "images/default-product.png",
-                    // تجنب أخطاء التواريخ في قواعد بيانات SQL Server
-                    ProductionDate = DateTime.Now,
-                    ExpiryDate = DateTime.Now.AddYears(1)
+                    ImageUrl = mainImageUrl // 🚨 حفظ مسار الصورة الفعلي
                 };
 
                 _context.Products.Add(p);
                 await _context.SaveChangesAsync();
+
+                // 🚨 معالجة رفع الصور الإضافية (إن وجدت)
+                if (dto.AdditionalImages != null && dto.AdditionalImages.Count > 0)
+                {
+                    var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "products");
+                    foreach (var file in dto.AdditionalImages)
+                    {
+                        if (file.Length > 0)
+                        {
+                            var uniqueFileName = Guid.NewGuid().ToString() + "_" + file.FileName;
+                            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                            using (var fileStream = new FileStream(filePath, FileMode.Create)) { await file.CopyToAsync(fileStream); }
+
+                            _context.ProductImages.Add(new ProductImage { ProductId = p.Id, ImageUrl = "/uploads/products/" + uniqueFileName }); // ✅ تم إزالة IsPrimary
+                        }
+                    }
+                    await _context.SaveChangesAsync();
+                }
+
                 return Ok(new { success = true, message = "تم إضافة المنتج بنجاح" });
             }
             catch (Exception ex)
             {
-                // إظهار رسالة الخطأ الحقيقية من قاعدة البيانات
                 string errorMsg = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
                 return Ok(new { success = false, message = errorMsg });
             }
         }
 
         [HttpPut("products/{id}")]
-        public async Task<IActionResult> EditProduct(int id, [FromBody] ApiProductDto dto)
+        public async Task<IActionResult> EditProduct(int id, [FromForm] ApiProductFormDto dto) // 🚨 FromForm
         {
             try
             {
@@ -621,6 +676,18 @@ namespace Diska.ApiControllers
                 p.Brand = dto.Brand ?? p.Brand;
                 p.Weight = dto.Weight ?? p.Weight;
                 p.UnitsPerCarton = dto.UnitsPerCarton ?? p.UnitsPerCarton;
+                p.MetaTitle = dto.Name ?? p.MetaTitle;
+
+                // 🚨 تعديل الصورة إذا تم رفع صورة جديدة
+                if (dto.MainImage != null && dto.MainImage.Length > 0)
+                {
+                    var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "products");
+                    if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+                    var uniqueFileName = Guid.NewGuid().ToString() + "_" + dto.MainImage.FileName;
+                    var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                    using (var fileStream = new FileStream(filePath, FileMode.Create)) { await dto.MainImage.CopyToAsync(fileStream); }
+                    p.ImageUrl = "/uploads/products/" + uniqueFileName;
+                }
 
                 await _context.SaveChangesAsync();
                 return Ok(new { success = true, message = "تم التعديل بنجاح" });
@@ -640,9 +707,8 @@ namespace Diska.ApiControllers
                 var p = await _context.Products.FirstOrDefaultAsync(x => x.Id == id && x.MerchantId == UserId);
                 if (p != null)
                 {
-                    // 🚨 Soft Delete: إخفاء المنتج بدلاً من حذفه من الجذور لمنع تعطل الطلبات السابقة للعملاء
                     p.Status = "Hidden";
-                    p.StockQuantity = 0; // تصفير المخزون
+                    p.StockQuantity = 0;
                     await _context.SaveChangesAsync();
                 }
                 return Ok(new { success = true, message = "تم حذف (إخفاء) المنتج بنجاح" });
@@ -653,13 +719,38 @@ namespace Diska.ApiControllers
                 return Ok(new { success = false, message = errorMsg });
             }
         }
+
         [HttpPut("products/stock")]
-        public async Task<IActionResult> UpdateStock([FromBody] ApiStockUpdateDto dto) { try { var p = await _context.Products.FirstOrDefaultAsync(x => x.Id == dto.ProductId && x.MerchantId == UserId); if (p == null) return Ok(new { success = false, message = "المنتج غير موجود" }); p.StockQuantity = dto.Quantity; await _context.SaveChangesAsync(); return Ok(new { success = true }); } catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); } }
+        public async Task<IActionResult> UpdateStock([FromBody] ApiStockDto dto) { try { var p = await _context.Products.FirstOrDefaultAsync(x => x.Id == dto.ProductId && x.MerchantId == UserId); if (p != null) { p.StockQuantity = dto.Quantity; await _context.SaveChangesAsync(); } return Ok(new { success = true, message = "تم تحديث المخزون" }); } catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); } }
 
         [HttpPost("products/request-price")]
-        public async Task<IActionResult> RequestPriceUpdate([FromBody] ApiOfferDto dto) { try { _context.PendingMerchantActions.Add(new PendingMerchantAction { MerchantId = UserId, ActionType = "UpdateProductPrice", EntityName = "Product", EntityId = dto.RequestId.ToString(), NewValueJson = JsonSerializer.Serialize(new { Price = dto.Price }), OldValueJson = "{}", Status = "Pending", RequestDate = DateTime.Now, ActionByAdminId = "", AdminComment = "" }); await _context.SaveChangesAsync(); return Ok(new { success = true }); } catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); } }
+        public async Task<IActionResult> RequestPriceUpdate([FromBody] ApiPriceRequestDto dto)
+        {
+            try
+            {
+                var p = await _context.Products.FirstOrDefaultAsync(x => x.Id == dto.RequestId && x.MerchantId == UserId);
+                if (p == null) return Ok(new { success = false, message = "المنتج غير موجود" });
 
-        // 🚨 إصلاح مشكلة الصفقات (Deals) للتاجر
+                // 🚨 إصلاح: تسجيل الطلب الفعلي في الداتابيز ليظهر للإدارة
+                _context.PendingMerchantActions.Add(new PendingMerchantAction
+                {
+                    MerchantId = UserId,
+                    ActionType = "PriceUpdate",
+                    EntityName = "Product",
+                    EntityId = p.Id.ToString(), // ✅ تم تحويل الأيدي لنص لمنع خطأ Int to String
+                    Status = "Pending",
+                    OldValueJson = p.Price.ToString(),
+                    NewValueJson = dto.Price.ToString(),
+                    RequestDate = DateTime.Now,
+                    ActionByAdminId = "",
+                    AdminComment = ""
+                });
+
+                await _context.SaveChangesAsync();
+                return Ok(new { success = true, message = "تم إرسال طلب تعديل السعر للإدارة بنجاح" });
+            }
+            catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); }
+        }
         [HttpGet("deals")]
         public async Task<IActionResult> GetDeals() { var data = await _context.GroupDeals.Where(d => d.Product!.MerchantId == UserId).Select(d => new { d.Id, d.Title, d.Status, d.DealPrice, d.DiscountValue, d.TargetQuantity, d.ReservedQuantity, d.StartDate, d.EndDate }).ToListAsync(); if (!data.Any()) return Ok(new { success = true, data = new[] { new { Id = 1, Title = "عرض تجريبي", Status = "Approved", DealPrice = 90.0m, DiscountValue = 10.0m, TargetQuantity = 50, ReservedQuantity = 10, StartDate = DateTime.Now, EndDate = DateTime.Now.AddDays(7) } } }); return Ok(new { success = true, data }); }
 
@@ -732,10 +823,10 @@ namespace Diska.ApiControllers
                 {
                     MerchantId = UserId,
                     ActionType = "WithdrawRequest",
-                    EntityName = "Wallet",      // ✅ تم إضافة هذا الحقل المفقود
-                    EntityId = UserId,          // ✅ تم إضافة هذا الحقل المفقود
+                    EntityName = "Wallet",
+                    EntityId = UserId,
                     Status = "Pending",
-                    NewValueJson = JsonSerializer.Serialize(new { Amount = dto.Amount }), // ✅ تحويله لـ JSON سليم كما في الويب
+                    NewValueJson = JsonSerializer.Serialize(new { Amount = dto.Amount }),
                     OldValueJson = "{}",
                     RequestDate = DateTime.Now,
                     ActionByAdminId = "",
@@ -1016,7 +1107,7 @@ namespace Diska.ApiControllers
         public async Task<IActionResult> NotifyMerchant([FromBody] ApiMessageDto dto) { await Task.CompletedTask; return Ok(new { success = true, message = "تم إرسال إشعار للتاجر" }); }
 
         [HttpPost("restock/update-stock")]
-        public async Task<IActionResult> AdminQuickUpdateStock([FromBody] ApiStockUpdateDto dto) { try { var p = await _context.Products.FindAsync(dto.ProductId); if (p != null) { p.StockQuantity = dto.Quantity; await _context.SaveChangesAsync(); } return Ok(new { success = true }); } catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); } }
+        public async Task<IActionResult> AdminQuickUpdateStock([FromBody] ApiStockDto dto) { try { var p = await _context.Products.FindAsync(dto.ProductId); if (p != null) { p.StockQuantity = dto.Quantity; await _context.SaveChangesAsync(); } return Ok(new { success = true }); } catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); } }
 
         // Merchant Permissions
         [HttpGet("permissions/{merchantId}")]
@@ -1042,7 +1133,7 @@ namespace Diska.ApiControllers
     public class ApiAddressDto { public string? Title { get; set; } public string? Governorate { get; set; } public string? City { get; set; } public string? Street { get; set; } public string? PhoneNumber { get; set; } public bool IsDefault { get; set; } }
     public class ApiReviewDto { public int ProductId { get; set; } public int Rating { get; set; } public string? Comment { get; set; } }
     public class ApiDealRequestDto { public string? ProductName { get; set; } public int TargetQuantity { get; set; } public decimal DealPrice { get; set; } public string? Location { get; set; } }
-    public class ApiProductDto { public string? Name { get; set; } public string? NameEn { get; set; } public string? Description { get; set; } public string? ImageUrl { get; set; }  public string? DescriptionEn { get; set; } public decimal Price { get; set; } public decimal? OldPrice { get; set; } public decimal? CostPrice { get; set; } public int StockQuantity { get; set; } public int LowStockThreshold { get; set; } public int CategoryId { get; set; } public string? SKU { get; set; } public string? Barcode { get; set; } public string? Brand { get; set; } public decimal? Weight { get; set; } public int? UnitsPerCarton { get; set; } }
+    public class ApiProductDto { public string? Name { get; set; } public string? NameEn { get; set; } public string? Description { get; set; } public string? ImageUrl { get; set; } public string? DescriptionEn { get; set; } public decimal Price { get; set; } public decimal? OldPrice { get; set; } public decimal? CostPrice { get; set; } public int StockQuantity { get; set; } public int LowStockThreshold { get; set; } public int CategoryId { get; set; } public string? SKU { get; set; } public string? Barcode { get; set; } public string? Brand { get; set; } public decimal? Weight { get; set; } public int? UnitsPerCarton { get; set; } }
     public class ApiDealDto { public string? Title { get; set; } public int ProductId { get; set; } public decimal DiscountValue { get; set; } public bool IsPercentage { get; set; } public int TargetQuantity { get; set; } public DateTime StartDate { get; set; } public DateTime EndDate { get; set; } }
     public class ApiBannerDto { public string? Title { get; set; } public string? LinkType { get; set; } public string? LinkId { get; set; } }
     public class ApiCategoryDto { public string? Name { get; set; } public string? NameEn { get; set; } public string? IconClass { get; set; } public string? ImageUrl { get; set; } }
@@ -1051,7 +1142,6 @@ namespace Diska.ApiControllers
     public class ApiCartItemDto { public int Id { get; set; } public int Qty { get; set; } public string? ColorName { get; set; } public string? ColorHex { get; set; } }
     public class ApiSurveyDto { public string? Title { get; set; } public string? TitleEn { get; set; } public string? TargetAudience { get; set; } public bool IsActive { get; set; } public DateTime StartDate { get; set; } public DateTime EndDate { get; set; } }
     public class ApiSurveySubmitDto { public int SurveyId { get; set; } public Dictionary<string, string>? Answers { get; set; } }
-    public class ApiStockUpdateDto { public int ProductId { get; set; } public int Quantity { get; set; } }
     public class ApiOfferDto { public int RequestId { get; set; } public decimal Price { get; set; } public string? Notes { get; set; } }
     public class ApiMessageDto { public int RequestId { get; set; } public string? Message { get; set; } }
     public class ApiStatusUpdateDto { public int Id { get; set; } public string? Status { get; set; } }
@@ -1060,4 +1150,29 @@ namespace Diska.ApiControllers
     public class ApiRejectDto { public int Id { get; set; } public string? Reason { get; set; } }
     public class ApiPermissionDto { public string? MerchantId { get; set; } public List<string>? Keys { get; set; } }
     public class ApiStaffDto { public string? FullName { get; set; } public string? Phone { get; set; } public string? Password { get; set; } }
+
+    public class ApiStockDto { public int ProductId { get; set; } public int Quantity { get; set; } }
+    public class ApiPriceRequestDto { public int RequestId { get; set; } public decimal Price { get; set; } }
+
+    public class ApiProductFormDto
+    {
+        public string? Name { get; set; } 
+        public string? NameEn { get; set; }
+        public decimal Price { get; set; }
+        public decimal? OldPrice { get; set; }
+        public decimal? CostPrice { get; set; }
+        public int StockQuantity { get; set; }
+        public int LowStockThreshold { get; set; }
+        public int CategoryId { get; set; }
+        public string? Description { get; set; }
+        public string? DescriptionEn { get; set; }
+        public string? SKU { get; set; }
+        public string? Barcode { get; set; }
+        public string? Brand { get; set; }
+        public decimal? Weight { get; set; }
+        public int? UnitsPerCarton { get; set; }
+
+        public IFormFile? MainImage { get; set; }
+        public List<IFormFile>? AdditionalImages { get; set; }
+    }
 }
