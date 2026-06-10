@@ -40,13 +40,18 @@ namespace Diska.Controllers
         {
             ViewData["ReturnUrl"] = returnUrl;
 
-            if (string.IsNullOrEmpty(phone) || string.IsNullOrEmpty(password))
+            // 🚨 المتغير قادم باسم phone من الـ View، ولكنه يحمل الإيميل أو رقم الهاتف
+            string identifier = phone?.Trim() ?? "";
+
+            if (string.IsNullOrEmpty(identifier) || string.IsNullOrEmpty(password))
             {
                 TempData["Error"] = "من فضلك أدخل البيانات كاملة";
                 return View();
             }
 
-            var user = await _userManager.FindByNameAsync(phone) ?? _userManager.Users.FirstOrDefault(u => u.PhoneNumber == phone);
+            // 🚨 فحص قاعدة البيانات: نبحث بالبريد أولاً، وإذا لم نجد نبحث برقم الهاتف أو الـ UserName
+            var user = await _userManager.FindByEmailAsync(identifier)
+                    ?? _userManager.Users.FirstOrDefault(u => u.PhoneNumber == identifier || u.UserName == identifier);
 
             if (user != null)
             {
@@ -114,7 +119,6 @@ namespace Diska.Controllers
             if (result.Succeeded)
             {
                 await _userManager.AddToRoleAsync(user, role);
-
                 await _signInManager.SignInAsync(user, isPersistent: true);
 
                 if (role == "Merchant")
@@ -149,8 +153,8 @@ namespace Diska.Controllers
             }
 
             // في حال فشل الإرسال (رصيد غير كافٍ أو خطأ في المزود)
-            return Json(new { success = false, message = "فشل إرسال رمز التحقق، يرجى المحاولة لاحقاً", provider_error = smsResult.Message });
-        }
+            return Json(new { success = false, message = "فشل إرسال رمز التحقق، يرجى المحاولة لاحقاً", provider_error = "فشل إرسال رمز التحقق، يرجى المحاولة لاحقاً" });
+            }
 
         // =========================================================
         // 4. نسيت كلمة المرور - الوضع الحي (LIVE)
@@ -224,7 +228,7 @@ namespace Diska.Controllers
                 return RedirectToAction("ResetPasswordConfirmation");
             }
 
-            foreach (var error in result.Errors) ModelState.AddModelError(string.Empty, error.Description);
+            foreach (var error in result.Errors) ModelState.AddModelError(string.Empty, "فشل إرسال رمز التحقق، يرجى المحاولة لاحقاً");
             return View(model);
         }
 

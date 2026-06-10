@@ -279,8 +279,11 @@
                 <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
 
                 <div class="form-group">
-                    <label class="form-label">@(isAr ? "رقم الهاتف" : "Phone Number")</label>
-                    <input type="tel" name="phone" class="form-control" placeholder="01xxxxxxxxx" required style="direction:ltr; text-align:@(isAr ? "right" : "left");">
+                    <label class="form-label">@(isAr ? "رقم الهاتف أو البريد الإلكتروني" : "Phone Number or Email")</label>
+
+                    <input type="text" name="phone" class="form-control"
+                           placeholder="@(isAr ? "أدخل رقم هاتفك أو إيميلك" : "Enter Phone or Email")"
+                           required style="direction:ltr; text-align:@(isAr ? "right" : "left");">
                 </div>
 
                 <div class="form-group">

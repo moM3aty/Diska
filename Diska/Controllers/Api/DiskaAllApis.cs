@@ -1121,7 +1121,7 @@ namespace Diska.ApiControllers
     // DTOs (Data Transfer Objects)
     // =========================================================================
     public class ApiLoginDto { public string? Phone { get; set; } public string? Password { get; set; } public bool RememberMe { get; set; } }
-    public class ApiSignupDto { public string? FullName { get; set; } public string? Phone { get; set; } public string? Password { get; set; } public string? Type { get; set; } public string? ShopName { get; set; } public string? CommercialReg { get; set; } public string? TaxCard { get; set; } }
+    public class ApiSignupDto { public string? FullName { get; set; } public string? Phone { get; set; } public string? Email { get; set; } public string? Password { get; set; } public string? Type { get; set; } public string? ShopName { get; set; } public string? CommercialReg { get; set; } public string? TaxCard { get; set; } }
     public class ApiPhoneDto { public string? Phone { get; set; } }
     public class ApiResetPassDto { public string? Phone { get; set; } public string? Code { get; set; } public string? Password { get; set; } }
     public class ApiUpdateProfileDto { public string? FullName { get; set; } public string? ShopName { get; set; } public string? CommercialRegister { get; set; } public string? CurrentPassword { get; set; } public string? NewPassword { get; set; } }
