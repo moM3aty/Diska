@@ -33,35 +33,18 @@ namespace Diska.ApiControllers
             _userManager = userManager; _signInManager = signInManager; _smsService = smsService;
         }
 
-        [HttpPost("send-otp")]
-        public async Task<IActionResult> SendOtp([FromBody] ApiPhoneDto dto)
-        {
-            try
-            {
-                if (string.IsNullOrEmpty(dto.Phone)) return Ok(new { success = false, message = "رقم الهاتف مطلوب" });
-                string phone = dto.Phone!; // ✅ التأكد للمترجم أنه ليس Null
-
-                string otp = new Random().Next(100000, 999999).ToString();
-                _otpStore[phone] = (otp, DateTime.Now.AddMinutes(10)); // حفظ الكود للمقارنة لاحقاً
-
-                var smsResult = await _smsService.SendOtpAsync(phone, otp);
-
-                if (smsResult.IsSuccess)
-                {
-                    return Ok(new { success = true, message = "تم إرسال رمز التحقق بنجاح" });
-                }
-
-                return Ok(new { success = false, message = "فشل إرسال الرسالة، تأكد من الرصيد أو الرقم", error = smsResult.Message });
-            }
-            catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); }
-        }
-
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] ApiLoginDto dto)
         {
             try
             {
-                var user = await _userManager.FindByNameAsync(dto.Phone ?? "") ?? _userManager.Users.FirstOrDefault(u => u.PhoneNumber == dto.Phone);
+                string identifier = dto.Phone?.Trim() ?? "";
+                if (string.IsNullOrEmpty(identifier)) return Ok(new { success = false, message = "البيانات مطلوبة" });
+
+                // البحث بالإيميل أو برقم الهاتف أو باسم المستخدم
+                var user = await _userManager.FindByEmailAsync(identifier)
+                        ?? await _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == identifier || u.UserName == identifier);
+
                 if (user == null) return Ok(new { success = false, message = "المستخدم غير موجود" });
                 if (await _userManager.IsLockedOutAsync(user)) return Ok(new { success = false, message = "الحساب محظور" });
 
@@ -76,26 +59,47 @@ namespace Diska.ApiControllers
             catch (Exception ex) { return Ok(new { success = false, message = ex.Message }); }
         }
 
+        // =========================================================
+        // 3. إنشاء حساب جديد (حفظ الإيميل أو الهاتف بشكل صحيح)
+        // =========================================================
         [HttpPost("signup")]
         public async Task<IActionResult> Signup([FromBody] ApiSignupDto dto)
         {
             try
             {
-                if (string.IsNullOrEmpty(dto.Phone)) return Ok(new { success = false, message = "رقم الهاتف مطلوب" });
-                if (await _userManager.FindByNameAsync(dto.Phone) != null) return Ok(new { success = false, message = "رقم الهاتف مسجل مسبقاً" });
+                string identifier = dto.Phone?.Trim() ?? ""; // الموبايل هيبعت القيمة هنا أو في Email
+                string emailInput = dto.Email?.Trim() ?? "";
+
+                // إذا أرسل الموبايل الإيميل داخل حقل Phone بالخطأ، نقوم بتصحيحها
+                if (identifier.Contains("@"))
+                {
+                    emailInput = identifier;
+                    identifier = ""; // نُفرغ رقم الهاتف لأنه أرسل إيميلاً
+                }
+
+                if (string.IsNullOrEmpty(identifier) && string.IsNullOrEmpty(emailInput))
+                    return Ok(new { success = false, message = "رقم الهاتف أو البريد الإلكتروني مطلوب" });
+
+                // التحقق من التكرار
+                if (!string.IsNullOrEmpty(identifier) && await _userManager.Users.AnyAsync(u => u.PhoneNumber == identifier))
+                    return Ok(new { success = false, message = "رقم الهاتف مسجل مسبقاً" });
+
+                if (!string.IsNullOrEmpty(emailInput) && await _userManager.FindByEmailAsync(emailInput) != null)
+                    return Ok(new { success = false, message = "البريد الإلكتروني مسجل مسبقاً" });
 
                 string role = dto.Type == "Merchant" ? "Merchant" : "Customer";
+                string finalUserName = !string.IsNullOrEmpty(identifier) ? identifier : emailInput;
 
                 var user = new ApplicationUser
                 {
-                    UserName = dto.Phone,
-                    PhoneNumber = dto.Phone,
+                    UserName = finalUserName,
+                    PhoneNumber = identifier, // سيكون فارغاً إذا سجل بالإيميل فقط
+                    Email = !string.IsNullOrEmpty(emailInput) ? emailInput : $"{identifier}@diska.local",
                     FullName = dto.FullName ?? (role == "Merchant" ? "تاجر ديسكا" : "عميل ديسكا"),
                     ShopName = role == "Merchant" ? (dto.ShopName ?? "متجر جديد") : "عميل",
                     CommercialRegister = role == "Merchant" ? (dto.CommercialReg ?? "0") : "0",
                     TaxCard = role == "Merchant" ? (dto.TaxCard ?? "0") : "0",
                     IsVerifiedMerchant = role == "Merchant" ? true : false,
-                    Email = $"{dto.Phone}@diska.local",
                     UserType = role,
                     CreatedAt = DateTime.Now
                 };
